@@ -1,0 +1,186 @@
+/**
+ * Simple piano keyboard for playing notes
+ */
+
+import { useCallback, useEffect, useState, type ReactElement } from 'react';
+
+interface PianoKeyboardProps {
+  onNoteOn: (note: string) => void;
+  onNoteOff: () => void;
+  /** Starting octave */
+  octave?: number;
+  /** Number of octaves to display */
+  octaves?: number;
+}
+
+const WHITE_KEYS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+const BLACK_KEYS = ['C#', 'D#', null, 'F#', 'G#', 'A#', null];
+
+// Computer keyboard to note mapping (one octave)
+const KEY_MAP: Record<string, string> = {
+  a: 'C',
+  w: 'C#',
+  s: 'D',
+  e: 'D#',
+  d: 'E',
+  f: 'F',
+  t: 'F#',
+  g: 'G',
+  y: 'G#',
+  h: 'A',
+  u: 'A#',
+  j: 'B',
+  k: 'C+', // Next octave C
+};
+
+export function PianoKeyboard({
+  onNoteOn,
+  onNoteOff,
+  octave = 4,
+  octaves = 2,
+}: PianoKeyboardProps) {
+  const [activeNote, setActiveNote] = useState<string | null>(null);
+
+  const handleKeyDown = useCallback(
+    (note: string) => {
+      if (activeNote !== note) {
+        setActiveNote(note);
+        onNoteOn(note);
+      }
+    },
+    [activeNote, onNoteOn]
+  );
+
+  const handleKeyUp = useCallback(() => {
+    setActiveNote(null);
+    onNoteOff();
+  }, [onNoteOff]);
+
+  // Computer keyboard support
+  useEffect(() => {
+    const handleKeyboardDown = (e: KeyboardEvent) => {
+      if (e.repeat) return;
+      const key = e.key.toLowerCase();
+      const noteBase = KEY_MAP[key];
+      if (noteBase) {
+        const noteOctave = noteBase.includes('+') ? octave + 1 : octave;
+        const noteName = noteBase.replace('+', '');
+        handleKeyDown(`${noteName}${noteOctave}`);
+      }
+    };
+
+    const handleKeyboardUp = (e: KeyboardEvent) => {
+      const key = e.key.toLowerCase();
+      if (KEY_MAP[key]) {
+        handleKeyUp();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyboardDown);
+    window.addEventListener('keyup', handleKeyboardUp);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyboardDown);
+      window.removeEventListener('keyup', handleKeyboardUp);
+    };
+  }, [octave, handleKeyDown, handleKeyUp]);
+
+  const whiteKeyWidth = 36;
+  const blackKeyWidth = 24;
+  const whiteKeyHeight = 100;
+  const blackKeyHeight = 60;
+
+  const keys: ReactElement[] = [];
+  const blackKeys: ReactElement[] = [];
+
+  // Generate keys for each octave
+  for (let o = 0; o < octaves; o++) {
+    const currentOctave = octave + o;
+
+    WHITE_KEYS.forEach((note, i) => {
+      const fullNote = `${note}${currentOctave}`;
+      const isActive = activeNote === fullNote;
+      const x = (o * 7 + i) * whiteKeyWidth;
+
+      keys.push(
+        <rect
+          key={fullNote}
+          x={x}
+          y={0}
+          width={whiteKeyWidth - 2}
+          height={whiteKeyHeight}
+          fill={isActive ? '#4ade80' : '#f5f5f5'}
+          stroke="#333"
+          strokeWidth="1"
+          rx="4"
+          style={{ cursor: 'pointer' }}
+          onMouseDown={() => handleKeyDown(fullNote)}
+          onMouseUp={handleKeyUp}
+          onMouseLeave={() => {
+            if (activeNote === fullNote) handleKeyUp();
+          }}
+        />
+      );
+    });
+
+    BLACK_KEYS.forEach((note, i) => {
+      if (note === null) return;
+      const fullNote = `${note}${currentOctave}`;
+      const isActive = activeNote === fullNote;
+      // Position black keys between white keys
+      const x = (o * 7 + i) * whiteKeyWidth + whiteKeyWidth * 0.7;
+
+      blackKeys.push(
+        <rect
+          key={fullNote}
+          x={x}
+          y={0}
+          width={blackKeyWidth}
+          height={blackKeyHeight}
+          fill={isActive ? '#22c55e' : '#1a1a1a'}
+          stroke="#000"
+          strokeWidth="1"
+          rx="2"
+          style={{ cursor: 'pointer' }}
+          onMouseDown={() => handleKeyDown(fullNote)}
+          onMouseUp={handleKeyUp}
+          onMouseLeave={() => {
+            if (activeNote === fullNote) handleKeyUp();
+          }}
+        />
+      );
+    });
+  }
+
+  const totalWidth = octaves * 7 * whiteKeyWidth;
+
+  return (
+    <div
+      style={{
+        background: '#1a1a1a',
+        padding: '12px',
+        borderRadius: '8px',
+        border: '1px solid #333',
+      }}
+    >
+      <svg
+        width={totalWidth}
+        height={whiteKeyHeight}
+        style={{ display: 'block' }}
+      >
+        {keys}
+        {blackKeys}
+      </svg>
+      <div
+        style={{
+          marginTop: '8px',
+          fontSize: '10px',
+          color: '#666',
+          textAlign: 'center',
+        }}
+      >
+        Use keyboard: A-S-D-F-G-H-J-K (white) W-E-T-Y-U (black)
+      </div>
+    </div>
+  );
+}

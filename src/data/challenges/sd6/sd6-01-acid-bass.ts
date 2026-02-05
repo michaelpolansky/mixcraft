@@ -1,0 +1,60 @@
+import type { Challenge } from '../../../core/types.ts';
+
+/**
+ * SD6-01: Acid Bass
+ * Combines: Filter resonance + filter envelope + low octave
+ *
+ * The classic 303-style acid bass sound. Players must combine
+ * high resonance with a fast filter envelope decay for that
+ * iconic "squelchy" character.
+ */
+export const challenge: Challenge = {
+  id: 'sd6-01-acid-bass',
+  title: 'Acid Bass',
+  description: 'Create that classic squelchy acid bass sound. It should have a sharp, resonant "blip" at the start of each note that quickly settles down.',
+  difficulty: 2,
+  module: 'SD6',
+  testNote: 'C2',
+  hints: [
+    'Acid bass uses a sawtooth wave in a low octave.',
+    'High filter resonance creates that signature squelch.',
+    'A fast filter envelope decay makes the brightness sweep down quickly.',
+  ],
+  targetParams: {
+    oscillator: {
+      type: 'sawtooth',
+      octave: -1,
+      detune: 0,
+    },
+    filter: {
+      type: 'lowpass',
+      cutoff: 400,
+      resonance: 15,
+    },
+    filterEnvelope: {
+      attack: 0.005,
+      decay: 0.15,
+      sustain: 0.1,
+      release: 0.1,
+      amount: 3,
+    },
+    amplitudeEnvelope: {
+      attack: 0.005,
+      decay: 0.2,
+      sustain: 0.6,
+      release: 0.1,
+    },
+    lfo: {
+      rate: 1,
+      depth: 0,
+      waveform: 'sine',
+    },
+    effects: {
+      distortion: { amount: 0.2, mix: 0.3 },
+      delay: { time: 0.25, feedback: 0.3, mix: 0 },
+      reverb: { decay: 1.5, mix: 0 },
+      chorus: { rate: 1.5, depth: 0.5, mix: 0 },
+    },
+    volume: -12,
+  },
+};
