@@ -13,3 +13,5 @@ export { ScoreBar } from './ScoreBar.tsx';
 export { ResultsModal } from './ResultsModal.tsx';
 export { TargetPlayer } from './TargetPlayer.tsx';
 export { LFOWaveformSelector } from './LFOWaveformSelector.tsx';
+export { EQControl } from './EQControl.tsx';
+export { CompressorControl } from './CompressorControl.tsx';

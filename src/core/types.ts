@@ -298,3 +298,87 @@ export interface ChallengeProgress {
   /** Whether challenge is completed (passed at least once) */
   completed: boolean;
 }
+
+// ============================================
+// Mixing Challenge Types
+// ============================================
+
+// Re-export mixing effect types
+export type {
+  EQParams,
+  CompressorSimpleParams,
+  CompressorFullParams,
+} from './mixing-effects.ts';
+
+export type { AudioSourceConfig, AudioSource } from './audio-source.ts';
+
+/** Audio source type for mixing challenges */
+export type MixingSourceType = 'tone' | 'noise' | 'drum' | 'bass' | 'pad';
+
+/** Target settings for EQ matching challenges (F1-F3) */
+export interface EQTarget {
+  type: 'eq';
+  low: number;
+  mid: number;
+  high: number;
+}
+
+/** Target settings for compression matching challenges (F4-F5) */
+export interface CompressorTarget {
+  type: 'compressor';
+  threshold: number;
+  amount: number;
+  attack?: number;   // Only for F5
+  release?: number;  // Only for F5
+}
+
+/** Problem detection for F6-F8 (identify and fix issues) */
+export interface MixingProblem {
+  type: 'problem';
+  /** Description of the audio problem */
+  description: string;
+  /** Acceptable solution ranges */
+  solution: {
+    eq?: Partial<{ low: [number, number]; mid: [number, number]; high: [number, number] }>;
+    compressor?: Partial<{ threshold: [number, number]; amount: [number, number] }>;
+  };
+}
+
+/** Union type for mixing challenge targets */
+export type MixingTarget = EQTarget | CompressorTarget | MixingProblem;
+
+/** Mixing challenge definition */
+export interface MixingChallenge {
+  /** Unique identifier */
+  id: string;
+  /** Display title */
+  title: string;
+  /** Description of what to achieve */
+  description: string;
+  /** Star difficulty (1-3) */
+  difficulty: 1 | 2 | 3;
+  /** Audio source configuration */
+  sourceConfig: {
+    type: MixingSourceType;
+    frequency?: number;
+  };
+  /** Target to match or problem to solve */
+  target: MixingTarget;
+  /** Progressive hints */
+  hints: string[];
+  /** Curriculum module (e.g., "F1", "F2") */
+  module: string;
+  /** Available controls for this challenge */
+  controls: {
+    eq: boolean;
+    compressor: boolean | 'simple' | 'full';
+  };
+}
+
+/** Union type for all challenge types */
+export type AnyChallenge = Challenge | MixingChallenge;
+
+/** Type guard for mixing challenges */
+export function isMixingChallenge(challenge: AnyChallenge): challenge is MixingChallenge {
+  return 'sourceConfig' in challenge && 'controls' in challenge;
+}

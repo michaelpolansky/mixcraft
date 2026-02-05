@@ -5,17 +5,23 @@
 import { useState, useEffect } from 'react';
 import { SynthView } from './ui/views/SynthView.tsx';
 import { ChallengeView } from './ui/views/ChallengeView.tsx';
+import { MixingChallengeView } from './ui/views/MixingChallengeView.tsx';
 import { useSynthStore } from './ui/stores/synth-store.ts';
 import { useChallengeStore } from './ui/stores/challenge-store.ts';
+import { useMixingStore } from './ui/stores/mixing-store.ts';
 import { allChallenges, modules } from './data/challenges/index.ts';
+import { allMixingChallenges, mixingModules, getMixingChallenge, getNextMixingChallenge } from './data/challenges/mixing/index.ts';
 import { useIsMobile } from './ui/hooks/useMediaQuery.ts';
+import type { MixingChallenge } from './core/types.ts';
 
-type View = 'menu' | 'sandbox' | 'challenge';
+type View = 'menu' | 'sandbox' | 'challenge' | 'mixing-challenge';
 
 export function App() {
   const [view, setView] = useState<View>('menu');
   const { initEngine, startAudio, isInitialized } = useSynthStore();
   const { loadChallenge, currentChallenge, exitChallenge, getChallengeProgress, getTotalProgress, getModuleProgress } = useChallengeStore();
+  const { getChallengeProgress: getMixingProgress, getModuleProgress: getMixingModuleProgress } = useMixingStore();
+  const [currentMixingChallenge, setCurrentMixingChallenge] = useState<MixingChallenge | null>(null);
   const isMobile = useIsMobile();
 
   // Onboarding state - show for first-time users
@@ -39,15 +45,38 @@ export function App() {
     await startAudio();
   };
 
-  // Start a challenge
+  // Start a sound design challenge
   const handleStartChallenge = (challengeId: string) => {
     loadChallenge(challengeId);
     setView('challenge');
   };
 
+  // Start a mixing challenge
+  const handleStartMixingChallenge = (challengeId: string) => {
+    const challenge = getMixingChallenge(challengeId);
+    if (challenge) {
+      setCurrentMixingChallenge(challenge);
+      setView('mixing-challenge');
+    }
+  };
+
+  // Handle next mixing challenge
+  const handleNextMixingChallenge = () => {
+    if (currentMixingChallenge) {
+      const next = getNextMixingChallenge(currentMixingChallenge.id);
+      if (next) {
+        setCurrentMixingChallenge(next);
+      } else {
+        setCurrentMixingChallenge(null);
+        setView('menu');
+      }
+    }
+  };
+
   // Exit challenge
   const handleExitChallenge = () => {
     exitChallenge();
+    setCurrentMixingChallenge(null);
     setView('menu');
   };
 
@@ -102,9 +131,22 @@ export function App() {
     );
   }
 
-  // Challenge view
+  // Sound design challenge view
   if (view === 'challenge' && currentChallenge) {
     return <ChallengeView onExit={handleExitChallenge} />;
+  }
+
+  // Mixing challenge view
+  if (view === 'mixing-challenge' && currentMixingChallenge) {
+    const hasNext = !!getNextMixingChallenge(currentMixingChallenge.id);
+    return (
+      <MixingChallengeView
+        challenge={currentMixingChallenge}
+        onExit={handleExitChallenge}
+        onNext={handleNextMixingChallenge}
+        hasNext={hasNext}
+      />
+    );
   }
 
   // Sandbox view
@@ -1016,7 +1058,8 @@ export function App() {
             background: '#141414',
             borderRadius: '12px',
             padding: '20px',
-            marginBottom: '24px',
+            border: '1px solid #2a2a2a',
+            marginBottom: '16px',
           }}
         >
           {(() => {
@@ -1115,6 +1158,813 @@ export function App() {
                       </div>
 
                       {/* Completed check */}
+                      {progress?.completed && (
+                        <span style={{ color: '#22c55e', fontSize: '16px' }}>✓</span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+          </div>
+        </div>
+
+        {/* Mixing Fundamentals Section */}
+        <h2
+          style={{
+            fontSize: '14px',
+            fontWeight: 600,
+            color: '#3b82f6',
+            textTransform: 'uppercase',
+            letterSpacing: '1px',
+            marginBottom: '16px',
+            marginTop: '32px',
+          }}
+        >
+          Mixing Fundamentals
+        </h2>
+
+        {/* Module: F1 - Frequency Basics */}
+        <div
+          style={{
+            background: '#141414',
+            borderRadius: '12px',
+            padding: '20px',
+            border: '1px solid #2a2a2a',
+            marginBottom: '16px',
+          }}
+        >
+          {(() => {
+            const mp = getMixingModuleProgress('F1', allMixingChallenges);
+            const pct = mp.total > 0 ? Math.round((mp.completed / mp.total) * 100) : 0;
+            return (
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '16px',
+                }}
+              >
+                <div style={{ flex: 1 }}>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>
+                    {mixingModules.F1.title}
+                  </h3>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#666' }}>
+                    {mixingModules.F1.description}
+                  </p>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ color: '#eab308', fontSize: '13px' }}>
+                    {'★'.repeat(mp.stars)}<span style={{ color: '#333' }}>{'★'.repeat(mp.total * 3 - mp.stars)}</span>
+                  </div>
+                  <div
+                    style={{
+                      padding: '4px 10px',
+                      background: pct === 100 ? '#22c55e' : '#222',
+                      borderRadius: '12px',
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      color: pct === 100 ? '#000' : '#888',
+                    }}
+                  >
+                    {mp.completed}/{mp.total}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {allMixingChallenges
+              .filter((c) => c.module === 'F1')
+              .map((challenge) => {
+                const progress = getMixingProgress(challenge.id);
+                const stars = progress?.stars ?? 0;
+
+                return (
+                  <button
+                    key={challenge.id}
+                    onClick={() => handleStartMixingChallenge(challenge.id)}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '12px 16px',
+                      background: '#0a0a0a',
+                      border: '1px solid #222',
+                      borderRadius: '8px',
+                      color: '#fff',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: '14px', fontWeight: 500 }}>
+                        {challenge.title}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#666' }}>
+                        {'★'.repeat(challenge.difficulty)}
+                        {'☆'.repeat(3 - challenge.difficulty)}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ color: '#eab308', fontSize: '14px' }}>
+                        {'★'.repeat(stars)}
+                        <span style={{ color: '#333' }}>{'★'.repeat(3 - stars)}</span>
+                      </div>
+                      {progress?.completed && (
+                        <span style={{ color: '#22c55e', fontSize: '16px' }}>✓</span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+          </div>
+        </div>
+
+        {/* Module: F2 - EQ Shaping */}
+        <div
+          style={{
+            background: '#141414',
+            borderRadius: '12px',
+            padding: '20px',
+            border: '1px solid #2a2a2a',
+            marginBottom: '16px',
+          }}
+        >
+          {(() => {
+            const mp = getMixingModuleProgress('F2', allMixingChallenges);
+            const pct = mp.total > 0 ? Math.round((mp.completed / mp.total) * 100) : 0;
+            return (
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '16px',
+                }}
+              >
+                <div style={{ flex: 1 }}>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>
+                    {mixingModules.F2.title}
+                  </h3>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#666' }}>
+                    {mixingModules.F2.description}
+                  </p>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ color: '#eab308', fontSize: '13px' }}>
+                    {'★'.repeat(mp.stars)}<span style={{ color: '#333' }}>{'★'.repeat(mp.total * 3 - mp.stars)}</span>
+                  </div>
+                  <div
+                    style={{
+                      padding: '4px 10px',
+                      background: pct === 100 ? '#22c55e' : '#222',
+                      borderRadius: '12px',
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      color: pct === 100 ? '#000' : '#888',
+                    }}
+                  >
+                    {mp.completed}/{mp.total}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {allMixingChallenges
+              .filter((c) => c.module === 'F2')
+              .map((challenge) => {
+                const progress = getMixingProgress(challenge.id);
+                const stars = progress?.stars ?? 0;
+
+                return (
+                  <button
+                    key={challenge.id}
+                    onClick={() => handleStartMixingChallenge(challenge.id)}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '12px 16px',
+                      background: '#0a0a0a',
+                      border: '1px solid #222',
+                      borderRadius: '8px',
+                      color: '#fff',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: '14px', fontWeight: 500 }}>
+                        {challenge.title}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#666' }}>
+                        {'★'.repeat(challenge.difficulty)}
+                        {'☆'.repeat(3 - challenge.difficulty)}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ color: '#eab308', fontSize: '14px' }}>
+                        {'★'.repeat(stars)}
+                        <span style={{ color: '#333' }}>{'★'.repeat(3 - stars)}</span>
+                      </div>
+                      {progress?.completed && (
+                        <span style={{ color: '#22c55e', fontSize: '16px' }}>✓</span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+          </div>
+        </div>
+
+        {/* Module: F3 - EQ Repair */}
+        <div
+          style={{
+            background: '#141414',
+            borderRadius: '12px',
+            padding: '20px',
+            border: '1px solid #2a2a2a',
+            marginBottom: '16px',
+          }}
+        >
+          {(() => {
+            const mp = getMixingModuleProgress('F3', allMixingChallenges);
+            const pct = mp.total > 0 ? Math.round((mp.completed / mp.total) * 100) : 0;
+            return (
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '16px',
+                }}
+              >
+                <div style={{ flex: 1 }}>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>
+                    {mixingModules.F3.title}
+                  </h3>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#666' }}>
+                    {mixingModules.F3.description}
+                  </p>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ color: '#eab308', fontSize: '13px' }}>
+                    {'★'.repeat(mp.stars)}<span style={{ color: '#333' }}>{'★'.repeat(mp.total * 3 - mp.stars)}</span>
+                  </div>
+                  <div
+                    style={{
+                      padding: '4px 10px',
+                      background: pct === 100 ? '#22c55e' : '#222',
+                      borderRadius: '12px',
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      color: pct === 100 ? '#000' : '#888',
+                    }}
+                  >
+                    {mp.completed}/{mp.total}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {allMixingChallenges
+              .filter((c) => c.module === 'F3')
+              .map((challenge) => {
+                const progress = getMixingProgress(challenge.id);
+                const stars = progress?.stars ?? 0;
+
+                return (
+                  <button
+                    key={challenge.id}
+                    onClick={() => handleStartMixingChallenge(challenge.id)}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '12px 16px',
+                      background: '#0a0a0a',
+                      border: '1px solid #222',
+                      borderRadius: '8px',
+                      color: '#fff',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: '14px', fontWeight: 500 }}>
+                        {challenge.title}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#666' }}>
+                        {'★'.repeat(challenge.difficulty)}
+                        {'☆'.repeat(3 - challenge.difficulty)}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ color: '#eab308', fontSize: '14px' }}>
+                        {'★'.repeat(stars)}
+                        <span style={{ color: '#333' }}>{'★'.repeat(3 - stars)}</span>
+                      </div>
+                      {progress?.completed && (
+                        <span style={{ color: '#22c55e', fontSize: '16px' }}>✓</span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+          </div>
+        </div>
+
+        {/* Module: F4 - Compression Basics */}
+        <div
+          style={{
+            background: '#141414',
+            borderRadius: '12px',
+            padding: '20px',
+            border: '1px solid #2a2a2a',
+            marginBottom: '16px',
+          }}
+        >
+          {(() => {
+            const mp = getMixingModuleProgress('F4', allMixingChallenges);
+            const pct = mp.total > 0 ? Math.round((mp.completed / mp.total) * 100) : 0;
+            return (
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '16px',
+                }}
+              >
+                <div style={{ flex: 1 }}>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>
+                    {mixingModules.F4.title}
+                  </h3>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#666' }}>
+                    {mixingModules.F4.description}
+                  </p>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ color: '#eab308', fontSize: '13px' }}>
+                    {'★'.repeat(mp.stars)}<span style={{ color: '#333' }}>{'★'.repeat(mp.total * 3 - mp.stars)}</span>
+                  </div>
+                  <div
+                    style={{
+                      padding: '4px 10px',
+                      background: pct === 100 ? '#22c55e' : '#222',
+                      borderRadius: '12px',
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      color: pct === 100 ? '#000' : '#888',
+                    }}
+                  >
+                    {mp.completed}/{mp.total}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {allMixingChallenges
+              .filter((c) => c.module === 'F4')
+              .map((challenge) => {
+                const progress = getMixingProgress(challenge.id);
+                const stars = progress?.stars ?? 0;
+
+                return (
+                  <button
+                    key={challenge.id}
+                    onClick={() => handleStartMixingChallenge(challenge.id)}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '12px 16px',
+                      background: '#0a0a0a',
+                      border: '1px solid #222',
+                      borderRadius: '8px',
+                      color: '#fff',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: '14px', fontWeight: 500 }}>
+                        {challenge.title}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#666' }}>
+                        {'★'.repeat(challenge.difficulty)}
+                        {'☆'.repeat(3 - challenge.difficulty)}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ color: '#eab308', fontSize: '14px' }}>
+                        {'★'.repeat(stars)}
+                        <span style={{ color: '#333' }}>{'★'.repeat(3 - stars)}</span>
+                      </div>
+                      {progress?.completed && (
+                        <span style={{ color: '#22c55e', fontSize: '16px' }}>✓</span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+          </div>
+        </div>
+
+        {/* Module: F5 - Advanced Compression */}
+        <div
+          style={{
+            background: '#141414',
+            borderRadius: '12px',
+            padding: '20px',
+            border: '1px solid #2a2a2a',
+            marginBottom: '16px',
+          }}
+        >
+          {(() => {
+            const mp = getMixingModuleProgress('F5', allMixingChallenges);
+            const pct = mp.total > 0 ? Math.round((mp.completed / mp.total) * 100) : 0;
+            return (
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '16px',
+                }}
+              >
+                <div style={{ flex: 1 }}>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>
+                    {mixingModules.F5.title}
+                  </h3>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#666' }}>
+                    {mixingModules.F5.description}
+                  </p>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ color: '#eab308', fontSize: '13px' }}>
+                    {'★'.repeat(mp.stars)}<span style={{ color: '#333' }}>{'★'.repeat(mp.total * 3 - mp.stars)}</span>
+                  </div>
+                  <div
+                    style={{
+                      padding: '4px 10px',
+                      background: pct === 100 ? '#22c55e' : '#222',
+                      borderRadius: '12px',
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      color: pct === 100 ? '#000' : '#888',
+                    }}
+                  >
+                    {mp.completed}/{mp.total}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {allMixingChallenges
+              .filter((c) => c.module === 'F5')
+              .map((challenge) => {
+                const progress = getMixingProgress(challenge.id);
+                const stars = progress?.stars ?? 0;
+
+                return (
+                  <button
+                    key={challenge.id}
+                    onClick={() => handleStartMixingChallenge(challenge.id)}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '12px 16px',
+                      background: '#0a0a0a',
+                      border: '1px solid #222',
+                      borderRadius: '8px',
+                      color: '#fff',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: '14px', fontWeight: 500 }}>
+                        {challenge.title}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#666' }}>
+                        {'★'.repeat(challenge.difficulty)}
+                        {'☆'.repeat(3 - challenge.difficulty)}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ color: '#eab308', fontSize: '14px' }}>
+                        {'★'.repeat(stars)}
+                        <span style={{ color: '#333' }}>{'★'.repeat(3 - stars)}</span>
+                      </div>
+                      {progress?.completed && (
+                        <span style={{ color: '#22c55e', fontSize: '16px' }}>✓</span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+          </div>
+        </div>
+
+        {/* Module: F6 - Combined Processing */}
+        <div
+          style={{
+            background: '#141414',
+            borderRadius: '12px',
+            padding: '20px',
+            border: '1px solid #2a2a2a',
+            marginBottom: '16px',
+          }}
+        >
+          {(() => {
+            const mp = getMixingModuleProgress('F6', allMixingChallenges);
+            const pct = mp.total > 0 ? Math.round((mp.completed / mp.total) * 100) : 0;
+            return (
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '16px',
+                }}
+              >
+                <div style={{ flex: 1 }}>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>
+                    {mixingModules.F6.title}
+                  </h3>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#666' }}>
+                    {mixingModules.F6.description}
+                  </p>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ color: '#eab308', fontSize: '13px' }}>
+                    {'★'.repeat(mp.stars)}<span style={{ color: '#333' }}>{'★'.repeat(mp.total * 3 - mp.stars)}</span>
+                  </div>
+                  <div
+                    style={{
+                      padding: '4px 10px',
+                      background: pct === 100 ? '#22c55e' : '#222',
+                      borderRadius: '12px',
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      color: pct === 100 ? '#000' : '#888',
+                    }}
+                  >
+                    {mp.completed}/{mp.total}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {allMixingChallenges
+              .filter((c) => c.module === 'F6')
+              .map((challenge) => {
+                const progress = getMixingProgress(challenge.id);
+                const stars = progress?.stars ?? 0;
+
+                return (
+                  <button
+                    key={challenge.id}
+                    onClick={() => handleStartMixingChallenge(challenge.id)}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '12px 16px',
+                      background: '#0a0a0a',
+                      border: '1px solid #222',
+                      borderRadius: '8px',
+                      color: '#fff',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: '14px', fontWeight: 500 }}>
+                        {challenge.title}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#666' }}>
+                        {'★'.repeat(challenge.difficulty)}
+                        {'☆'.repeat(3 - challenge.difficulty)}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ color: '#eab308', fontSize: '14px' }}>
+                        {'★'.repeat(stars)}
+                        <span style={{ color: '#333' }}>{'★'.repeat(3 - stars)}</span>
+                      </div>
+                      {progress?.completed && (
+                        <span style={{ color: '#22c55e', fontSize: '16px' }}>✓</span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+          </div>
+        </div>
+
+        {/* Module: F7 - Problem Solving */}
+        <div
+          style={{
+            background: '#141414',
+            borderRadius: '12px',
+            padding: '20px',
+            border: '1px solid #2a2a2a',
+            marginBottom: '16px',
+          }}
+        >
+          {(() => {
+            const mp = getMixingModuleProgress('F7', allMixingChallenges);
+            const pct = mp.total > 0 ? Math.round((mp.completed / mp.total) * 100) : 0;
+            return (
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '16px',
+                }}
+              >
+                <div style={{ flex: 1 }}>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>
+                    {mixingModules.F7.title}
+                  </h3>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#666' }}>
+                    {mixingModules.F7.description}
+                  </p>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ color: '#eab308', fontSize: '13px' }}>
+                    {'★'.repeat(mp.stars)}<span style={{ color: '#333' }}>{'★'.repeat(mp.total * 3 - mp.stars)}</span>
+                  </div>
+                  <div
+                    style={{
+                      padding: '4px 10px',
+                      background: pct === 100 ? '#22c55e' : '#222',
+                      borderRadius: '12px',
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      color: pct === 100 ? '#000' : '#888',
+                    }}
+                  >
+                    {mp.completed}/{mp.total}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {allMixingChallenges
+              .filter((c) => c.module === 'F7')
+              .map((challenge) => {
+                const progress = getMixingProgress(challenge.id);
+                const stars = progress?.stars ?? 0;
+
+                return (
+                  <button
+                    key={challenge.id}
+                    onClick={() => handleStartMixingChallenge(challenge.id)}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '12px 16px',
+                      background: '#0a0a0a',
+                      border: '1px solid #222',
+                      borderRadius: '8px',
+                      color: '#fff',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: '14px', fontWeight: 500 }}>
+                        {challenge.title}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#666' }}>
+                        {'★'.repeat(challenge.difficulty)}
+                        {'☆'.repeat(3 - challenge.difficulty)}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ color: '#eab308', fontSize: '14px' }}>
+                        {'★'.repeat(stars)}
+                        <span style={{ color: '#333' }}>{'★'.repeat(3 - stars)}</span>
+                      </div>
+                      {progress?.completed && (
+                        <span style={{ color: '#22c55e', fontSize: '16px' }}>✓</span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+          </div>
+        </div>
+
+        {/* Module: F8 - Mix Balance */}
+        <div
+          style={{
+            background: '#141414',
+            borderRadius: '12px',
+            padding: '20px',
+            border: '1px solid #2a2a2a',
+            marginBottom: '24px',
+          }}
+        >
+          {(() => {
+            const mp = getMixingModuleProgress('F8', allMixingChallenges);
+            const pct = mp.total > 0 ? Math.round((mp.completed / mp.total) * 100) : 0;
+            return (
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '16px',
+                }}
+              >
+                <div style={{ flex: 1 }}>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>
+                    {mixingModules.F8.title}
+                  </h3>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#666' }}>
+                    {mixingModules.F8.description}
+                  </p>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ color: '#eab308', fontSize: '13px' }}>
+                    {'★'.repeat(mp.stars)}<span style={{ color: '#333' }}>{'★'.repeat(mp.total * 3 - mp.stars)}</span>
+                  </div>
+                  <div
+                    style={{
+                      padding: '4px 10px',
+                      background: pct === 100 ? '#22c55e' : '#222',
+                      borderRadius: '12px',
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      color: pct === 100 ? '#000' : '#888',
+                    }}
+                  >
+                    {mp.completed}/{mp.total}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {allMixingChallenges
+              .filter((c) => c.module === 'F8')
+              .map((challenge) => {
+                const progress = getMixingProgress(challenge.id);
+                const stars = progress?.stars ?? 0;
+
+                return (
+                  <button
+                    key={challenge.id}
+                    onClick={() => handleStartMixingChallenge(challenge.id)}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '12px 16px',
+                      background: '#0a0a0a',
+                      border: '1px solid #222',
+                      borderRadius: '8px',
+                      color: '#fff',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: '14px', fontWeight: 500 }}>
+                        {challenge.title}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#666' }}>
+                        {'★'.repeat(challenge.difficulty)}
+                        {'☆'.repeat(3 - challenge.difficulty)}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ color: '#eab308', fontSize: '14px' }}>
+                        {'★'.repeat(stars)}
+                        <span style={{ color: '#333' }}>{'★'.repeat(3 - stars)}</span>
+                      </div>
                       {progress?.completed && (
                         <span style={{ color: '#22c55e', fontSize: '16px' }}>✓</span>
                       )}
