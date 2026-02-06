@@ -20,7 +20,9 @@ import {
   ResultsModal,
   CarrierModulatorViz,
   HarmonicDrawbars,
+  InfoPanel,
 } from '../components/index.ts';
+import { InfoPanelProvider } from '../context/InfoPanelContext.tsx';
 import { PARAM_RANGES, FM_PARAM_RANGES, HARMONICITY_PRESETS } from '../../core/types.ts';
 import type { SynthParams, FMSynthParams, AdditiveSynthParams } from '../../core/types.ts';
 import { SynthEngine, createSynthEngine } from '../../core/synth-engine.ts';
@@ -401,15 +403,18 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
   const hasNext = !!getNextChallenge(currentChallenge.id);
 
   return (
+    <InfoPanelProvider>
     <div
       style={{
         minHeight: '100vh',
         background: '#0a0a0a',
         color: '#fff',
         fontFamily: 'system-ui, -apple-system, sans-serif',
-        padding: '24px',
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
+    <div style={{ padding: '24px', flex: 1 }}>
       {/* Header */}
       <div
         style={{
@@ -708,6 +713,7 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
                 step={PARAM_RANGES.octave.step}
                 onChange={setOctave}
                 formatValue={formatOctave}
+                paramId="oscillator.octave"
               />
               <Knob
                 label="Detune"
@@ -717,6 +723,7 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
                 step={PARAM_RANGES.detune.step}
                 onChange={setDetune}
                 formatValue={formatCents}
+                paramId="oscillator.detune"
               />
             </div>
           </Section>
@@ -733,6 +740,7 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
                 onChange={setFilterCutoff}
                 formatValue={formatHz}
                 logarithmic
+                paramId="filter.cutoff"
               />
               <Knob
                 label="Resonance"
@@ -742,6 +750,7 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
                 step={PARAM_RANGES.resonance.step}
                 onChange={setFilterResonance}
                 formatValue={(v) => v.toFixed(1)}
+                paramId="filter.resonance"
               />
             </div>
           </Section>
@@ -751,10 +760,10 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
             <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
               <EnvelopeDisplay envelope={params.amplitudeEnvelope} width={120} height={60} />
               <div style={{ display: 'flex', gap: '12px' }}>
-                <Slider label="A" value={params.amplitudeEnvelope.attack} min={PARAM_RANGES.attack.min} max={PARAM_RANGES.attack.max} onChange={setAmplitudeAttack} formatValue={formatMs} logarithmic height={80} />
-                <Slider label="D" value={params.amplitudeEnvelope.decay} min={PARAM_RANGES.decay.min} max={PARAM_RANGES.decay.max} onChange={setAmplitudeDecay} formatValue={formatMs} logarithmic height={80} />
-                <Slider label="S" value={params.amplitudeEnvelope.sustain} min={PARAM_RANGES.sustain.min} max={PARAM_RANGES.sustain.max} onChange={setAmplitudeSustain} formatValue={formatPercent} height={80} />
-                <Slider label="R" value={params.amplitudeEnvelope.release} min={PARAM_RANGES.release.min} max={PARAM_RANGES.release.max} onChange={setAmplitudeRelease} formatValue={formatMs} logarithmic height={80} />
+                <Slider label="A" value={params.amplitudeEnvelope.attack} min={PARAM_RANGES.attack.min} max={PARAM_RANGES.attack.max} onChange={setAmplitudeAttack} formatValue={formatMs} logarithmic height={80} paramId="amplitude.attack" />
+                <Slider label="D" value={params.amplitudeEnvelope.decay} min={PARAM_RANGES.decay.min} max={PARAM_RANGES.decay.max} onChange={setAmplitudeDecay} formatValue={formatMs} logarithmic height={80} paramId="amplitude.decay" />
+                <Slider label="S" value={params.amplitudeEnvelope.sustain} min={PARAM_RANGES.sustain.min} max={PARAM_RANGES.sustain.max} onChange={setAmplitudeSustain} formatValue={formatPercent} height={80} paramId="amplitude.sustain" />
+                <Slider label="R" value={params.amplitudeEnvelope.release} min={PARAM_RANGES.release.min} max={PARAM_RANGES.release.max} onChange={setAmplitudeRelease} formatValue={formatMs} logarithmic height={80} paramId="amplitude.release" />
               </div>
             </div>
           </Section>
@@ -774,14 +783,15 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
                     onChange={setFilterEnvelopeAmount}
                     formatValue={(v) => `${v > 0 ? '+' : ''}${v.toFixed(1)}`}
                     size={40}
+                    paramId="filterEnv.amount"
                   />
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '12px' }}>
-                <Slider label="A" value={params.filterEnvelope.attack} min={PARAM_RANGES.attack.min} max={PARAM_RANGES.attack.max} onChange={setFilterEnvelopeAttack} formatValue={formatMs} logarithmic height={80} />
-                <Slider label="D" value={params.filterEnvelope.decay} min={PARAM_RANGES.decay.min} max={PARAM_RANGES.decay.max} onChange={setFilterEnvelopeDecay} formatValue={formatMs} logarithmic height={80} />
-                <Slider label="S" value={params.filterEnvelope.sustain} min={PARAM_RANGES.sustain.min} max={PARAM_RANGES.sustain.max} onChange={setFilterEnvelopeSustain} formatValue={formatPercent} height={80} />
-                <Slider label="R" value={params.filterEnvelope.release} min={PARAM_RANGES.release.min} max={PARAM_RANGES.release.max} onChange={setFilterEnvelopeRelease} formatValue={formatMs} logarithmic height={80} />
+                <Slider label="A" value={params.filterEnvelope.attack} min={PARAM_RANGES.attack.min} max={PARAM_RANGES.attack.max} onChange={setFilterEnvelopeAttack} formatValue={formatMs} logarithmic height={80} paramId="filterEnv.attack" />
+                <Slider label="D" value={params.filterEnvelope.decay} min={PARAM_RANGES.decay.min} max={PARAM_RANGES.decay.max} onChange={setFilterEnvelopeDecay} formatValue={formatMs} logarithmic height={80} paramId="filterEnv.decay" />
+                <Slider label="S" value={params.filterEnvelope.sustain} min={PARAM_RANGES.sustain.min} max={PARAM_RANGES.sustain.max} onChange={setFilterEnvelopeSustain} formatValue={formatPercent} height={80} paramId="filterEnv.sustain" />
+                <Slider label="R" value={params.filterEnvelope.release} min={PARAM_RANGES.release.min} max={PARAM_RANGES.release.max} onChange={setFilterEnvelopeRelease} formatValue={formatMs} logarithmic height={80} paramId="filterEnv.release" />
               </div>
             </div>
           </Section>
@@ -798,6 +808,7 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
                 step={PARAM_RANGES.lfoRate.step}
                 onChange={setLFORate}
                 formatValue={(v) => `${v.toFixed(1)}Hz`}
+                paramId="lfo.rate"
               />
               <Knob
                 label="Depth"
@@ -807,6 +818,7 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
                 step={PARAM_RANGES.lfoDepth.step}
                 onChange={setLFODepth}
                 formatValue={formatPercent}
+                paramId="lfo.depth"
               />
             </div>
           </Section>
@@ -949,6 +961,9 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
         />
       )}
     </div>
+    <InfoPanel accentColor={isFM ? '#f97316' : isAdditive ? '#06b6d4' : '#4ade80'} />
+    </div>
+    </InfoPanelProvider>
   );
 }
 

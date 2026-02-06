@@ -88,6 +88,7 @@ export function AdditiveSynthPanel({
             label="Attack"
             onChange={onAttackChange}
             formatValue={(v) => v < 1 ? `${Math.round(v * 1000)}ms` : `${v.toFixed(2)}s`}
+            paramId="amplitude.attack"
           />
 
           <Knob
@@ -98,6 +99,7 @@ export function AdditiveSynthPanel({
             label="Decay"
             onChange={onDecayChange}
             formatValue={(v) => v < 1 ? `${Math.round(v * 1000)}ms` : `${v.toFixed(2)}s`}
+            paramId="amplitude.decay"
           />
 
           <Knob
@@ -108,6 +110,7 @@ export function AdditiveSynthPanel({
             label="Sustain"
             onChange={onSustainChange}
             formatValue={(v) => `${Math.round(v * 100)}%`}
+            paramId="amplitude.sustain"
           />
 
           <Knob
@@ -118,6 +121,7 @@ export function AdditiveSynthPanel({
             label="Release"
             onChange={onReleaseChange}
             formatValue={(v) => v < 1 ? `${Math.round(v * 1000)}ms` : `${v.toFixed(2)}s`}
+            paramId="amplitude.release"
           />
         </div>
       </Section>
@@ -133,6 +137,7 @@ export function AdditiveSynthPanel({
             label="Volume"
             onChange={onVolumeChange}
             formatValue={(v) => `${v.toFixed(1)} dB`}
+            paramId="volume"
           />
         </div>
       </Section>

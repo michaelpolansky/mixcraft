@@ -149,6 +149,7 @@ export function FMSynthPanel({
                 label="Harmonicity"
                 onChange={onHarmonicityChange}
                 formatValue={(v) => `${v.toFixed(1)}x`}
+                paramId="fm.harmonicity"
               />
 
               {/* Preset buttons */}
@@ -205,6 +206,7 @@ export function FMSynthPanel({
               label="Mod Index"
               onChange={onModulationIndexChange}
               formatValue={(v) => v.toFixed(1)}
+              paramId="fm.modulationIndex"
             />
 
             <Knob
@@ -215,6 +217,7 @@ export function FMSynthPanel({
               label="Mod Env"
               onChange={onModEnvAmountChange}
               formatValue={(v) => `${Math.round(v * 100)}%`}
+              paramId="fm.modulationEnvelopeAmount"
             />
           </div>
         </div>
@@ -231,6 +234,7 @@ export function FMSynthPanel({
             label="Attack"
             onChange={onAttackChange}
             formatValue={(v) => v < 1 ? `${Math.round(v * 1000)}ms` : `${v.toFixed(2)}s`}
+            paramId="amplitude.attack"
           />
 
           <Knob
@@ -241,6 +245,7 @@ export function FMSynthPanel({
             label="Decay"
             onChange={onDecayChange}
             formatValue={(v) => v < 1 ? `${Math.round(v * 1000)}ms` : `${v.toFixed(2)}s`}
+            paramId="amplitude.decay"
           />
 
           <Knob
@@ -251,6 +256,7 @@ export function FMSynthPanel({
             label="Sustain"
             onChange={onSustainChange}
             formatValue={(v) => `${Math.round(v * 100)}%`}
+            paramId="amplitude.sustain"
           />
 
           <Knob
@@ -261,6 +267,7 @@ export function FMSynthPanel({
             label="Release"
             onChange={onReleaseChange}
             formatValue={(v) => v < 1 ? `${Math.round(v * 1000)}ms` : `${v.toFixed(2)}s`}
+            paramId="amplitude.release"
           />
         </div>
       </Section>
@@ -276,6 +283,7 @@ export function FMSynthPanel({
             label="Volume"
             onChange={onVolumeChange}
             formatValue={(v) => `${v.toFixed(1)} dB`}
+            paramId="volume"
           />
         </div>
       </Section>
