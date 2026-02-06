@@ -7,8 +7,9 @@ import { useEffect, useRef, useCallback, useState } from 'react';
 import * as Tone from 'tone';
 import { useProductionStore } from '../stores/production-store.ts';
 import { ProductionMixer, SpectrumAnalyzer } from '../components/index.ts';
-import { createProductionSource, ProductionSource } from '../../core/production-source.ts';
+import { createProductionSource, ProductionSource, type LayerState } from '../../core/production-source.ts';
 import { evaluateProductionChallenge } from '../../core/production-evaluation.ts';
+import { trpc } from '../api/trpc.ts';
 import type { ProductionChallenge, ProductionGoalTarget, ProductionReferenceTarget } from '../../core/types.ts';
 
 type PlaybackMode = 'yours' | 'reference';
@@ -468,6 +469,8 @@ export function ProductionChallengeView({
         <ProductionResultsModal
           result={lastResult}
           challenge={challenge}
+          layerStates={layerStates}
+          attemptNumber={currentAttempt}
           onRetry={handleRetry}
           onNext={onNext}
           hasNext={hasNext}
@@ -523,6 +526,8 @@ interface ProductionResultsModalProps {
     };
   };
   challenge: ProductionChallenge;
+  layerStates: LayerState[];
+  attemptNumber: number;
   onRetry: () => void;
   onNext?: () => void;
   hasNext?: boolean;
@@ -531,10 +536,67 @@ interface ProductionResultsModalProps {
 function ProductionResultsModal({
   result,
   challenge,
+  layerStates,
+  attemptNumber,
   onRetry,
   onNext,
   hasNext,
 }: ProductionResultsModalProps) {
+  // AI feedback state
+  const [aiFeedback, setAiFeedback] = useState<string | null>(null);
+  const [feedbackLoading, setFeedbackLoading] = useState(true);
+
+  // Fetch AI feedback on mount
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchFeedback() {
+      try {
+        const targetDescription = challenge.target.type === 'goal'
+          ? (challenge.target as ProductionGoalTarget).description
+          : undefined;
+
+        const response = await trpc.feedback.generateProduction.mutate({
+          result,
+          layerStates: layerStates.map((s) => ({
+            id: s.id,
+            name: s.name,
+            volume: s.volume,
+            pan: s.pan,
+            muted: s.muted,
+            eqLow: s.eqLow,
+            eqHigh: s.eqHigh,
+          })),
+          challenge: {
+            id: challenge.id,
+            title: challenge.title,
+            description: challenge.description,
+            module: challenge.module,
+            targetType: challenge.target.type,
+            targetDescription,
+          },
+          attemptNumber,
+        });
+
+        if (!cancelled) {
+          setAiFeedback(response.feedback);
+          setFeedbackLoading(false);
+        }
+      } catch (error) {
+        console.error('Failed to fetch AI feedback:', error);
+        if (!cancelled) {
+          setFeedbackLoading(false);
+        }
+      }
+    }
+
+    fetchFeedback();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [result, challenge, layerStates, attemptNumber]);
+
   return (
     <div
       style={{
@@ -646,17 +708,55 @@ function ProductionResultsModal({
           </div>
         )}
 
-        {/* Feedback */}
+        {/* AI Feedback */}
+        <div
+          style={{
+            background: '#0a0a0a',
+            borderRadius: '8px',
+            padding: '12px',
+            marginBottom: '16px',
+            border: '1px solid #2a2a2a',
+          }}
+        >
+          <div
+            style={{
+              fontSize: '11px',
+              color: '#4ade80',
+              textTransform: 'uppercase',
+              letterSpacing: '1px',
+              marginBottom: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+          >
+            <span>✦</span> AI Mentor
+          </div>
+          <div
+            style={{
+              color: '#ccc',
+              fontSize: '13px',
+              lineHeight: '1.5',
+              fontStyle: feedbackLoading ? 'italic' : 'normal',
+            }}
+          >
+            {feedbackLoading && 'Analyzing your production...'}
+            {!feedbackLoading && aiFeedback}
+            {!feedbackLoading && !aiFeedback && 'AI feedback unavailable'}
+          </div>
+        </div>
+
+        {/* Condition Feedback */}
         <div style={{ marginBottom: '24px' }}>
           {result.feedback.map((fb, i) => (
             <div
               key={i}
               style={{
-                color: '#888',
-                fontSize: '13px',
+                color: '#666',
+                fontSize: '12px',
                 marginBottom: '6px',
                 paddingLeft: '12px',
-                borderLeft: `2px solid ${result.passed ? '#22c55e' : '#f59e0b'}`,
+                borderLeft: `2px solid ${result.passed ? '#22c55e44' : '#f59e0b44'}`,
               }}
             >
               {fb}

@@ -11,6 +11,7 @@ import { EQControl, SpectrumAnalyzer, Slider } from '../components/index.ts';
 import { createAudioSource, type AudioSource } from '../../core/audio-source.ts';
 import { MixingEQ, MixingCompressor, MixingReverb } from '../../core/mixing-effects.ts';
 import { evaluateMixingChallenge } from '../../core/mixing-evaluation.ts';
+import { trpc } from '../api/trpc.ts';
 import type { MixingChallenge, MixingTrack, EQParams } from '../../core/types.ts';
 
 interface MultiTrackMixingViewProps {
@@ -67,6 +68,10 @@ export function MultiTrackMixingView({
   const busCompressorRef = useRef<MixingCompressor | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [gainReduction, setGainReduction] = useState(0);
+
+  // AI feedback state
+  const [aiFeedback, setAiFeedback] = useState<string | null>(null);
+  const [feedbackLoading, setFeedbackLoading] = useState(false);
 
   // Load challenge on mount
   useEffect(() => {
@@ -152,6 +157,57 @@ export function MultiTrackMixingView({
       busCompressorRef.current.setParams(compressorParams);
     }
   }, [compressorParams]);
+
+  // Fetch AI feedback when results are available
+  useEffect(() => {
+    if (!lastResult) {
+      setAiFeedback(null);
+      return;
+    }
+
+    let cancelled = false;
+    setFeedbackLoading(true);
+
+    async function fetchFeedback() {
+      try {
+        const response = await trpc.feedback.generateMixing.mutate({
+          result: lastResult,
+          trackParams: Object.fromEntries(
+            Object.entries(trackParams).map(([id, p]) => [
+              id,
+              { low: p.low, mid: p.mid, high: p.high, volume: p.volume, pan: p.pan, reverbMix: p.reverbMix },
+            ])
+          ),
+          busCompressor: { threshold: compressorParams.threshold, amount: compressorParams.amount },
+          busEQ: busEQParams,
+          challenge: {
+            id: challenge.id,
+            title: challenge.title,
+            description: challenge.description,
+            module: challenge.module,
+            trackNames: challenge.tracks?.map((t) => t.name) ?? [],
+          },
+          attemptNumber: currentAttempt,
+        });
+
+        if (!cancelled) {
+          setAiFeedback(response.feedback);
+          setFeedbackLoading(false);
+        }
+      } catch (error) {
+        console.error('Failed to fetch AI feedback:', error);
+        if (!cancelled) {
+          setFeedbackLoading(false);
+        }
+      }
+    }
+
+    fetchFeedback();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [lastResult, challenge, currentAttempt]);
 
   // Play/Stop toggle
   const togglePlayback = useCallback(async () => {
@@ -685,14 +741,52 @@ export function MultiTrackMixingView({
                   </div>
                 </div>
 
-                {/* Feedback */}
+                {/* AI Feedback */}
+                <div
+                  style={{
+                    background: '#0a0a0a',
+                    borderRadius: '8px',
+                    padding: '12px',
+                    marginBottom: '16px',
+                    border: '1px solid #2a2a2a',
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: '11px',
+                      color: '#4ade80',
+                      textTransform: 'uppercase',
+                      letterSpacing: '1px',
+                      marginBottom: '8px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                    }}
+                  >
+                    <span>✦</span> AI Mentor
+                  </div>
+                  <div
+                    style={{
+                      color: '#ccc',
+                      fontSize: '13px',
+                      lineHeight: '1.5',
+                      fontStyle: feedbackLoading ? 'italic' : 'normal',
+                    }}
+                  >
+                    {feedbackLoading && 'Analyzing your mix...'}
+                    {!feedbackLoading && aiFeedback}
+                    {!feedbackLoading && !aiFeedback && 'AI feedback unavailable'}
+                  </div>
+                </div>
+
+                {/* Condition Feedback */}
                 <div style={{ marginBottom: '16px' }}>
                   {lastResult.feedback.map((fb, i) => (
                     <div
                       key={i}
                       style={{
-                        fontSize: '13px',
-                        color: '#ccc',
+                        fontSize: '12px',
+                        color: '#888',
                         marginBottom: '4px',
                       }}
                     >
