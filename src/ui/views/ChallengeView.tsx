@@ -24,6 +24,8 @@ import {
   Oscilloscope,
   FilterResponse,
   EnvelopeVisualizer,
+  LFOVisualizer,
+  EffectsVisualizer,
 } from '../components/index.ts';
 import { InfoPanelProvider } from '../context/InfoPanelContext.tsx';
 import { PARAM_RANGES, FM_PARAM_RANGES, HARMONICITY_PRESETS } from '../../core/types.ts';
@@ -406,13 +408,15 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
   const hasNext = !!getNextChallenge(currentChallenge.id);
 
   // Determine visualization type based on challenge module
-  const getVisualizationType = (): 'oscilloscope' | 'filter' | 'envelope' | 'none' => {
+  const getVisualizationType = (): 'oscilloscope' | 'filter' | 'envelope' | 'lfo' | 'effects' | 'none' => {
     if (isFM || isAdditive) return 'none'; // These have their own visualizations
     const module = currentChallenge.module;
     if (module === 'SD1') return 'oscilloscope'; // Oscillators
     if (module === 'SD2') return 'filter'; // Filters
     if (module === 'SD3') return 'envelope'; // Envelopes
-    return 'oscilloscope'; // Default for other modules
+    if (module === 'SD4') return 'lfo'; // LFO/Modulation
+    if (module === 'SD5') return 'effects'; // Effects
+    return 'oscilloscope'; // Default for SD6, SD7, etc.
   };
 
   const visualizationType = getVisualizationType();
@@ -933,6 +937,28 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
                 filterEnvelope={params.filterEnvelope}
                 width={450}
                 height={150}
+              />
+            </Section>
+          )}
+          {visualizationType === 'lfo' && (
+            <Section title="LFO Modulation">
+              <LFOVisualizer
+                waveform={params.lfo.waveform}
+                rate={params.lfo.rate}
+                depth={params.lfo.depth}
+                width={450}
+                height={150}
+                accentColor="#4ade80"
+              />
+            </Section>
+          )}
+          {visualizationType === 'effects' && (
+            <Section title="Effects Chain">
+              <EffectsVisualizer
+                effects={params.effects}
+                width={450}
+                height={150}
+                accentColor="#4ade80"
               />
             </Section>
           )}

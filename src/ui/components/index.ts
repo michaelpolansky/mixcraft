@@ -25,3 +25,5 @@ export { InfoPanel } from './InfoPanel.tsx';
 export { Oscilloscope } from './Oscilloscope.tsx';
 export { FilterResponse } from './FilterResponse.tsx';
 export { EnvelopeVisualizer } from './EnvelopeVisualizer.tsx';
+export { LFOVisualizer } from './LFOVisualizer.tsx';
+export { EffectsVisualizer } from './EffectsVisualizer.tsx';
