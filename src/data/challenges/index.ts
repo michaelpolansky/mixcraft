@@ -5,6 +5,28 @@
 
 import type { Challenge } from '../../core/types.ts';
 
+// Sampling Challenges (SM1-SM6)
+import {
+  samplingChallengesById,
+  samplingChallengesByModule,
+  allSamplingChallenges,
+  samplingModules,
+  getSamplingChallenge,
+  getSamplingModuleChallenges,
+  getNextSamplingChallenge,
+} from './sampling/index.ts';
+
+// Re-export sampling
+export {
+  samplingChallengesById,
+  samplingChallengesByModule,
+  allSamplingChallenges,
+  samplingModules,
+  getSamplingChallenge,
+  getSamplingModuleChallenges,
+  getNextSamplingChallenge,
+};
+
 // SD1 - Oscillator Fundamentals
 import { challenge as sd1_01 } from './sd1/sd1-01-pure-tone.ts';
 import { challenge as sd1_02 } from './sd1/sd1-02-buzzy-bass.ts';

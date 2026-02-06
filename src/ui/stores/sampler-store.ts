@@ -4,7 +4,8 @@
  */
 
 import { create } from 'zustand';
-import type { SamplerParams, SamplingChallenge } from '../../core/types.ts';
+import { persist } from 'zustand/middleware';
+import type { SamplerParams, SamplingChallenge, ChallengeProgress } from '../../core/types.ts';
 import { DEFAULT_SAMPLER_PARAMS } from '../../core/types.ts';
 import { SamplerEngine, createSamplerEngine } from '../../core/sampler-engine.ts';
 import type { SamplingScoreResult } from '../../core/sampling-evaluation.ts';
@@ -23,6 +24,9 @@ interface SamplerStore {
   hintsRevealed: number;
   isScoring: boolean;
   lastResult: SamplingScoreResult | null;
+
+  // Progress tracking (persisted)
+  progress: Record<string, ChallengeProgress>;
 
   // Initialization
   initEngine: () => void;
@@ -60,28 +64,38 @@ interface SamplerStore {
   revealHint: () => void;
   startScoring: () => void;
   submitResult: (result: SamplingScoreResult) => void;
+  saveProgress: (challengeId: string, score: number, stars: number) => void;
   retry: () => void;
+
+  // Progress queries
+  getChallengeProgress: (challengeId: string) => ChallengeProgress | undefined;
+  getModuleProgress: (moduleId: string, allChallenges: SamplingChallenge[]) => { completed: number; total: number; stars: number };
 
   // Cleanup
   dispose: () => void;
 }
 
-export const useSamplerStore = create<SamplerStore>((set, get) => ({
-  // Initial state
-  engine: null,
-  isInitialized: false,
-  isPlaying: false,
-  isLoading: false,
-  params: { ...DEFAULT_SAMPLER_PARAMS },
+export const useSamplerStore = create<SamplerStore>()(
+  persist(
+    (set, get) => ({
+      // Initial state
+      engine: null,
+      isInitialized: false,
+      isPlaying: false,
+      isLoading: false,
+      params: { ...DEFAULT_SAMPLER_PARAMS },
 
-  // Challenge state
-  currentChallenge: null,
-  currentAttempt: 1,
-  hintsRevealed: 0,
-  isScoring: false,
-  lastResult: null,
+      // Challenge state
+      currentChallenge: null,
+      currentAttempt: 1,
+      hintsRevealed: 0,
+      isScoring: false,
+      lastResult: null,
 
-  // Initialize the sampler engine
+      // Progress tracking
+      progress: {},
+
+      // Initialize the sampler engine
   initEngine: () => {
     const existingEngine = get().engine;
     if (existingEngine) {
@@ -291,34 +305,87 @@ export const useSamplerStore = create<SamplerStore>((set, get) => ({
     set({ isScoring: true });
   },
 
-  // Submit scoring result
-  submitResult: (result: SamplingScoreResult) => {
-    set((state) => ({
-      lastResult: result,
-      isScoring: false,
-      currentAttempt: state.currentAttempt + 1,
-    }));
-  },
+      // Submit scoring result
+      submitResult: (result: SamplingScoreResult) => {
+        set((state) => ({
+          lastResult: result,
+          isScoring: false,
+          currentAttempt: state.currentAttempt + 1,
+        }));
+      },
 
-  // Retry current challenge
-  retry: () => {
-    const { engine, currentAttempt } = get();
-    if (engine) {
-      engine.setParams(DEFAULT_SAMPLER_PARAMS);
-    }
-    set({
-      lastResult: null,
-      currentAttempt: currentAttempt + 1,
-      params: engine ? engine.getParams() : { ...DEFAULT_SAMPLER_PARAMS },
-    });
-  },
+      // Save progress for a challenge
+      saveProgress: (challengeId: string, score: number, stars: number) => {
+        set((state) => {
+          const existing = state.progress[challengeId];
+          const isNewBest = !existing || score > existing.bestScore;
 
-  // Cleanup
-  dispose: () => {
-    const { engine } = get();
-    if (engine) {
-      engine.dispose();
-      set({ engine: null, isInitialized: false, isPlaying: false });
+          return {
+            progress: {
+              ...state.progress,
+              [challengeId]: {
+                challengeId,
+                bestScore: isNewBest ? score : existing.bestScore,
+                stars: isNewBest ? stars : Math.max(existing.stars, stars),
+                completed: true,
+                attempts: (existing?.attempts ?? 0) + 1,
+              },
+            },
+          };
+        });
+      },
+
+      // Retry current challenge
+      retry: () => {
+        const { engine, currentAttempt } = get();
+        if (engine) {
+          engine.setParams(DEFAULT_SAMPLER_PARAMS);
+        }
+        set({
+          lastResult: null,
+          currentAttempt: currentAttempt + 1,
+          params: engine ? engine.getParams() : { ...DEFAULT_SAMPLER_PARAMS },
+        });
+      },
+
+      // Get progress for a specific challenge
+      getChallengeProgress: (challengeId: string) => {
+        return get().progress[challengeId];
+      },
+
+      // Get progress for a module
+      getModuleProgress: (moduleId: string, allChallenges: SamplingChallenge[]) => {
+        const { progress } = get();
+        const moduleChallenges = allChallenges.filter((c) => c.module === moduleId);
+
+        let completed = 0;
+        let stars = 0;
+
+        for (const challenge of moduleChallenges) {
+          const p = progress[challenge.id];
+          if (p?.completed) completed++;
+          stars += p?.stars ?? 0;
+        }
+
+        return {
+          completed,
+          total: moduleChallenges.length,
+          stars,
+        };
+      },
+
+      // Cleanup
+      dispose: () => {
+        const { engine } = get();
+        if (engine) {
+          engine.dispose();
+          set({ engine: null, isInitialized: false, isPlaying: false });
+        }
+      },
+    }),
+    {
+      name: 'mixcraft-sampling-progress',
+      partialize: (state) => ({ progress: state.progress }),
     }
-  },
-}));
+  )
+);

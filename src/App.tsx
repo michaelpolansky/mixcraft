@@ -18,7 +18,8 @@ import { useSynthStore } from './ui/stores/synth-store.ts';
 import { useChallengeStore } from './ui/stores/challenge-store.ts';
 import { useMixingStore } from './ui/stores/mixing-store.ts';
 import { useProductionStore } from './ui/stores/production-store.ts';
-import { allChallenges, modules } from './data/challenges/index.ts';
+import { useSamplerStore } from './ui/stores/sampler-store.ts';
+import { allChallenges, modules, allSamplingChallenges, samplingModules, getSamplingChallenge, getNextSamplingChallenge } from './data/challenges/index.ts';
 import { allMixingChallenges, mixingModules, getMixingChallenge, getNextMixingChallenge } from './data/challenges/mixing/index.ts';
 import { allProductionChallenges, productionModules, getProductionChallenge, getNextProductionChallenge } from './data/challenges/production/index.ts';
 import { useIsMobile } from './ui/hooks/useMediaQuery.ts';
@@ -65,6 +66,7 @@ export function App() {
   const { loadChallenge, currentChallenge, exitChallenge, getChallengeProgress, getTotalProgress, getModuleProgress } = useChallengeStore();
   const { getChallengeProgress: getMixingProgress, getModuleProgress: getMixingModuleProgress } = useMixingStore();
   const { getChallengeProgress: getProductionProgress, getModuleProgress: getProductionModuleProgress } = useProductionStore();
+  const { getChallengeProgress: getSamplingProgress, getModuleProgress: getSamplingModuleProgress } = useSamplerStore();
   const [currentMixingChallenge, setCurrentMixingChallenge] = useState<MixingChallenge | null>(null);
   const [currentProductionChallenge, setCurrentProductionChallenge] = useState<ProductionChallenge | null>(null);
   const [currentSamplingChallenge, setCurrentSamplingChallenge] = useState<SamplingChallenge | null>(null);
@@ -151,17 +153,25 @@ export function App() {
   };
 
   // Start a sampling challenge
-  const handleStartSamplingChallenge = (challenge: SamplingChallenge) => {
-    setCurrentSamplingChallenge(challenge);
-    setView('sampling-challenge');
+  const handleStartSamplingChallenge = (challengeId: string) => {
+    const challenge = getSamplingChallenge(challengeId);
+    if (challenge) {
+      setCurrentSamplingChallenge(challenge);
+      setView('sampling-challenge');
+    }
   };
 
-  // Handle next sampling challenge (placeholder - will be implemented with challenge data)
+  // Handle next sampling challenge
   const handleNextSamplingChallenge = () => {
-    // For now, just go back to menu
-    // TODO: Implement getNextSamplingChallenge when challenges are created
-    setCurrentSamplingChallenge(null);
-    setView('menu');
+    if (currentSamplingChallenge) {
+      const next = getNextSamplingChallenge(currentSamplingChallenge.id);
+      if (next) {
+        setCurrentSamplingChallenge(next);
+      } else {
+        setCurrentSamplingChallenge(null);
+        setView('menu');
+      }
+    }
   };
 
   // Not initialized - show start screen
@@ -267,8 +277,7 @@ export function App() {
 
   // Sampling challenge view
   if (view === 'sampling-challenge' && currentSamplingChallenge) {
-    // TODO: hasNext will be calculated from sampling challenge data when created
-    const hasNext = false;
+    const hasNext = !!getNextSamplingChallenge(currentSamplingChallenge.id);
     return (
       <Suspense fallback={<LoadingFallback />}>
         <SamplerChallengeView
@@ -2212,6 +2221,615 @@ export function App() {
                   <button
                     key={challenge.id}
                     onClick={() => handleStartMixingChallenge(challenge.id)}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '12px 16px',
+                      background: '#0a0a0a',
+                      border: '1px solid #222',
+                      borderRadius: '8px',
+                      color: '#fff',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: '14px', fontWeight: 500 }}>
+                        {challenge.title}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#666' }}>
+                        {'★'.repeat(challenge.difficulty)}
+                        {'☆'.repeat(3 - challenge.difficulty)}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ color: '#eab308', fontSize: '14px' }}>
+                        {'★'.repeat(stars)}
+                        <span style={{ color: '#333' }}>{'★'.repeat(3 - stars)}</span>
+                      </div>
+                      {progress?.completed && (
+                        <span style={{ color: '#22c55e', fontSize: '16px' }}>✓</span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+          </div>
+        </div>
+
+        {/* Sampling Section */}
+        <h2
+          style={{
+            fontSize: '14px',
+            fontWeight: 600,
+            color: '#d946ef',
+            textTransform: 'uppercase',
+            letterSpacing: '1px',
+            marginBottom: '16px',
+            marginTop: '32px',
+          }}
+        >
+          Sampling
+        </h2>
+
+        {/* Module: SM1 - Sample Basics */}
+        <div
+          style={{
+            background: '#141414',
+            borderRadius: '12px',
+            padding: '20px',
+            border: '1px solid #2a2a2a',
+            marginBottom: '16px',
+          }}
+        >
+          {(() => {
+            const mp = getSamplingModuleProgress('SM1', allSamplingChallenges);
+            const pct = mp.total > 0 ? Math.round((mp.completed / mp.total) * 100) : 0;
+            return (
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '16px',
+                }}
+              >
+                <div style={{ flex: 1 }}>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>
+                    {samplingModules.SM1.title}
+                  </h3>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#666' }}>
+                    {samplingModules.SM1.description}
+                  </p>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ color: '#eab308', fontSize: '13px' }}>
+                    {'★'.repeat(mp.stars)}<span style={{ color: '#333' }}>{'★'.repeat(mp.total * 3 - mp.stars)}</span>
+                  </div>
+                  <div
+                    style={{
+                      padding: '4px 10px',
+                      background: pct === 100 ? '#22c55e' : '#222',
+                      borderRadius: '12px',
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      color: pct === 100 ? '#000' : '#888',
+                    }}
+                  >
+                    {mp.completed}/{mp.total}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {allSamplingChallenges
+              .filter((c) => c.module === 'SM1')
+              .map((challenge) => {
+                const progress = getSamplingProgress(challenge.id);
+                const stars = progress?.stars ?? 0;
+
+                return (
+                  <button
+                    key={challenge.id}
+                    onClick={() => handleStartSamplingChallenge(challenge.id)}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '12px 16px',
+                      background: '#0a0a0a',
+                      border: '1px solid #222',
+                      borderRadius: '8px',
+                      color: '#fff',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: '14px', fontWeight: 500 }}>
+                        {challenge.title}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#666' }}>
+                        {'★'.repeat(challenge.difficulty)}
+                        {'☆'.repeat(3 - challenge.difficulty)}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ color: '#eab308', fontSize: '14px' }}>
+                        {'★'.repeat(stars)}
+                        <span style={{ color: '#333' }}>{'★'.repeat(3 - stars)}</span>
+                      </div>
+                      {progress?.completed && (
+                        <span style={{ color: '#22c55e', fontSize: '16px' }}>✓</span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+          </div>
+        </div>
+
+        {/* Module: SM2 - Building Instruments */}
+        <div
+          style={{
+            background: '#141414',
+            borderRadius: '12px',
+            padding: '20px',
+            border: '1px solid #2a2a2a',
+            marginBottom: '16px',
+          }}
+        >
+          {(() => {
+            const mp = getSamplingModuleProgress('SM2', allSamplingChallenges);
+            const pct = mp.total > 0 ? Math.round((mp.completed / mp.total) * 100) : 0;
+            return (
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '16px',
+                }}
+              >
+                <div style={{ flex: 1 }}>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>
+                    {samplingModules.SM2.title}
+                  </h3>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#666' }}>
+                    {samplingModules.SM2.description}
+                  </p>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ color: '#eab308', fontSize: '13px' }}>
+                    {'★'.repeat(mp.stars)}<span style={{ color: '#333' }}>{'★'.repeat(mp.total * 3 - mp.stars)}</span>
+                  </div>
+                  <div
+                    style={{
+                      padding: '4px 10px',
+                      background: pct === 100 ? '#22c55e' : '#222',
+                      borderRadius: '12px',
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      color: pct === 100 ? '#000' : '#888',
+                    }}
+                  >
+                    {mp.completed}/{mp.total}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {allSamplingChallenges
+              .filter((c) => c.module === 'SM2')
+              .map((challenge) => {
+                const progress = getSamplingProgress(challenge.id);
+                const stars = progress?.stars ?? 0;
+
+                return (
+                  <button
+                    key={challenge.id}
+                    onClick={() => handleStartSamplingChallenge(challenge.id)}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '12px 16px',
+                      background: '#0a0a0a',
+                      border: '1px solid #222',
+                      borderRadius: '8px',
+                      color: '#fff',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: '14px', fontWeight: 500 }}>
+                        {challenge.title}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#666' }}>
+                        {'★'.repeat(challenge.difficulty)}
+                        {'☆'.repeat(3 - challenge.difficulty)}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ color: '#eab308', fontSize: '14px' }}>
+                        {'★'.repeat(stars)}
+                        <span style={{ color: '#333' }}>{'★'.repeat(3 - stars)}</span>
+                      </div>
+                      {progress?.completed && (
+                        <span style={{ color: '#22c55e', fontSize: '16px' }}>✓</span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+          </div>
+        </div>
+
+        {/* Module: SM3 - Time & Pitch */}
+        <div
+          style={{
+            background: '#141414',
+            borderRadius: '12px',
+            padding: '20px',
+            border: '1px solid #2a2a2a',
+            marginBottom: '16px',
+          }}
+        >
+          {(() => {
+            const mp = getSamplingModuleProgress('SM3', allSamplingChallenges);
+            const pct = mp.total > 0 ? Math.round((mp.completed / mp.total) * 100) : 0;
+            return (
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '16px',
+                }}
+              >
+                <div style={{ flex: 1 }}>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>
+                    {samplingModules.SM3.title}
+                  </h3>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#666' }}>
+                    {samplingModules.SM3.description}
+                  </p>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ color: '#eab308', fontSize: '13px' }}>
+                    {'★'.repeat(mp.stars)}<span style={{ color: '#333' }}>{'★'.repeat(mp.total * 3 - mp.stars)}</span>
+                  </div>
+                  <div
+                    style={{
+                      padding: '4px 10px',
+                      background: pct === 100 ? '#22c55e' : '#222',
+                      borderRadius: '12px',
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      color: pct === 100 ? '#000' : '#888',
+                    }}
+                  >
+                    {mp.completed}/{mp.total}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {allSamplingChallenges
+              .filter((c) => c.module === 'SM3')
+              .map((challenge) => {
+                const progress = getSamplingProgress(challenge.id);
+                const stars = progress?.stars ?? 0;
+
+                return (
+                  <button
+                    key={challenge.id}
+                    onClick={() => handleStartSamplingChallenge(challenge.id)}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '12px 16px',
+                      background: '#0a0a0a',
+                      border: '1px solid #222',
+                      borderRadius: '8px',
+                      color: '#fff',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: '14px', fontWeight: 500 }}>
+                        {challenge.title}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#666' }}>
+                        {'★'.repeat(challenge.difficulty)}
+                        {'☆'.repeat(3 - challenge.difficulty)}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ color: '#eab308', fontSize: '14px' }}>
+                        {'★'.repeat(stars)}
+                        <span style={{ color: '#333' }}>{'★'.repeat(3 - stars)}</span>
+                      </div>
+                      {progress?.completed && (
+                        <span style={{ color: '#22c55e', fontSize: '16px' }}>✓</span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+          </div>
+        </div>
+
+        {/* Module: SM4 - Chopping */}
+        <div
+          style={{
+            background: '#141414',
+            borderRadius: '12px',
+            padding: '20px',
+            border: '1px solid #2a2a2a',
+            marginBottom: '16px',
+          }}
+        >
+          {(() => {
+            const mp = getSamplingModuleProgress('SM4', allSamplingChallenges);
+            const pct = mp.total > 0 ? Math.round((mp.completed / mp.total) * 100) : 0;
+            return (
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '16px',
+                }}
+              >
+                <div style={{ flex: 1 }}>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>
+                    {samplingModules.SM4.title}
+                  </h3>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#666' }}>
+                    {samplingModules.SM4.description}
+                  </p>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ color: '#eab308', fontSize: '13px' }}>
+                    {'★'.repeat(mp.stars)}<span style={{ color: '#333' }}>{'★'.repeat(mp.total * 3 - mp.stars)}</span>
+                  </div>
+                  <div
+                    style={{
+                      padding: '4px 10px',
+                      background: pct === 100 ? '#22c55e' : '#222',
+                      borderRadius: '12px',
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      color: pct === 100 ? '#000' : '#888',
+                    }}
+                  >
+                    {mp.completed}/{mp.total}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {allSamplingChallenges
+              .filter((c) => c.module === 'SM4')
+              .map((challenge) => {
+                const progress = getSamplingProgress(challenge.id);
+                const stars = progress?.stars ?? 0;
+
+                return (
+                  <button
+                    key={challenge.id}
+                    onClick={() => handleStartSamplingChallenge(challenge.id)}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '12px 16px',
+                      background: '#0a0a0a',
+                      border: '1px solid #222',
+                      borderRadius: '8px',
+                      color: '#fff',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: '14px', fontWeight: 500 }}>
+                        {challenge.title}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#666' }}>
+                        {'★'.repeat(challenge.difficulty)}
+                        {'☆'.repeat(3 - challenge.difficulty)}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ color: '#eab308', fontSize: '14px' }}>
+                        {'★'.repeat(stars)}
+                        <span style={{ color: '#333' }}>{'★'.repeat(3 - stars)}</span>
+                      </div>
+                      {progress?.completed && (
+                        <span style={{ color: '#22c55e', fontSize: '16px' }}>✓</span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+          </div>
+        </div>
+
+        {/* Module: SM5 - Flipping */}
+        <div
+          style={{
+            background: '#141414',
+            borderRadius: '12px',
+            padding: '20px',
+            border: '1px solid #2a2a2a',
+            marginBottom: '16px',
+          }}
+        >
+          {(() => {
+            const mp = getSamplingModuleProgress('SM5', allSamplingChallenges);
+            const pct = mp.total > 0 ? Math.round((mp.completed / mp.total) * 100) : 0;
+            return (
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '16px',
+                }}
+              >
+                <div style={{ flex: 1 }}>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>
+                    {samplingModules.SM5.title}
+                  </h3>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#666' }}>
+                    {samplingModules.SM5.description}
+                  </p>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ color: '#eab308', fontSize: '13px' }}>
+                    {'★'.repeat(mp.stars)}<span style={{ color: '#333' }}>{'★'.repeat(mp.total * 3 - mp.stars)}</span>
+                  </div>
+                  <div
+                    style={{
+                      padding: '4px 10px',
+                      background: pct === 100 ? '#22c55e' : '#222',
+                      borderRadius: '12px',
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      color: pct === 100 ? '#000' : '#888',
+                    }}
+                  >
+                    {mp.completed}/{mp.total}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {allSamplingChallenges
+              .filter((c) => c.module === 'SM5')
+              .map((challenge) => {
+                const progress = getSamplingProgress(challenge.id);
+                const stars = progress?.stars ?? 0;
+
+                return (
+                  <button
+                    key={challenge.id}
+                    onClick={() => handleStartSamplingChallenge(challenge.id)}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '12px 16px',
+                      background: '#0a0a0a',
+                      border: '1px solid #222',
+                      borderRadius: '8px',
+                      color: '#fff',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: '14px', fontWeight: 500 }}>
+                        {challenge.title}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#666' }}>
+                        {'★'.repeat(challenge.difficulty)}
+                        {'☆'.repeat(3 - challenge.difficulty)}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ color: '#eab308', fontSize: '14px' }}>
+                        {'★'.repeat(stars)}
+                        <span style={{ color: '#333' }}>{'★'.repeat(3 - stars)}</span>
+                      </div>
+                      {progress?.completed && (
+                        <span style={{ color: '#22c55e', fontSize: '16px' }}>✓</span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+          </div>
+        </div>
+
+        {/* Module: SM6 - Polish & Clean */}
+        <div
+          style={{
+            background: '#141414',
+            borderRadius: '12px',
+            padding: '20px',
+            border: '1px solid #2a2a2a',
+            marginBottom: '16px',
+          }}
+        >
+          {(() => {
+            const mp = getSamplingModuleProgress('SM6', allSamplingChallenges);
+            const pct = mp.total > 0 ? Math.round((mp.completed / mp.total) * 100) : 0;
+            return (
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '16px',
+                }}
+              >
+                <div style={{ flex: 1 }}>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>
+                    {samplingModules.SM6.title}
+                  </h3>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#666' }}>
+                    {samplingModules.SM6.description}
+                  </p>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ color: '#eab308', fontSize: '13px' }}>
+                    {'★'.repeat(mp.stars)}<span style={{ color: '#333' }}>{'★'.repeat(mp.total * 3 - mp.stars)}</span>
+                  </div>
+                  <div
+                    style={{
+                      padding: '4px 10px',
+                      background: pct === 100 ? '#22c55e' : '#222',
+                      borderRadius: '12px',
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      color: pct === 100 ? '#000' : '#888',
+                    }}
+                  >
+                    {mp.completed}/{mp.total}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {allSamplingChallenges
+              .filter((c) => c.module === 'SM6')
+              .map((challenge) => {
+                const progress = getSamplingProgress(challenge.id);
+                const stars = progress?.stars ?? 0;
+
+                return (
+                  <button
+                    key={challenge.id}
+                    onClick={() => handleStartSamplingChallenge(challenge.id)}
                     style={{
                       display: 'flex',
                       justifyContent: 'space-between',
