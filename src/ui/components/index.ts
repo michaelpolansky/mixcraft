@@ -27,3 +27,4 @@ export { FilterResponse } from './FilterResponse.tsx';
 export { EnvelopeVisualizer } from './EnvelopeVisualizer.tsx';
 export { LFOVisualizer } from './LFOVisualizer.tsx';
 export { EffectsVisualizer } from './EffectsVisualizer.tsx';
+export { WaveformEditor } from './WaveformEditor.tsx';
