@@ -22,17 +22,25 @@ src/
   core/           # All game logic. No React imports. Pure functions.
     types.ts      # All TypeScript interfaces and type definitions
     synth-engine.ts
+    sampler-engine.ts
+    drum-sequencer-engine.ts
     sound-analysis.ts
     sound-comparison.ts
+    sampling-evaluation.ts
+    drum-sequencing-evaluation.ts
+    mixing-evaluation.ts
+    production-evaluation.ts
   ui/             # React components. Imports from core/ only.
-    components/   # Reusable UI (Knob, Slider, WaveformSelector, LFOWaveformSelector, SpectrumAnalyzer, etc.)
-    views/        # Full-screen views (SynthView, ChallengeView)
-    stores/       # Zustand stores (synth-store.ts, challenge-store.ts)
+    components/   # Reusable UI (Knob, Slider, StepGrid, VelocityLane, WaveformEditor, etc.)
+    views/        # Full-screen views (SynthView, ChallengeView, SamplerView, DrumSequencerView)
+    stores/       # Zustand stores (synth-store.ts, sampler-store.ts, drum-sequencer-store.ts)
   data/           # Static data files
-    challenges/   # Challenge definitions by module (sd1-sd7/)
+    challenges/   # Challenge definitions by track (sd1-sd7/, sm1-sm6/, ds1-ds6/, etc.)
   server/         # tRPC backend
     routers/      # API routers (feedback.ts for AI feedback)
   tests/          # Mirrors src/ structure
+public/
+  samples/drums/  # Synthesized drum samples (16 sounds)
 docs/
   SPEC.md         # Full product specification
 ```
@@ -50,35 +58,54 @@ docs/
 - Canvas 2D for all visualizations. No SVG, no charting libraries for real-time displays.
 - Challenge evaluation is deterministic given the same audio features. AI feedback is additive, not required.
 
-## Three-Track Curriculum
+## Five-Track Curriculum
 
-1. **Sound Design** (32 challenges) — synthesis, filters, envelopes, modulation. Ships first.
+1. **Sound Design** (32 challenges) — synthesis, filters, envelopes, modulation.
 2. **Production** (20 challenges) — layering, arrangement, frequency stacking.
 3. **Mixing** (136 challenges) — EQ, compression, reverb, stereo, levels.
+4. **Sampling** (24 challenges) — sample manipulation, chopping, pitch/time, flipping.
+5. **Drum Sequencing** (24 challenges) — step sequencing, groove, velocity, genre patterns.
 
-Sound design is the entry point. It has the lowest content requirements (synthesis generates its own audio) and teaches concepts that make mixing intuitive later.
+Sound design is the entry point. It teaches concepts that make mixing and production intuitive later.
 
 ## Current State
 
-**All 188 challenges complete across three tracks.** Deployed to production.
+**All 236 challenges complete across five tracks.** Deployed to production with AI feedback on all tracks.
 
 ### Sound Design Track (32 challenges, SD1-SD7)
 - Subtractive synth with oscillator, filter, dual ADSR envelopes, LFO (filter modulation)
 - Effects chain: distortion, delay, reverb, chorus (all with dry/wet mix)
 - Challenge system with scoring (70% audio features, 30% parameter proximity)
-- tRPC backend with Claude API for natural language feedback
-- Full UI controls for all synth parameters and effects
+- AI feedback via Claude API
 
 ### Production Track (20 challenges, P1-P5)
 - Layer-based audio system with mute, volume, pan, and EQ per layer
 - Reference matching (match target mix) and goal-based evaluation
 - Frequency stacking, arrangement, and stereo imaging challenges
+- AI feedback via Claude API
 
 ### Mixing Track (136 challenges, F1-F8, I1-I6, A1-A5, M1-M4)
 - Multi-track mixing with per-track EQ, volume, pan, and reverb
 - Bus processing: bus compressor and bus EQ with UI controls
-- Goal-based evaluation with 17 condition types (frequency separation, pan position, depth placement, volume balance, etc.)
+- Goal-based evaluation with 17 condition types
 - Four difficulty tiers: Fundamentals (32), Intermediate (36), Advanced (36), Mastery (32)
+- AI feedback via Claude API
+
+### Sampling Track (24 challenges, SM1-SM6)
+- SamplerEngine wrapping Tone.js Player for sample playback
+- WaveformEditor with visual slice markers and drag handles
+- Pitch shifting, time stretch, start/end points, fade in/out
+- Challenge types: recreate-kit, chop-challenge, tune-to-track, flip-this, clean-sample
+- AI feedback via Claude API
+
+### Drum Sequencing Track (24 challenges, DS1-DS6)
+- DrumSequencerEngine wrapping Tone.js Transport and Players
+- StepGrid (Canvas 2D) for pattern editing with playhead
+- VelocityLane for per-step dynamics control
+- 16 synthesized drum samples (kick, snare, clap, hats, toms, cymbals, 808, percussion)
+- Evaluation: pattern accuracy, velocity, swing, tempo
+- Modules: Grid Basics, Hi-hats, Groove & Swing, Velocity, Genre Patterns, Loop Construction
+- AI feedback via Claude API
 
 ### Polish
 - Progress persistence (localStorage via Zustand)
@@ -90,10 +117,8 @@ Sound design is the entry point. It has the lowest content requirements (synthes
 - First-time user onboarding tooltip
 
 ### Testing
-- 70 unit tests for evaluation logic (mixing, production, sound comparison)
+- 395 unit tests for evaluation logic and engines
 - All pure function tests, no audio context dependencies
-
-**Next:** AI feedback for Production and Mixing tracks (Sound Design already has it)
 
 ## Session Log
 
@@ -111,3 +136,7 @@ Sound design is the entry point. It has the lowest content requirements (synthes
 | 9 | 2026-02-05 | Mixing Mastery (M1-M4, 32 challenges) - full mix, genre mixing, automation concepts, troubleshooting |
 | 10 | 2026-02-05 | Production Track (P1-P5, 20 challenges) - frequency stacking, layering, arrangement, stereo, full productions |
 | 11 | 2026-02-05 | Bus EQ UI, bus compressor flag fix, bus-level condition types, unit tests (70 tests), deploy to Vercel |
+| 12 | 2026-02-06 | Sampling Track Phase 1 - SamplerEngine, WaveformEditor, sampler store, SamplerView sandbox |
+| 13 | 2026-02-06 | Sampling Track Phase 2 - evaluation logic (40 tests), SamplerChallengeView, SM1-SM6 challenges (24 total) |
+| 14 | 2026-02-06 | Drum Sequencing Track - DrumSequencerEngine (60 tests), StepGrid, VelocityLane, store, views, DS1-DS6 (24 challenges) |
+| 15 | 2026-02-06 | Drum samples (16 synthesized sounds), AI feedback for Sampling and Drum Sequencing tracks |
