@@ -9,6 +9,7 @@ import * as Tone from 'tone';
 import { useDrumSequencerStore } from '../stores/drum-sequencer-store.ts';
 import { Knob, StepGrid, VelocityLane } from '../components/index.ts';
 import { evaluateDrumSequencingChallenge } from '../../core/drum-sequencing-evaluation.ts';
+import { trpc } from '../api/trpc.ts';
 import {
   DrumSequencerEngine,
   createDrumSequencerEngine,
@@ -706,6 +707,7 @@ export function DrumSequencerChallengeView({
           result={lastResult}
           challenge={challenge}
           attemptNumber={currentAttempt - 1}
+          pattern={pattern}
           onRetry={handleRetry}
           onNext={onNext}
           hasNext={hasNext}
@@ -716,12 +718,26 @@ export function DrumSequencerChallengeView({
 }
 
 /**
+ * Count active steps in a pattern
+ */
+function countActiveSteps(pattern: DrumPattern): number {
+  let count = 0;
+  for (const track of pattern.tracks) {
+    for (const step of track.steps) {
+      if (step.active) count++;
+    }
+  }
+  return count;
+}
+
+/**
  * Results Modal for drum sequencing challenges
  */
 interface DrumSequencingResultsModalProps {
   result: DrumSequencingScoreResult;
   challenge: DrumSequencingChallenge;
   attemptNumber: number;
+  pattern: DrumPattern;
   onRetry: () => void;
   onNext?: () => void;
   hasNext?: boolean;
@@ -731,10 +747,60 @@ function DrumSequencingResultsModal({
   result,
   challenge,
   attemptNumber,
+  pattern,
   onRetry,
   onNext,
   hasNext,
 }: DrumSequencingResultsModalProps) {
+  // AI feedback state
+  const [aiFeedback, setAiFeedback] = useState<string | null>(null);
+  const [feedbackLoading, setFeedbackLoading] = useState(true);
+
+  // Fetch AI feedback on mount
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchFeedback() {
+      try {
+        const response = await trpc.feedback.generateDrumSequencing.mutate({
+          result,
+          patternSummary: {
+            tempo: pattern.tempo,
+            swing: pattern.swing,
+            trackCount: pattern.tracks.length,
+            activeSteps: countActiveSteps(pattern),
+            totalSteps: pattern.stepCount * pattern.tracks.length,
+          },
+          challenge: {
+            id: challenge.id,
+            title: challenge.title,
+            description: challenge.description,
+            module: challenge.module,
+            challengeType: 'drum-sequencing',
+            evaluationFocus: challenge.evaluationFocus,
+          },
+          attemptNumber,
+        });
+
+        if (!cancelled) {
+          setAiFeedback(response.feedback);
+          setFeedbackLoading(false);
+        }
+      } catch (error) {
+        console.error('Failed to fetch AI feedback:', error);
+        if (!cancelled) {
+          setFeedbackLoading(false);
+        }
+      }
+    }
+
+    fetchFeedback();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [result, challenge, pattern, attemptNumber]);
+
   return (
     <div
       style={{
@@ -900,7 +966,7 @@ function DrumSequencingResultsModal({
         </div>
 
         {/* Feedback */}
-        <div style={{ marginBottom: '24px' }}>
+        <div style={{ marginBottom: '16px' }}>
           {result.feedback.map((fb, i) => (
             <div
               key={i}
@@ -915,6 +981,31 @@ function DrumSequencingResultsModal({
               {fb}
             </div>
           ))}
+        </div>
+
+        {/* AI Feedback */}
+        <div style={{ marginTop: '16px', marginBottom: '24px' }}>
+          <div style={{
+            fontSize: '11px',
+            color: '#666',
+            textTransform: 'uppercase',
+            marginBottom: '8px',
+          }}>
+            AI Mentor
+          </div>
+          <div style={{
+            background: '#0f0f0f',
+            borderRadius: '8px',
+            padding: '12px',
+            fontSize: '13px',
+            color: '#ccc',
+            lineHeight: 1.5,
+            fontStyle: feedbackLoading ? 'italic' : 'normal',
+          }}>
+            {feedbackLoading && 'Analyzing your work...'}
+            {!feedbackLoading && aiFeedback}
+            {!feedbackLoading && !aiFeedback && 'AI feedback unavailable'}
+          </div>
         </div>
 
         {/* Actions */}

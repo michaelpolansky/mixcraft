@@ -395,6 +395,193 @@ Give brief, encouraging feedback (2-3 sentences max). Focus on:
 Be warm and encouraging. Explain how different elements work together in a production. If they passed, congratulate them and highlight what made the production work.`;
 }
 
+// ============================================
+// Sampling Feedback Schemas
+// ============================================
+
+const SamplingScoreResultSchema = z.object({
+  overall: z.number(),
+  stars: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+  passed: z.boolean(),
+  breakdown: z.object({
+    type: z.string(),
+    pitchScore: z.number().optional(),
+    sliceScore: z.number().optional(),
+    timingScore: z.number().optional(),
+    creativityScore: z.number().optional(),
+  }),
+  feedback: z.array(z.string()),
+});
+
+const SamplerParamsSchema = z.object({
+  pitch: z.number(),
+  timeStretch: z.number(),
+  volume: z.number(),
+  startPoint: z.number(),
+  endPoint: z.number(),
+  fadeIn: z.number(),
+  fadeOut: z.number(),
+  sliceCount: z.number(),
+});
+
+const SamplingChallengeInfoSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  description: z.string(),
+  module: z.string(),
+  challengeType: z.string(),
+});
+
+const SamplingFeedbackInputSchema = z.object({
+  result: SamplingScoreResultSchema,
+  playerParams: SamplerParamsSchema,
+  challenge: SamplingChallengeInfoSchema,
+  attemptNumber: z.number(),
+});
+
+/**
+ * Build prompt for sampling feedback
+ */
+function buildSamplingFeedbackPrompt(input: z.infer<typeof SamplingFeedbackInputSchema>): string {
+  const { result, playerParams, challenge, attemptNumber } = input;
+
+  const paramsSummary = `
+Current sample settings:
+- Pitch: ${playerParams.pitch > 0 ? '+' : ''}${playerParams.pitch} semitones
+- Time Stretch: ${(playerParams.timeStretch * 100).toFixed(0)}%
+- Volume: ${playerParams.volume > 0 ? '+' : ''}${playerParams.volume.toFixed(1)}dB
+- Start/End: ${(playerParams.startPoint * 100).toFixed(0)}% - ${(playerParams.endPoint * 100).toFixed(0)}%
+- Fade In/Out: ${(playerParams.fadeIn * 1000).toFixed(0)}ms / ${(playerParams.fadeOut * 1000).toFixed(0)}ms
+- Slices: ${playerParams.sliceCount}`;
+
+  const breakdownSummary = [];
+  if (result.breakdown.pitchScore !== undefined) {
+    breakdownSummary.push(`- Pitch: ${result.breakdown.pitchScore.toFixed(0)}%`);
+  }
+  if (result.breakdown.sliceScore !== undefined) {
+    breakdownSummary.push(`- Slicing: ${result.breakdown.sliceScore.toFixed(0)}%`);
+  }
+  if (result.breakdown.timingScore !== undefined) {
+    breakdownSummary.push(`- Timing: ${result.breakdown.timingScore.toFixed(0)}%`);
+  }
+
+  return `You are a friendly sampling mentor helping someone learn sample-based music production. A student just attempted a sampling challenge.
+
+Challenge: "${challenge.title}"
+Description: ${challenge.description}
+Module: ${challenge.module}
+Type: ${challenge.challengeType}
+Attempt #${attemptNumber}
+
+Score: ${result.overall}% (${result.stars} star${result.stars > 1 ? 's' : ''})
+${result.passed ? 'PASSED' : 'NOT YET PASSED'}
+
+${paramsSummary}
+
+Score breakdown:
+${breakdownSummary.join('\n')}
+
+Give brief, encouraging feedback (2-3 sentences max). Focus on:
+1. What they did well (any aspect scoring above 70%)
+2. The ONE most important thing to adjust
+3. A specific, actionable tip about sampling technique (pitch shifting, slicing, timing, etc.)
+
+Be warm and encouraging. Explain the creative possibilities of sampling. If they passed, congratulate them and highlight what worked.`;
+}
+
+// ============================================
+// Drum Sequencing Feedback Schemas
+// ============================================
+
+const DrumSequencingScoreResultSchema = z.object({
+  overall: z.number(),
+  stars: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+  passed: z.boolean(),
+  breakdown: z.object({
+    patternScore: z.number().optional(),
+    velocityScore: z.number().optional(),
+    swingScore: z.number().optional(),
+    tempoScore: z.number().optional(),
+  }),
+  feedback: z.array(z.string()),
+});
+
+const DrumPatternSummarySchema = z.object({
+  tempo: z.number(),
+  swing: z.number(),
+  trackCount: z.number(),
+  activeSteps: z.number(),
+  totalSteps: z.number(),
+});
+
+const DrumSequencingChallengeInfoSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  description: z.string(),
+  module: z.string(),
+  challengeType: z.string(),
+  evaluationFocus: z.array(z.string()),
+});
+
+const DrumSequencingFeedbackInputSchema = z.object({
+  result: DrumSequencingScoreResultSchema,
+  patternSummary: DrumPatternSummarySchema,
+  challenge: DrumSequencingChallengeInfoSchema,
+  attemptNumber: z.number(),
+});
+
+/**
+ * Build prompt for drum sequencing feedback
+ */
+function buildDrumSequencingFeedbackPrompt(input: z.infer<typeof DrumSequencingFeedbackInputSchema>): string {
+  const { result, patternSummary, challenge, attemptNumber } = input;
+
+  const patternInfo = `
+Current pattern:
+- Tempo: ${patternSummary.tempo} BPM
+- Swing: ${(patternSummary.swing * 100).toFixed(0)}%
+- Tracks: ${patternSummary.trackCount}
+- Active steps: ${patternSummary.activeSteps} / ${patternSummary.totalSteps}`;
+
+  const breakdownSummary = [];
+  if (result.breakdown.patternScore !== undefined) {
+    breakdownSummary.push(`- Pattern accuracy: ${result.breakdown.patternScore.toFixed(0)}%`);
+  }
+  if (result.breakdown.velocityScore !== undefined) {
+    breakdownSummary.push(`- Velocity/dynamics: ${result.breakdown.velocityScore.toFixed(0)}%`);
+  }
+  if (result.breakdown.swingScore !== undefined) {
+    breakdownSummary.push(`- Swing/groove: ${result.breakdown.swingScore.toFixed(0)}%`);
+  }
+  if (result.breakdown.tempoScore !== undefined) {
+    breakdownSummary.push(`- Tempo: ${result.breakdown.tempoScore.toFixed(0)}%`);
+  }
+
+  return `You are a friendly drum programming mentor helping someone learn beat-making. A student just attempted a drum sequencing challenge.
+
+Challenge: "${challenge.title}"
+Description: ${challenge.description}
+Module: ${challenge.module}
+Type: ${challenge.challengeType}
+Focus areas: ${challenge.evaluationFocus.join(', ')}
+Attempt #${attemptNumber}
+
+Score: ${result.overall}% (${result.stars} star${result.stars > 1 ? 's' : ''})
+${result.passed ? 'PASSED' : 'NOT YET PASSED'}
+
+${patternInfo}
+
+Score breakdown:
+${breakdownSummary.join('\n')}
+
+Give brief, encouraging feedback (2-3 sentences max). Focus on:
+1. What they did well (any aspect scoring above 70%)
+2. The ONE most important thing to fix in their pattern
+3. A specific, actionable tip about rhythm, groove, or dynamics (e.g., "try adding ghost notes on the snare for more groove")
+
+Be warm and encouraging. Use rhythm terminology that's accessible. If they passed, congratulate them and explain what made the beat work.`;
+}
+
 /**
  * Feedback router
  */
@@ -460,6 +647,58 @@ export const feedbackRouter = router({
     .mutation(async ({ input }) => {
       const client = getAnthropicClient();
       const prompt = buildProductionFeedbackPrompt(input);
+
+      const response = await client.messages.create({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 300,
+        messages: [
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+      });
+
+      const textBlock = response.content.find((block) => block.type === 'text');
+      const feedback = textBlock?.type === 'text' ? textBlock.text : 'Unable to generate feedback.';
+
+      return { feedback };
+    }),
+
+  /**
+   * Generate AI feedback for a sampling challenge attempt
+   */
+  generateSampling: publicProcedure
+    .input(SamplingFeedbackInputSchema)
+    .mutation(async ({ input }) => {
+      const client = getAnthropicClient();
+      const prompt = buildSamplingFeedbackPrompt(input);
+
+      const response = await client.messages.create({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 300,
+        messages: [
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+      });
+
+      const textBlock = response.content.find((block) => block.type === 'text');
+      const feedback = textBlock?.type === 'text' ? textBlock.text : 'Unable to generate feedback.';
+
+      return { feedback };
+    }),
+
+  /**
+   * Generate AI feedback for a drum sequencing challenge attempt
+   */
+  generateDrumSequencing: publicProcedure
+    .input(DrumSequencingFeedbackInputSchema)
+    .mutation(async ({ input }) => {
+      const client = getAnthropicClient();
+      const prompt = buildDrumSequencingFeedbackPrompt(input);
 
       const response = await client.messages.create({
         model: 'claude-sonnet-4-20250514',

@@ -13,6 +13,7 @@ import {
 } from '../components/index.ts';
 import { InfoPanelProvider } from '../context/InfoPanelContext.tsx';
 import { evaluateSamplingChallenge } from '../../core/sampling-evaluation.ts';
+import { trpc } from '../api/trpc.ts';
 import type { SamplingChallenge } from '../../core/types.ts';
 import { SAMPLER_PARAM_RANGES } from '../../core/types.ts';
 import type { SamplingScoreResult } from '../../core/sampling-evaluation.ts';
@@ -618,6 +619,14 @@ export function SamplerChallengeView({
             result={lastResult}
             challenge={challenge}
             attemptNumber={currentAttempt - 1}
+            playerParams={{
+              pitch: params.pitch,
+              timeStretch: params.timeStretch,
+              volume: params.volume,
+              startPoint: params.startPoint,
+              endPoint: params.endPoint,
+              slices: params.slices,
+            }}
             onRetry={handleRetry}
             onNext={onNext}
             hasNext={hasNext}
@@ -637,6 +646,14 @@ interface SamplingResultsModalProps {
   result: SamplingScoreResult;
   challenge: SamplingChallenge;
   attemptNumber: number;
+  playerParams: {
+    pitch: number;
+    timeStretch: number;
+    volume: number;
+    startPoint: number;
+    endPoint: number;
+    slices: { start: number; end: number }[];
+  };
   onRetry: () => void;
   onNext?: () => void;
   hasNext?: boolean;
@@ -646,10 +663,62 @@ function SamplingResultsModal({
   result,
   challenge,
   attemptNumber,
+  playerParams,
   onRetry,
   onNext,
   hasNext,
 }: SamplingResultsModalProps) {
+  // AI feedback state
+  const [aiFeedback, setAiFeedback] = useState<string | null>(null);
+  const [feedbackLoading, setFeedbackLoading] = useState(true);
+
+  // Fetch AI feedback on mount
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchFeedback() {
+      try {
+        const response = await trpc.feedback.generateSampling.mutate({
+          result,
+          playerParams: {
+            pitch: playerParams.pitch,
+            timeStretch: playerParams.timeStretch,
+            volume: playerParams.volume,
+            startPoint: playerParams.startPoint,
+            endPoint: playerParams.endPoint,
+            fadeIn: 0,
+            fadeOut: 0,
+            sliceCount: playerParams.slices.length,
+          },
+          challenge: {
+            id: challenge.id,
+            title: challenge.title,
+            description: challenge.description,
+            module: challenge.module,
+            challengeType: challenge.challengeType,
+          },
+          attemptNumber,
+        });
+
+        if (!cancelled) {
+          setAiFeedback(response.feedback);
+          setFeedbackLoading(false);
+        }
+      } catch (error) {
+        console.error('Failed to fetch AI feedback:', error);
+        if (!cancelled) {
+          setFeedbackLoading(false);
+        }
+      }
+    }
+
+    fetchFeedback();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [result, challenge, playerParams, attemptNumber]);
+
   return (
     <div
       style={{
@@ -815,7 +884,7 @@ function SamplingResultsModal({
         </div>
 
         {/* Feedback */}
-        <div style={{ marginBottom: '24px' }}>
+        <div style={{ marginBottom: '16px' }}>
           {result.feedback.map((fb, i) => (
             <div
               key={i}
@@ -830,6 +899,31 @@ function SamplingResultsModal({
               {fb}
             </div>
           ))}
+        </div>
+
+        {/* AI Feedback */}
+        <div style={{ marginTop: '16px', marginBottom: '24px' }}>
+          <div style={{
+            fontSize: '11px',
+            color: '#666',
+            textTransform: 'uppercase',
+            marginBottom: '8px',
+          }}>
+            AI Mentor
+          </div>
+          <div style={{
+            background: '#0f0f0f',
+            borderRadius: '8px',
+            padding: '12px',
+            fontSize: '13px',
+            color: '#ccc',
+            lineHeight: 1.5,
+            fontStyle: feedbackLoading ? 'italic' : 'normal',
+          }}>
+            {feedbackLoading && 'Analyzing your work...'}
+            {!feedbackLoading && aiFeedback}
+            {!feedbackLoading && !aiFeedback && 'AI feedback unavailable'}
+          </div>
         </div>
 
         {/* Actions */}
