@@ -409,6 +409,125 @@ describe('SamplerEngine', () => {
     });
   });
 
+  describe('getWaveformData', () => {
+    it('returns empty Float32Array when no sample is loaded', () => {
+      const freshEngine = createSamplerEngine();
+      const waveformData = freshEngine.getWaveformData();
+      expect(waveformData).toBeInstanceOf(Float32Array);
+      expect(waveformData.length).toBe(0);
+    });
+
+    it('returns Float32Array (not null) after loadSample', async () => {
+      const freshEngine = createSamplerEngine();
+      await freshEngine.loadSample('/test/sample.wav', 'Test Sample');
+      const waveformData = freshEngine.getWaveformData();
+      expect(waveformData).toBeInstanceOf(Float32Array);
+      expect(waveformData.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('loadSample', () => {
+    it('accepts a URL and name', async () => {
+      const freshEngine = createSamplerEngine();
+      await freshEngine.loadSample('/test/sample.wav', 'Test Sample');
+      // If we get here without throwing, the test passes
+      expect(true).toBe(true);
+    });
+
+    it('updates params with sample URL and name', async () => {
+      const freshEngine = createSamplerEngine();
+      await freshEngine.loadSample('/test/sample.wav', 'Test Sample');
+      const params = freshEngine.getParams();
+      expect(params.sampleUrl).toBe('/test/sample.wav');
+      expect(params.sampleName).toBe('Test Sample');
+    });
+
+    it('updates duration from loaded buffer', async () => {
+      const freshEngine = createSamplerEngine();
+      await freshEngine.loadSample('/test/sample.wav', 'Test Sample');
+      const params = freshEngine.getParams();
+      expect(params.duration).toBe(5); // Mock buffer duration is 5
+    });
+
+    it('sets loaded property to true', async () => {
+      const freshEngine = createSamplerEngine();
+      await freshEngine.loadSample('/test/sample.wav', 'Test Sample');
+      expect(freshEngine.loaded).toBe(true);
+    });
+  });
+
+  describe('start', () => {
+    it('can be called without throwing', () => {
+      expect(() => engine.start()).not.toThrow();
+    });
+
+    it('can be called with optional time parameter', () => {
+      expect(() => engine.start(0.5)).not.toThrow();
+    });
+
+    it('does not throw when called before loading a sample', () => {
+      const freshEngine = createSamplerEngine();
+      // Mock loaded as false for this test
+      (freshEngine as unknown as { player: { loaded: boolean } }).player.loaded = false;
+      expect(() => freshEngine.start()).not.toThrow();
+    });
+
+    it('returns early when playback duration is zero or negative', () => {
+      const freshEngine = createSamplerEngine();
+      freshEngine.setStartPoint(0.5);
+      freshEngine.setEndPoint(0.5); // Same as start, so duration = 0
+      expect(() => freshEngine.start()).not.toThrow();
+    });
+  });
+
+  describe('stop', () => {
+    it('can be called without throwing', () => {
+      expect(() => engine.stop()).not.toThrow();
+    });
+
+    it('can be called when not playing', () => {
+      const freshEngine = createSamplerEngine();
+      expect(() => freshEngine.stop()).not.toThrow();
+    });
+
+    it('can be called multiple times', () => {
+      expect(() => {
+        engine.stop();
+        engine.stop();
+        engine.stop();
+      }).not.toThrow();
+    });
+  });
+
+  describe('triggerSlice', () => {
+    it('accepts a valid slice index', () => {
+      const freshEngine = createSamplerEngine();
+      (freshEngine as unknown as { params: { duration: number } }).params.duration = 10;
+      freshEngine.addSlice(0, 2);
+      expect(() => freshEngine.triggerSlice(0)).not.toThrow();
+    });
+
+    it('does not throw for negative index', () => {
+      expect(() => engine.triggerSlice(-1)).not.toThrow();
+    });
+
+    it('does not throw for index out of bounds', () => {
+      expect(() => engine.triggerSlice(999)).not.toThrow();
+    });
+
+    it('does not throw for empty slices array', () => {
+      const freshEngine = createSamplerEngine();
+      expect(() => freshEngine.triggerSlice(0)).not.toThrow();
+    });
+
+    it('handles slice with zero duration gracefully', () => {
+      const freshEngine = createSamplerEngine();
+      (freshEngine as unknown as { params: { duration: number } }).params.duration = 10;
+      const slice = freshEngine.addSlice(5, 5); // Zero duration
+      expect(() => freshEngine.triggerSlice(0)).not.toThrow();
+    });
+  });
+
   describe('dispose', () => {
     it('disposes without throwing', () => {
       expect(() => engine.dispose()).not.toThrow();

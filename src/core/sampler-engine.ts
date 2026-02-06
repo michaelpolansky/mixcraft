@@ -428,8 +428,8 @@ export class SamplerEngine {
   /**
    * Gets the waveform data for visualization
    */
-  getWaveformData(): Float32Array | null {
-    return this.waveformData;
+  getWaveformData(): Float32Array {
+    return this.waveformData ?? new Float32Array(0);
   }
 
   /**
