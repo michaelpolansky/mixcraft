@@ -49,6 +49,9 @@ interface MixingStore {
   // Player's current settings (multi-track)
   trackParams: Record<string, TrackEQParams>;
 
+  // Bus-level settings (master bus processing)
+  busEQParams: EQParams;
+
   // Progress tracking (persisted)
   progress: Record<string, ChallengeProgress>;
 
@@ -76,12 +79,18 @@ interface MixingStore {
   setTrackReverbSize: (trackId: string, value: number) => void;
   resetTrackEQ: (trackId: string) => void;
 
-  // Actions - Compressor
+  // Actions - Compressor (bus)
   setCompressorThreshold: (value: number) => void;
   setCompressorAmount: (value: number) => void;
   setCompressorAttack: (value: number) => void;
   setCompressorRelease: (value: number) => void;
   resetCompressor: () => void;
+
+  // Actions - Bus EQ
+  setBusEQLow: (value: number) => void;
+  setBusEQMid: (value: number) => void;
+  setBusEQHigh: (value: number) => void;
+  resetBusEQ: () => void;
 
   // Progress queries
   getChallengeProgress: (challengeId: string) => ChallengeProgress | undefined;
@@ -110,6 +119,7 @@ export const useMixingStore = create<MixingStore>()(
       eqParams: { ...DEFAULT_EQ },
       compressorParams: { ...DEFAULT_COMPRESSOR },
       trackParams: {},
+      busEQParams: { ...DEFAULT_EQ },
       progress: {},
 
       // Load a mixing challenge
@@ -138,6 +148,7 @@ export const useMixingStore = create<MixingStore>()(
           eqParams: { ...DEFAULT_EQ },
           compressorParams: { ...DEFAULT_COMPRESSOR },
           trackParams,
+          busEQParams: { ...DEFAULT_EQ },
         });
       },
 
@@ -220,6 +231,7 @@ export const useMixingStore = create<MixingStore>()(
           eqParams: { ...DEFAULT_EQ },
           compressorParams: { ...DEFAULT_COMPRESSOR },
           trackParams,
+          busEQParams: { ...DEFAULT_EQ },
         });
       },
 
@@ -366,6 +378,29 @@ export const useMixingStore = create<MixingStore>()(
 
       resetCompressor: () => {
         set({ compressorParams: { ...DEFAULT_COMPRESSOR } });
+      },
+
+      // Bus EQ Actions
+      setBusEQLow: (value: number) => {
+        set((state) => ({
+          busEQParams: { ...state.busEQParams, low: value },
+        }));
+      },
+
+      setBusEQMid: (value: number) => {
+        set((state) => ({
+          busEQParams: { ...state.busEQParams, mid: value },
+        }));
+      },
+
+      setBusEQHigh: (value: number) => {
+        set((state) => ({
+          busEQParams: { ...state.busEQParams, high: value },
+        }));
+      },
+
+      resetBusEQ: () => {
+        set({ busEQParams: { ...DEFAULT_EQ } });
       },
 
       // Get progress for a specific challenge

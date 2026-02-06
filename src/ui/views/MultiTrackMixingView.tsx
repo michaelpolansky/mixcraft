@@ -41,6 +41,7 @@ export function MultiTrackMixingView({
     lastResult,
     trackParams,
     compressorParams,
+    busEQParams,
     loadChallenge,
     revealHint,
     startScoring,
@@ -55,10 +56,14 @@ export function MultiTrackMixingView({
     setTrackReverbSize,
     setCompressorThreshold,
     setCompressorAmount,
+    setBusEQLow,
+    setBusEQMid,
+    setBusEQHigh,
   } = useMixingStore();
 
   // Audio references for each track
   const trackAudioRef = useRef<Map<string, TrackAudio>>(new Map());
+  const busEQRef = useRef<MixingEQ | null>(null);
   const busCompressorRef = useRef<MixingCompressor | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [gainReduction, setGainReduction] = useState(0);
@@ -72,8 +77,10 @@ export function MultiTrackMixingView({
   useEffect(() => {
     if (!challenge.tracks) return;
 
-    // Create bus compressor
+    // Create bus processing chain: Bus EQ -> Bus Compressor -> Destination
+    busEQRef.current = new MixingEQ();
     busCompressorRef.current = new MixingCompressor();
+    busEQRef.current.connect(busCompressorRef.current.input);
     busCompressorRef.current.connect(Tone.getDestination());
 
     // Create audio for each track
@@ -84,12 +91,12 @@ export function MultiTrackMixingView({
       const panner = new Tone.Panner(track.initialPan ?? 0);
       const reverb = new MixingReverb();
 
-      // Chain: source -> eq -> gain -> panner -> reverb -> bus compressor
+      // Chain: source -> eq -> gain -> panner -> reverb -> bus EQ
       source.connect(eq.input);
       eq.connect(gain);
       gain.connect(panner);
       panner.connect(reverb.input);
-      reverb.connect(busCompressorRef.current.input);
+      reverb.connect(busEQRef.current!.input);
 
       trackAudioRef.current.set(track.id, { source, eq, gain, panner, reverb });
     }
@@ -114,6 +121,7 @@ export function MultiTrackMixingView({
         audio.reverb.dispose();
       }
       trackAudioRef.current.clear();
+      busEQRef.current?.dispose();
       busCompressorRef.current?.dispose();
     };
   }, [challenge]);
@@ -130,6 +138,13 @@ export function MultiTrackMixingView({
       }
     }
   }, [trackParams]);
+
+  // Sync bus EQ params
+  useEffect(() => {
+    if (busEQRef.current) {
+      busEQRef.current.setParams(busEQParams);
+    }
+  }, [busEQParams]);
 
   // Sync bus compressor params
   useEffect(() => {
@@ -175,10 +190,11 @@ export function MultiTrackMixingView({
       challenge,
       { low: 0, mid: 0, high: 0 }, // Not used for multi-track
       compressorParams,
-      playerTrackEQs
+      playerTrackEQs,
+      busEQParams
     );
     submitResult(result);
-  }, [challenge, trackParams, compressorParams, startScoring, submitResult]);
+  }, [challenge, trackParams, compressorParams, busEQParams, startScoring, submitResult]);
 
   // Handle retry
   const handleRetry = useCallback(() => {
@@ -199,7 +215,8 @@ export function MultiTrackMixingView({
   }, [onExit]);
 
   const tracks = challenge.tracks ?? [];
-  const showCompressor = challenge.controls.compressor !== false;
+  const showBusEQ = challenge.controls.busEQ === true;
+  const showBusCompressor = challenge.controls.busCompressor === true;
 
   return (
     <div
@@ -439,8 +456,8 @@ export function MultiTrackMixingView({
               })}
             </div>
 
-            {/* Bus Compressor */}
-            {showCompressor && (
+            {/* Bus Processing Section */}
+            {(showBusEQ || showBusCompressor) && (
               <div
                 style={{
                   background: '#1a1a1a',
@@ -449,62 +466,123 @@ export function MultiTrackMixingView({
                   marginBottom: '24px',
                 }}
               >
-                <div style={{ fontSize: '14px', fontWeight: 500, marginBottom: '16px' }}>Bus Compressor</div>
-                <div style={{ display: 'flex', gap: '24px' }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '11px', color: '#666', marginBottom: '8px' }}>Threshold</div>
-                    <input
-                      type="range"
-                      min="-40"
-                      max="0"
-                      step="1"
-                      value={compressorParams.threshold}
-                      onChange={(e) => setCompressorThreshold(parseFloat(e.target.value))}
-                      style={{ width: '100%' }}
-                    />
-                    <div style={{ fontSize: '11px', color: '#888', textAlign: 'center' }}>
-                      {compressorParams.threshold} dB
+                <div style={{ fontSize: '14px', fontWeight: 500, marginBottom: '16px' }}>Bus Processing</div>
+
+                {/* Bus EQ */}
+                {showBusEQ && (
+                  <div style={{ marginBottom: showBusCompressor ? '16px' : 0 }}>
+                    <div style={{ fontSize: '12px', color: '#888', marginBottom: '12px' }}>Master EQ</div>
+                    <div style={{ display: 'flex', gap: '16px' }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '11px', color: '#666', marginBottom: '4px' }}>Low</div>
+                        <input
+                          type="range"
+                          min="-12"
+                          max="12"
+                          step="0.5"
+                          value={busEQParams.low}
+                          onChange={(e) => setBusEQLow(parseFloat(e.target.value))}
+                          style={{ width: '100%' }}
+                        />
+                        <div style={{ fontSize: '11px', color: '#888', textAlign: 'center' }}>
+                          {busEQParams.low > 0 ? '+' : ''}{busEQParams.low.toFixed(1)} dB
+                        </div>
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '11px', color: '#666', marginBottom: '4px' }}>Mid</div>
+                        <input
+                          type="range"
+                          min="-12"
+                          max="12"
+                          step="0.5"
+                          value={busEQParams.mid}
+                          onChange={(e) => setBusEQMid(parseFloat(e.target.value))}
+                          style={{ width: '100%' }}
+                        />
+                        <div style={{ fontSize: '11px', color: '#888', textAlign: 'center' }}>
+                          {busEQParams.mid > 0 ? '+' : ''}{busEQParams.mid.toFixed(1)} dB
+                        </div>
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '11px', color: '#666', marginBottom: '4px' }}>High</div>
+                        <input
+                          type="range"
+                          min="-12"
+                          max="12"
+                          step="0.5"
+                          value={busEQParams.high}
+                          onChange={(e) => setBusEQHigh(parseFloat(e.target.value))}
+                          style={{ width: '100%' }}
+                        />
+                        <div style={{ fontSize: '11px', color: '#888', textAlign: 'center' }}>
+                          {busEQParams.high > 0 ? '+' : ''}{busEQParams.high.toFixed(1)} dB
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '11px', color: '#666', marginBottom: '8px' }}>Amount</div>
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      step="5"
-                      value={compressorParams.amount}
-                      onChange={(e) => setCompressorAmount(parseFloat(e.target.value))}
-                      style={{ width: '100%' }}
-                    />
-                    <div style={{ fontSize: '11px', color: '#888', textAlign: 'center' }}>
-                      {compressorParams.amount}%
+                )}
+
+                {/* Bus Compressor */}
+                {showBusCompressor && (
+                  <div>
+                    <div style={{ fontSize: '12px', color: '#888', marginBottom: '12px' }}>Compressor</div>
+                    <div style={{ display: 'flex', gap: '24px' }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '11px', color: '#666', marginBottom: '8px' }}>Threshold</div>
+                        <input
+                          type="range"
+                          min="-40"
+                          max="0"
+                          step="1"
+                          value={compressorParams.threshold}
+                          onChange={(e) => setCompressorThreshold(parseFloat(e.target.value))}
+                          style={{ width: '100%' }}
+                        />
+                        <div style={{ fontSize: '11px', color: '#888', textAlign: 'center' }}>
+                          {compressorParams.threshold} dB
+                        </div>
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '11px', color: '#666', marginBottom: '8px' }}>Amount</div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          step="5"
+                          value={compressorParams.amount}
+                          onChange={(e) => setCompressorAmount(parseFloat(e.target.value))}
+                          style={{ width: '100%' }}
+                        />
+                        <div style={{ fontSize: '11px', color: '#888', textAlign: 'center' }}>
+                          {compressorParams.amount}%
+                        </div>
+                      </div>
+                      <div style={{ width: '60px' }}>
+                        <div style={{ fontSize: '11px', color: '#666', marginBottom: '8px' }}>GR</div>
+                        <div
+                          style={{
+                            height: '60px',
+                            background: '#0a0a0a',
+                            borderRadius: '4px',
+                            display: 'flex',
+                            alignItems: 'flex-end',
+                            justifyContent: 'center',
+                            padding: '4px',
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: '20px',
+                              height: `${Math.min(100, Math.abs(gainReduction) * 5)}%`,
+                              background: '#ef4444',
+                              borderRadius: '2px',
+                            }}
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <div style={{ width: '60px' }}>
-                    <div style={{ fontSize: '11px', color: '#666', marginBottom: '8px' }}>GR</div>
-                    <div
-                      style={{
-                        height: '60px',
-                        background: '#0a0a0a',
-                        borderRadius: '4px',
-                        display: 'flex',
-                        alignItems: 'flex-end',
-                        justifyContent: 'center',
-                        padding: '4px',
-                      }}
-                    >
-                      <div
-                        style={{
-                          width: '20px',
-                          height: `${Math.min(100, Math.abs(gainReduction) * 5)}%`,
-                          background: '#ef4444',
-                          borderRadius: '2px',
-                        }}
-                      />
-                    </div>
-                  </div>
-                </div>
+                )}
               </div>
             )}
 

@@ -408,6 +408,46 @@ function checkMultiTrackCondition(
       return diff <= condition.tolerance;
     }
 
+    // Bus-level conditions are handled separately in checkBusCondition
+    case 'bus_compression':
+    case 'bus_eq_boost':
+    case 'bus_eq_cut':
+      return false; // Handled separately
+
+    default:
+      return false;
+  }
+}
+
+/** Bus parameters for condition checking */
+interface BusParams {
+  compressor?: { amount: number };
+  eq?: { low: number; mid: number; high: number };
+}
+
+/**
+ * Check a bus-level condition
+ */
+function checkBusCondition(
+  condition: MultiTrackCondition,
+  busParams: BusParams
+): boolean {
+  switch (condition.type) {
+    case 'bus_compression': {
+      if (!busParams.compressor) return false;
+      return busParams.compressor.amount >= condition.minAmount;
+    }
+
+    case 'bus_eq_boost': {
+      if (!busParams.eq) return false;
+      return busParams.eq[condition.band] >= condition.minBoost;
+    }
+
+    case 'bus_eq_cut': {
+      if (!busParams.eq) return false;
+      return busParams.eq[condition.band] <= -condition.minCut;
+    }
+
     default:
       return false;
   }
@@ -446,6 +486,13 @@ function describeCondition(condition: MultiTrackCondition): string {
       return `${condition.track} volume between ${condition.minDb} and ${condition.maxDb} dB`;
     case 'volume_balanced':
       return `${condition.track1} and ${condition.track2} balanced within ${condition.tolerance} dB`;
+    // Bus-level conditions
+    case 'bus_compression':
+      return `Bus compression at ${condition.minAmount}%+`;
+    case 'bus_eq_boost':
+      return `Bus ${condition.band}s boosted by ${condition.minBoost}+ dB`;
+    case 'bus_eq_cut':
+      return `Bus ${condition.band}s cut by ${condition.minCut}+ dB`;
     default:
       return 'Unknown condition';
   }
@@ -456,13 +503,22 @@ function describeCondition(condition: MultiTrackCondition): string {
  */
 function evaluateMultiTrackGoal(
   playerTracks: Record<string, TrackParamsWithExtras>,
-  target: MultiTrackGoalTarget
+  target: MultiTrackGoalTarget,
+  busParams?: BusParams
 ): { conditionResults: { description: string; passed: boolean }[]; total: number; feedback: string[] } {
   const conditionResults: { description: string; passed: boolean }[] = [];
   const feedback: string[] = [];
 
   for (const condition of target.conditions) {
-    const passed = checkMultiTrackCondition(condition, playerTracks);
+    let passed: boolean;
+
+    // Check if this is a bus-level condition
+    if (condition.type === 'bus_compression' || condition.type === 'bus_eq_boost' || condition.type === 'bus_eq_cut') {
+      passed = busParams ? checkBusCondition(condition, busParams) : false;
+    } else {
+      passed = checkMultiTrackCondition(condition, playerTracks);
+    }
+
     conditionResults.push({
       description: describeCondition(condition),
       passed,
@@ -494,7 +550,8 @@ export function evaluateMixingChallenge(
   challenge: MixingChallenge,
   playerEQ: EQParams,
   playerCompressor: CompressorFullParams,
-  playerTrackEQs?: Record<string, EQParams>
+  playerTrackEQs?: Record<string, EQParams>,
+  playerBusEQ?: EQParams
 ): MixingScoreResult {
   const target = challenge.target;
   const feedback: string[] = [];
@@ -535,7 +592,11 @@ export function evaluateMixingChallenge(
     feedback.push(...mtResult.feedback);
   } else if (target.type === 'multitrack-goal' && playerTrackEQs) {
     // Multi-track goal-based challenge
-    const goalResult = evaluateMultiTrackGoal(playerTrackEQs, target);
+    const busParams: BusParams = {
+      compressor: { amount: playerCompressor.amount },
+      eq: playerBusEQ,
+    };
+    const goalResult = evaluateMultiTrackGoal(playerTrackEQs, target, busParams);
     breakdown.conditions = goalResult.conditionResults;
     overall = goalResult.total;
     feedback.push(...goalResult.feedback);

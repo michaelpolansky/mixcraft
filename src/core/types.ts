@@ -403,7 +403,11 @@ export type MultiTrackCondition =
   | { type: 'depth_placement'; track: string; depth: 'front' | 'middle' | 'back' }
   | { type: 'volume_louder'; track1: string; track2: string }
   | { type: 'volume_range'; track: string; minDb: number; maxDb: number }
-  | { type: 'volume_balanced'; track1: string; track2: string; tolerance: number };
+  | { type: 'volume_balanced'; track1: string; track2: string; tolerance: number }
+  // Bus-level conditions
+  | { type: 'bus_compression'; minAmount: number }
+  | { type: 'bus_eq_boost'; band: 'low' | 'mid' | 'high'; minBoost: number }
+  | { type: 'bus_eq_cut'; band: 'low' | 'mid' | 'high'; minCut: number };
 
 /** Union type for mixing challenge targets */
 export type MixingTarget = EQTarget | CompressorTarget | MixingProblem | MultiTrackEQTarget | MultiTrackGoalTarget;
@@ -441,6 +445,10 @@ export interface MixingChallenge {
     pan?: boolean;
     /** Per-track reverb controls (for depth and space) */
     reverb?: boolean;
+    /** Bus compressor (master bus processing) */
+    busCompressor?: boolean;
+    /** Bus EQ (master bus processing) */
+    busEQ?: boolean;
   };
 }
 
