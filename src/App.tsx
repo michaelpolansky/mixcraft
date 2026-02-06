@@ -13,6 +13,7 @@ const ProductionChallengeView = lazy(() => import('./ui/views/ProductionChalleng
 const FMSynthView = lazy(() => import('./ui/views/FMSynthView.tsx').then(m => ({ default: m.FMSynthView })));
 const AdditiveSynthView = lazy(() => import('./ui/views/AdditiveSynthView.tsx').then(m => ({ default: m.AdditiveSynthView })));
 const SamplerView = lazy(() => import('./ui/views/SamplerView.tsx').then(m => ({ default: m.SamplerView })));
+const SamplerChallengeView = lazy(() => import('./ui/views/SamplerChallengeView.tsx').then(m => ({ default: m.SamplerChallengeView })));
 import { useSynthStore } from './ui/stores/synth-store.ts';
 import { useChallengeStore } from './ui/stores/challenge-store.ts';
 import { useMixingStore } from './ui/stores/mixing-store.ts';
@@ -21,7 +22,7 @@ import { allChallenges, modules } from './data/challenges/index.ts';
 import { allMixingChallenges, mixingModules, getMixingChallenge, getNextMixingChallenge } from './data/challenges/mixing/index.ts';
 import { allProductionChallenges, productionModules, getProductionChallenge, getNextProductionChallenge } from './data/challenges/production/index.ts';
 import { useIsMobile } from './ui/hooks/useMediaQuery.ts';
-import type { MixingChallenge, ProductionChallenge } from './core/types.ts';
+import type { MixingChallenge, ProductionChallenge, SamplingChallenge } from './core/types.ts';
 
 // Loading fallback for lazy-loaded views
 function LoadingFallback() {
@@ -56,7 +57,7 @@ function LoadingFallback() {
   );
 }
 
-type View = 'menu' | 'sandbox' | 'fm-sandbox' | 'additive-sandbox' | 'sampler' | 'challenge' | 'mixing-challenge' | 'production-challenge';
+type View = 'menu' | 'sandbox' | 'fm-sandbox' | 'additive-sandbox' | 'sampler' | 'challenge' | 'mixing-challenge' | 'production-challenge' | 'sampling-challenge';
 
 export function App() {
   const [view, setView] = useState<View>('menu');
@@ -66,6 +67,7 @@ export function App() {
   const { getChallengeProgress: getProductionProgress, getModuleProgress: getProductionModuleProgress } = useProductionStore();
   const [currentMixingChallenge, setCurrentMixingChallenge] = useState<MixingChallenge | null>(null);
   const [currentProductionChallenge, setCurrentProductionChallenge] = useState<ProductionChallenge | null>(null);
+  const [currentSamplingChallenge, setCurrentSamplingChallenge] = useState<SamplingChallenge | null>(null);
   const isMobile = useIsMobile();
 
   // Onboarding state - show for first-time users
@@ -144,6 +146,21 @@ export function App() {
     exitChallenge();
     setCurrentMixingChallenge(null);
     setCurrentProductionChallenge(null);
+    setCurrentSamplingChallenge(null);
+    setView('menu');
+  };
+
+  // Start a sampling challenge
+  const handleStartSamplingChallenge = (challenge: SamplingChallenge) => {
+    setCurrentSamplingChallenge(challenge);
+    setView('sampling-challenge');
+  };
+
+  // Handle next sampling challenge (placeholder - will be implemented with challenge data)
+  const handleNextSamplingChallenge = () => {
+    // For now, just go back to menu
+    // TODO: Implement getNextSamplingChallenge when challenges are created
+    setCurrentSamplingChallenge(null);
     setView('menu');
   };
 
@@ -242,6 +259,22 @@ export function App() {
           challenge={currentProductionChallenge}
           onExit={handleExitChallenge}
           onNext={handleNextProductionChallenge}
+          hasNext={hasNext}
+        />
+      </Suspense>
+    );
+  }
+
+  // Sampling challenge view
+  if (view === 'sampling-challenge' && currentSamplingChallenge) {
+    // TODO: hasNext will be calculated from sampling challenge data when created
+    const hasNext = false;
+    return (
+      <Suspense fallback={<LoadingFallback />}>
+        <SamplerChallengeView
+          challenge={currentSamplingChallenge}
+          onExit={handleExitChallenge}
+          onNext={handleNextSamplingChallenge}
           hasNext={hasNext}
         />
       </Suspense>
