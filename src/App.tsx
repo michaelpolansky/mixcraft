@@ -22,7 +22,7 @@ import { useMixingStore } from './ui/stores/mixing-store.ts';
 import { useProductionStore } from './ui/stores/production-store.ts';
 import { useSamplerStore } from './ui/stores/sampler-store.ts';
 import { useDrumSequencerStore } from './ui/stores/drum-sequencer-store.ts';
-import { allChallenges, modules, allSamplingChallenges, samplingModules, getSamplingChallenge, getNextSamplingChallenge } from './data/challenges/index.ts';
+import { allChallenges, modules, allSamplingChallenges, samplingModules, getSamplingChallenge, getNextSamplingChallenge, allDrumSequencingChallenges, drumSequencingModules, getDrumSequencingChallenge, getNextDrumSequencingChallenge } from './data/challenges/index.ts';
 import { allMixingChallenges, mixingModules, getMixingChallenge, getNextMixingChallenge } from './data/challenges/mixing/index.ts';
 import { allProductionChallenges, productionModules, getProductionChallenge, getNextProductionChallenge } from './data/challenges/production/index.ts';
 import { useIsMobile } from './ui/hooks/useMediaQuery.ts';
@@ -70,6 +70,7 @@ export function App() {
   const { getChallengeProgress: getMixingProgress, getModuleProgress: getMixingModuleProgress } = useMixingStore();
   const { getChallengeProgress: getProductionProgress, getModuleProgress: getProductionModuleProgress } = useProductionStore();
   const { getChallengeProgress: getSamplingProgress, getModuleProgress: getSamplingModuleProgress } = useSamplerStore();
+  const { getChallengeProgress: getDrumSequencingProgress, getModuleProgress: getDrumSequencingModuleProgress } = useDrumSequencerStore();
   const [currentMixingChallenge, setCurrentMixingChallenge] = useState<MixingChallenge | null>(null);
   const [currentProductionChallenge, setCurrentProductionChallenge] = useState<ProductionChallenge | null>(null);
   const [currentSamplingChallenge, setCurrentSamplingChallenge] = useState<SamplingChallenge | null>(null);
@@ -180,18 +181,25 @@ export function App() {
   };
 
   // Start a drum sequencing challenge
-  const handleStartDrumSequencingChallenge = (challenge: DrumSequencingChallenge) => {
-    setCurrentDrumSequencingChallenge(challenge);
-    setView('drum-sequencer-challenge');
+  const handleStartDrumSequencingChallenge = (challengeId: string) => {
+    const challenge = getDrumSequencingChallenge(challengeId);
+    if (challenge) {
+      setCurrentDrumSequencingChallenge(challenge);
+      setView('drum-sequencer-challenge');
+    }
   };
 
   // Handle next drum sequencing challenge
-  // Note: getNextDrumSequencingChallenge will be implemented when challenges are created
   const handleNextDrumSequencingChallenge = () => {
-    // For now, just exit to menu
-    // When challenges exist, this will fetch the next challenge
-    setCurrentDrumSequencingChallenge(null);
-    setView('menu');
+    if (currentDrumSequencingChallenge) {
+      const next = getNextDrumSequencingChallenge(currentDrumSequencingChallenge.id);
+      if (next) {
+        setCurrentDrumSequencingChallenge(next);
+      } else {
+        setCurrentDrumSequencingChallenge(null);
+        setView('menu');
+      }
+    }
   };
 
   // Not initialized - show start screen
@@ -312,8 +320,7 @@ export function App() {
 
   // Drum sequencer challenge view
   if (view === 'drum-sequencer-challenge' && currentDrumSequencingChallenge) {
-    // Note: hasNext will be determined when challenges are implemented
-    const hasNext = false;
+    const hasNext = !!getNextDrumSequencingChallenge(currentDrumSequencingChallenge.id);
     return (
       <Suspense fallback={<LoadingFallback />}>
         <DrumSequencerChallengeView
@@ -2896,6 +2903,615 @@ export function App() {
                   <button
                     key={challenge.id}
                     onClick={() => handleStartSamplingChallenge(challenge.id)}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '12px 16px',
+                      background: '#0a0a0a',
+                      border: '1px solid #222',
+                      borderRadius: '8px',
+                      color: '#fff',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: '14px', fontWeight: 500 }}>
+                        {challenge.title}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#666' }}>
+                        {'★'.repeat(challenge.difficulty)}
+                        {'☆'.repeat(3 - challenge.difficulty)}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ color: '#eab308', fontSize: '14px' }}>
+                        {'★'.repeat(stars)}
+                        <span style={{ color: '#333' }}>{'★'.repeat(3 - stars)}</span>
+                      </div>
+                      {progress?.completed && (
+                        <span style={{ color: '#22c55e', fontSize: '16px' }}>✓</span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+          </div>
+        </div>
+
+        {/* Drum Sequencing Section */}
+        <h2
+          style={{
+            fontSize: '14px',
+            fontWeight: 600,
+            color: '#f97316',
+            textTransform: 'uppercase',
+            letterSpacing: '1px',
+            marginBottom: '16px',
+            marginTop: '32px',
+          }}
+        >
+          Drum Sequencing
+        </h2>
+
+        {/* Module: DS1 - Grid Basics */}
+        <div
+          style={{
+            background: '#141414',
+            borderRadius: '12px',
+            padding: '20px',
+            border: '1px solid #2a2a2a',
+            marginBottom: '16px',
+          }}
+        >
+          {(() => {
+            const mp = getDrumSequencingModuleProgress('DS1', allDrumSequencingChallenges);
+            const pct = mp.total > 0 ? Math.round((mp.completed / mp.total) * 100) : 0;
+            return (
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '16px',
+                }}
+              >
+                <div style={{ flex: 1 }}>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>
+                    {drumSequencingModules.DS1.title}
+                  </h3>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#666' }}>
+                    {drumSequencingModules.DS1.description}
+                  </p>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ color: '#eab308', fontSize: '13px' }}>
+                    {'★'.repeat(mp.stars)}<span style={{ color: '#333' }}>{'★'.repeat(mp.total * 3 - mp.stars)}</span>
+                  </div>
+                  <div
+                    style={{
+                      padding: '4px 10px',
+                      background: pct === 100 ? '#22c55e' : '#222',
+                      borderRadius: '12px',
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      color: pct === 100 ? '#000' : '#888',
+                    }}
+                  >
+                    {mp.completed}/{mp.total}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {allDrumSequencingChallenges
+              .filter((c) => c.module === 'DS1')
+              .map((challenge) => {
+                const progress = getDrumSequencingProgress(challenge.id);
+                const stars = progress?.stars ?? 0;
+
+                return (
+                  <button
+                    key={challenge.id}
+                    onClick={() => handleStartDrumSequencingChallenge(challenge.id)}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '12px 16px',
+                      background: '#0a0a0a',
+                      border: '1px solid #222',
+                      borderRadius: '8px',
+                      color: '#fff',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: '14px', fontWeight: 500 }}>
+                        {challenge.title}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#666' }}>
+                        {'★'.repeat(challenge.difficulty)}
+                        {'☆'.repeat(3 - challenge.difficulty)}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ color: '#eab308', fontSize: '14px' }}>
+                        {'★'.repeat(stars)}
+                        <span style={{ color: '#333' }}>{'★'.repeat(3 - stars)}</span>
+                      </div>
+                      {progress?.completed && (
+                        <span style={{ color: '#22c55e', fontSize: '16px' }}>✓</span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+          </div>
+        </div>
+
+        {/* Module: DS2 - Hi-hats & Percussion */}
+        <div
+          style={{
+            background: '#141414',
+            borderRadius: '12px',
+            padding: '20px',
+            border: '1px solid #2a2a2a',
+            marginBottom: '16px',
+          }}
+        >
+          {(() => {
+            const mp = getDrumSequencingModuleProgress('DS2', allDrumSequencingChallenges);
+            const pct = mp.total > 0 ? Math.round((mp.completed / mp.total) * 100) : 0;
+            return (
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '16px',
+                }}
+              >
+                <div style={{ flex: 1 }}>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>
+                    {drumSequencingModules.DS2.title}
+                  </h3>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#666' }}>
+                    {drumSequencingModules.DS2.description}
+                  </p>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ color: '#eab308', fontSize: '13px' }}>
+                    {'★'.repeat(mp.stars)}<span style={{ color: '#333' }}>{'★'.repeat(mp.total * 3 - mp.stars)}</span>
+                  </div>
+                  <div
+                    style={{
+                      padding: '4px 10px',
+                      background: pct === 100 ? '#22c55e' : '#222',
+                      borderRadius: '12px',
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      color: pct === 100 ? '#000' : '#888',
+                    }}
+                  >
+                    {mp.completed}/{mp.total}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {allDrumSequencingChallenges
+              .filter((c) => c.module === 'DS2')
+              .map((challenge) => {
+                const progress = getDrumSequencingProgress(challenge.id);
+                const stars = progress?.stars ?? 0;
+
+                return (
+                  <button
+                    key={challenge.id}
+                    onClick={() => handleStartDrumSequencingChallenge(challenge.id)}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '12px 16px',
+                      background: '#0a0a0a',
+                      border: '1px solid #222',
+                      borderRadius: '8px',
+                      color: '#fff',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: '14px', fontWeight: 500 }}>
+                        {challenge.title}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#666' }}>
+                        {'★'.repeat(challenge.difficulty)}
+                        {'☆'.repeat(3 - challenge.difficulty)}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ color: '#eab308', fontSize: '14px' }}>
+                        {'★'.repeat(stars)}
+                        <span style={{ color: '#333' }}>{'★'.repeat(3 - stars)}</span>
+                      </div>
+                      {progress?.completed && (
+                        <span style={{ color: '#22c55e', fontSize: '16px' }}>✓</span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+          </div>
+        </div>
+
+        {/* Module: DS3 - Groove & Swing */}
+        <div
+          style={{
+            background: '#141414',
+            borderRadius: '12px',
+            padding: '20px',
+            border: '1px solid #2a2a2a',
+            marginBottom: '16px',
+          }}
+        >
+          {(() => {
+            const mp = getDrumSequencingModuleProgress('DS3', allDrumSequencingChallenges);
+            const pct = mp.total > 0 ? Math.round((mp.completed / mp.total) * 100) : 0;
+            return (
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '16px',
+                }}
+              >
+                <div style={{ flex: 1 }}>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>
+                    {drumSequencingModules.DS3.title}
+                  </h3>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#666' }}>
+                    {drumSequencingModules.DS3.description}
+                  </p>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ color: '#eab308', fontSize: '13px' }}>
+                    {'★'.repeat(mp.stars)}<span style={{ color: '#333' }}>{'★'.repeat(mp.total * 3 - mp.stars)}</span>
+                  </div>
+                  <div
+                    style={{
+                      padding: '4px 10px',
+                      background: pct === 100 ? '#22c55e' : '#222',
+                      borderRadius: '12px',
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      color: pct === 100 ? '#000' : '#888',
+                    }}
+                  >
+                    {mp.completed}/{mp.total}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {allDrumSequencingChallenges
+              .filter((c) => c.module === 'DS3')
+              .map((challenge) => {
+                const progress = getDrumSequencingProgress(challenge.id);
+                const stars = progress?.stars ?? 0;
+
+                return (
+                  <button
+                    key={challenge.id}
+                    onClick={() => handleStartDrumSequencingChallenge(challenge.id)}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '12px 16px',
+                      background: '#0a0a0a',
+                      border: '1px solid #222',
+                      borderRadius: '8px',
+                      color: '#fff',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: '14px', fontWeight: 500 }}>
+                        {challenge.title}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#666' }}>
+                        {'★'.repeat(challenge.difficulty)}
+                        {'☆'.repeat(3 - challenge.difficulty)}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ color: '#eab308', fontSize: '14px' }}>
+                        {'★'.repeat(stars)}
+                        <span style={{ color: '#333' }}>{'★'.repeat(3 - stars)}</span>
+                      </div>
+                      {progress?.completed && (
+                        <span style={{ color: '#22c55e', fontSize: '16px' }}>✓</span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+          </div>
+        </div>
+
+        {/* Module: DS4 - Velocity & Dynamics */}
+        <div
+          style={{
+            background: '#141414',
+            borderRadius: '12px',
+            padding: '20px',
+            border: '1px solid #2a2a2a',
+            marginBottom: '16px',
+          }}
+        >
+          {(() => {
+            const mp = getDrumSequencingModuleProgress('DS4', allDrumSequencingChallenges);
+            const pct = mp.total > 0 ? Math.round((mp.completed / mp.total) * 100) : 0;
+            return (
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '16px',
+                }}
+              >
+                <div style={{ flex: 1 }}>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>
+                    {drumSequencingModules.DS4.title}
+                  </h3>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#666' }}>
+                    {drumSequencingModules.DS4.description}
+                  </p>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ color: '#eab308', fontSize: '13px' }}>
+                    {'★'.repeat(mp.stars)}<span style={{ color: '#333' }}>{'★'.repeat(mp.total * 3 - mp.stars)}</span>
+                  </div>
+                  <div
+                    style={{
+                      padding: '4px 10px',
+                      background: pct === 100 ? '#22c55e' : '#222',
+                      borderRadius: '12px',
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      color: pct === 100 ? '#000' : '#888',
+                    }}
+                  >
+                    {mp.completed}/{mp.total}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {allDrumSequencingChallenges
+              .filter((c) => c.module === 'DS4')
+              .map((challenge) => {
+                const progress = getDrumSequencingProgress(challenge.id);
+                const stars = progress?.stars ?? 0;
+
+                return (
+                  <button
+                    key={challenge.id}
+                    onClick={() => handleStartDrumSequencingChallenge(challenge.id)}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '12px 16px',
+                      background: '#0a0a0a',
+                      border: '1px solid #222',
+                      borderRadius: '8px',
+                      color: '#fff',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: '14px', fontWeight: 500 }}>
+                        {challenge.title}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#666' }}>
+                        {'★'.repeat(challenge.difficulty)}
+                        {'☆'.repeat(3 - challenge.difficulty)}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ color: '#eab308', fontSize: '14px' }}>
+                        {'★'.repeat(stars)}
+                        <span style={{ color: '#333' }}>{'★'.repeat(3 - stars)}</span>
+                      </div>
+                      {progress?.completed && (
+                        <span style={{ color: '#22c55e', fontSize: '16px' }}>✓</span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+          </div>
+        </div>
+
+        {/* Module: DS5 - Genre Patterns */}
+        <div
+          style={{
+            background: '#141414',
+            borderRadius: '12px',
+            padding: '20px',
+            border: '1px solid #2a2a2a',
+            marginBottom: '16px',
+          }}
+        >
+          {(() => {
+            const mp = getDrumSequencingModuleProgress('DS5', allDrumSequencingChallenges);
+            const pct = mp.total > 0 ? Math.round((mp.completed / mp.total) * 100) : 0;
+            return (
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '16px',
+                }}
+              >
+                <div style={{ flex: 1 }}>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>
+                    {drumSequencingModules.DS5.title}
+                  </h3>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#666' }}>
+                    {drumSequencingModules.DS5.description}
+                  </p>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ color: '#eab308', fontSize: '13px' }}>
+                    {'★'.repeat(mp.stars)}<span style={{ color: '#333' }}>{'★'.repeat(mp.total * 3 - mp.stars)}</span>
+                  </div>
+                  <div
+                    style={{
+                      padding: '4px 10px',
+                      background: pct === 100 ? '#22c55e' : '#222',
+                      borderRadius: '12px',
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      color: pct === 100 ? '#000' : '#888',
+                    }}
+                  >
+                    {mp.completed}/{mp.total}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {allDrumSequencingChallenges
+              .filter((c) => c.module === 'DS5')
+              .map((challenge) => {
+                const progress = getDrumSequencingProgress(challenge.id);
+                const stars = progress?.stars ?? 0;
+
+                return (
+                  <button
+                    key={challenge.id}
+                    onClick={() => handleStartDrumSequencingChallenge(challenge.id)}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '12px 16px',
+                      background: '#0a0a0a',
+                      border: '1px solid #222',
+                      borderRadius: '8px',
+                      color: '#fff',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: '14px', fontWeight: 500 }}>
+                        {challenge.title}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#666' }}>
+                        {'★'.repeat(challenge.difficulty)}
+                        {'☆'.repeat(3 - challenge.difficulty)}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ color: '#eab308', fontSize: '14px' }}>
+                        {'★'.repeat(stars)}
+                        <span style={{ color: '#333' }}>{'★'.repeat(3 - stars)}</span>
+                      </div>
+                      {progress?.completed && (
+                        <span style={{ color: '#22c55e', fontSize: '16px' }}>✓</span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+          </div>
+        </div>
+
+        {/* Module: DS6 - Loop Construction */}
+        <div
+          style={{
+            background: '#141414',
+            borderRadius: '12px',
+            padding: '20px',
+            border: '1px solid #2a2a2a',
+            marginBottom: '16px',
+          }}
+        >
+          {(() => {
+            const mp = getDrumSequencingModuleProgress('DS6', allDrumSequencingChallenges);
+            const pct = mp.total > 0 ? Math.round((mp.completed / mp.total) * 100) : 0;
+            return (
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '16px',
+                }}
+              >
+                <div style={{ flex: 1 }}>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>
+                    {drumSequencingModules.DS6.title}
+                  </h3>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#666' }}>
+                    {drumSequencingModules.DS6.description}
+                  </p>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ color: '#eab308', fontSize: '13px' }}>
+                    {'★'.repeat(mp.stars)}<span style={{ color: '#333' }}>{'★'.repeat(mp.total * 3 - mp.stars)}</span>
+                  </div>
+                  <div
+                    style={{
+                      padding: '4px 10px',
+                      background: pct === 100 ? '#22c55e' : '#222',
+                      borderRadius: '12px',
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      color: pct === 100 ? '#000' : '#888',
+                    }}
+                  >
+                    {mp.completed}/{mp.total}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {allDrumSequencingChallenges
+              .filter((c) => c.module === 'DS6')
+              .map((challenge) => {
+                const progress = getDrumSequencingProgress(challenge.id);
+                const stars = progress?.stars ?? 0;
+
+                return (
+                  <button
+                    key={challenge.id}
+                    onClick={() => handleStartDrumSequencingChallenge(challenge.id)}
                     style={{
                       display: 'flex',
                       justifyContent: 'space-between',

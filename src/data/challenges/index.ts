@@ -16,6 +16,17 @@ import {
   getNextSamplingChallenge,
 } from './sampling/index.ts';
 
+// Drum Sequencing Challenges (DS1-DS6)
+import {
+  drumSequencingChallengesById,
+  drumSequencingChallengesByModule,
+  allDrumSequencingChallenges,
+  drumSequencingModules,
+  getDrumSequencingChallenge,
+  getDrumSequencingModuleChallenges,
+  getNextDrumSequencingChallenge,
+} from './drum-sequencing/index.ts';
+
 // Re-export sampling
 export {
   samplingChallengesById,
@@ -25,6 +36,17 @@ export {
   getSamplingChallenge,
   getSamplingModuleChallenges,
   getNextSamplingChallenge,
+};
+
+// Re-export drum sequencing
+export {
+  drumSequencingChallengesById,
+  drumSequencingChallengesByModule,
+  allDrumSequencingChallenges,
+  drumSequencingModules,
+  getDrumSequencingChallenge,
+  getDrumSequencingModuleChallenges,
+  getNextDrumSequencingChallenge,
 };
 
 // SD1 - Oscillator Fundamentals
