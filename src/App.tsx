@@ -12,6 +12,7 @@ const MultiTrackMixingView = lazy(() => import('./ui/views/MultiTrackMixingView.
 const ProductionChallengeView = lazy(() => import('./ui/views/ProductionChallengeView.tsx').then(m => ({ default: m.ProductionChallengeView })));
 const FMSynthView = lazy(() => import('./ui/views/FMSynthView.tsx').then(m => ({ default: m.FMSynthView })));
 const AdditiveSynthView = lazy(() => import('./ui/views/AdditiveSynthView.tsx').then(m => ({ default: m.AdditiveSynthView })));
+const SamplerView = lazy(() => import('./ui/views/SamplerView.tsx').then(m => ({ default: m.SamplerView })));
 import { useSynthStore } from './ui/stores/synth-store.ts';
 import { useChallengeStore } from './ui/stores/challenge-store.ts';
 import { useMixingStore } from './ui/stores/mixing-store.ts';
@@ -55,7 +56,7 @@ function LoadingFallback() {
   );
 }
 
-type View = 'menu' | 'sandbox' | 'fm-sandbox' | 'additive-sandbox' | 'challenge' | 'mixing-challenge' | 'production-challenge';
+type View = 'menu' | 'sandbox' | 'fm-sandbox' | 'additive-sandbox' | 'sampler' | 'challenge' | 'mixing-challenge' | 'production-challenge';
 
 export function App() {
   const [view, setView] = useState<View>('menu');
@@ -349,6 +350,15 @@ export function App() {
     );
   }
 
+  // Sampler Sandbox view
+  if (view === 'sampler') {
+    return (
+      <Suspense fallback={<LoadingFallback />}>
+        <SamplerView onBack={() => setView('menu')} />
+      </Suspense>
+    );
+  }
+
   // Main menu
   return (
     <div
@@ -573,6 +583,27 @@ export function App() {
             </div>
             <div style={{ fontSize: '13px', color: '#666' }}>
               Build sounds from harmonics
+            </div>
+          </button>
+
+          <button
+            onClick={() => setView('sampler')}
+            style={{
+              padding: '20px 32px',
+              background: '#141414',
+              border: '1px solid #a855f7',
+              borderRadius: '12px',
+              color: '#fff',
+              cursor: 'pointer',
+              textAlign: 'left',
+              flex: 1,
+            }}
+          >
+            <div style={{ fontSize: '18px', fontWeight: 600, marginBottom: '4px', color: '#a855f7' }}>
+              Sampler Sandbox
+            </div>
+            <div style={{ fontSize: '13px', color: '#666' }}>
+              Load and manipulate samples
             </div>
           </button>
         </div>
