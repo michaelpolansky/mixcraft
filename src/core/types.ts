@@ -233,6 +233,54 @@ export const PARAM_RANGES = {
 } as const;
 
 // ============================================
+// FM Synth Types
+// ============================================
+
+export interface FMSynthParams {
+  /** Ratio between modulator and carrier frequency (0.5 to 12) */
+  harmonicity: number;
+  /** Depth of frequency modulation (0 to 10) */
+  modulationIndex: number;
+  /** Carrier oscillator waveform */
+  carrierType: OscillatorType;
+  /** Modulator oscillator waveform */
+  modulatorType: OscillatorType;
+  /** Amplitude envelope */
+  amplitudeEnvelope: ADSREnvelope;
+  /** How much the modulation envelope affects modIndex (0 to 1) */
+  modulationEnvelopeAmount: number;
+  /** Effects processors */
+  effects: EffectsParams;
+  /** Master volume in dB (-60 to 0) */
+  volume: number;
+}
+
+export const DEFAULT_FM_SYNTH_PARAMS: FMSynthParams = {
+  harmonicity: 1,
+  modulationIndex: 2,
+  carrierType: 'sine',
+  modulatorType: 'sine',
+  amplitudeEnvelope: {
+    attack: 0.01,
+    decay: 0.3,
+    sustain: 0.5,
+    release: 0.5,
+  },
+  modulationEnvelopeAmount: 0.5,
+  effects: DEFAULT_EFFECTS,
+  volume: -12,
+};
+
+export const FM_PARAM_RANGES = {
+  harmonicity: { min: 0.5, max: 12, step: 0.1 },
+  modulationIndex: { min: 0, max: 10, step: 0.1 },
+  modulationEnvelopeAmount: { min: 0, max: 1, step: 0.01 },
+} as const;
+
+/** Common harmonicity presets for quick selection */
+export const HARMONICITY_PRESETS = [1, 2, 3, 4, 5, 6] as const;
+
+// ============================================
 // Audio Analysis Types
 // ============================================
 
@@ -276,8 +324,10 @@ export interface Challenge {
   description: string;
   /** Star difficulty (1-3) */
   difficulty: 1 | 2 | 3;
-  /** Target synth parameters to match */
-  targetParams: SynthParams;
+  /** Synthesis type for this challenge */
+  synthesisType?: 'subtractive' | 'fm';
+  /** Target synth parameters to match (type depends on synthesisType) */
+  targetParams: SynthParams | FMSynthParams;
   /** Progressive hints (revealed one at a time) */
   hints: string[];
   /** Curriculum module (e.g., "SD1") */
