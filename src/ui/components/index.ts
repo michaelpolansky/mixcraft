@@ -17,3 +17,5 @@ export { EQControl } from './EQControl.tsx';
 export { CompressorControl } from './CompressorControl.tsx';
 export { LayerStrip } from './LayerStrip.tsx';
 export { ProductionMixer } from './ProductionMixer.tsx';
+export { FMSynthPanel } from './FMSynthPanel.tsx';
+export { CarrierModulatorViz } from './CarrierModulatorViz.tsx';
