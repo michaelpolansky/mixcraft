@@ -313,7 +313,7 @@ export type {
 export type { AudioSourceConfig, AudioSource } from './audio-source.ts';
 
 /** Audio source type for mixing challenges */
-export type MixingSourceType = 'tone' | 'noise' | 'drum' | 'bass' | 'pad';
+export type MixingSourceType = 'tone' | 'noise' | 'drum' | 'bass' | 'pad' | 'vocal' | 'keys' | 'guitar' | 'snare' | 'hihat';
 
 /** Target settings for EQ matching challenges (F1-F3) */
 export interface EQTarget {
@@ -344,8 +344,69 @@ export interface MixingProblem {
   };
 }
 
+// ============================================
+// Multi-Track Mixing Types (Intermediate+)
+// ============================================
+
+/** Track configuration for multi-track mixing */
+export interface MixingTrack {
+  /** Unique identifier for this track */
+  id: string;
+  /** Display name (e.g., "Kick", "Bass") */
+  name: string;
+  /** Audio source configuration */
+  sourceConfig: {
+    type: MixingSourceType;
+    frequency?: number;
+  };
+  /** Initial volume in dB (default 0) */
+  initialVolume?: number;
+  /** Initial pan position (-1 to 1, default 0 center) */
+  initialPan?: number;
+  /** Color for UI display */
+  color?: string;
+}
+
+/** Target EQ settings per track for multi-track challenges */
+export interface MultiTrackEQTarget {
+  type: 'multitrack-eq';
+  /** Target EQ settings for each track by ID */
+  tracks: Record<string, { low: number; mid: number; high: number }>;
+  /** Optional bus compressor target */
+  busCompressor?: {
+    threshold: number;
+    amount: number;
+  };
+}
+
+/** Goal-based target for multi-track (relative relationships) */
+export interface MultiTrackGoalTarget {
+  type: 'multitrack-goal';
+  /** Description of the goal */
+  description: string;
+  /** Conditions to check */
+  conditions: MultiTrackCondition[];
+}
+
+/** Conditions for multi-track goal evaluation */
+export type MultiTrackCondition =
+  | { type: 'frequency_separation'; track1: string; track2: string; band: 'low' | 'mid' | 'high' }
+  | { type: 'relative_level'; louder: string; quieter: string; band: 'low' | 'mid' | 'high' }
+  | { type: 'eq_cut'; track: string; band: 'low' | 'mid' | 'high'; minCut: number }
+  | { type: 'eq_boost'; track: string; band: 'low' | 'mid' | 'high'; minBoost: number }
+  | { type: 'balance'; description: string }
+  | { type: 'pan_position'; track: string; position: 'left' | 'center' | 'right' }
+  | { type: 'pan_spread'; track1: string; track2: string; minSpread: number }
+  | { type: 'pan_opposite'; track1: string; track2: string }
+  | { type: 'reverb_amount'; track: string; minMix: number; maxMix?: number }
+  | { type: 'reverb_contrast'; dryTrack: string; wetTrack: string; minDifference: number }
+  | { type: 'depth_placement'; track: string; depth: 'front' | 'middle' | 'back' }
+  | { type: 'volume_louder'; track1: string; track2: string }
+  | { type: 'volume_range'; track: string; minDb: number; maxDb: number }
+  | { type: 'volume_balanced'; track1: string; track2: string; tolerance: number };
+
 /** Union type for mixing challenge targets */
-export type MixingTarget = EQTarget | CompressorTarget | MixingProblem;
+export type MixingTarget = EQTarget | CompressorTarget | MixingProblem | MultiTrackEQTarget | MultiTrackGoalTarget;
 
 /** Mixing challenge definition */
 export interface MixingChallenge {
@@ -357,26 +418,120 @@ export interface MixingChallenge {
   description: string;
   /** Star difficulty (1-3) */
   difficulty: 1 | 2 | 3;
-  /** Audio source configuration */
-  sourceConfig: {
+  /** Audio source configuration (for single-track challenges) */
+  sourceConfig?: {
     type: MixingSourceType;
     frequency?: number;
   };
+  /** Multiple tracks (for Intermediate+ multi-track challenges) */
+  tracks?: MixingTrack[];
   /** Target to match or problem to solve */
   target: MixingTarget;
   /** Progressive hints */
   hints: string[];
-  /** Curriculum module (e.g., "F1", "F2") */
+  /** Curriculum module (e.g., "F1", "F2", "I1") */
   module: string;
   /** Available controls for this challenge */
   controls: {
     eq: boolean;
     compressor: boolean | 'simple' | 'full';
+    /** Per-track volume faders (for multi-track) */
+    volume?: boolean;
+    /** Per-track pan controls (for stereo imaging) */
+    pan?: boolean;
+    /** Per-track reverb controls (for depth and space) */
+    reverb?: boolean;
   };
 }
 
+// ============================================
+// Production Challenge Types
+// ============================================
+
+/** Configuration for a single layer in a production challenge */
+export interface ProductionLayer {
+  /** Unique identifier for this layer */
+  id: string;
+  /** Display name (e.g., "Kick", "Bass") */
+  name: string;
+  /** Audio source configuration */
+  sourceConfig: {
+    type: MixingSourceType;
+    frequency?: number;
+  };
+  /** Initial volume in dB */
+  initialVolume: number;
+  /** Initial pan position (-1 to 1) */
+  initialPan?: number;
+  /** Initial mute state */
+  initialMuted?: boolean;
+}
+
+/** Reference target - match exact values (P1-P2) */
+export interface ProductionReferenceTarget {
+  type: 'reference';
+  layers: {
+    volume: number;
+    muted: boolean;
+    pan?: number;
+    eqLow?: number;
+    eqHigh?: number;
+  }[];
+}
+
+/** Condition types for goal-based evaluation */
+export type ProductionCondition =
+  | { type: 'level_order'; louder: string; quieter: string }
+  | { type: 'pan_spread'; minWidth: number }
+  | { type: 'layer_active'; layerId: string; active: boolean }
+  | { type: 'layer_muted'; layerId: string; muted: boolean }
+  | { type: 'relative_level'; layer1: string; layer2: string; difference: [number, number] }
+  | { type: 'pan_position'; layerId: string; position: [number, number] };
+
+/** Goal target - meet conditions (P3-P5) */
+export interface ProductionGoalTarget {
+  type: 'goal';
+  description: string;
+  conditions: ProductionCondition[];
+}
+
+/** Union type for production targets */
+export type ProductionTarget = ProductionReferenceTarget | ProductionGoalTarget;
+
+/** Production challenge definition */
+export interface ProductionChallenge {
+  /** Unique identifier */
+  id: string;
+  /** Display title */
+  title: string;
+  /** Description of what to achieve */
+  description: string;
+  /** Star difficulty (1-3) */
+  difficulty: 1 | 2 | 3;
+  /** Curriculum module (e.g., "P1", "P2") */
+  module: string;
+  /** Audio layers for this challenge */
+  layers: ProductionLayer[];
+  /** Target to match or goal to achieve */
+  target: ProductionTarget;
+  /** Available controls */
+  availableControls: {
+    volume: boolean;
+    mute: boolean;
+    pan: boolean;
+    eq: boolean;
+  };
+  /** Progressive hints */
+  hints: string[];
+}
+
+/** Type guard for production challenges */
+export function isProductionChallenge(challenge: AnyChallenge | ProductionChallenge): challenge is ProductionChallenge {
+  return 'layers' in challenge && 'availableControls' in challenge;
+}
+
 /** Union type for all challenge types */
-export type AnyChallenge = Challenge | MixingChallenge;
+export type AnyChallenge = Challenge | MixingChallenge | ProductionChallenge;
 
 /** Type guard for mixing challenges */
 export function isMixingChallenge(challenge: AnyChallenge): challenge is MixingChallenge {

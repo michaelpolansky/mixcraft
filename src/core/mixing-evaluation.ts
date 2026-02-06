@@ -3,8 +3,16 @@
  * Scores player's EQ and compressor settings against targets
  */
 
-import type { MixingChallenge, EQParams, CompressorFullParams, MixingTarget } from './types.ts';
-import type { MixingScoreResult } from '../ui/stores/mixing-store.ts';
+import type {
+  MixingChallenge,
+  EQParams,
+  CompressorFullParams,
+  MixingTarget,
+  MultiTrackEQTarget,
+  MultiTrackGoalTarget,
+  MultiTrackCondition,
+} from './types.ts';
+import type { MixingScoreResult, TrackEQParams } from '../ui/stores/mixing-store.ts';
 
 /**
  * Calculate similarity between two values within a tolerance range
@@ -210,12 +218,283 @@ function calculateStars(score: number): 1 | 2 | 3 {
 }
 
 /**
+ * Evaluate multi-track EQ challenge
+ */
+function evaluateMultiTrackEQ(
+  playerTracks: Record<string, EQParams>,
+  target: MultiTrackEQTarget,
+  playerBusComp?: CompressorFullParams
+): { trackScores: Record<string, { low: number; mid: number; high: number; total: number }>; busScore?: number; total: number; feedback: string[] } {
+  const trackScores: Record<string, { low: number; mid: number; high: number; total: number }> = {};
+  const feedback: string[] = [];
+  const scores: number[] = [];
+
+  // Evaluate each track's EQ
+  for (const [trackId, targetEQ] of Object.entries(target.tracks)) {
+    const playerEQ = playerTracks[trackId] || { low: 0, mid: 0, high: 0 };
+    const eqScore = evaluateEQ(playerEQ, targetEQ);
+    trackScores[trackId] = eqScore;
+    scores.push(eqScore.total);
+
+    // Generate per-track feedback
+    if (eqScore.total < 70) {
+      const hints: string[] = [];
+      if (eqScore.low < 70) {
+        hints.push(playerEQ.low < targetEQ.low ? 'boost lows' : 'cut lows');
+      }
+      if (eqScore.mid < 70) {
+        hints.push(playerEQ.mid < targetEQ.mid ? 'boost mids' : 'cut mids');
+      }
+      if (eqScore.high < 70) {
+        hints.push(playerEQ.high < targetEQ.high ? 'boost highs' : 'cut highs');
+      }
+      feedback.push(`${trackId}: try to ${hints.join(', ')}`);
+    }
+  }
+
+  // Evaluate bus compressor if specified
+  let busScore: number | undefined;
+  if (target.busCompressor && playerBusComp) {
+    const compResult = evaluateCompressor(playerBusComp, target.busCompressor);
+    busScore = compResult.total;
+    scores.push(busScore);
+  }
+
+  const total = scores.length > 0
+    ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
+    : 0;
+
+  if (total >= 80) {
+    feedback.unshift('Good frequency separation!');
+  }
+
+  return { trackScores, busScore, total, feedback };
+}
+
+/** Extended track params that may include pan, reverb, and volume */
+interface TrackParamsWithExtras extends EQParams {
+  pan?: number;
+  reverbMix?: number;
+  volume?: number;
+}
+
+/**
+ * Check a multi-track condition
+ */
+function checkMultiTrackCondition(
+  condition: MultiTrackCondition,
+  playerTracks: Record<string, TrackParamsWithExtras>
+): boolean {
+  switch (condition.type) {
+    case 'frequency_separation': {
+      // Check that two tracks don't both boost the same band
+      const track1 = playerTracks[condition.track1];
+      const track2 = playerTracks[condition.track2];
+      if (!track1 || !track2) return false;
+      const band = condition.band;
+      // At least one should cut or both should be neutral
+      return track1[band] <= 0 || track2[band] <= 0;
+    }
+
+    case 'relative_level': {
+      // Check that one track is louder than another in a specific band
+      const louder = playerTracks[condition.louder];
+      const quieter = playerTracks[condition.quieter];
+      if (!louder || !quieter) return false;
+      return louder[condition.band] > quieter[condition.band];
+    }
+
+    case 'eq_cut': {
+      // Check that a track cuts a band by at least minCut
+      const track = playerTracks[condition.track];
+      if (!track) return false;
+      return track[condition.band] <= -condition.minCut;
+    }
+
+    case 'eq_boost': {
+      // Check that a track boosts a band by at least minBoost
+      const track = playerTracks[condition.track];
+      if (!track) return false;
+      return track[condition.band] >= condition.minBoost;
+    }
+
+    case 'balance': {
+      // Generic balance check - always passes (relies on other conditions)
+      return true;
+    }
+
+    case 'pan_position': {
+      // Check that a track is panned to a specific position
+      const track = playerTracks[condition.track];
+      if (!track || track.pan === undefined) return false;
+      const pan = track.pan;
+      switch (condition.position) {
+        case 'left': return pan <= -0.3;
+        case 'right': return pan >= 0.3;
+        case 'center': return pan >= -0.2 && pan <= 0.2;
+        default: return false;
+      }
+    }
+
+    case 'pan_spread': {
+      // Check that two tracks are spread apart in the stereo field
+      const track1 = playerTracks[condition.track1];
+      const track2 = playerTracks[condition.track2];
+      if (!track1 || !track2 || track1.pan === undefined || track2.pan === undefined) return false;
+      const spread = Math.abs(track1.pan - track2.pan);
+      return spread >= condition.minSpread;
+    }
+
+    case 'pan_opposite': {
+      // Check that two tracks are panned to opposite sides
+      const track1 = playerTracks[condition.track1];
+      const track2 = playerTracks[condition.track2];
+      if (!track1 || !track2 || track1.pan === undefined || track2.pan === undefined) return false;
+      // One should be left, one should be right (or at least opposite-ish)
+      return (track1.pan < -0.2 && track2.pan > 0.2) || (track1.pan > 0.2 && track2.pan < -0.2);
+    }
+
+    case 'reverb_amount': {
+      // Check that a track has reverb within a range
+      const track = playerTracks[condition.track];
+      if (!track || track.reverbMix === undefined) return false;
+      const meetsMin = track.reverbMix >= condition.minMix;
+      const meetsMax = condition.maxMix === undefined || track.reverbMix <= condition.maxMix;
+      return meetsMin && meetsMax;
+    }
+
+    case 'reverb_contrast': {
+      // Check that there's a reverb difference between dry and wet tracks
+      const dryTrack = playerTracks[condition.dryTrack];
+      const wetTrack = playerTracks[condition.wetTrack];
+      if (!dryTrack || !wetTrack || dryTrack.reverbMix === undefined || wetTrack.reverbMix === undefined) return false;
+      const difference = wetTrack.reverbMix - dryTrack.reverbMix;
+      return difference >= condition.minDifference;
+    }
+
+    case 'depth_placement': {
+      // Check that a track is at the right depth (front = dry, back = wet)
+      const track = playerTracks[condition.track];
+      if (!track || track.reverbMix === undefined) return false;
+      switch (condition.depth) {
+        case 'front': return track.reverbMix <= 20;
+        case 'middle': return track.reverbMix >= 20 && track.reverbMix <= 50;
+        case 'back': return track.reverbMix >= 40;
+        default: return false;
+      }
+    }
+
+    case 'volume_louder': {
+      // Check that track1 is louder than track2
+      const track1 = playerTracks[condition.track1];
+      const track2 = playerTracks[condition.track2];
+      if (!track1 || !track2 || track1.volume === undefined || track2.volume === undefined) return false;
+      return track1.volume > track2.volume;
+    }
+
+    case 'volume_range': {
+      // Check that a track's volume is within a range
+      const track = playerTracks[condition.track];
+      if (!track || track.volume === undefined) return false;
+      return track.volume >= condition.minDb && track.volume <= condition.maxDb;
+    }
+
+    case 'volume_balanced': {
+      // Check that two tracks are balanced within a tolerance
+      const track1 = playerTracks[condition.track1];
+      const track2 = playerTracks[condition.track2];
+      if (!track1 || !track2 || track1.volume === undefined || track2.volume === undefined) return false;
+      const diff = Math.abs(track1.volume - track2.volume);
+      return diff <= condition.tolerance;
+    }
+
+    default:
+      return false;
+  }
+}
+
+/**
+ * Describe a multi-track condition for feedback
+ */
+function describeCondition(condition: MultiTrackCondition): string {
+  switch (condition.type) {
+    case 'frequency_separation':
+      return `${condition.track1} and ${condition.track2} separated in ${condition.band}s`;
+    case 'relative_level':
+      return `${condition.louder} louder than ${condition.quieter} in ${condition.band}s`;
+    case 'eq_cut':
+      return `${condition.track} ${condition.band}s cut by ${condition.minCut}+ dB`;
+    case 'eq_boost':
+      return `${condition.track} ${condition.band}s boosted by ${condition.minBoost}+ dB`;
+    case 'balance':
+      return condition.description;
+    case 'pan_position':
+      return `${condition.track} panned ${condition.position}`;
+    case 'pan_spread':
+      return `${condition.track1} and ${condition.track2} spread across stereo field`;
+    case 'pan_opposite':
+      return `${condition.track1} and ${condition.track2} panned to opposite sides`;
+    case 'reverb_amount':
+      return `${condition.track} reverb at ${condition.minMix}%${condition.maxMix ? ` to ${condition.maxMix}%` : '+'}`;
+    case 'reverb_contrast':
+      return `${condition.wetTrack} wetter than ${condition.dryTrack}`;
+    case 'depth_placement':
+      return `${condition.track} placed ${condition.depth} in the mix`;
+    case 'volume_louder':
+      return `${condition.track1} louder than ${condition.track2}`;
+    case 'volume_range':
+      return `${condition.track} volume between ${condition.minDb} and ${condition.maxDb} dB`;
+    case 'volume_balanced':
+      return `${condition.track1} and ${condition.track2} balanced within ${condition.tolerance} dB`;
+    default:
+      return 'Unknown condition';
+  }
+}
+
+/**
+ * Evaluate multi-track goal-based challenge
+ */
+function evaluateMultiTrackGoal(
+  playerTracks: Record<string, TrackParamsWithExtras>,
+  target: MultiTrackGoalTarget
+): { conditionResults: { description: string; passed: boolean }[]; total: number; feedback: string[] } {
+  const conditionResults: { description: string; passed: boolean }[] = [];
+  const feedback: string[] = [];
+
+  for (const condition of target.conditions) {
+    const passed = checkMultiTrackCondition(condition, playerTracks);
+    conditionResults.push({
+      description: describeCondition(condition),
+      passed,
+    });
+
+    if (!passed) {
+      feedback.push(`Not met: ${describeCondition(condition)}`);
+    }
+  }
+
+  const passedCount = conditionResults.filter((c) => c.passed).length;
+  const total = conditionResults.length > 0
+    ? Math.round((passedCount / conditionResults.length) * 100)
+    : 0;
+
+  if (total >= 90) {
+    feedback.unshift('Excellent balance!');
+  } else if (total >= 70) {
+    feedback.unshift('Good progress!');
+  }
+
+  return { conditionResults, total, feedback };
+}
+
+/**
  * Main evaluation function for mixing challenges
  */
 export function evaluateMixingChallenge(
   challenge: MixingChallenge,
   playerEQ: EQParams,
-  playerCompressor: CompressorFullParams
+  playerCompressor: CompressorFullParams,
+  playerTrackEQs?: Record<string, EQParams>
 ): MixingScoreResult {
   const target = challenge.target;
   const feedback: string[] = [];
@@ -245,6 +524,21 @@ export function evaluateMixingChallenge(
     } else {
       feedback.push('Problem solved correctly!');
     }
+  } else if (target.type === 'multitrack-eq' && playerTrackEQs) {
+    // Multi-track EQ challenge (I1+)
+    const mtResult = evaluateMultiTrackEQ(playerTrackEQs, target, playerCompressor);
+    breakdown.tracks = mtResult.trackScores;
+    if (mtResult.busScore !== undefined) {
+      breakdown.busCompressor = mtResult.busScore;
+    }
+    overall = mtResult.total;
+    feedback.push(...mtResult.feedback);
+  } else if (target.type === 'multitrack-goal' && playerTrackEQs) {
+    // Multi-track goal-based challenge
+    const goalResult = evaluateMultiTrackGoal(playerTrackEQs, target);
+    breakdown.conditions = goalResult.conditionResults;
+    overall = goalResult.total;
+    feedback.push(...goalResult.feedback);
   }
 
   const stars = calculateStars(overall);

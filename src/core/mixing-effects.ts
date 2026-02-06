@@ -1,6 +1,6 @@
 /**
  * Mixing Effects
- * EQ and Compressor for mixing challenges
+ * EQ, Compressor, and Reverb for mixing challenges
  */
 
 import * as Tone from 'tone';
@@ -31,6 +31,14 @@ export interface CompressorFullParams extends CompressorSimpleParams {
 }
 
 /**
+ * Simple Reverb Parameters (I5)
+ */
+export interface ReverbParams {
+  mix: number;      // 0 to 100 (dry/wet percentage)
+  size: number;     // 0 to 100 (room size, maps to decay)
+}
+
+/**
  * EQ parameter ranges
  */
 export const EQ_RANGES = {
@@ -50,6 +58,14 @@ export const COMPRESSOR_RANGES = {
 };
 
 /**
+ * Reverb parameter ranges
+ */
+export const REVERB_RANGES = {
+  mix: { min: 0, max: 100, default: 0 },
+  size: { min: 0, max: 100, default: 50 },
+};
+
+/**
  * Default EQ settings (flat)
  */
 export const DEFAULT_EQ: EQParams = {
@@ -66,6 +82,14 @@ export const DEFAULT_COMPRESSOR: CompressorFullParams = {
   amount: 0,
   attack: 0.03,
   release: 0.25,
+};
+
+/**
+ * Default reverb settings (dry)
+ */
+export const DEFAULT_REVERB: ReverbParams = {
+  mix: 0,
+  size: 50,
 };
 
 /**
@@ -246,5 +270,94 @@ export class MixingCompressor {
 
   dispose(): void {
     this.compressor.dispose();
+  }
+}
+
+/**
+ * Simple Reverb for mixing challenges
+ * Uses Tone.Reverb for room simulation
+ */
+export class MixingReverb {
+  private reverb: Tone.Reverb;
+  private dryGain: Tone.Gain;
+  private wetGain: Tone.Gain;
+  private inputGain: Tone.Gain;
+  private outputGain: Tone.Gain;
+  private _params: ReverbParams = { ...DEFAULT_REVERB };
+
+  constructor() {
+    // Create reverb with reasonable defaults
+    this.reverb = new Tone.Reverb({
+      decay: 2,
+      preDelay: 0.01,
+      wet: 1, // Reverb itself is always wet, we control mix with gains
+    });
+
+    // Dry/wet mixing
+    this.inputGain = new Tone.Gain(1);
+    this.outputGain = new Tone.Gain(1);
+    this.dryGain = new Tone.Gain(1);
+    this.wetGain = new Tone.Gain(0);
+
+    // Routing: input -> dry -> output
+    //          input -> reverb -> wet -> output
+    this.inputGain.connect(this.dryGain);
+    this.inputGain.connect(this.reverb);
+    this.reverb.connect(this.wetGain);
+    this.dryGain.connect(this.outputGain);
+    this.wetGain.connect(this.outputGain);
+  }
+
+  get input(): Tone.InputNode {
+    return this.inputGain;
+  }
+
+  get output(): Tone.OutputNode {
+    return this.outputGain;
+  }
+
+  get params(): ReverbParams {
+    return { ...this._params };
+  }
+
+  setMix(percent: number): void {
+    this._params.mix = Math.max(REVERB_RANGES.mix.min, Math.min(REVERB_RANGES.mix.max, percent));
+    // Convert percentage to dry/wet gains
+    const wet = this._params.mix / 100;
+    const dry = 1 - wet;
+    this.dryGain.gain.value = dry;
+    this.wetGain.gain.value = wet;
+  }
+
+  setSize(percent: number): void {
+    this._params.size = Math.max(REVERB_RANGES.size.min, Math.min(REVERB_RANGES.size.max, percent));
+    // Map size to decay time (0.5 to 5 seconds)
+    const decay = 0.5 + (this._params.size / 100) * 4.5;
+    this.reverb.decay = decay;
+  }
+
+  setParams(params: Partial<ReverbParams>): void {
+    if (params.mix !== undefined) this.setMix(params.mix);
+    if (params.size !== undefined) this.setSize(params.size);
+  }
+
+  reset(): void {
+    this.setParams(DEFAULT_REVERB);
+  }
+
+  connect(destination: Tone.InputNode): void {
+    this.outputGain.connect(destination);
+  }
+
+  disconnect(): void {
+    this.outputGain.disconnect();
+  }
+
+  dispose(): void {
+    this.reverb.dispose();
+    this.dryGain.dispose();
+    this.wetGain.dispose();
+    this.inputGain.dispose();
+    this.outputGain.dispose();
   }
 }

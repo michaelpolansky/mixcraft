@@ -8,6 +8,17 @@ import { persist } from 'zustand/middleware';
 import type { MixingChallenge, ChallengeProgress, EQParams, CompressorFullParams } from '../../core/types.ts';
 import { DEFAULT_EQ, DEFAULT_COMPRESSOR } from '../../core/mixing-effects.ts';
 
+/** Per-track EQ parameters */
+export interface TrackEQParams {
+  low: number;
+  mid: number;
+  high: number;
+  volume: number; // dB, 0 = unity
+  pan: number; // -1 (left) to +1 (right), 0 = center
+  reverbMix: number; // 0 to 100 (dry to wet percentage)
+  reverbSize: number; // 0 to 100 (small to large room)
+}
+
 /** Result from mixing challenge evaluation */
 export interface MixingScoreResult {
   overall: number;
@@ -16,6 +27,9 @@ export interface MixingScoreResult {
   breakdown: {
     eq?: { low: number; mid: number; high: number; total: number };
     compressor?: { threshold: number; amount: number; attack?: number; release?: number; total: number };
+    tracks?: Record<string, { low: number; mid: number; high: number; total: number }>;
+    busCompressor?: number;
+    conditions?: { description: string; passed: boolean }[];
   };
   feedback: string[];
 }
@@ -28,9 +42,12 @@ interface MixingStore {
   isScoring: boolean;
   lastResult: MixingScoreResult | null;
 
-  // Player's current settings
+  // Player's current settings (single-track)
   eqParams: EQParams;
   compressorParams: CompressorFullParams;
+
+  // Player's current settings (multi-track)
+  trackParams: Record<string, TrackEQParams>;
 
   // Progress tracking (persisted)
   progress: Record<string, ChallengeProgress>;
@@ -43,11 +60,21 @@ interface MixingStore {
   submitResult: (result: MixingScoreResult) => void;
   retry: () => void;
 
-  // Actions - EQ
+  // Actions - EQ (single-track)
   setEQLow: (value: number) => void;
   setEQMid: (value: number) => void;
   setEQHigh: (value: number) => void;
   resetEQ: () => void;
+
+  // Actions - Track EQ (multi-track)
+  setTrackEQLow: (trackId: string, value: number) => void;
+  setTrackEQMid: (trackId: string, value: number) => void;
+  setTrackEQHigh: (trackId: string, value: number) => void;
+  setTrackVolume: (trackId: string, value: number) => void;
+  setTrackPan: (trackId: string, value: number) => void;
+  setTrackReverbMix: (trackId: string, value: number) => void;
+  setTrackReverbSize: (trackId: string, value: number) => void;
+  resetTrackEQ: (trackId: string) => void;
 
   // Actions - Compressor
   setCompressorThreshold: (value: number) => void;
@@ -69,6 +96,8 @@ const initialProgress: ChallengeProgress = {
   completed: false,
 };
 
+const DEFAULT_TRACK_EQ: TrackEQParams = { low: 0, mid: 0, high: 0, volume: 0, pan: 0, reverbMix: 0, reverbSize: 50 };
+
 export const useMixingStore = create<MixingStore>()(
   persist(
     (set, get) => ({
@@ -80,12 +109,25 @@ export const useMixingStore = create<MixingStore>()(
       lastResult: null,
       eqParams: { ...DEFAULT_EQ },
       compressorParams: { ...DEFAULT_COMPRESSOR },
+      trackParams: {},
       progress: {},
 
       // Load a mixing challenge
       loadChallenge: (challenge: MixingChallenge) => {
         const existingProgress = get().progress[challenge.id];
         const attempts = existingProgress?.attempts ?? 0;
+
+        // Initialize track params for multi-track challenges
+        const trackParams: Record<string, TrackEQParams> = {};
+        if (challenge.tracks) {
+          for (const track of challenge.tracks) {
+            trackParams[track.id] = {
+              ...DEFAULT_TRACK_EQ,
+              volume: track.initialVolume ?? 0,
+              pan: track.initialPan ?? 0,
+            };
+          }
+        }
 
         set({
           currentChallenge: challenge,
@@ -95,6 +137,7 @@ export const useMixingStore = create<MixingStore>()(
           lastResult: null,
           eqParams: { ...DEFAULT_EQ },
           compressorParams: { ...DEFAULT_COMPRESSOR },
+          trackParams,
         });
       },
 
@@ -157,6 +200,18 @@ export const useMixingStore = create<MixingStore>()(
         const { currentChallenge } = get();
         if (!currentChallenge) return;
 
+        // Reset track params for multi-track challenges
+        const trackParams: Record<string, TrackEQParams> = {};
+        if (currentChallenge.tracks) {
+          for (const track of currentChallenge.tracks) {
+            trackParams[track.id] = {
+              ...DEFAULT_TRACK_EQ,
+              volume: track.initialVolume ?? 0,
+              pan: track.initialPan ?? 0,
+            };
+          }
+        }
+
         set({
           currentAttempt: get().currentAttempt + 1,
           hintsRevealed: 0,
@@ -164,6 +219,7 @@ export const useMixingStore = create<MixingStore>()(
           lastResult: null,
           eqParams: { ...DEFAULT_EQ },
           compressorParams: { ...DEFAULT_COMPRESSOR },
+          trackParams,
         });
       },
 
@@ -188,6 +244,99 @@ export const useMixingStore = create<MixingStore>()(
 
       resetEQ: () => {
         set({ eqParams: { ...DEFAULT_EQ } });
+      },
+
+      // Track EQ Actions (multi-track)
+      setTrackEQLow: (trackId: string, value: number) => {
+        const { trackParams } = get();
+        const existing = trackParams[trackId] ?? { ...DEFAULT_TRACK_EQ };
+        set({
+          trackParams: {
+            ...trackParams,
+            [trackId]: { ...existing, low: value },
+          },
+        });
+      },
+
+      setTrackEQMid: (trackId: string, value: number) => {
+        const { trackParams } = get();
+        const existing = trackParams[trackId] ?? { ...DEFAULT_TRACK_EQ };
+        set({
+          trackParams: {
+            ...trackParams,
+            [trackId]: { ...existing, mid: value },
+          },
+        });
+      },
+
+      setTrackEQHigh: (trackId: string, value: number) => {
+        const { trackParams } = get();
+        const existing = trackParams[trackId] ?? { ...DEFAULT_TRACK_EQ };
+        set({
+          trackParams: {
+            ...trackParams,
+            [trackId]: { ...existing, high: value },
+          },
+        });
+      },
+
+      setTrackVolume: (trackId: string, value: number) => {
+        const { trackParams } = get();
+        const existing = trackParams[trackId] ?? { ...DEFAULT_TRACK_EQ };
+        set({
+          trackParams: {
+            ...trackParams,
+            [trackId]: { ...existing, volume: value },
+          },
+        });
+      },
+
+      setTrackPan: (trackId: string, value: number) => {
+        const { trackParams } = get();
+        const existing = trackParams[trackId] ?? { ...DEFAULT_TRACK_EQ };
+        set({
+          trackParams: {
+            ...trackParams,
+            [trackId]: { ...existing, pan: value },
+          },
+        });
+      },
+
+      setTrackReverbMix: (trackId: string, value: number) => {
+        const { trackParams } = get();
+        const existing = trackParams[trackId] ?? { ...DEFAULT_TRACK_EQ };
+        set({
+          trackParams: {
+            ...trackParams,
+            [trackId]: { ...existing, reverbMix: value },
+          },
+        });
+      },
+
+      setTrackReverbSize: (trackId: string, value: number) => {
+        const { trackParams } = get();
+        const existing = trackParams[trackId] ?? { ...DEFAULT_TRACK_EQ };
+        set({
+          trackParams: {
+            ...trackParams,
+            [trackId]: { ...existing, reverbSize: value },
+          },
+        });
+      },
+
+      resetTrackEQ: (trackId: string) => {
+        const { currentChallenge } = get();
+        const track = currentChallenge?.tracks?.find((t) => t.id === trackId);
+        set((state) => ({
+          trackParams: {
+            ...state.trackParams,
+            [trackId]: {
+              ...DEFAULT_TRACK_EQ,
+              volume: track?.initialVolume ?? 0,
+              pan: track?.initialPan ?? 0,
+            },
+          },
+        }));
       },
 
       // Compressor Actions
