@@ -815,8 +815,12 @@ export const DEFAULT_DRUM_PATTERN: DrumPattern = {
   tracks: [
     { id: 'kick', name: 'Kick', sampleUrl: '/samples/drums/kick.wav', steps: createEmptySteps(16) },
     { id: 'snare', name: 'Snare', sampleUrl: '/samples/drums/snare.wav', steps: createEmptySteps(16) },
+    { id: 'clap', name: 'Clap', sampleUrl: '/samples/drums/clap.wav', steps: createEmptySteps(16) },
     { id: 'hihat-closed', name: 'HH Closed', sampleUrl: '/samples/drums/hihat-closed.wav', steps: createEmptySteps(16) },
     { id: 'hihat-open', name: 'HH Open', sampleUrl: '/samples/drums/hihat-open.wav', steps: createEmptySteps(16) },
+    { id: 'rim', name: 'Rim', sampleUrl: '/samples/drums/rim.wav', steps: createEmptySteps(16) },
+    { id: 'tom-high', name: 'Tom Hi', sampleUrl: '/samples/drums/tom-high.wav', steps: createEmptySteps(16) },
+    { id: 'tom-low', name: 'Tom Lo', sampleUrl: '/samples/drums/tom-low.wav', steps: createEmptySteps(16) },
   ],
 };
 
