@@ -281,6 +281,47 @@ export const FM_PARAM_RANGES = {
 export const HARMONICITY_PRESETS = [1, 2, 3, 4, 5, 6] as const;
 
 // ============================================
+// Additive Synth Types
+// ============================================
+
+export interface AdditiveSynthParams {
+  /** Amplitude of each harmonic partial (16 values, each 0-1) */
+  harmonics: number[];
+  /** Amplitude envelope */
+  amplitudeEnvelope: ADSREnvelope;
+  /** Effects processors */
+  effects: EffectsParams;
+  /** Master volume in dB (-60 to 0) */
+  volume: number;
+}
+
+export const DEFAULT_ADDITIVE_SYNTH_PARAMS: AdditiveSynthParams = {
+  harmonics: [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  amplitudeEnvelope: {
+    attack: 0.01,
+    decay: 0.2,
+    sustain: 0.7,
+    release: 0.3,
+  },
+  effects: DEFAULT_EFFECTS,
+  volume: -12,
+};
+
+/** Harmonic presets for common waveforms and timbres */
+export const ADDITIVE_PRESETS = {
+  /** Sawtooth wave: all harmonics with 1/n amplitude */
+  saw: Array.from({ length: 16 }, (_, i) => 1 / (i + 1)),
+  /** Square wave: odd harmonics only with 1/n amplitude */
+  square: Array.from({ length: 16 }, (_, i) => (i + 1) % 2 === 1 ? 1 / (i + 1) : 0),
+  /** Triangle wave: odd harmonics only with 1/n² amplitude */
+  triangle: Array.from({ length: 16 }, (_, i) => (i + 1) % 2 === 1 ? 1 / Math.pow(i + 1, 2) : 0),
+  /** Organ-like timbre: selected harmonics */
+  organ: [1, 0.8, 0, 0.6, 0, 0.4, 0, 0.3, 0, 0, 0, 0, 0, 0, 0, 0],
+} as const;
+
+export type AdditivePreset = keyof typeof ADDITIVE_PRESETS;
+
+// ============================================
 // Audio Analysis Types
 // ============================================
 
@@ -325,9 +366,9 @@ export interface Challenge {
   /** Star difficulty (1-3) */
   difficulty: 1 | 2 | 3;
   /** Synthesis type for this challenge */
-  synthesisType?: 'subtractive' | 'fm';
+  synthesisType?: 'subtractive' | 'fm' | 'additive';
   /** Target synth parameters to match (type depends on synthesisType) */
-  targetParams: SynthParams | FMSynthParams;
+  targetParams: SynthParams | FMSynthParams | AdditiveSynthParams;
   /** Progressive hints (revealed one at a time) */
   hints: string[];
   /** Curriculum module (e.g., "SD1") */
