@@ -304,6 +304,15 @@ export function WaveformEditor({
     draw();
   }, [draw]);
 
+  // Handle global mouseup to stop dragging when mouse is released outside canvas
+  useEffect(() => {
+    if (dragging) {
+      const handleGlobalMouseUp = () => setDragging(null);
+      window.addEventListener('mouseup', handleGlobalMouseUp);
+      return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
+    }
+  }, [dragging]);
+
   /**
    * Handle mouse down - start dragging handles
    */
