@@ -24,3 +24,4 @@ export { AdditiveSynthPanel } from './AdditiveSynthPanel.tsx';
 export { InfoPanel } from './InfoPanel.tsx';
 export { Oscilloscope } from './Oscilloscope.tsx';
 export { FilterResponse } from './FilterResponse.tsx';
+export { EnvelopeVisualizer } from './EnvelopeVisualizer.tsx';

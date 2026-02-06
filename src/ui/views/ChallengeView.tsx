@@ -23,6 +23,7 @@ import {
   InfoPanel,
   Oscilloscope,
   FilterResponse,
+  EnvelopeVisualizer,
 } from '../components/index.ts';
 import { InfoPanelProvider } from '../context/InfoPanelContext.tsx';
 import { PARAM_RANGES, FM_PARAM_RANGES, HARMONICITY_PRESETS } from '../../core/types.ts';
@@ -405,11 +406,12 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
   const hasNext = !!getNextChallenge(currentChallenge.id);
 
   // Determine visualization type based on challenge module
-  const getVisualizationType = (): 'oscilloscope' | 'filter' | 'none' => {
+  const getVisualizationType = (): 'oscilloscope' | 'filter' | 'envelope' | 'none' => {
     if (isFM || isAdditive) return 'none'; // These have their own visualizations
     const module = currentChallenge.module;
     if (module === 'SD1') return 'oscilloscope'; // Oscillators
     if (module === 'SD2') return 'filter'; // Filters
+    if (module === 'SD3') return 'envelope'; // Envelopes
     return 'oscilloscope'; // Default for other modules
   };
 
@@ -921,6 +923,16 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
                 width={450}
                 height={150}
                 accentColor="#4ade80"
+              />
+            </Section>
+          )}
+          {visualizationType === 'envelope' && (
+            <Section title="Envelope Shape">
+              <EnvelopeVisualizer
+                amplitudeEnvelope={params.amplitudeEnvelope}
+                filterEnvelope={params.filterEnvelope}
+                width={450}
+                height={150}
               />
             </Section>
           )}
