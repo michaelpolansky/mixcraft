@@ -28,3 +28,5 @@ export { EnvelopeVisualizer } from './EnvelopeVisualizer.tsx';
 export { LFOVisualizer } from './LFOVisualizer.tsx';
 export { EffectsVisualizer } from './EffectsVisualizer.tsx';
 export { WaveformEditor } from './WaveformEditor.tsx';
+export { StepGrid } from './StepGrid.tsx';
+export { VelocityLane } from './VelocityLane.tsx';
