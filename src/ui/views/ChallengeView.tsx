@@ -6,6 +6,7 @@
 import { useEffect, useCallback, useRef } from 'react';
 import { useSynthStore } from '../stores/synth-store.ts';
 import { useFMSynthStore } from '../stores/fm-synth-store.ts';
+import { useAdditiveSynthStore } from '../stores/additive-synth-store.ts';
 import { useChallengeStore } from '../stores/challenge-store.ts';
 import {
   Knob,
@@ -18,13 +19,15 @@ import {
   TargetPlayer,
   ResultsModal,
   CarrierModulatorViz,
+  HarmonicDrawbars,
 } from '../components/index.ts';
 import { PARAM_RANGES, FM_PARAM_RANGES, HARMONICITY_PRESETS } from '../../core/types.ts';
-import type { SynthParams, FMSynthParams } from '../../core/types.ts';
+import type { SynthParams, FMSynthParams, AdditiveSynthParams } from '../../core/types.ts';
 import { SynthEngine, createSynthEngine } from '../../core/synth-engine.ts';
 import { FMSynthEngine, createFMSynthEngine } from '../../core/fm-synth-engine.ts';
+import { AdditiveSynthEngine, createAdditiveSynthEngine } from '../../core/additive-synth-engine.ts';
 import { captureAndAnalyze, initMeyda } from '../../core/sound-analysis.ts';
-import { compareSounds, compareFMParams } from '../../core/sound-comparison.ts';
+import { compareSounds, compareFMParams, compareAdditiveParams } from '../../core/sound-comparison.ts';
 import { getNextChallenge } from '../../data/challenges/index.ts';
 
 interface ChallengeViewProps {
@@ -98,6 +101,32 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
     startAudio: startFMAudio,
   } = useFMSynthStore();
 
+  // Additive Synth store for player's additive sound
+  const {
+    params: additiveParams,
+    engine: additiveEngine,
+    isInitialized: additiveIsInitialized,
+    setHarmonic: setAdditiveHarmonic,
+    applyPreset: applyAdditivePreset,
+    setAmplitudeAttack: setAdditiveAttack,
+    setAmplitudeDecay: setAdditiveDecay,
+    setAmplitudeSustain: setAdditiveSustain,
+    setAmplitudeRelease: setAdditiveRelease,
+    setDistortionAmount: setAdditiveDistortionAmount,
+    setDistortionMix: setAdditiveDistortionMix,
+    setDelayTime: setAdditiveDelayTime,
+    setDelayFeedback: setAdditiveDelayFeedback,
+    setDelayMix: setAdditiveDelayMix,
+    setReverbDecay: setAdditiveReverbDecay,
+    setReverbMix: setAdditiveReverbMix,
+    setChorusRate: setAdditiveChorusRate,
+    setChorusDepth: setAdditiveChorusDepth,
+    setChorusMix: setAdditiveChorusMix,
+    setVolume: setAdditiveVolume,
+    initEngine: initAdditiveEngine,
+    startAudio: startAdditiveAudio,
+  } = useAdditiveSynthStore();
+
   // Challenge store
   const {
     currentChallenge,
@@ -112,13 +141,15 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
     retry,
   } = useChallengeStore();
 
-  // Reference synth for playing target sounds (supports both types)
+  // Reference synth for playing target sounds (supports all synth types)
   const targetSynthRef = useRef<SynthEngine | null>(null);
   const targetFMSynthRef = useRef<FMSynthEngine | null>(null);
+  const targetAdditiveSynthRef = useRef<AdditiveSynthEngine | null>(null);
 
   // Determine synthesis type from challenge
   const synthesisType = currentChallenge?.synthesisType ?? 'subtractive';
   const isFM = synthesisType === 'fm';
+  const isAdditive = synthesisType === 'additive';
 
   // Initialize FM engine when FM challenge loads
   useEffect(() => {
@@ -127,6 +158,14 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
       startFMAudio();
     }
   }, [currentChallenge, isFM, fmIsInitialized, initFMEngine, startFMAudio]);
+
+  // Initialize Additive engine when additive challenge loads
+  useEffect(() => {
+    if (currentChallenge && isAdditive && !additiveIsInitialized) {
+      initAdditiveEngine();
+      startAdditiveAudio();
+    }
+  }, [currentChallenge, isAdditive, additiveIsInitialized, initAdditiveEngine, startAdditiveAudio]);
 
   // Initialize target synth when challenge loads
   useEffect(() => {
@@ -140,6 +179,12 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
       if (fmIsInitialized) {
         targetFMSynthRef.current = createFMSynthEngine(currentChallenge.targetParams as FMSynthParams);
         targetFMSynthRef.current.start();
+      }
+    } else if (isAdditive) {
+      // Additive challenge - create additive target synth
+      if (additiveIsInitialized) {
+        targetAdditiveSynthRef.current = createAdditiveSynthEngine(currentChallenge.targetParams as AdditiveSynthParams);
+        targetAdditiveSynthRef.current.start();
       }
     } else {
       // Subtractive challenge - create subtractive target synth
@@ -158,8 +203,12 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
         targetFMSynthRef.current.dispose();
         targetFMSynthRef.current = null;
       }
+      if (targetAdditiveSynthRef.current) {
+        targetAdditiveSynthRef.current.dispose();
+        targetAdditiveSynthRef.current = null;
+      }
     };
-  }, [currentChallenge, isInitialized, fmIsInitialized, isFM]);
+  }, [currentChallenge, isInitialized, fmIsInitialized, additiveIsInitialized, isFM, isAdditive]);
 
   // Play target sound
   const playTarget = useCallback(() => {
@@ -167,11 +216,14 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
     if (isFM) {
       if (!targetFMSynthRef.current) return;
       targetFMSynthRef.current.triggerAttackRelease(currentChallenge.testNote, '4n');
+    } else if (isAdditive) {
+      if (!targetAdditiveSynthRef.current) return;
+      targetAdditiveSynthRef.current.triggerAttackRelease(currentChallenge.testNote, '4n');
     } else {
       if (!targetSynthRef.current) return;
       targetSynthRef.current.triggerAttackRelease(currentChallenge.testNote, '4n');
     }
-  }, [currentChallenge, isFM]);
+  }, [currentChallenge, isFM, isAdditive]);
 
   // Play player's sound
   const playYours = useCallback(() => {
@@ -179,11 +231,14 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
     if (isFM) {
       if (!fmEngine) return;
       fmEngine.triggerAttackRelease(currentChallenge.testNote, '4n');
+    } else if (isAdditive) {
+      if (!additiveEngine) return;
+      additiveEngine.triggerAttackRelease(currentChallenge.testNote, '4n');
     } else {
       if (!engine) return;
       engine.triggerAttackRelease(currentChallenge.testNote, '4n');
     }
-  }, [engine, fmEngine, currentChallenge, isFM]);
+  }, [engine, fmEngine, additiveEngine, currentChallenge, isFM, isAdditive]);
 
   // Compare (play target then yours)
   const playCompare = useCallback(() => {
@@ -200,6 +255,8 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
     // Check we have the right engine ready
     if (isFM) {
       if (!fmEngine || !targetFMSynthRef.current) return;
+    } else if (isAdditive) {
+      if (!additiveEngine || !targetAdditiveSynthRef.current) return;
     } else {
       if (!engine || !targetSynthRef.current) return;
     }
@@ -245,6 +302,44 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
           stars: stars as 0 | 1 | 2 | 3,
           passed: stars >= 1,
         });
+      } else if (isAdditive) {
+        // Additive challenge scoring
+        const playerFeatures = await captureAndAnalyze(
+          additiveEngine!.getAnalyser(),
+          () => additiveEngine!.triggerAttack(currentChallenge.testNote),
+          () => additiveEngine!.triggerRelease()
+        );
+
+        const targetFeatures = await captureAndAnalyze(
+          targetAdditiveSynthRef.current!.getAnalyser(),
+          () => targetAdditiveSynthRef.current!.triggerAttack(currentChallenge.testNote),
+          () => targetAdditiveSynthRef.current!.triggerRelease()
+        );
+
+        // Use audio-based comparison for spectral similarity
+        const audioResult = compareSounds(
+          playerFeatures,
+          targetFeatures,
+          params, // Fallback to subtractive params format for generic audio comparison
+          currentChallenge.targetParams
+        );
+
+        // Blend with additive parameter comparison
+        const additiveParamResult = compareAdditiveParams(
+          additiveParams,
+          currentChallenge.targetParams as AdditiveSynthParams
+        );
+
+        // Weight: 60% audio, 40% params (harmonics are very important in additive)
+        const blendedScore = audioResult.overall * 0.6 + additiveParamResult.score * 0.4;
+        const stars = blendedScore >= 90 ? 3 : blendedScore >= 70 ? 2 : blendedScore >= 50 ? 1 : 0;
+
+        submitResult({
+          ...audioResult,
+          overall: Math.round(blendedScore),
+          stars: stars as 0 | 1 | 2 | 3,
+          passed: stars >= 1,
+        });
       } else {
         // Subtractive challenge scoring
         const playerFeatures = await captureAndAnalyze(
@@ -282,7 +377,7 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
         passed: false,
       });
     }
-  }, [engine, fmEngine, currentChallenge, params, fmParams, isFM, startScoring, submitResult]);
+  }, [engine, fmEngine, additiveEngine, currentChallenge, params, fmParams, additiveParams, isFM, isAdditive, startScoring, submitResult]);
 
   // Format helpers
   const formatHz = (value: number) => (value >= 1000 ? `${(value / 1000).toFixed(1)}k` : `${Math.round(value)}`);
@@ -527,6 +622,73 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
                   max={PARAM_RANGES.volume.max}
                   step={PARAM_RANGES.volume.step}
                   onChange={setFMVolume}
+                  formatValue={formatDb}
+                  size={48}
+                />
+              </Section>
+            </>
+          ) : isAdditive ? (
+            <>
+              {/* Additive Harmonics */}
+              <HarmonicDrawbars
+                harmonics={additiveParams.harmonics}
+                onChange={setAdditiveHarmonic}
+                onPreset={applyAdditivePreset}
+              />
+
+              {/* Additive Envelope */}
+              <Section title="Envelope">
+                <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
+                  <Knob value={additiveParams.amplitudeEnvelope.attack} min={PARAM_RANGES.attack.min} max={PARAM_RANGES.attack.max} label="Attack" onChange={setAdditiveAttack} formatValue={formatMs} />
+                  <Knob value={additiveParams.amplitudeEnvelope.decay} min={PARAM_RANGES.decay.min} max={PARAM_RANGES.decay.max} label="Decay" onChange={setAdditiveDecay} formatValue={formatMs} />
+                  <Knob value={additiveParams.amplitudeEnvelope.sustain} min={PARAM_RANGES.sustain.min} max={PARAM_RANGES.sustain.max} label="Sustain" onChange={setAdditiveSustain} formatValue={formatPercent} />
+                  <Knob value={additiveParams.amplitudeEnvelope.release} min={PARAM_RANGES.release.min} max={PARAM_RANGES.release.max} label="Release" onChange={setAdditiveRelease} formatValue={formatMs} />
+                </div>
+              </Section>
+
+              {/* Additive Effects */}
+              <Section title="Effects">
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div>
+                    <div style={{ fontSize: '10px', color: '#666', marginBottom: '8px', textTransform: 'uppercase' }}>Distortion</div>
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                      <Knob label="Amt" value={additiveParams.effects.distortion.amount} min={PARAM_RANGES.distortionAmount.min} max={PARAM_RANGES.distortionAmount.max} step={PARAM_RANGES.distortionAmount.step} onChange={setAdditiveDistortionAmount} formatValue={formatPercent} size={36} />
+                      <Knob label="Mix" value={additiveParams.effects.distortion.mix} min={PARAM_RANGES.distortionMix.min} max={PARAM_RANGES.distortionMix.max} step={PARAM_RANGES.distortionMix.step} onChange={setAdditiveDistortionMix} formatValue={formatPercent} size={36} />
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '10px', color: '#666', marginBottom: '8px', textTransform: 'uppercase' }}>Delay</div>
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                      <Knob label="Time" value={additiveParams.effects.delay.time} min={PARAM_RANGES.delayTime.min} max={PARAM_RANGES.delayTime.max} step={PARAM_RANGES.delayTime.step} onChange={setAdditiveDelayTime} formatValue={(v) => `${Math.round(v * 1000)}ms`} size={36} />
+                      <Knob label="Mix" value={additiveParams.effects.delay.mix} min={PARAM_RANGES.delayMix.min} max={PARAM_RANGES.delayMix.max} step={PARAM_RANGES.delayMix.step} onChange={setAdditiveDelayMix} formatValue={formatPercent} size={36} />
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '10px', color: '#666', marginBottom: '8px', textTransform: 'uppercase' }}>Reverb</div>
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                      <Knob label="Decay" value={additiveParams.effects.reverb.decay} min={PARAM_RANGES.reverbDecay.min} max={PARAM_RANGES.reverbDecay.max} step={PARAM_RANGES.reverbDecay.step} onChange={setAdditiveReverbDecay} formatValue={(v) => `${v.toFixed(1)}s`} size={36} />
+                      <Knob label="Mix" value={additiveParams.effects.reverb.mix} min={PARAM_RANGES.reverbMix.min} max={PARAM_RANGES.reverbMix.max} step={PARAM_RANGES.reverbMix.step} onChange={setAdditiveReverbMix} formatValue={formatPercent} size={36} />
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '10px', color: '#666', marginBottom: '8px', textTransform: 'uppercase' }}>Chorus</div>
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                      <Knob label="Rate" value={additiveParams.effects.chorus.rate} min={PARAM_RANGES.chorusRate.min} max={PARAM_RANGES.chorusRate.max} step={PARAM_RANGES.chorusRate.step} onChange={setAdditiveChorusRate} formatValue={(v) => `${v.toFixed(1)}Hz`} size={36} />
+                      <Knob label="Mix" value={additiveParams.effects.chorus.mix} min={PARAM_RANGES.chorusMix.min} max={PARAM_RANGES.chorusMix.max} step={PARAM_RANGES.chorusMix.step} onChange={setAdditiveChorusMix} formatValue={formatPercent} size={36} />
+                    </div>
+                  </div>
+                </div>
+              </Section>
+
+              {/* Additive Volume */}
+              <Section title="Output">
+                <Knob
+                  label="Volume"
+                  value={additiveParams.volume}
+                  min={PARAM_RANGES.volume.min}
+                  max={PARAM_RANGES.volume.max}
+                  step={PARAM_RANGES.volume.step}
+                  onChange={setAdditiveVolume}
                   formatValue={formatDb}
                   size={48}
                 />
@@ -777,7 +939,7 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
       {lastResult && (
         <ResultsModal
           result={lastResult}
-          playerParams={isFM ? fmParams : params}
+          playerParams={isFM ? fmParams : isAdditive ? additiveParams : params}
           targetParams={currentChallenge.targetParams}
           challenge={currentChallenge}
           attemptNumber={currentAttempt}

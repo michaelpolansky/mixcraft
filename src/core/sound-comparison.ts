@@ -4,7 +4,7 @@
  */
 
 import type { SoundFeatures } from './sound-analysis.ts';
-import type { SynthParams, FMSynthParams, ADSREnvelope } from './types.ts';
+import type { SynthParams, FMSynthParams, ADSREnvelope, AdditiveSynthParams } from './types.ts';
 import { FM_PARAM_RANGES } from './types.ts';
 
 /**
@@ -407,6 +407,74 @@ export function compareFMParams(
     breakdown.carrierType * 0.15 +
     breakdown.modulatorType * 0.15 +
     breakdown.envelope * 0.20
+  );
+
+  return { score, breakdown };
+}
+
+// ============================================
+// Additive Synth Parameter Comparison
+// ============================================
+
+export interface AdditiveParamBreakdown {
+  harmonics: number;
+  envelope: number;
+}
+
+export interface AdditiveComparisonResult {
+  score: number;
+  breakdown: AdditiveParamBreakdown;
+}
+
+/**
+ * Compare harmonic amplitudes between player and target
+ * Uses mean squared error normalized to 0-100 score
+ */
+function compareHarmonics(player: number[], target: number[]): number {
+  let totalError = 0;
+  const length = Math.min(player.length, target.length, 16);
+
+  for (let i = 0; i < length; i++) {
+    const diff = (player[i] ?? 0) - (target[i] ?? 0);
+    totalError += diff * diff;
+  }
+
+  // MSE normalized: max possible error per harmonic is 1 (squared)
+  // So max total error for 16 harmonics is 16
+  const mse = totalError / length;
+  // Convert to score: MSE of 0 = 100, MSE of 1 = 0
+  return Math.max(0, Math.round((1 - mse) * 100));
+}
+
+/**
+ * Compare ADSR envelopes for additive synth
+ */
+function compareAdditiveEnvelope(player: ADSREnvelope, target: ADSREnvelope): number {
+  const attackDiff = Math.abs(player.attack - target.attack) / 2; // max 2s
+  const decayDiff = Math.abs(player.decay - target.decay) / 2;
+  const sustainDiff = Math.abs(player.sustain - target.sustain); // 0-1
+  const releaseDiff = Math.abs(player.release - target.release) / 5; // max 5s
+
+  const avgDiff = (attackDiff + decayDiff + sustainDiff + releaseDiff) / 4;
+  return Math.max(0, Math.round((1 - avgDiff) * 100));
+}
+
+/**
+ * Compare additive synth parameters
+ */
+export function compareAdditiveParams(
+  player: AdditiveSynthParams,
+  target: AdditiveSynthParams
+): AdditiveComparisonResult {
+  const breakdown: AdditiveParamBreakdown = {
+    harmonics: compareHarmonics(player.harmonics, target.harmonics),
+    envelope: compareAdditiveEnvelope(player.amplitudeEnvelope, target.amplitudeEnvelope),
+  };
+
+  // Weighted average: 70% harmonics, 30% envelope
+  const score = Math.round(
+    breakdown.harmonics * 0.70 +
+    breakdown.envelope * 0.30
   );
 
   return { score, breakdown };
