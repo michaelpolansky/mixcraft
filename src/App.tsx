@@ -2,26 +2,67 @@
  * MIXCRAFT Application Entry Point
  */
 
-import { useState, useEffect } from 'react';
-import { SynthView } from './ui/views/SynthView.tsx';
-import { ChallengeView } from './ui/views/ChallengeView.tsx';
-import { MixingChallengeView } from './ui/views/MixingChallengeView.tsx';
+import { useState, useEffect, lazy, Suspense } from 'react';
+
+// Lazy load heavy view components for code splitting
+const SynthView = lazy(() => import('./ui/views/SynthView.tsx').then(m => ({ default: m.SynthView })));
+const ChallengeView = lazy(() => import('./ui/views/ChallengeView.tsx').then(m => ({ default: m.ChallengeView })));
+const MixingChallengeView = lazy(() => import('./ui/views/MixingChallengeView.tsx').then(m => ({ default: m.MixingChallengeView })));
+const MultiTrackMixingView = lazy(() => import('./ui/views/MultiTrackMixingView.tsx').then(m => ({ default: m.MultiTrackMixingView })));
+const ProductionChallengeView = lazy(() => import('./ui/views/ProductionChallengeView.tsx').then(m => ({ default: m.ProductionChallengeView })));
 import { useSynthStore } from './ui/stores/synth-store.ts';
 import { useChallengeStore } from './ui/stores/challenge-store.ts';
 import { useMixingStore } from './ui/stores/mixing-store.ts';
+import { useProductionStore } from './ui/stores/production-store.ts';
 import { allChallenges, modules } from './data/challenges/index.ts';
 import { allMixingChallenges, mixingModules, getMixingChallenge, getNextMixingChallenge } from './data/challenges/mixing/index.ts';
+import { allProductionChallenges, productionModules, getProductionChallenge, getNextProductionChallenge } from './data/challenges/production/index.ts';
 import { useIsMobile } from './ui/hooks/useMediaQuery.ts';
-import type { MixingChallenge } from './core/types.ts';
+import type { MixingChallenge, ProductionChallenge } from './core/types.ts';
 
-type View = 'menu' | 'sandbox' | 'challenge' | 'mixing-challenge';
+// Loading fallback for lazy-loaded views
+function LoadingFallback() {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '100vh',
+        background: '#0a0a0a',
+        color: '#4ade80',
+        fontFamily: 'system-ui, -apple-system, sans-serif',
+      }}
+    >
+      <div style={{ textAlign: 'center' }}>
+        <div
+          style={{
+            width: '32px',
+            height: '32px',
+            border: '3px solid #333',
+            borderTopColor: '#4ade80',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto 16px',
+          }}
+        />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        <p style={{ color: '#666', fontSize: '14px' }}>Loading...</p>
+      </div>
+    </div>
+  );
+}
+
+type View = 'menu' | 'sandbox' | 'challenge' | 'mixing-challenge' | 'production-challenge';
 
 export function App() {
   const [view, setView] = useState<View>('menu');
   const { initEngine, startAudio, isInitialized } = useSynthStore();
   const { loadChallenge, currentChallenge, exitChallenge, getChallengeProgress, getTotalProgress, getModuleProgress } = useChallengeStore();
   const { getChallengeProgress: getMixingProgress, getModuleProgress: getMixingModuleProgress } = useMixingStore();
+  const { getChallengeProgress: getProductionProgress, getModuleProgress: getProductionModuleProgress } = useProductionStore();
   const [currentMixingChallenge, setCurrentMixingChallenge] = useState<MixingChallenge | null>(null);
+  const [currentProductionChallenge, setCurrentProductionChallenge] = useState<ProductionChallenge | null>(null);
   const isMobile = useIsMobile();
 
   // Onboarding state - show for first-time users
@@ -73,10 +114,33 @@ export function App() {
     }
   };
 
+  // Start a production challenge
+  const handleStartProductionChallenge = (challengeId: string) => {
+    const challenge = getProductionChallenge(challengeId);
+    if (challenge) {
+      setCurrentProductionChallenge(challenge);
+      setView('production-challenge');
+    }
+  };
+
+  // Handle next production challenge
+  const handleNextProductionChallenge = () => {
+    if (currentProductionChallenge) {
+      const next = getNextProductionChallenge(currentProductionChallenge.id);
+      if (next) {
+        setCurrentProductionChallenge(next);
+      } else {
+        setCurrentProductionChallenge(null);
+        setView('menu');
+      }
+    }
+  };
+
   // Exit challenge
   const handleExitChallenge = () => {
     exitChallenge();
     setCurrentMixingChallenge(null);
+    setCurrentProductionChallenge(null);
     setView('menu');
   };
 
@@ -133,51 +197,85 @@ export function App() {
 
   // Sound design challenge view
   if (view === 'challenge' && currentChallenge) {
-    return <ChallengeView onExit={handleExitChallenge} />;
+    return (
+      <Suspense fallback={<LoadingFallback />}>
+        <ChallengeView onExit={handleExitChallenge} />
+      </Suspense>
+    );
   }
 
   // Mixing challenge view
   if (view === 'mixing-challenge' && currentMixingChallenge) {
     const hasNext = !!getNextMixingChallenge(currentMixingChallenge.id);
+    const isMultiTrack = !!currentMixingChallenge.tracks && currentMixingChallenge.tracks.length > 0;
+
     return (
-      <MixingChallengeView
-        challenge={currentMixingChallenge}
-        onExit={handleExitChallenge}
-        onNext={handleNextMixingChallenge}
-        hasNext={hasNext}
-      />
+      <Suspense fallback={<LoadingFallback />}>
+        {isMultiTrack ? (
+          <MultiTrackMixingView
+            challenge={currentMixingChallenge}
+            onExit={handleExitChallenge}
+            onNext={handleNextMixingChallenge}
+            hasNext={hasNext}
+          />
+        ) : (
+          <MixingChallengeView
+            challenge={currentMixingChallenge}
+            onExit={handleExitChallenge}
+            onNext={handleNextMixingChallenge}
+            hasNext={hasNext}
+          />
+        )}
+      </Suspense>
+    );
+  }
+
+  // Production challenge view
+  if (view === 'production-challenge' && currentProductionChallenge) {
+    const hasNext = !!getNextProductionChallenge(currentProductionChallenge.id);
+    return (
+      <Suspense fallback={<LoadingFallback />}>
+        <ProductionChallengeView
+          challenge={currentProductionChallenge}
+          onExit={handleExitChallenge}
+          onNext={handleNextProductionChallenge}
+          hasNext={hasNext}
+        />
+      </Suspense>
     );
   }
 
   // Sandbox view
   if (view === 'sandbox') {
     return (
-      <div>
-        <div
-          style={{
-            position: 'fixed',
-            top: '16px',
-            left: '16px',
-            zIndex: 100,
-          }}
-        >
-          <button
-            onClick={() => setView('menu')}
+      <Suspense fallback={<LoadingFallback />}>
+        <div>
+          <div
             style={{
-              background: '#1a1a1a',
-              border: '1px solid #333',
-              borderRadius: '4px',
-              color: '#888',
-              cursor: 'pointer',
-              padding: '8px 16px',
-              fontSize: '13px',
+              position: 'fixed',
+              top: '16px',
+              left: '16px',
+              zIndex: 100,
             }}
           >
-            ← Menu
-          </button>
+            <button
+              onClick={() => setView('menu')}
+              style={{
+                background: '#1a1a1a',
+                border: '1px solid #333',
+                borderRadius: '4px',
+                color: '#888',
+                cursor: 'pointer',
+                padding: '8px 16px',
+                fontSize: '13px',
+              }}
+            >
+              ← Menu
+            </button>
+          </div>
+          <SynthView />
         </div>
-        <SynthView />
-      </div>
+      </Suspense>
     );
   }
 
@@ -1938,6 +2036,516 @@ export function App() {
                   <button
                     key={challenge.id}
                     onClick={() => handleStartMixingChallenge(challenge.id)}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '12px 16px',
+                      background: '#0a0a0a',
+                      border: '1px solid #222',
+                      borderRadius: '8px',
+                      color: '#fff',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: '14px', fontWeight: 500 }}>
+                        {challenge.title}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#666' }}>
+                        {'★'.repeat(challenge.difficulty)}
+                        {'☆'.repeat(3 - challenge.difficulty)}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ color: '#eab308', fontSize: '14px' }}>
+                        {'★'.repeat(stars)}
+                        <span style={{ color: '#333' }}>{'★'.repeat(3 - stars)}</span>
+                      </div>
+                      {progress?.completed && (
+                        <span style={{ color: '#22c55e', fontSize: '16px' }}>✓</span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+          </div>
+        </div>
+
+        {/* Production Section */}
+        <h2
+          style={{
+            fontSize: '14px',
+            fontWeight: 600,
+            color: '#a855f7',
+            textTransform: 'uppercase',
+            letterSpacing: '1px',
+            marginBottom: '16px',
+            marginTop: '32px',
+          }}
+        >
+          Production
+        </h2>
+
+        {/* Module: P1 - Frequency Stacking */}
+        <div
+          style={{
+            background: '#141414',
+            borderRadius: '12px',
+            padding: '20px',
+            border: '1px solid #2a2a2a',
+            marginBottom: '16px',
+          }}
+        >
+          {(() => {
+            const mp = getProductionModuleProgress('P1', allProductionChallenges);
+            const pct = mp.total > 0 ? Math.round((mp.completed / mp.total) * 100) : 0;
+            return (
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '16px',
+                }}
+              >
+                <div style={{ flex: 1 }}>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>
+                    {productionModules.P1.title}
+                  </h3>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#666' }}>
+                    {productionModules.P1.description}
+                  </p>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ color: '#eab308', fontSize: '13px' }}>
+                    {'★'.repeat(mp.stars)}<span style={{ color: '#333' }}>{'★'.repeat(mp.total * 3 - mp.stars)}</span>
+                  </div>
+                  <div
+                    style={{
+                      padding: '4px 10px',
+                      background: pct === 100 ? '#22c55e' : '#222',
+                      borderRadius: '12px',
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      color: pct === 100 ? '#000' : '#888',
+                    }}
+                  >
+                    {mp.completed}/{mp.total}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {allProductionChallenges
+              .filter((c) => c.module === 'P1')
+              .map((challenge) => {
+                const progress = getProductionProgress(challenge.id);
+                const stars = progress?.stars ?? 0;
+
+                return (
+                  <button
+                    key={challenge.id}
+                    onClick={() => handleStartProductionChallenge(challenge.id)}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '12px 16px',
+                      background: '#0a0a0a',
+                      border: '1px solid #222',
+                      borderRadius: '8px',
+                      color: '#fff',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: '14px', fontWeight: 500 }}>
+                        {challenge.title}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#666' }}>
+                        {'★'.repeat(challenge.difficulty)}
+                        {'☆'.repeat(3 - challenge.difficulty)}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ color: '#eab308', fontSize: '14px' }}>
+                        {'★'.repeat(stars)}
+                        <span style={{ color: '#333' }}>{'★'.repeat(3 - stars)}</span>
+                      </div>
+                      {progress?.completed && (
+                        <span style={{ color: '#22c55e', fontSize: '16px' }}>✓</span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+          </div>
+        </div>
+
+        {/* Module: P2 - Layering */}
+        <div
+          style={{
+            background: '#141414',
+            borderRadius: '12px',
+            padding: '20px',
+            border: '1px solid #2a2a2a',
+            marginBottom: '16px',
+          }}
+        >
+          {(() => {
+            const mp = getProductionModuleProgress('P2', allProductionChallenges);
+            const pct = mp.total > 0 ? Math.round((mp.completed / mp.total) * 100) : 0;
+            return (
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '16px',
+                }}
+              >
+                <div style={{ flex: 1 }}>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>
+                    {productionModules.P2.title}
+                  </h3>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#666' }}>
+                    {productionModules.P2.description}
+                  </p>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ color: '#eab308', fontSize: '13px' }}>
+                    {'★'.repeat(mp.stars)}<span style={{ color: '#333' }}>{'★'.repeat(mp.total * 3 - mp.stars)}</span>
+                  </div>
+                  <div
+                    style={{
+                      padding: '4px 10px',
+                      background: pct === 100 ? '#22c55e' : '#222',
+                      borderRadius: '12px',
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      color: pct === 100 ? '#000' : '#888',
+                    }}
+                  >
+                    {mp.completed}/{mp.total}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {allProductionChallenges
+              .filter((c) => c.module === 'P2')
+              .map((challenge) => {
+                const progress = getProductionProgress(challenge.id);
+                const stars = progress?.stars ?? 0;
+
+                return (
+                  <button
+                    key={challenge.id}
+                    onClick={() => handleStartProductionChallenge(challenge.id)}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '12px 16px',
+                      background: '#0a0a0a',
+                      border: '1px solid #222',
+                      borderRadius: '8px',
+                      color: '#fff',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: '14px', fontWeight: 500 }}>
+                        {challenge.title}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#666' }}>
+                        {'★'.repeat(challenge.difficulty)}
+                        {'☆'.repeat(3 - challenge.difficulty)}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ color: '#eab308', fontSize: '14px' }}>
+                        {'★'.repeat(stars)}
+                        <span style={{ color: '#333' }}>{'★'.repeat(3 - stars)}</span>
+                      </div>
+                      {progress?.completed && (
+                        <span style={{ color: '#22c55e', fontSize: '16px' }}>✓</span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+          </div>
+        </div>
+
+        {/* Module: P3 - Arrangement Energy */}
+        <div
+          style={{
+            background: '#141414',
+            borderRadius: '12px',
+            padding: '20px',
+            border: '1px solid #2a2a2a',
+            marginBottom: '16px',
+          }}
+        >
+          {(() => {
+            const mp = getProductionModuleProgress('P3', allProductionChallenges);
+            const pct = mp.total > 0 ? Math.round((mp.completed / mp.total) * 100) : 0;
+            return (
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '16px',
+                }}
+              >
+                <div style={{ flex: 1 }}>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>
+                    {productionModules.P3.title}
+                  </h3>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#666' }}>
+                    {productionModules.P3.description}
+                  </p>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ color: '#eab308', fontSize: '13px' }}>
+                    {'★'.repeat(mp.stars)}<span style={{ color: '#333' }}>{'★'.repeat(mp.total * 3 - mp.stars)}</span>
+                  </div>
+                  <div
+                    style={{
+                      padding: '4px 10px',
+                      background: pct === 100 ? '#22c55e' : '#222',
+                      borderRadius: '12px',
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      color: pct === 100 ? '#000' : '#888',
+                    }}
+                  >
+                    {mp.completed}/{mp.total}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {allProductionChallenges
+              .filter((c) => c.module === 'P3')
+              .map((challenge) => {
+                const progress = getProductionProgress(challenge.id);
+                const stars = progress?.stars ?? 0;
+
+                return (
+                  <button
+                    key={challenge.id}
+                    onClick={() => handleStartProductionChallenge(challenge.id)}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '12px 16px',
+                      background: '#0a0a0a',
+                      border: '1px solid #222',
+                      borderRadius: '8px',
+                      color: '#fff',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: '14px', fontWeight: 500 }}>
+                        {challenge.title}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#666' }}>
+                        {'★'.repeat(challenge.difficulty)}
+                        {'☆'.repeat(3 - challenge.difficulty)}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ color: '#eab308', fontSize: '14px' }}>
+                        {'★'.repeat(stars)}
+                        <span style={{ color: '#333' }}>{'★'.repeat(3 - stars)}</span>
+                      </div>
+                      {progress?.completed && (
+                        <span style={{ color: '#22c55e', fontSize: '16px' }}>✓</span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+          </div>
+        </div>
+
+        {/* Module: P4 - Rhythm and Groove */}
+        <div
+          style={{
+            background: '#141414',
+            borderRadius: '12px',
+            padding: '20px',
+            border: '1px solid #2a2a2a',
+            marginBottom: '16px',
+          }}
+        >
+          {(() => {
+            const mp = getProductionModuleProgress('P4', allProductionChallenges);
+            const pct = mp.total > 0 ? Math.round((mp.completed / mp.total) * 100) : 0;
+            return (
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '16px',
+                }}
+              >
+                <div style={{ flex: 1 }}>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>
+                    {productionModules.P4.title}
+                  </h3>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#666' }}>
+                    {productionModules.P4.description}
+                  </p>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ color: '#eab308', fontSize: '13px' }}>
+                    {'★'.repeat(mp.stars)}<span style={{ color: '#333' }}>{'★'.repeat(mp.total * 3 - mp.stars)}</span>
+                  </div>
+                  <div
+                    style={{
+                      padding: '4px 10px',
+                      background: pct === 100 ? '#22c55e' : '#222',
+                      borderRadius: '12px',
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      color: pct === 100 ? '#000' : '#888',
+                    }}
+                  >
+                    {mp.completed}/{mp.total}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {allProductionChallenges
+              .filter((c) => c.module === 'P4')
+              .map((challenge) => {
+                const progress = getProductionProgress(challenge.id);
+                const stars = progress?.stars ?? 0;
+
+                return (
+                  <button
+                    key={challenge.id}
+                    onClick={() => handleStartProductionChallenge(challenge.id)}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '12px 16px',
+                      background: '#0a0a0a',
+                      border: '1px solid #222',
+                      borderRadius: '8px',
+                      color: '#fff',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: '14px', fontWeight: 500 }}>
+                        {challenge.title}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#666' }}>
+                        {'★'.repeat(challenge.difficulty)}
+                        {'☆'.repeat(3 - challenge.difficulty)}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ color: '#eab308', fontSize: '14px' }}>
+                        {'★'.repeat(stars)}
+                        <span style={{ color: '#333' }}>{'★'.repeat(3 - stars)}</span>
+                      </div>
+                      {progress?.completed && (
+                        <span style={{ color: '#22c55e', fontSize: '16px' }}>✓</span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+          </div>
+        </div>
+
+        {/* Module: P5 - Space and Depth */}
+        <div
+          style={{
+            background: '#141414',
+            borderRadius: '12px',
+            padding: '20px',
+            border: '1px solid #2a2a2a',
+            marginBottom: '24px',
+          }}
+        >
+          {(() => {
+            const mp = getProductionModuleProgress('P5', allProductionChallenges);
+            const pct = mp.total > 0 ? Math.round((mp.completed / mp.total) * 100) : 0;
+            return (
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '16px',
+                }}
+              >
+                <div style={{ flex: 1 }}>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>
+                    {productionModules.P5.title}
+                  </h3>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#666' }}>
+                    {productionModules.P5.description}
+                  </p>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ color: '#eab308', fontSize: '13px' }}>
+                    {'★'.repeat(mp.stars)}<span style={{ color: '#333' }}>{'★'.repeat(mp.total * 3 - mp.stars)}</span>
+                  </div>
+                  <div
+                    style={{
+                      padding: '4px 10px',
+                      background: pct === 100 ? '#22c55e' : '#222',
+                      borderRadius: '12px',
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      color: pct === 100 ? '#000' : '#888',
+                    }}
+                  >
+                    {mp.completed}/{mp.total}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {allProductionChallenges
+              .filter((c) => c.module === 'P5')
+              .map((challenge) => {
+                const progress = getProductionProgress(challenge.id);
+                const stars = progress?.stars ?? 0;
+
+                return (
+                  <button
+                    key={challenge.id}
+                    onClick={() => handleStartProductionChallenge(challenge.id)}
                     style={{
                       display: 'flex',
                       justifyContent: 'space-between',

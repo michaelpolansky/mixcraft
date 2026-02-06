@@ -58,8 +58,14 @@ export function MixingChallengeView({
     loadChallenge(challenge);
   }, [challenge, loadChallenge]);
 
-  // Initialize audio chain
+  // Check if this is a multi-track challenge
+  const isMultiTrack = !!challenge.tracks && challenge.tracks.length > 0;
+
+  // Initialize audio chain (single-track only)
   useEffect(() => {
+    // Skip for multi-track challenges - they use a different audio setup
+    if (isMultiTrack || !challenge.sourceConfig) return;
+
     // Create audio source
     audioSourceRef.current = createAudioSource(challenge.sourceConfig);
 
@@ -89,7 +95,7 @@ export function MixingChallengeView({
       eqRef.current?.dispose();
       compressorRef.current?.dispose();
     };
-  }, [challenge]);
+  }, [challenge, isMultiTrack]);
 
   // Sync EQ params to audio
   useEffect(() => {

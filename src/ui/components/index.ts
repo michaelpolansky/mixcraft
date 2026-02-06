@@ -15,3 +15,5 @@ export { TargetPlayer } from './TargetPlayer.tsx';
 export { LFOWaveformSelector } from './LFOWaveformSelector.tsx';
 export { EQControl } from './EQControl.tsx';
 export { CompressorControl } from './CompressorControl.tsx';
+export { LayerStrip } from './LayerStrip.tsx';
+export { ProductionMixer } from './ProductionMixer.tsx';
