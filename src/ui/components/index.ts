@@ -19,3 +19,4 @@ export { LayerStrip } from './LayerStrip.tsx';
 export { ProductionMixer } from './ProductionMixer.tsx';
 export { FMSynthPanel } from './FMSynthPanel.tsx';
 export { CarrierModulatorViz } from './CarrierModulatorViz.tsx';
+export { HarmonicDrawbars } from './HarmonicDrawbars.tsx';
