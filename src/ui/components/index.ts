@@ -20,3 +20,4 @@ export { ProductionMixer } from './ProductionMixer.tsx';
 export { FMSynthPanel } from './FMSynthPanel.tsx';
 export { CarrierModulatorViz } from './CarrierModulatorViz.tsx';
 export { HarmonicDrawbars } from './HarmonicDrawbars.tsx';
+export { AdditiveSynthPanel } from './AdditiveSynthPanel.tsx';

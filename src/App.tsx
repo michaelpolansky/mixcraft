@@ -11,6 +11,7 @@ const MixingChallengeView = lazy(() => import('./ui/views/MixingChallengeView.ts
 const MultiTrackMixingView = lazy(() => import('./ui/views/MultiTrackMixingView.tsx').then(m => ({ default: m.MultiTrackMixingView })));
 const ProductionChallengeView = lazy(() => import('./ui/views/ProductionChallengeView.tsx').then(m => ({ default: m.ProductionChallengeView })));
 const FMSynthView = lazy(() => import('./ui/views/FMSynthView.tsx').then(m => ({ default: m.FMSynthView })));
+const AdditiveSynthView = lazy(() => import('./ui/views/AdditiveSynthView.tsx').then(m => ({ default: m.AdditiveSynthView })));
 import { useSynthStore } from './ui/stores/synth-store.ts';
 import { useChallengeStore } from './ui/stores/challenge-store.ts';
 import { useMixingStore } from './ui/stores/mixing-store.ts';
@@ -54,7 +55,7 @@ function LoadingFallback() {
   );
 }
 
-type View = 'menu' | 'sandbox' | 'fm-sandbox' | 'challenge' | 'mixing-challenge' | 'production-challenge';
+type View = 'menu' | 'sandbox' | 'fm-sandbox' | 'additive-sandbox' | 'challenge' | 'mixing-challenge' | 'production-challenge';
 
 export function App() {
   const [view, setView] = useState<View>('menu');
@@ -314,6 +315,40 @@ export function App() {
     );
   }
 
+  // Additive Sandbox view
+  if (view === 'additive-sandbox') {
+    return (
+      <Suspense fallback={<LoadingFallback />}>
+        <div>
+          <div
+            style={{
+              position: 'fixed',
+              top: '16px',
+              left: '16px',
+              zIndex: 100,
+            }}
+          >
+            <button
+              onClick={() => setView('menu')}
+              style={{
+                background: '#1a1a1a',
+                border: '1px solid #333',
+                borderRadius: '4px',
+                color: '#888',
+                cursor: 'pointer',
+                padding: '8px 16px',
+                fontSize: '13px',
+              }}
+            >
+              ← Menu
+            </button>
+          </div>
+          <AdditiveSynthView />
+        </div>
+      </Suspense>
+    );
+  }
+
   // Main menu
   return (
     <div
@@ -517,6 +552,27 @@ export function App() {
             </div>
             <div style={{ fontSize: '13px', color: '#666' }}>
               Explore FM synthesis bells & basses
+            </div>
+          </button>
+
+          <button
+            onClick={() => setView('additive-sandbox')}
+            style={{
+              padding: '20px 32px',
+              background: '#141414',
+              border: '1px solid #06b6d4',
+              borderRadius: '12px',
+              color: '#fff',
+              cursor: 'pointer',
+              textAlign: 'left',
+              flex: 1,
+            }}
+          >
+            <div style={{ fontSize: '18px', fontWeight: 600, marginBottom: '4px', color: '#06b6d4' }}>
+              Additive Sandbox
+            </div>
+            <div style={{ fontSize: '13px', color: '#666' }}>
+              Build sounds from harmonics
             </div>
           </button>
         </div>
