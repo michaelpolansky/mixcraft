@@ -14,6 +14,7 @@ const FMSynthView = lazy(() => import('./ui/views/FMSynthView.tsx').then(m => ({
 const AdditiveSynthView = lazy(() => import('./ui/views/AdditiveSynthView.tsx').then(m => ({ default: m.AdditiveSynthView })));
 const SamplerView = lazy(() => import('./ui/views/SamplerView.tsx').then(m => ({ default: m.SamplerView })));
 const SamplerChallengeView = lazy(() => import('./ui/views/SamplerChallengeView.tsx').then(m => ({ default: m.SamplerChallengeView })));
+const DrumSequencerView = lazy(() => import('./ui/views/DrumSequencerView.tsx').then(m => ({ default: m.DrumSequencerView })));
 import { useSynthStore } from './ui/stores/synth-store.ts';
 import { useChallengeStore } from './ui/stores/challenge-store.ts';
 import { useMixingStore } from './ui/stores/mixing-store.ts';
@@ -58,7 +59,7 @@ function LoadingFallback() {
   );
 }
 
-type View = 'menu' | 'sandbox' | 'fm-sandbox' | 'additive-sandbox' | 'sampler' | 'challenge' | 'mixing-challenge' | 'production-challenge' | 'sampling-challenge';
+type View = 'menu' | 'sandbox' | 'fm-sandbox' | 'additive-sandbox' | 'sampler' | 'drum-sequencer' | 'challenge' | 'mixing-challenge' | 'production-challenge' | 'sampling-challenge';
 
 export function App() {
   const [view, setView] = useState<View>('menu');
@@ -401,6 +402,15 @@ export function App() {
     );
   }
 
+  // Drum Sequencer Sandbox view
+  if (view === 'drum-sequencer') {
+    return (
+      <Suspense fallback={<LoadingFallback />}>
+        <DrumSequencerView onBack={() => setView('menu')} />
+      </Suspense>
+    );
+  }
+
   // Main menu
   return (
     <div
@@ -646,6 +656,27 @@ export function App() {
             </div>
             <div style={{ fontSize: '13px', color: '#666' }}>
               Load and manipulate samples
+            </div>
+          </button>
+
+          <button
+            onClick={() => setView('drum-sequencer')}
+            style={{
+              padding: '20px 32px',
+              background: '#141414',
+              border: '1px solid #f97316',
+              borderRadius: '12px',
+              color: '#fff',
+              cursor: 'pointer',
+              textAlign: 'left',
+              flex: 1,
+            }}
+          >
+            <div style={{ fontSize: '18px', fontWeight: 600, marginBottom: '4px', color: '#f97316' }}>
+              🥁 Drum Sequencer
+            </div>
+            <div style={{ fontSize: '13px', color: '#666' }}>
+              Compose rhythms and patterns
             </div>
           </button>
         </div>
