@@ -238,8 +238,11 @@ export class SamplerEngine {
 
   /**
    * Sets the time stretch ratio
-   * Note: Basic Player doesn't support true time stretch without pitch change
-   * For proper time stretch, GrainPlayer would be needed
+   *
+   * @stub This method stores the value but does not apply it.
+   * Tone.Player does not support true time stretch without pitch change.
+   * For proper time stretch (independent of pitch), GrainPlayer would be needed.
+   * This is a placeholder for future implementation.
    */
   setTimeStretch(ratio: number): void {
     const clamped = clamp(
@@ -248,8 +251,8 @@ export class SamplerEngine {
       SAMPLER_PARAM_RANGES.timeStretch.max
     );
     this.params.timeStretch = clamped;
-    // Basic implementation: time stretch affects playback rate
-    // True time stretch would require GrainPlayer
+    // STUB: Value stored but not applied - requires GrainPlayer for true time stretch
+    console.warn('SamplerEngine.setTimeStretch: stub - GrainPlayer required for true time stretch');
   }
 
   // ============================================
@@ -455,10 +458,65 @@ export class SamplerEngine {
   // ============================================
 
   /**
-   * Gets the current sampler parameters
+   * Gets the current sampler parameters (deep copy to prevent external mutation)
    */
   getParams(): SamplerParams {
-    return { ...this.params };
+    return {
+      ...this.params,
+      slices: this.params.slices.map(s => ({ ...s })),
+      amplitudeEnvelope: { ...this.params.amplitudeEnvelope },
+      effects: {
+        distortion: { ...this.params.effects.distortion },
+        delay: { ...this.params.effects.delay },
+        reverb: { ...this.params.effects.reverb },
+        chorus: { ...this.params.effects.chorus },
+      },
+    };
+  }
+
+  /**
+   * Sets multiple parameters at once (bulk update)
+   * Delegates to individual setters to ensure proper validation and state updates
+   */
+  setParams(params: Partial<SamplerParams>): void {
+    if (params.pitch !== undefined) {
+      this.setPitch(params.pitch);
+    }
+    if (params.timeStretch !== undefined) {
+      this.setTimeStretch(params.timeStretch);
+    }
+    if (params.startPoint !== undefined) {
+      this.setStartPoint(params.startPoint);
+    }
+    if (params.endPoint !== undefined) {
+      this.setEndPoint(params.endPoint);
+    }
+    if (params.loop !== undefined) {
+      this.setLoop(params.loop);
+    }
+    if (params.reverse !== undefined) {
+      this.setReverse(params.reverse);
+    }
+    if (params.volume !== undefined) {
+      this.setVolume(params.volume);
+    }
+    if (params.amplitudeEnvelope) {
+      this.setAmplitudeEnvelope(params.amplitudeEnvelope);
+    }
+    if (params.effects) {
+      if (params.effects.distortion) {
+        this.setDistortion(params.effects.distortion);
+      }
+      if (params.effects.delay) {
+        this.setDelay(params.effects.delay);
+      }
+      if (params.effects.reverb) {
+        this.setReverb(params.effects.reverb);
+      }
+      if (params.effects.chorus) {
+        this.setChorus(params.effects.chorus);
+      }
+    }
   }
 
   /**
