@@ -60,19 +60,27 @@ Sound design is the entry point. It has the lowest content requirements (synthes
 
 ## Current State
 
-**32 Sound Design challenges complete (SD1-SD7)** with AI-powered feedback.
+**All 188 challenges complete across three tracks.** Deployed to production.
 
+### Sound Design Track (32 challenges, SD1-SD7)
 - Subtractive synth with oscillator, filter, dual ADSR envelopes, LFO (filter modulation)
 - Effects chain: distortion, delay, reverb, chorus (all with dry/wet mix)
 - Challenge system with scoring (70% audio features, 30% parameter proximity)
 - tRPC backend with Claude API for natural language feedback
 - Full UI controls for all synth parameters and effects
 
-**Sound Design Track Complete:**
-- SD6: Synthesis Techniques - 6 mastery challenges combining all concepts
-- SD7: Genre Sound Design - 6 challenges recreating iconic synth sounds (80s Brass, Reese Bass, Juno Pad, Trance Supersaw, Synthwave Bass, Cinematic Strings)
+### Production Track (20 challenges, P1-P5)
+- Layer-based audio system with mute, volume, pan, and EQ per layer
+- Reference matching (match target mix) and goal-based evaluation
+- Frequency stacking, arrangement, and stereo imaging challenges
 
-**Polish Complete:**
+### Mixing Track (136 challenges, F1-F8, I1-I6, A1-A5, M1-M4)
+- Multi-track mixing with per-track EQ, volume, pan, and reverb
+- Bus processing: bus compressor and bus EQ with UI controls
+- Goal-based evaluation with 17 condition types (frequency separation, pan position, depth placement, volume balance, etc.)
+- Four difficulty tiers: Fundamentals (32), Intermediate (36), Advanced (36), Mastery (32)
+
+### Polish
 - Progress persistence (localStorage via Zustand)
 - Progress display in menu header (stars, completion %)
 - Module progress bars with star counts
@@ -81,7 +89,11 @@ Sound design is the entry point. It has the lowest content requirements (synthes
 - Mobile responsive menu layout
 - First-time user onboarding tooltip
 
-**Next:** Production track
+### Testing
+- 70 unit tests for evaluation logic (mixing, production, sound comparison)
+- All pure function tests, no audio context dependencies
+
+**Next:** AI feedback for Production and Mixing tracks (Sound Design already has it)
 
 ## Session Log
 
@@ -93,3 +105,9 @@ Sound design is the entry point. It has the lowest content requirements (synthes
 | 3 | 2026-02-05 | SD2 (Filter Basics), AI feedback (tRPC + Claude), SD3 (Envelopes), LFO support, SD4 (Modulation), LFO UI controls |
 | 4 | 2026-02-05 | SD5 (Effects), SD6 (Synthesis Techniques), SD7 (Genre Sound Design) - Sound Design track complete (32 challenges) |
 | 5 | 2026-02-05 | Polish - progress display, module progress bars, continue button, confetti celebration, mobile responsive, onboarding |
+| 6 | 2026-02-05 | Mixing Fundamentals (F1-F8, 32 challenges) - EQ, compression, problem-solving |
+| 7 | 2026-02-05 | Mixing Intermediate (I1-I6, 36 challenges) - multi-track with kick/bass, vocals, drums, stereo, reverb, full band |
+| 8 | 2026-02-05 | Mixing Advanced (A1-A5, 36 challenges) - frequency mastery, stereo mastery, depth, dynamics, integration |
+| 9 | 2026-02-05 | Mixing Mastery (M1-M4, 32 challenges) - full mix, genre mixing, automation concepts, troubleshooting |
+| 10 | 2026-02-05 | Production Track (P1-P5, 20 challenges) - frequency stacking, layering, arrangement, stereo, full productions |
+| 11 | 2026-02-05 | Bus EQ UI, bus compressor flag fix, bus-level condition types, unit tests (70 tests), deploy to Vercel |
