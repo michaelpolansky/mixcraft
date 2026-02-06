@@ -4,9 +4,10 @@
  */
 
 import { create } from 'zustand';
-import type { SamplerParams } from '../../core/types.ts';
+import type { SamplerParams, SamplingChallenge } from '../../core/types.ts';
 import { DEFAULT_SAMPLER_PARAMS } from '../../core/types.ts';
 import { SamplerEngine, createSamplerEngine } from '../../core/sampler-engine.ts';
+import type { SamplingScoreResult } from '../../core/sampling-evaluation.ts';
 
 interface SamplerStore {
   // State
@@ -15,6 +16,13 @@ interface SamplerStore {
   isPlaying: boolean;
   isLoading: boolean;
   params: SamplerParams;
+
+  // Challenge state
+  currentChallenge: SamplingChallenge | null;
+  currentAttempt: number;
+  hintsRevealed: number;
+  isScoring: boolean;
+  lastResult: SamplingScoreResult | null;
 
   // Initialization
   initEngine: () => void;
@@ -47,6 +55,13 @@ interface SamplerStore {
   getWaveformData: () => Float32Array | null;
   resetToDefaults: () => void;
 
+  // Challenge actions
+  loadChallenge: (challenge: SamplingChallenge) => void;
+  revealHint: () => void;
+  startScoring: () => void;
+  submitResult: (result: SamplingScoreResult) => void;
+  retry: () => void;
+
   // Cleanup
   dispose: () => void;
 }
@@ -58,6 +73,13 @@ export const useSamplerStore = create<SamplerStore>((set, get) => ({
   isPlaying: false,
   isLoading: false,
   params: { ...DEFAULT_SAMPLER_PARAMS },
+
+  // Challenge state
+  currentChallenge: null,
+  currentAttempt: 1,
+  hintsRevealed: 0,
+  isScoring: false,
+  lastResult: null,
 
   // Initialize the sampler engine
   initEngine: () => {
@@ -235,6 +257,60 @@ export const useSamplerStore = create<SamplerStore>((set, get) => ({
     if (!engine) return;
     engine.setParams(DEFAULT_SAMPLER_PARAMS);
     set({ params: engine.getParams() });
+  },
+
+  // Load a sampling challenge
+  loadChallenge: (challenge: SamplingChallenge) => {
+    const { engine } = get();
+    if (engine) {
+      engine.setParams(DEFAULT_SAMPLER_PARAMS);
+    }
+    set({
+      currentChallenge: challenge,
+      currentAttempt: 1,
+      hintsRevealed: 0,
+      isScoring: false,
+      lastResult: null,
+      params: engine ? engine.getParams() : { ...DEFAULT_SAMPLER_PARAMS },
+    });
+  },
+
+  // Reveal the next hint
+  revealHint: () => {
+    const { currentChallenge, hintsRevealed } = get();
+    if (!currentChallenge) return;
+
+    const maxHints = currentChallenge.hints.length;
+    if (hintsRevealed < maxHints) {
+      set({ hintsRevealed: hintsRevealed + 1 });
+    }
+  },
+
+  // Start the scoring process
+  startScoring: () => {
+    set({ isScoring: true });
+  },
+
+  // Submit scoring result
+  submitResult: (result: SamplingScoreResult) => {
+    set((state) => ({
+      lastResult: result,
+      isScoring: false,
+      currentAttempt: state.currentAttempt + 1,
+    }));
+  },
+
+  // Retry current challenge
+  retry: () => {
+    const { engine, currentAttempt } = get();
+    if (engine) {
+      engine.setParams(DEFAULT_SAMPLER_PARAMS);
+    }
+    set({
+      lastResult: null,
+      currentAttempt: currentAttempt + 1,
+      params: engine ? engine.getParams() : { ...DEFAULT_SAMPLER_PARAMS },
+    });
   },
 
   // Cleanup
