@@ -5,6 +5,7 @@
 
 import { useEffect, useCallback, useRef } from 'react';
 import { useSynthStore } from '../stores/synth-store.ts';
+import { useFMSynthStore } from '../stores/fm-synth-store.ts';
 import { useChallengeStore } from '../stores/challenge-store.ts';
 import {
   Knob,
@@ -16,11 +17,14 @@ import {
   EnvelopeDisplay,
   TargetPlayer,
   ResultsModal,
+  CarrierModulatorViz,
 } from '../components/index.ts';
-import { PARAM_RANGES } from '../../core/types.ts';
+import { PARAM_RANGES, FM_PARAM_RANGES, HARMONICITY_PRESETS } from '../../core/types.ts';
+import type { SynthParams, FMSynthParams } from '../../core/types.ts';
 import { SynthEngine, createSynthEngine } from '../../core/synth-engine.ts';
+import { FMSynthEngine, createFMSynthEngine } from '../../core/fm-synth-engine.ts';
 import { captureAndAnalyze, initMeyda } from '../../core/sound-analysis.ts';
-import { compareSounds } from '../../core/sound-comparison.ts';
+import { compareSounds, compareFMParams } from '../../core/sound-comparison.ts';
 import { getNextChallenge } from '../../data/challenges/index.ts';
 
 interface ChallengeViewProps {
@@ -28,7 +32,7 @@ interface ChallengeViewProps {
 }
 
 export function ChallengeView({ onExit }: ChallengeViewProps) {
-  // Synth store for player's sound
+  // Synth store for player's subtractive sound
   const {
     params,
     engine,
@@ -64,6 +68,36 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
     setVolume,
   } = useSynthStore();
 
+  // FM Synth store for player's FM sound
+  const {
+    params: fmParams,
+    engine: fmEngine,
+    isInitialized: fmIsInitialized,
+    setHarmonicity,
+    setHarmonicityPreset,
+    setModulationIndex,
+    setCarrierType,
+    setModulatorType,
+    setModulationEnvelopeAmount,
+    setAmplitudeAttack: setFMAttack,
+    setAmplitudeDecay: setFMDecay,
+    setAmplitudeSustain: setFMSustain,
+    setAmplitudeRelease: setFMRelease,
+    setDistortionAmount: setFMDistortionAmount,
+    setDistortionMix: setFMDistortionMix,
+    setDelayTime: setFMDelayTime,
+    setDelayFeedback: setFMDelayFeedback,
+    setDelayMix: setFMDelayMix,
+    setReverbDecay: setFMReverbDecay,
+    setReverbMix: setFMReverbMix,
+    setChorusRate: setFMChorusRate,
+    setChorusDepth: setFMChorusDepth,
+    setChorusMix: setFMChorusMix,
+    setVolume: setFMVolume,
+    initEngine: initFMEngine,
+    startAudio: startFMAudio,
+  } = useFMSynthStore();
+
   // Challenge store
   const {
     currentChallenge,
@@ -78,17 +112,41 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
     retry,
   } = useChallengeStore();
 
-  // Reference synth for playing target sounds
+  // Reference synth for playing target sounds (supports both types)
   const targetSynthRef = useRef<SynthEngine | null>(null);
+  const targetFMSynthRef = useRef<FMSynthEngine | null>(null);
+
+  // Determine synthesis type from challenge
+  const synthesisType = currentChallenge?.synthesisType ?? 'subtractive';
+  const isFM = synthesisType === 'fm';
+
+  // Initialize FM engine when FM challenge loads
+  useEffect(() => {
+    if (currentChallenge && isFM && !fmIsInitialized) {
+      initFMEngine();
+      startFMAudio();
+    }
+  }, [currentChallenge, isFM, fmIsInitialized, initFMEngine, startFMAudio]);
 
   // Initialize target synth when challenge loads
   useEffect(() => {
-    if (currentChallenge && isInitialized) {
-      targetSynthRef.current = createSynthEngine(currentChallenge.targetParams);
-      targetSynthRef.current.start();
+    if (!currentChallenge) return;
 
-      // Initialize audio analysis (no-op, kept for API compatibility)
-      initMeyda(44100, 2048);
+    // Initialize audio analysis (no-op, kept for API compatibility)
+    initMeyda(44100, 2048);
+
+    if (isFM) {
+      // FM challenge - create FM target synth
+      if (fmIsInitialized) {
+        targetFMSynthRef.current = createFMSynthEngine(currentChallenge.targetParams as FMSynthParams);
+        targetFMSynthRef.current.start();
+      }
+    } else {
+      // Subtractive challenge - create subtractive target synth
+      if (isInitialized) {
+        targetSynthRef.current = createSynthEngine(currentChallenge.targetParams as SynthParams);
+        targetSynthRef.current.start();
+      }
     }
 
     return () => {
@@ -96,20 +154,36 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
         targetSynthRef.current.dispose();
         targetSynthRef.current = null;
       }
+      if (targetFMSynthRef.current) {
+        targetFMSynthRef.current.dispose();
+        targetFMSynthRef.current = null;
+      }
     };
-  }, [currentChallenge, isInitialized]);
+  }, [currentChallenge, isInitialized, fmIsInitialized, isFM]);
 
   // Play target sound
   const playTarget = useCallback(() => {
-    if (!targetSynthRef.current || !currentChallenge) return;
-    targetSynthRef.current.triggerAttackRelease(currentChallenge.testNote, '4n');
-  }, [currentChallenge]);
+    if (!currentChallenge) return;
+    if (isFM) {
+      if (!targetFMSynthRef.current) return;
+      targetFMSynthRef.current.triggerAttackRelease(currentChallenge.testNote, '4n');
+    } else {
+      if (!targetSynthRef.current) return;
+      targetSynthRef.current.triggerAttackRelease(currentChallenge.testNote, '4n');
+    }
+  }, [currentChallenge, isFM]);
 
   // Play player's sound
   const playYours = useCallback(() => {
-    if (!engine || !currentChallenge) return;
-    engine.triggerAttackRelease(currentChallenge.testNote, '4n');
-  }, [engine, currentChallenge]);
+    if (!currentChallenge) return;
+    if (isFM) {
+      if (!fmEngine) return;
+      fmEngine.triggerAttackRelease(currentChallenge.testNote, '4n');
+    } else {
+      if (!engine) return;
+      engine.triggerAttackRelease(currentChallenge.testNote, '4n');
+    }
+  }, [engine, fmEngine, currentChallenge, isFM]);
 
   // Compare (play target then yours)
   const playCompare = useCallback(() => {
@@ -121,37 +195,81 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
 
   // Submit and score
   const handleSubmit = useCallback(async () => {
-    if (!engine || !targetSynthRef.current || !currentChallenge) return;
+    if (!currentChallenge) return;
+
+    // Check we have the right engine ready
+    if (isFM) {
+      if (!fmEngine || !targetFMSynthRef.current) return;
+    } else {
+      if (!engine || !targetSynthRef.current) return;
+    }
 
     startScoring();
 
     try {
-      // Capture and analyze player's sound
-      const playerFeatures = await captureAndAnalyze(
-        engine.getAnalyser(),
-        () => engine.triggerAttack(currentChallenge.testNote),
-        () => engine.triggerRelease()
-      );
+      if (isFM) {
+        // FM challenge scoring
+        const playerFeatures = await captureAndAnalyze(
+          fmEngine!.getAnalyser(),
+          () => fmEngine!.triggerAttack(currentChallenge.testNote),
+          () => fmEngine!.triggerRelease()
+        );
 
-      // Capture and analyze target sound
-      const targetFeatures = await captureAndAnalyze(
-        targetSynthRef.current.getAnalyser(),
-        () => targetSynthRef.current!.triggerAttack(currentChallenge.testNote),
-        () => targetSynthRef.current!.triggerRelease()
-      );
+        const targetFeatures = await captureAndAnalyze(
+          targetFMSynthRef.current!.getAnalyser(),
+          () => targetFMSynthRef.current!.triggerAttack(currentChallenge.testNote),
+          () => targetFMSynthRef.current!.triggerRelease()
+        );
 
-      // Compare and score
-      const result = compareSounds(
-        playerFeatures,
-        targetFeatures,
-        params,
-        currentChallenge.targetParams
-      );
+        // Use FM-specific comparison (audio features + FM params)
+        const audioResult = compareSounds(
+          playerFeatures,
+          targetFeatures,
+          fmParams,
+          currentChallenge.targetParams
+        );
 
-      submitResult(result);
+        // Blend with FM parameter comparison
+        const fmParamResult = compareFMParams(
+          fmParams,
+          currentChallenge.targetParams as FMSynthParams
+        );
+
+        // Weight: 70% audio, 30% params
+        const blendedScore = audioResult.overall * 0.7 + fmParamResult.score * 0.3;
+        const stars = blendedScore >= 90 ? 3 : blendedScore >= 70 ? 2 : blendedScore >= 50 ? 1 : 0;
+
+        submitResult({
+          ...audioResult,
+          overall: Math.round(blendedScore),
+          stars: stars as 0 | 1 | 2 | 3,
+          passed: stars >= 1,
+        });
+      } else {
+        // Subtractive challenge scoring
+        const playerFeatures = await captureAndAnalyze(
+          engine!.getAnalyser(),
+          () => engine!.triggerAttack(currentChallenge.testNote),
+          () => engine!.triggerRelease()
+        );
+
+        const targetFeatures = await captureAndAnalyze(
+          targetSynthRef.current!.getAnalyser(),
+          () => targetSynthRef.current!.triggerAttack(currentChallenge.testNote),
+          () => targetSynthRef.current!.triggerRelease()
+        );
+
+        const result = compareSounds(
+          playerFeatures,
+          targetFeatures,
+          params,
+          currentChallenge.targetParams
+        );
+
+        submitResult(result);
+      }
     } catch (error) {
       console.error('Scoring failed:', error);
-      // Show a basic result on error
       submitResult({
         overall: 0,
         stars: 1,
@@ -164,7 +282,7 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
         passed: false,
       });
     }
-  }, [engine, currentChallenge, params, startScoring, submitResult]);
+  }, [engine, fmEngine, currentChallenge, params, fmParams, isFM, startScoring, submitResult]);
 
   // Format helpers
   const formatHz = (value: number) => (value >= 1000 ? `${(value / 1000).toFixed(1)}k` : `${Math.round(value)}`);
@@ -275,8 +393,149 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
       >
         {/* Left Column - Controls */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {/* Oscillator */}
-          <Section title="Oscillator">
+          {isFM ? (
+            <>
+              {/* FM Oscillators */}
+              <Section title="Oscillators">
+                <CarrierModulatorViz
+                  carrierType={fmParams.carrierType}
+                  modulatorType={fmParams.modulatorType}
+                  harmonicity={fmParams.harmonicity}
+                  modulationIndex={fmParams.modulationIndex}
+                />
+                <div style={{ display: 'flex', justifyContent: 'space-around', gap: '16px', marginTop: '16px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '10px', color: '#00ff88', textTransform: 'uppercase' }}>Carrier</span>
+                    <WaveformSelector value={fmParams.carrierType} onChange={setCarrierType} />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '10px', color: '#ff8800', textTransform: 'uppercase' }}>Modulator</span>
+                    <WaveformSelector value={fmParams.modulatorType} onChange={setModulatorType} />
+                  </div>
+                </div>
+              </Section>
+
+              {/* FM Modulation */}
+              <Section title="Modulation">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
+                  <Knob
+                    value={fmParams.harmonicity}
+                    min={FM_PARAM_RANGES.harmonicity.min}
+                    max={FM_PARAM_RANGES.harmonicity.max}
+                    step={FM_PARAM_RANGES.harmonicity.step}
+                    label="Harmonicity"
+                    onChange={setHarmonicity}
+                    formatValue={(v) => `${v.toFixed(1)}x`}
+                  />
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <span style={{ fontSize: '9px', color: '#555', textTransform: 'uppercase' }}>Presets</span>
+                    <div style={{ display: 'flex', gap: '4px' }}>
+                      {HARMONICITY_PRESETS.map((preset) => (
+                        <button
+                          key={preset}
+                          onClick={() => setHarmonicityPreset(preset)}
+                          style={{
+                            width: '28px',
+                            height: '28px',
+                            background: Math.abs(fmParams.harmonicity - preset) < 0.05 ? '#2a3a2a' : '#1a1a1a',
+                            border: Math.abs(fmParams.harmonicity - preset) < 0.05 ? '2px solid #4ade80' : '1px solid #333',
+                            borderRadius: '4px',
+                            color: Math.abs(fmParams.harmonicity - preset) < 0.05 ? '#4ade80' : '#888',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {preset}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '24px', justifyContent: 'center' }}>
+                  <Knob
+                    value={fmParams.modulationIndex}
+                    min={FM_PARAM_RANGES.modulationIndex.min}
+                    max={FM_PARAM_RANGES.modulationIndex.max}
+                    step={FM_PARAM_RANGES.modulationIndex.step}
+                    label="Mod Index"
+                    onChange={setModulationIndex}
+                    formatValue={(v) => v.toFixed(1)}
+                  />
+                  <Knob
+                    value={fmParams.modulationEnvelopeAmount}
+                    min={FM_PARAM_RANGES.modulationEnvelopeAmount.min}
+                    max={FM_PARAM_RANGES.modulationEnvelopeAmount.max}
+                    step={FM_PARAM_RANGES.modulationEnvelopeAmount.step}
+                    label="Mod Env"
+                    onChange={setModulationEnvelopeAmount}
+                    formatValue={formatPercent}
+                  />
+                </div>
+              </Section>
+
+              {/* FM Amplitude Envelope */}
+              <Section title="Envelope">
+                <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
+                  <Knob value={fmParams.amplitudeEnvelope.attack} min={PARAM_RANGES.attack.min} max={PARAM_RANGES.attack.max} label="Attack" onChange={setFMAttack} formatValue={formatMs} />
+                  <Knob value={fmParams.amplitudeEnvelope.decay} min={PARAM_RANGES.decay.min} max={PARAM_RANGES.decay.max} label="Decay" onChange={setFMDecay} formatValue={formatMs} />
+                  <Knob value={fmParams.amplitudeEnvelope.sustain} min={PARAM_RANGES.sustain.min} max={PARAM_RANGES.sustain.max} label="Sustain" onChange={setFMSustain} formatValue={formatPercent} />
+                  <Knob value={fmParams.amplitudeEnvelope.release} min={PARAM_RANGES.release.min} max={PARAM_RANGES.release.max} label="Release" onChange={setFMRelease} formatValue={formatMs} />
+                </div>
+              </Section>
+
+              {/* FM Effects */}
+              <Section title="Effects">
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div>
+                    <div style={{ fontSize: '10px', color: '#666', marginBottom: '8px', textTransform: 'uppercase' }}>Distortion</div>
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                      <Knob label="Amt" value={fmParams.effects.distortion.amount} min={PARAM_RANGES.distortionAmount.min} max={PARAM_RANGES.distortionAmount.max} step={PARAM_RANGES.distortionAmount.step} onChange={setFMDistortionAmount} formatValue={formatPercent} size={36} />
+                      <Knob label="Mix" value={fmParams.effects.distortion.mix} min={PARAM_RANGES.distortionMix.min} max={PARAM_RANGES.distortionMix.max} step={PARAM_RANGES.distortionMix.step} onChange={setFMDistortionMix} formatValue={formatPercent} size={36} />
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '10px', color: '#666', marginBottom: '8px', textTransform: 'uppercase' }}>Delay</div>
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                      <Knob label="Time" value={fmParams.effects.delay.time} min={PARAM_RANGES.delayTime.min} max={PARAM_RANGES.delayTime.max} step={PARAM_RANGES.delayTime.step} onChange={setFMDelayTime} formatValue={(v) => `${Math.round(v * 1000)}ms`} size={36} />
+                      <Knob label="Mix" value={fmParams.effects.delay.mix} min={PARAM_RANGES.delayMix.min} max={PARAM_RANGES.delayMix.max} step={PARAM_RANGES.delayMix.step} onChange={setFMDelayMix} formatValue={formatPercent} size={36} />
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '10px', color: '#666', marginBottom: '8px', textTransform: 'uppercase' }}>Reverb</div>
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                      <Knob label="Decay" value={fmParams.effects.reverb.decay} min={PARAM_RANGES.reverbDecay.min} max={PARAM_RANGES.reverbDecay.max} step={PARAM_RANGES.reverbDecay.step} onChange={setFMReverbDecay} formatValue={(v) => `${v.toFixed(1)}s`} size={36} />
+                      <Knob label="Mix" value={fmParams.effects.reverb.mix} min={PARAM_RANGES.reverbMix.min} max={PARAM_RANGES.reverbMix.max} step={PARAM_RANGES.reverbMix.step} onChange={setFMReverbMix} formatValue={formatPercent} size={36} />
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '10px', color: '#666', marginBottom: '8px', textTransform: 'uppercase' }}>Chorus</div>
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                      <Knob label="Rate" value={fmParams.effects.chorus.rate} min={PARAM_RANGES.chorusRate.min} max={PARAM_RANGES.chorusRate.max} step={PARAM_RANGES.chorusRate.step} onChange={setFMChorusRate} formatValue={(v) => `${v.toFixed(1)}Hz`} size={36} />
+                      <Knob label="Mix" value={fmParams.effects.chorus.mix} min={PARAM_RANGES.chorusMix.min} max={PARAM_RANGES.chorusMix.max} step={PARAM_RANGES.chorusMix.step} onChange={setFMChorusMix} formatValue={formatPercent} size={36} />
+                    </div>
+                  </div>
+                </div>
+              </Section>
+
+              {/* FM Volume */}
+              <Section title="Output">
+                <Knob
+                  label="Volume"
+                  value={fmParams.volume}
+                  min={PARAM_RANGES.volume.min}
+                  max={PARAM_RANGES.volume.max}
+                  step={PARAM_RANGES.volume.step}
+                  onChange={setFMVolume}
+                  formatValue={formatDb}
+                  size={48}
+                />
+              </Section>
+            </>
+          ) : (
+            <>
+              {/* Oscillator */}
+              <Section title="Oscillator">
             <WaveformSelector value={params.oscillator.type} onChange={setOscillatorType} />
             <div style={{ display: 'flex', gap: '24px', marginTop: '16px' }}>
               <Knob
@@ -441,6 +700,8 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
               size={48}
             />
           </Section>
+            </>
+          )}
         </div>
 
         {/* Right Column - Visualization & Actions */}
@@ -516,7 +777,7 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
       {lastResult && (
         <ResultsModal
           result={lastResult}
-          playerParams={params}
+          playerParams={isFM ? fmParams : params}
           targetParams={currentChallenge.targetParams}
           challenge={currentChallenge}
           attemptNumber={currentAttempt}

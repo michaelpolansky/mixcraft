@@ -51,6 +51,14 @@ import { challenge as sd7_04 } from './sd7/sd7-04-trance-supersaw.ts';
 import { challenge as sd7_05 } from './sd7/sd7-05-synthwave-bass.ts';
 import { challenge as sd7_06 } from './sd7/sd7-06-cinematic-strings.ts';
 
+// SD8 - FM Synthesis
+import { challenge as sd8_01 } from './sd8/sd8-01-pure-fm.ts';
+import { challenge as sd8_02 } from './sd8/sd8-02-fm-bell.ts';
+import { challenge as sd8_03 } from './sd8/sd8-03-electric-piano.ts';
+import { challenge as sd8_04 } from './sd8/sd8-04-fm-bass.ts';
+import { challenge as sd8_05 } from './sd8/sd8-05-metallic-hit.ts';
+import { challenge as sd8_06 } from './sd8/sd8-06-pluck-lead.ts';
+
 /**
  * All challenges indexed by ID
  */
@@ -87,6 +95,12 @@ export const challengesById: Record<string, Challenge> = {
   'sd7-04-trance-supersaw': sd7_04,
   'sd7-05-synthwave-bass': sd7_05,
   'sd7-06-cinematic-strings': sd7_06,
+  'sd8-01-pure-fm': sd8_01,
+  'sd8-02-fm-bell': sd8_02,
+  'sd8-03-electric-piano': sd8_03,
+  'sd8-04-fm-bass': sd8_04,
+  'sd8-05-metallic-hit': sd8_05,
+  'sd8-06-pluck-lead': sd8_06,
 };
 
 /**
@@ -100,6 +114,7 @@ export const challengesByModule: Record<string, Challenge[]> = {
   SD5: [sd5_01, sd5_02, sd5_03, sd5_04],
   SD6: [sd6_01, sd6_02, sd6_03, sd6_04, sd6_05, sd6_06],
   SD7: [sd7_01, sd7_02, sd7_03, sd7_04, sd7_05, sd7_06],
+  SD8: [sd8_01, sd8_02, sd8_03, sd8_04, sd8_05, sd8_06],
 };
 
 /**
@@ -145,6 +160,13 @@ export const allChallenges: Challenge[] = [
   sd7_04,
   sd7_05,
   sd7_06,
+  // SD8 - FM Synthesis
+  sd8_01,
+  sd8_02,
+  sd8_03,
+  sd8_04,
+  sd8_05,
+  sd8_06,
 ];
 
 /**
@@ -191,6 +213,12 @@ export const modules = {
     id: 'SD7',
     title: 'Genre Sound Design',
     description: 'Recreate iconic synth sounds from 80s brass to trance supersaws.',
+    challengeCount: 6,
+  },
+  SD8: {
+    id: 'SD8',
+    title: 'FM Synthesis',
+    description: 'Master frequency modulation to create bells, electric pianos, and metallic sounds.',
     challengeCount: 6,
   },
 } as const;

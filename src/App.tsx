@@ -10,6 +10,7 @@ const ChallengeView = lazy(() => import('./ui/views/ChallengeView.tsx').then(m =
 const MixingChallengeView = lazy(() => import('./ui/views/MixingChallengeView.tsx').then(m => ({ default: m.MixingChallengeView })));
 const MultiTrackMixingView = lazy(() => import('./ui/views/MultiTrackMixingView.tsx').then(m => ({ default: m.MultiTrackMixingView })));
 const ProductionChallengeView = lazy(() => import('./ui/views/ProductionChallengeView.tsx').then(m => ({ default: m.ProductionChallengeView })));
+const FMSynthView = lazy(() => import('./ui/views/FMSynthView.tsx').then(m => ({ default: m.FMSynthView })));
 import { useSynthStore } from './ui/stores/synth-store.ts';
 import { useChallengeStore } from './ui/stores/challenge-store.ts';
 import { useMixingStore } from './ui/stores/mixing-store.ts';
@@ -53,7 +54,7 @@ function LoadingFallback() {
   );
 }
 
-type View = 'menu' | 'sandbox' | 'challenge' | 'mixing-challenge' | 'production-challenge';
+type View = 'menu' | 'sandbox' | 'fm-sandbox' | 'challenge' | 'mixing-challenge' | 'production-challenge';
 
 export function App() {
   const [view, setView] = useState<View>('menu');
@@ -279,6 +280,40 @@ export function App() {
     );
   }
 
+  // FM Sandbox view
+  if (view === 'fm-sandbox') {
+    return (
+      <Suspense fallback={<LoadingFallback />}>
+        <div>
+          <div
+            style={{
+              position: 'fixed',
+              top: '16px',
+              left: '16px',
+              zIndex: 100,
+            }}
+          >
+            <button
+              onClick={() => setView('menu')}
+              style={{
+                background: '#1a1a1a',
+                border: '1px solid #333',
+                borderRadius: '4px',
+                color: '#888',
+                cursor: 'pointer',
+                padding: '8px 16px',
+                fontSize: '13px',
+              }}
+            >
+              ← Menu
+            </button>
+          </div>
+          <FMSynthView />
+        </div>
+      </Suspense>
+    );
+  }
+
   // Main menu
   return (
     <div
@@ -461,6 +496,27 @@ export function App() {
             </div>
             <div style={{ fontSize: '13px', color: '#666' }}>
               Free play with the synthesizer
+            </div>
+          </button>
+
+          <button
+            onClick={() => setView('fm-sandbox')}
+            style={{
+              padding: '20px 32px',
+              background: '#141414',
+              border: '1px solid #ff8800',
+              borderRadius: '12px',
+              color: '#fff',
+              cursor: 'pointer',
+              textAlign: 'left',
+              flex: 1,
+            }}
+          >
+            <div style={{ fontSize: '18px', fontWeight: 600, marginBottom: '4px', color: '#ff8800' }}>
+              FM Sandbox
+            </div>
+            <div style={{ fontSize: '13px', color: '#666' }}>
+              Explore FM synthesis bells & basses
             </div>
           </button>
         </div>
