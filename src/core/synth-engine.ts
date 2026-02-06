@@ -22,6 +22,7 @@ import {
   DEFAULT_SYNTH_PARAMS,
   DEFAULT_ANALYSER_CONFIG,
 } from './types.ts';
+import { EffectsChain } from './effects-chain.ts';
 
 /**
  * Converts our filter type names to Tone.js BiquadFilterType
@@ -59,18 +60,7 @@ export class SynthEngine {
   private isInitialized = false;
 
   // Effects chain
-  private distortion: Tone.Distortion;
-  private distortionDry: Tone.Gain;
-  private distortionWet: Tone.Gain;
-  private delay: Tone.FeedbackDelay;
-  private delayDry: Tone.Gain;
-  private delayWet: Tone.Gain;
-  private reverb: Tone.Reverb;
-  private reverbDry: Tone.Gain;
-  private reverbWet: Tone.Gain;
-  private chorus: Tone.Chorus;
-  private chorusDry: Tone.Gain;
-  private chorusWet: Tone.Gain;
+  private effectsChain: EffectsChain;
 
   constructor(initialParams: Partial<SynthParams> = {}) {
     this.params = { ...DEFAULT_SYNTH_PARAMS, ...initialParams };
@@ -125,79 +115,15 @@ export class SynthEngine {
     this.lfo.start();
 
     // Create effects chain
-    // Distortion
-    this.distortion = new Tone.Distortion(this.params.effects.distortion.amount);
-    this.distortionDry = new Tone.Gain(1 - this.params.effects.distortion.mix);
-    this.distortionWet = new Tone.Gain(this.params.effects.distortion.mix);
-
-    // Delay
-    this.delay = new Tone.FeedbackDelay({
-      delayTime: this.params.effects.delay.time,
-      feedback: this.params.effects.delay.feedback,
-    });
-    this.delayDry = new Tone.Gain(1 - this.params.effects.delay.mix);
-    this.delayWet = new Tone.Gain(this.params.effects.delay.mix);
-
-    // Chorus
-    this.chorus = new Tone.Chorus({
-      frequency: this.params.effects.chorus.rate,
-      depth: this.params.effects.chorus.depth,
-      wet: 1, // We control mix manually
-    }).start();
-    this.chorusDry = new Tone.Gain(1 - this.params.effects.chorus.mix);
-    this.chorusWet = new Tone.Gain(this.params.effects.chorus.mix);
-
-    // Reverb
-    this.reverb = new Tone.Reverb({
-      decay: this.params.effects.reverb.decay,
-      wet: 1, // We control mix manually
-    });
-    this.reverbDry = new Tone.Gain(1 - this.params.effects.reverb.mix);
-    this.reverbWet = new Tone.Gain(this.params.effects.reverb.mix);
+    this.effectsChain = new EffectsChain(this.params.effects);
 
     // Create analyser node for spectrum visualization
     this.analyser = Tone.getContext().createAnalyser();
     this.configureAnalyser(DEFAULT_ANALYSER_CONFIG);
 
-    // Wire the effects chain:
-    // synth → [distortion dry/wet] → [delay dry/wet] → [chorus dry/wet] → [reverb dry/wet] → analyser → destination
-
-    // Create merge points for dry/wet mixing
-    const postDistortion = new Tone.Gain();
-    const postDelay = new Tone.Gain();
-    const postChorus = new Tone.Gain();
-    const postReverb = new Tone.Gain();
-
-    // Synth → Distortion stage
-    this.synth.connect(this.distortionDry);
-    this.synth.connect(this.distortion);
-    this.distortion.connect(this.distortionWet);
-    this.distortionDry.connect(postDistortion);
-    this.distortionWet.connect(postDistortion);
-
-    // Distortion → Delay stage
-    postDistortion.connect(this.delayDry);
-    postDistortion.connect(this.delay);
-    this.delay.connect(this.delayWet);
-    this.delayDry.connect(postDelay);
-    this.delayWet.connect(postDelay);
-
-    // Delay → Chorus stage
-    postDelay.connect(this.chorusDry);
-    postDelay.connect(this.chorus);
-    this.chorus.connect(this.chorusWet);
-    this.chorusDry.connect(postChorus);
-    this.chorusWet.connect(postChorus);
-
-    // Chorus → Reverb stage
-    postChorus.connect(this.reverbDry);
-    postChorus.connect(this.reverb);
-    this.reverb.connect(this.reverbWet);
-    this.reverbDry.connect(postReverb);
-    this.reverbWet.connect(postReverb);
-
-    // Reverb → Analyser → Destination
-    postReverb.connect(this.analyser);
+    // Wire: synth → effectsChain → analyser → destination
+    this.synth.connect(this.effectsChain.input);
+    this.effectsChain.connect(this.analyser);
     Tone.connect(this.analyser, Tone.getDestination());
   }
 
@@ -422,14 +348,7 @@ export class SynthEngine {
   // Distortion
   setDistortion(distortionParams: Partial<DistortionParams>): void {
     this.params.effects.distortion = { ...this.params.effects.distortion, ...distortionParams };
-
-    if (distortionParams.amount !== undefined) {
-      this.distortion.distortion = distortionParams.amount;
-    }
-    if (distortionParams.mix !== undefined) {
-      this.distortionDry.gain.value = 1 - distortionParams.mix;
-      this.distortionWet.gain.value = distortionParams.mix;
-    }
+    this.effectsChain.setDistortion(distortionParams);
   }
 
   setDistortionAmount(amount: number): void {
@@ -443,17 +362,7 @@ export class SynthEngine {
   // Delay
   setDelay(delayParams: Partial<DelayParams>): void {
     this.params.effects.delay = { ...this.params.effects.delay, ...delayParams };
-
-    if (delayParams.time !== undefined) {
-      this.delay.delayTime.value = delayParams.time;
-    }
-    if (delayParams.feedback !== undefined) {
-      this.delay.feedback.value = delayParams.feedback;
-    }
-    if (delayParams.mix !== undefined) {
-      this.delayDry.gain.value = 1 - delayParams.mix;
-      this.delayWet.gain.value = delayParams.mix;
-    }
+    this.effectsChain.setDelay(delayParams);
   }
 
   setDelayTime(time: number): void {
@@ -471,14 +380,7 @@ export class SynthEngine {
   // Reverb
   setReverb(reverbParams: Partial<ReverbParams>): void {
     this.params.effects.reverb = { ...this.params.effects.reverb, ...reverbParams };
-
-    if (reverbParams.decay !== undefined) {
-      this.reverb.decay = reverbParams.decay;
-    }
-    if (reverbParams.mix !== undefined) {
-      this.reverbDry.gain.value = 1 - reverbParams.mix;
-      this.reverbWet.gain.value = reverbParams.mix;
-    }
+    this.effectsChain.setReverb(reverbParams);
   }
 
   setReverbDecay(decay: number): void {
@@ -492,17 +394,7 @@ export class SynthEngine {
   // Chorus
   setChorus(chorusParams: Partial<ChorusParams>): void {
     this.params.effects.chorus = { ...this.params.effects.chorus, ...chorusParams };
-
-    if (chorusParams.rate !== undefined) {
-      this.chorus.frequency.value = chorusParams.rate;
-    }
-    if (chorusParams.depth !== undefined) {
-      this.chorus.depth = chorusParams.depth;
-    }
-    if (chorusParams.mix !== undefined) {
-      this.chorusDry.gain.value = 1 - chorusParams.mix;
-      this.chorusWet.gain.value = chorusParams.mix;
-    }
+    this.effectsChain.setChorus(chorusParams);
   }
 
   setChorusRate(rate: number): void {
@@ -640,21 +532,7 @@ export class SynthEngine {
     this.lfo.stop();
     this.lfo.dispose();
     this.lfoGain.dispose();
-
-    // Dispose effects
-    this.distortion.dispose();
-    this.distortionDry.dispose();
-    this.distortionWet.dispose();
-    this.delay.dispose();
-    this.delayDry.dispose();
-    this.delayWet.dispose();
-    this.chorus.dispose();
-    this.chorusDry.dispose();
-    this.chorusWet.dispose();
-    this.reverb.dispose();
-    this.reverbDry.dispose();
-    this.reverbWet.dispose();
-
+    this.effectsChain.dispose();
     this.synth.dispose();
   }
 }
