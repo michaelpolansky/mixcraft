@@ -21,6 +21,8 @@ import {
   CarrierModulatorViz,
   HarmonicDrawbars,
   InfoPanel,
+  Oscilloscope,
+  FilterResponse,
 } from '../components/index.ts';
 import { InfoPanelProvider } from '../context/InfoPanelContext.tsx';
 import { PARAM_RANGES, FM_PARAM_RANGES, HARMONICITY_PRESETS } from '../../core/types.ts';
@@ -401,6 +403,25 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
   }
 
   const hasNext = !!getNextChallenge(currentChallenge.id);
+
+  // Determine visualization type based on challenge module
+  const getVisualizationType = (): 'oscilloscope' | 'filter' | 'none' => {
+    if (isFM || isAdditive) return 'none'; // These have their own visualizations
+    const module = currentChallenge.module;
+    if (module === 'SD1') return 'oscilloscope'; // Oscillators
+    if (module === 'SD2') return 'filter'; // Filters
+    return 'oscilloscope'; // Default for other modules
+  };
+
+  const visualizationType = getVisualizationType();
+
+  // Get analyser for oscilloscope based on synth type
+  const getActiveAnalyser = useCallback(() => {
+    if (isFM && fmEngine) return fmEngine.getAnalyser();
+    if (isAdditive && additiveEngine) return additiveEngine.getAnalyser();
+    if (engine) return engine.getAnalyser();
+    return null;
+  }, [engine, fmEngine, additiveEngine, isFM, isAdditive]);
 
   return (
     <InfoPanelProvider>
@@ -880,6 +901,30 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
 
         {/* Right Column - Visualization & Actions */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {/* Educational Visualization - shows different views based on module */}
+          {visualizationType === 'oscilloscope' && (
+            <Section title="Waveform">
+              <Oscilloscope
+                getAnalyser={getActiveAnalyser}
+                width={450}
+                height={120}
+                accentColor="#4ade80"
+              />
+            </Section>
+          )}
+          {visualizationType === 'filter' && (
+            <Section title="Filter Response">
+              <FilterResponse
+                filterType={params.filter.type}
+                cutoff={params.filter.cutoff}
+                resonance={params.filter.resonance}
+                width={450}
+                height={150}
+                accentColor="#4ade80"
+              />
+            </Section>
+          )}
+
           {/* Spectrum */}
           <Section title="Spectrum Analyzer">
             <SpectrumAnalyzer width={450} height={200} barCount={64} />
