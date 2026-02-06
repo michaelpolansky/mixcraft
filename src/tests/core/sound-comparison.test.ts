@@ -3,9 +3,10 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { compareSounds, generateSummary, type ScoreResult } from '../../core/sound-comparison.ts';
+import { compareSounds, generateSummary, compareFMParams, type ScoreResult } from '../../core/sound-comparison.ts';
 import type { SoundFeatures } from '../../core/sound-analysis.ts';
-import type { SynthParams } from '../../core/types.ts';
+import type { SynthParams, FMSynthParams } from '../../core/types.ts';
+import { DEFAULT_FM_SYNTH_PARAMS } from '../../core/types.ts';
 
 // Helper to create default sound features
 function createFeatures(overrides: Partial<SoundFeatures> = {}): SoundFeatures {
@@ -420,5 +421,42 @@ describe('generateSummary', () => {
 
     const summary = generateSummary(result);
     expect(summary.toLowerCase()).toContain('attack');
+  });
+});
+
+describe('compareFMParams', () => {
+  it('scores 100 for identical params', () => {
+    const result = compareFMParams(DEFAULT_FM_SYNTH_PARAMS, DEFAULT_FM_SYNTH_PARAMS);
+    expect(result.score).toBe(100);
+  });
+
+  it('penalizes harmonicity difference', () => {
+    const player = { ...DEFAULT_FM_SYNTH_PARAMS, harmonicity: 3 };
+    const target = { ...DEFAULT_FM_SYNTH_PARAMS, harmonicity: 1 };
+    const result = compareFMParams(player, target);
+    expect(result.score).toBeLessThan(100);
+    expect(result.breakdown.harmonicity).toBeLessThan(100);
+  });
+
+  it('penalizes modulation index difference', () => {
+    const player = { ...DEFAULT_FM_SYNTH_PARAMS, modulationIndex: 8 };
+    const target = { ...DEFAULT_FM_SYNTH_PARAMS, modulationIndex: 2 };
+    const result = compareFMParams(player, target);
+    expect(result.score).toBeLessThan(100);
+    expect(result.breakdown.modulationIndex).toBeLessThan(100);
+  });
+
+  it('penalizes wrong carrier type', () => {
+    const player = { ...DEFAULT_FM_SYNTH_PARAMS, carrierType: 'square' as const };
+    const target = { ...DEFAULT_FM_SYNTH_PARAMS, carrierType: 'sine' as const };
+    const result = compareFMParams(player, target);
+    expect(result.breakdown.carrierType).toBe(50);
+  });
+
+  it('penalizes wrong modulator type', () => {
+    const player = { ...DEFAULT_FM_SYNTH_PARAMS, modulatorType: 'sawtooth' as const };
+    const target = { ...DEFAULT_FM_SYNTH_PARAMS, modulatorType: 'sine' as const };
+    const result = compareFMParams(player, target);
+    expect(result.breakdown.modulatorType).toBe(50);
   });
 });

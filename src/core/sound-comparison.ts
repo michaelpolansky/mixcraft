@@ -4,7 +4,8 @@
  */
 
 import type { SoundFeatures } from './sound-analysis.ts';
-import type { SynthParams } from './types.ts';
+import type { SynthParams, FMSynthParams, ADSREnvelope } from './types.ts';
+import { FM_PARAM_RANGES } from './types.ts';
 
 /**
  * Detailed breakdown of how well each aspect matched
@@ -333,4 +334,80 @@ export function generateSummary(result: ScoreResult): string {
     );
     return `Focus on ${worst[0]}: ${worst[1].feedback}`;
   }
+}
+
+// ============================================
+// FM Synth Parameter Comparison
+// ============================================
+
+export interface FMParamBreakdown {
+  harmonicity: number;
+  modulationIndex: number;
+  carrierType: number;
+  modulatorType: number;
+  envelope: number;
+}
+
+export interface FMComparisonResult {
+  score: number;
+  breakdown: FMParamBreakdown;
+}
+
+/**
+ * Compare harmonicity ratio
+ */
+function compareFMHarmonicity(player: number, target: number): number {
+  const maxDiff = FM_PARAM_RANGES.harmonicity.max - FM_PARAM_RANGES.harmonicity.min;
+  const diff = Math.abs(player - target);
+  return Math.max(0, 100 - (diff / maxDiff) * 100);
+}
+
+/**
+ * Compare modulation index
+ */
+function compareFMModIndex(player: number, target: number): number {
+  const maxDiff = FM_PARAM_RANGES.modulationIndex.max - FM_PARAM_RANGES.modulationIndex.min;
+  const diff = Math.abs(player - target);
+  return Math.max(0, 100 - (diff / maxDiff) * 100);
+}
+
+/**
+ * Compare ADSR envelopes for FM synth
+ */
+function compareFMEnvelope(player: ADSREnvelope, target: ADSREnvelope): number {
+  const attackDiff = Math.abs(player.attack - target.attack) / 2; // max 2s
+  const decayDiff = Math.abs(player.decay - target.decay) / 2;
+  const sustainDiff = Math.abs(player.sustain - target.sustain); // 0-1
+  const releaseDiff = Math.abs(player.release - target.release) / 5; // max 5s
+
+  const avgDiff = (attackDiff + decayDiff + sustainDiff + releaseDiff) / 4;
+  return Math.max(0, Math.round((1 - avgDiff) * 100));
+}
+
+/**
+ * Compare FM synth parameters
+ */
+export function compareFMParams(
+  player: FMSynthParams,
+  target: FMSynthParams
+): FMComparisonResult {
+  const breakdown: FMParamBreakdown = {
+    harmonicity: compareFMHarmonicity(player.harmonicity, target.harmonicity),
+    modulationIndex: compareFMModIndex(player.modulationIndex, target.modulationIndex),
+    carrierType: player.carrierType === target.carrierType ? 100 : 50,
+    modulatorType: player.modulatorType === target.modulatorType ? 100 : 50,
+    envelope: compareFMEnvelope(player.amplitudeEnvelope, target.amplitudeEnvelope),
+  };
+
+  // Weighted average:
+  // 25% harmonicity, 25% modulationIndex, 15% carrierType, 15% modulatorType, 20% envelope
+  const score = Math.round(
+    breakdown.harmonicity * 0.25 +
+    breakdown.modulationIndex * 0.25 +
+    breakdown.carrierType * 0.15 +
+    breakdown.modulatorType * 0.15 +
+    breakdown.envelope * 0.20
+  );
+
+  return { score, breakdown };
 }
