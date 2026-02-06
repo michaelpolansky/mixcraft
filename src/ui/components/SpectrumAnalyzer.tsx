@@ -13,6 +13,8 @@ interface SpectrumAnalyzerProps {
   barCount?: number;
   /** Show frequency labels */
   showLabels?: boolean;
+  /** Optional function to get analyser node (for use with different synth engines) */
+  getAnalyser?: () => AnalyserNode | null;
 }
 
 // Color palette for spectrum bars (low to high frequency)
@@ -41,18 +43,23 @@ export function SpectrumAnalyzer({
   height = 200,
   barCount = 64,
   showLabels = true,
+  getAnalyser,
 }: SpectrumAnalyzerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>(0);
-  const engine = useSynthStore((state) => state.engine);
+  const defaultEngine = useSynthStore((state) => state.engine);
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d');
-    if (!canvas || !ctx || !engine) return;
+
+    // Get analyser from custom prop or default to synth store engine
+    const analyser = getAnalyser ? getAnalyser() : defaultEngine?.getAnalyser();
+    if (!canvas || !ctx || !analyser) return;
 
     // Get frequency data
-    const frequencyData = engine.getFrequencyData();
+    const frequencyData = new Uint8Array(analyser.frequencyBinCount);
+    analyser.getByteFrequencyData(frequencyData);
     const binCount = frequencyData.length;
 
     // Clear canvas
@@ -149,10 +156,12 @@ export function SpectrumAnalyzer({
 
     // Continue animation
     animationRef.current = requestAnimationFrame(draw);
-  }, [engine, width, height, barCount, showLabels]);
+  }, [defaultEngine, getAnalyser, width, height, barCount, showLabels]);
 
   useEffect(() => {
-    if (engine) {
+    // Start animation if we have an analyser source
+    const hasAnalyser = getAnalyser ? getAnalyser() !== null : defaultEngine !== null;
+    if (hasAnalyser) {
       animationRef.current = requestAnimationFrame(draw);
     }
 
@@ -161,7 +170,7 @@ export function SpectrumAnalyzer({
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [engine, draw]);
+  }, [defaultEngine, getAnalyser, draw]);
 
   return (
     <div
