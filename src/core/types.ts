@@ -709,9 +709,47 @@ export function isProductionChallenge(challenge: AnyChallenge | ProductionChalle
 }
 
 /** Union type for all challenge types */
-export type AnyChallenge = Challenge | MixingChallenge | ProductionChallenge;
+export type AnyChallenge = Challenge | MixingChallenge | ProductionChallenge | SamplingChallenge;
 
 /** Type guard for mixing challenges */
 export function isMixingChallenge(challenge: AnyChallenge): challenge is MixingChallenge {
   return 'sourceConfig' in challenge && 'controls' in challenge;
+}
+
+// ============================================
+// Sampling Challenge Types
+// ============================================
+
+export interface SamplingChallenge {
+  /** Unique identifier */
+  id: string;
+  /** Display title */
+  title: string;
+  /** Description of what to create */
+  description: string;
+  /** Star difficulty (1-3) */
+  difficulty: 1 | 2 | 3;
+  /** Curriculum module (e.g., "SM1") */
+  module: string;
+  /** Challenge type */
+  challengeType: 'recreate-kit' | 'tune-to-track' | 'chop-challenge' | 'flip-this' | 'clean-sample';
+  /** Source sample URL */
+  sourceSampleUrl: string;
+  /** Target/reference sample URL (for comparison) */
+  targetSampleUrl?: string;
+  /** Target sampler params (for recreate challenges) */
+  targetParams?: Partial<SamplerParams>;
+  /** Expected slice count (for chop challenges) */
+  expectedSlices?: number;
+  /** Target key (for tune challenges) */
+  targetKey?: string;
+  /** Target BPM (for tune challenges) */
+  targetBpm?: number;
+  /** Progressive hints */
+  hints: string[];
+}
+
+/** Type guard for sampling challenges */
+export function isSamplingChallenge(challenge: AnyChallenge | SamplingChallenge): challenge is SamplingChallenge {
+  return 'challengeType' in challenge && 'sourceSampleUrl' in challenge;
 }
