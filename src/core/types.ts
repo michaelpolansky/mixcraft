@@ -322,6 +322,85 @@ export const ADDITIVE_PRESETS = {
 export type AdditivePreset = keyof typeof ADDITIVE_PRESETS;
 
 // ============================================
+// Sampler Types
+// ============================================
+
+export interface SampleSlice {
+  /** Unique identifier for this slice */
+  id: string;
+  /** Start time in seconds */
+  start: number;
+  /** End time in seconds */
+  end: number;
+  /** Pitch shift in semitones (-24 to +24) */
+  pitch: number;
+  /** Velocity/volume (0 to 1) */
+  velocity: number;
+}
+
+export interface SamplerParams {
+  /** URL of the loaded sample (null if no sample loaded) */
+  sampleUrl: string | null;
+  /** Display name of the sample */
+  sampleName: string;
+  /** Duration of the sample in seconds */
+  duration: number;
+  /** Pitch shift in semitones (-24 to +24) */
+  pitch: number;
+  /** Time stretch factor (0.5 to 2.0) */
+  timeStretch: number;
+  /** Start point as normalized position (0 to 1) */
+  startPoint: number;
+  /** End point as normalized position (0 to 1) */
+  endPoint: number;
+  /** Whether to loop playback */
+  loop: boolean;
+  /** Whether to play in reverse */
+  reverse: boolean;
+  /** Sample slices for chopping */
+  slices: SampleSlice[];
+  /** Currently selected slice index (-1 for full sample) */
+  selectedSlice: number;
+  /** Amplitude envelope */
+  amplitudeEnvelope: ADSREnvelope;
+  /** Effects processors */
+  effects: EffectsParams;
+  /** Master volume in dB (-60 to 0) */
+  volume: number;
+  /** Fade in time in seconds */
+  fadeIn: number;
+  /** Fade out time in seconds */
+  fadeOut: number;
+}
+
+export const DEFAULT_SAMPLER_PARAMS: SamplerParams = {
+  sampleUrl: null,
+  sampleName: '',
+  duration: 0,
+  pitch: 0,
+  timeStretch: 1.0,
+  startPoint: 0,
+  endPoint: 1,
+  loop: false,
+  reverse: false,
+  slices: [],
+  selectedSlice: -1,
+  amplitudeEnvelope: DEFAULT_AMPLITUDE_ENVELOPE,
+  effects: DEFAULT_EFFECTS,
+  volume: -12,
+  fadeIn: 0,
+  fadeOut: 0,
+};
+
+export const SAMPLER_PARAM_RANGES = {
+  pitch: { min: -24, max: 24, step: 1 },
+  timeStretch: { min: 0.5, max: 2.0, step: 0.01 },
+  volume: { min: -60, max: 0, step: 0.5 },
+  fadeIn: { min: 0, max: 5, step: 0.01 },
+  fadeOut: { min: 0, max: 5, step: 0.01 },
+} as const;
+
+// ============================================
 // Audio Analysis Types
 // ============================================
 
