@@ -306,6 +306,13 @@ export class SamplerEngine {
     this.volumeNode.volume.value = clamped;
   }
 
+  /**
+   * Set selected slice index
+   */
+  setSelectedSlice(index: number): void {
+    this.params.selectedSlice = index;
+  }
+
   // ============================================
   // Slice Management
   // ============================================

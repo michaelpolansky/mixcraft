@@ -4,7 +4,7 @@
  */
 
 import { create } from 'zustand';
-import type { SamplerParams, SampleSlice } from '../../core/types.ts';
+import type { SamplerParams } from '../../core/types.ts';
 import { DEFAULT_SAMPLER_PARAMS } from '../../core/types.ts';
 import { SamplerEngine, createSamplerEngine } from '../../core/sampler-engine.ts';
 
@@ -45,6 +45,7 @@ interface SamplerStore {
   // Utility
   getAnalyser: () => AnalyserNode | null;
   getWaveformData: () => Float32Array | null;
+  resetToDefaults: () => void;
 
   // Cleanup
   dispose: () => void;
@@ -210,13 +211,10 @@ export const useSamplerStore = create<SamplerStore>((set, get) => ({
 
   // Set the currently selected slice index
   setSelectedSlice: (index: number) => {
-    const { params } = get();
-    set({
-      params: {
-        ...params,
-        selectedSlice: index,
-      },
-    });
+    const { engine } = get();
+    if (!engine) return;
+    engine.setSelectedSlice(index);
+    set({ params: engine.getParams() });
   },
 
   // Get the analyser node for visualization
@@ -229,6 +227,14 @@ export const useSamplerStore = create<SamplerStore>((set, get) => ({
   getWaveformData: () => {
     const { engine } = get();
     return engine?.getWaveformData() ?? null;
+  },
+
+  // Reset sampler params to defaults
+  resetToDefaults: () => {
+    const { engine } = get();
+    if (!engine) return;
+    engine.setParams(DEFAULT_SAMPLER_PARAMS);
+    set({ params: engine.getParams() });
   },
 
   // Cleanup
