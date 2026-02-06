@@ -14,7 +14,9 @@ import {
   SpectrumAnalyzer,
   EnvelopeDisplay,
   PianoKeyboard,
+  InfoPanel,
 } from '../components/index.ts';
+import { InfoPanelProvider } from '../context/InfoPanelContext.tsx';
 import { PARAM_RANGES } from '../../core/types.ts';
 
 /**
@@ -189,15 +191,18 @@ export function SynthView() {
   }
 
   return (
+    <InfoPanelProvider>
     <div
       style={{
         minHeight: '100vh',
         background: '#0a0a0a',
         color: '#fff',
         fontFamily: 'system-ui, -apple-system, sans-serif',
-        padding: '24px',
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
+    <div style={{ padding: '24px', flex: 1 }}>
       {/* Header */}
       <div
         style={{
@@ -284,6 +289,7 @@ export function SynthView() {
                   step={PARAM_RANGES.octave.step}
                   onChange={setOctave}
                   formatValue={formatOctave}
+                  paramId="oscillator.octave"
                 />
                 <Knob
                   label="Detune"
@@ -293,6 +299,7 @@ export function SynthView() {
                   step={PARAM_RANGES.detune.step}
                   onChange={setDetune}
                   formatValue={formatCents}
+                  paramId="oscillator.detune"
                 />
               </div>
             </div>
@@ -322,6 +329,7 @@ export function SynthView() {
                   onChange={setFilterCutoff}
                   formatValue={formatHz}
                   logarithmic
+                  paramId="filter.cutoff"
                 />
                 <Knob
                   label="Resonance"
@@ -331,6 +339,7 @@ export function SynthView() {
                   step={PARAM_RANGES.resonance.step}
                   onChange={setFilterResonance}
                   formatValue={(v) => v.toFixed(1)}
+                  paramId="filter.resonance"
                 />
               </div>
             </div>
@@ -361,6 +370,7 @@ export function SynthView() {
                   onChange={setAmplitudeAttack}
                   formatValue={formatMs}
                   logarithmic
+                  paramId="amplitude.attack"
                 />
                 <Slider
                   label="D"
@@ -371,6 +381,7 @@ export function SynthView() {
                   onChange={setAmplitudeDecay}
                   formatValue={formatMs}
                   logarithmic
+                  paramId="amplitude.decay"
                 />
                 <Slider
                   label="S"
@@ -380,6 +391,7 @@ export function SynthView() {
                   step={PARAM_RANGES.sustain.step}
                   onChange={setAmplitudeSustain}
                   formatValue={formatPercent}
+                  paramId="amplitude.sustain"
                 />
                 <Slider
                   label="R"
@@ -390,6 +402,7 @@ export function SynthView() {
                   onChange={setAmplitudeRelease}
                   formatValue={formatMs}
                   logarithmic
+                  paramId="amplitude.release"
                 />
               </div>
             </div>
@@ -426,6 +439,7 @@ export function SynthView() {
                   onChange={setFilterEnvelopeAmount}
                   formatValue={(v) => `${v > 0 ? '+' : ''}${v.toFixed(1)} oct`}
                   size={48}
+                  paramId="filterEnv.amount"
                 />
               </div>
 
@@ -439,6 +453,7 @@ export function SynthView() {
                   onChange={setFilterEnvelopeAttack}
                   formatValue={formatMs}
                   logarithmic
+                  paramId="filterEnv.attack"
                 />
                 <Slider
                   label="D"
@@ -449,6 +464,7 @@ export function SynthView() {
                   onChange={setFilterEnvelopeDecay}
                   formatValue={formatMs}
                   logarithmic
+                  paramId="filterEnv.decay"
                 />
                 <Slider
                   label="S"
@@ -458,6 +474,7 @@ export function SynthView() {
                   step={PARAM_RANGES.sustain.step}
                   onChange={setFilterEnvelopeSustain}
                   formatValue={formatPercent}
+                  paramId="filterEnv.sustain"
                 />
                 <Slider
                   label="R"
@@ -468,6 +485,7 @@ export function SynthView() {
                   onChange={setFilterEnvelopeRelease}
                   formatValue={formatMs}
                   logarithmic
+                  paramId="filterEnv.release"
                 />
               </div>
             </div>
@@ -496,6 +514,7 @@ export function SynthView() {
                   step={PARAM_RANGES.lfoRate.step}
                   onChange={setLFORate}
                   formatValue={(v) => `${v.toFixed(1)}Hz`}
+                  paramId="lfo.rate"
                 />
                 <Knob
                   label="Depth"
@@ -505,6 +524,7 @@ export function SynthView() {
                   step={PARAM_RANGES.lfoDepth.step}
                   onChange={setLFODepth}
                   formatValue={(v) => `${Math.round(v * 100)}%`}
+                  paramId="lfo.depth"
                 />
               </div>
             </div>
@@ -517,34 +537,34 @@ export function SynthView() {
               <div>
                 <div style={{ fontSize: '10px', color: '#666', marginBottom: '8px', textTransform: 'uppercase' }}>Distortion</div>
                 <div style={{ display: 'flex', gap: '12px' }}>
-                  <Knob label="Amt" value={params.effects.distortion.amount} min={PARAM_RANGES.distortionAmount.min} max={PARAM_RANGES.distortionAmount.max} step={PARAM_RANGES.distortionAmount.step} onChange={setDistortionAmount} formatValue={formatPercent} size={40} />
-                  <Knob label="Mix" value={params.effects.distortion.mix} min={PARAM_RANGES.distortionMix.min} max={PARAM_RANGES.distortionMix.max} step={PARAM_RANGES.distortionMix.step} onChange={setDistortionMix} formatValue={formatPercent} size={40} />
+                  <Knob label="Amt" value={params.effects.distortion.amount} min={PARAM_RANGES.distortionAmount.min} max={PARAM_RANGES.distortionAmount.max} step={PARAM_RANGES.distortionAmount.step} onChange={setDistortionAmount} formatValue={formatPercent} size={40} paramId="distortion.amount" />
+                  <Knob label="Mix" value={params.effects.distortion.mix} min={PARAM_RANGES.distortionMix.min} max={PARAM_RANGES.distortionMix.max} step={PARAM_RANGES.distortionMix.step} onChange={setDistortionMix} formatValue={formatPercent} size={40} paramId="distortion.mix" />
                 </div>
               </div>
               {/* Delay */}
               <div>
                 <div style={{ fontSize: '10px', color: '#666', marginBottom: '8px', textTransform: 'uppercase' }}>Delay</div>
                 <div style={{ display: 'flex', gap: '12px' }}>
-                  <Knob label="Time" value={params.effects.delay.time} min={PARAM_RANGES.delayTime.min} max={PARAM_RANGES.delayTime.max} step={PARAM_RANGES.delayTime.step} onChange={setDelayTime} formatValue={(v) => `${Math.round(v * 1000)}ms`} size={40} />
-                  <Knob label="FB" value={params.effects.delay.feedback} min={PARAM_RANGES.delayFeedback.min} max={PARAM_RANGES.delayFeedback.max} step={PARAM_RANGES.delayFeedback.step} onChange={setDelayFeedback} formatValue={formatPercent} size={40} />
-                  <Knob label="Mix" value={params.effects.delay.mix} min={PARAM_RANGES.delayMix.min} max={PARAM_RANGES.delayMix.max} step={PARAM_RANGES.delayMix.step} onChange={setDelayMix} formatValue={formatPercent} size={40} />
+                  <Knob label="Time" value={params.effects.delay.time} min={PARAM_RANGES.delayTime.min} max={PARAM_RANGES.delayTime.max} step={PARAM_RANGES.delayTime.step} onChange={setDelayTime} formatValue={(v) => `${Math.round(v * 1000)}ms`} size={40} paramId="delay.time" />
+                  <Knob label="FB" value={params.effects.delay.feedback} min={PARAM_RANGES.delayFeedback.min} max={PARAM_RANGES.delayFeedback.max} step={PARAM_RANGES.delayFeedback.step} onChange={setDelayFeedback} formatValue={formatPercent} size={40} paramId="delay.feedback" />
+                  <Knob label="Mix" value={params.effects.delay.mix} min={PARAM_RANGES.delayMix.min} max={PARAM_RANGES.delayMix.max} step={PARAM_RANGES.delayMix.step} onChange={setDelayMix} formatValue={formatPercent} size={40} paramId="delay.mix" />
                 </div>
               </div>
               {/* Reverb */}
               <div>
                 <div style={{ fontSize: '10px', color: '#666', marginBottom: '8px', textTransform: 'uppercase' }}>Reverb</div>
                 <div style={{ display: 'flex', gap: '12px' }}>
-                  <Knob label="Decay" value={params.effects.reverb.decay} min={PARAM_RANGES.reverbDecay.min} max={PARAM_RANGES.reverbDecay.max} step={PARAM_RANGES.reverbDecay.step} onChange={setReverbDecay} formatValue={(v) => `${v.toFixed(1)}s`} size={40} />
-                  <Knob label="Mix" value={params.effects.reverb.mix} min={PARAM_RANGES.reverbMix.min} max={PARAM_RANGES.reverbMix.max} step={PARAM_RANGES.reverbMix.step} onChange={setReverbMix} formatValue={formatPercent} size={40} />
+                  <Knob label="Decay" value={params.effects.reverb.decay} min={PARAM_RANGES.reverbDecay.min} max={PARAM_RANGES.reverbDecay.max} step={PARAM_RANGES.reverbDecay.step} onChange={setReverbDecay} formatValue={(v) => `${v.toFixed(1)}s`} size={40} paramId="reverb.decay" />
+                  <Knob label="Mix" value={params.effects.reverb.mix} min={PARAM_RANGES.reverbMix.min} max={PARAM_RANGES.reverbMix.max} step={PARAM_RANGES.reverbMix.step} onChange={setReverbMix} formatValue={formatPercent} size={40} paramId="reverb.mix" />
                 </div>
               </div>
               {/* Chorus */}
               <div>
                 <div style={{ fontSize: '10px', color: '#666', marginBottom: '8px', textTransform: 'uppercase' }}>Chorus</div>
                 <div style={{ display: 'flex', gap: '12px' }}>
-                  <Knob label="Rate" value={params.effects.chorus.rate} min={PARAM_RANGES.chorusRate.min} max={PARAM_RANGES.chorusRate.max} step={PARAM_RANGES.chorusRate.step} onChange={setChorusRate} formatValue={(v) => `${v.toFixed(1)}Hz`} size={40} />
-                  <Knob label="Depth" value={params.effects.chorus.depth} min={PARAM_RANGES.chorusDepth.min} max={PARAM_RANGES.chorusDepth.max} step={PARAM_RANGES.chorusDepth.step} onChange={setChorusDepth} formatValue={formatPercent} size={40} />
-                  <Knob label="Mix" value={params.effects.chorus.mix} min={PARAM_RANGES.chorusMix.min} max={PARAM_RANGES.chorusMix.max} step={PARAM_RANGES.chorusMix.step} onChange={setChorusMix} formatValue={formatPercent} size={40} />
+                  <Knob label="Rate" value={params.effects.chorus.rate} min={PARAM_RANGES.chorusRate.min} max={PARAM_RANGES.chorusRate.max} step={PARAM_RANGES.chorusRate.step} onChange={setChorusRate} formatValue={(v) => `${v.toFixed(1)}Hz`} size={40} paramId="chorus.rate" />
+                  <Knob label="Depth" value={params.effects.chorus.depth} min={PARAM_RANGES.chorusDepth.min} max={PARAM_RANGES.chorusDepth.max} step={PARAM_RANGES.chorusDepth.step} onChange={setChorusDepth} formatValue={formatPercent} size={40} paramId="chorus.depth" />
+                  <Knob label="Mix" value={params.effects.chorus.mix} min={PARAM_RANGES.chorusMix.min} max={PARAM_RANGES.chorusMix.max} step={PARAM_RANGES.chorusMix.step} onChange={setChorusMix} formatValue={formatPercent} size={40} paramId="chorus.mix" />
                 </div>
               </div>
             </div>
@@ -562,6 +582,7 @@ export function SynthView() {
                 onChange={setVolume}
                 formatValue={formatDb}
                 size={56}
+                paramId="volume"
               />
             </div>
           </Section>
@@ -592,5 +613,8 @@ export function SynthView() {
         </div>
       </div>
     </div>
+    <InfoPanel />
+    </div>
+    </InfoPanelProvider>
   );
 }

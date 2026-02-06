@@ -3,6 +3,7 @@
  */
 
 import { useRef, useCallback } from 'react';
+import { useInfoPanel } from '../context/InfoPanelContext.tsx';
 
 interface SliderProps {
   value: number;
@@ -17,6 +18,8 @@ interface SliderProps {
   height?: number;
   /** Use logarithmic scale */
   logarithmic?: boolean;
+  /** Parameter ID for info panel (e.g., "amplitude.attack") */
+  paramId?: string;
 }
 
 export function Slider({
@@ -29,8 +32,10 @@ export function Slider({
   formatValue,
   height = 100,
   logarithmic = false,
+  paramId,
 }: SliderProps) {
   const trackRef = useRef<HTMLDivElement>(null);
+  const { setHoveredParam } = useInfoPanel();
 
   const valueToPosition = useCallback((v: number): number => {
     if (logarithmic) {
@@ -86,6 +91,8 @@ export function Slider({
 
   return (
     <div
+      onMouseEnter={() => paramId && setHoveredParam(paramId)}
+      onMouseLeave={() => setHoveredParam(null)}
       style={{
         display: 'flex',
         flexDirection: 'column',

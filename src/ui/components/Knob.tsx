@@ -3,7 +3,8 @@
  * Uses mouse drag for interaction
  */
 
-import { useRef, useCallback, useState, useEffect } from 'react';
+import { useRef, useCallback } from 'react';
+import { useInfoPanel } from '../context/InfoPanelContext.tsx';
 
 interface KnobProps {
   value: number;
@@ -18,6 +19,8 @@ interface KnobProps {
   size?: number;
   /** Use logarithmic scale (for frequency) */
   logarithmic?: boolean;
+  /** Parameter ID for info panel (e.g., "filter.cutoff") */
+  paramId?: string;
 }
 
 export function Knob({
@@ -30,8 +33,10 @@ export function Knob({
   formatValue,
   size = 64,
   logarithmic = false,
+  paramId,
 }: KnobProps) {
   const knobRef = useRef<HTMLDivElement>(null);
+  const { setHoveredParam } = useInfoPanel();
   const isDragging = useRef(false);
   const startY = useRef(0);
   const startValue = useRef(0);
@@ -103,6 +108,8 @@ export function Knob({
 
   return (
     <div
+      onMouseEnter={() => paramId && setHoveredParam(paramId)}
+      onMouseLeave={() => setHoveredParam(null)}
       style={{
         display: 'flex',
         flexDirection: 'column',

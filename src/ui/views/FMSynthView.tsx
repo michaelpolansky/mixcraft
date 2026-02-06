@@ -9,7 +9,9 @@ import {
   SpectrumAnalyzer,
   FMSynthPanel,
   PianoKeyboard,
+  InfoPanel,
 } from '../components/index.ts';
+import { InfoPanelProvider } from '../context/InfoPanelContext.tsx';
 
 /**
  * Section wrapper component for consistent styling
@@ -171,15 +173,18 @@ export function FMSynthView() {
   }
 
   return (
+    <InfoPanelProvider>
     <div
       style={{
         minHeight: '100vh',
         background: '#0a0a0a',
         color: '#fff',
         fontFamily: 'system-ui, -apple-system, sans-serif',
-        padding: '24px',
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
+    <div style={{ padding: '24px', flex: 1 }}>
       {/* Header */}
       <div
         style={{
@@ -273,5 +278,8 @@ export function FMSynthView() {
         </Section>
       </div>
     </div>
+    <InfoPanel accentColor="#f97316" />
+    </div>
+    </InfoPanelProvider>
   );
 }

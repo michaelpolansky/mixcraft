@@ -21,3 +21,4 @@ export { FMSynthPanel } from './FMSynthPanel.tsx';
 export { CarrierModulatorViz } from './CarrierModulatorViz.tsx';
 export { HarmonicDrawbars } from './HarmonicDrawbars.tsx';
 export { AdditiveSynthPanel } from './AdditiveSynthPanel.tsx';
+export { InfoPanel } from './InfoPanel.tsx';
