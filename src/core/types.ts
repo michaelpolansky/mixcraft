@@ -709,7 +709,7 @@ export function isProductionChallenge(challenge: AnyChallenge | ProductionChalle
 }
 
 /** Union type for all challenge types */
-export type AnyChallenge = Challenge | MixingChallenge | ProductionChallenge | SamplingChallenge;
+export type AnyChallenge = Challenge | MixingChallenge | ProductionChallenge | SamplingChallenge | DrumSequencingChallenge;
 
 /** Type guard for mixing challenges */
 export function isMixingChallenge(challenge: AnyChallenge): challenge is MixingChallenge {
@@ -752,4 +752,109 @@ export interface SamplingChallenge {
 /** Type guard for sampling challenges */
 export function isSamplingChallenge(challenge: AnyChallenge | SamplingChallenge): challenge is SamplingChallenge {
   return 'challengeType' in challenge && 'sourceSampleUrl' in challenge;
+}
+
+// ============================================
+// Drum Sequencer Types
+// ============================================
+
+export interface DrumStep {
+  /** Step is active */
+  active: boolean;
+  /** Velocity 0-1 */
+  velocity: number;
+}
+
+export interface DrumTrack {
+  /** Track ID (kick, snare, hihat-closed, etc.) */
+  id: string;
+  /** Display name */
+  name: string;
+  /** Sample URL */
+  sampleUrl: string;
+  /** 16 steps (one bar at 16th notes) */
+  steps: DrumStep[];
+}
+
+export interface DrumPattern {
+  /** Pattern name */
+  name: string;
+  /** Tempo in BPM */
+  tempo: number;
+  /** Swing amount (0-1, 0.5 = 50% swing) */
+  swing: number;
+  /** Number of steps (16 or 32) */
+  stepCount: 16 | 32;
+  /** Tracks in the pattern */
+  tracks: DrumTrack[];
+}
+
+export interface DrumSequencerParams {
+  /** Current pattern */
+  pattern: DrumPattern;
+  /** Current step (for playhead) */
+  currentStep: number;
+  /** Is playing */
+  isPlaying: boolean;
+  /** Selected track index */
+  selectedTrack: number;
+  /** Master volume in dB */
+  volume: number;
+}
+
+/** Create empty steps array */
+function createEmptySteps(count: number): DrumStep[] {
+  return Array(count).fill(null).map(() => ({ active: false, velocity: 0.8 }));
+}
+
+export const DEFAULT_DRUM_PATTERN: DrumPattern = {
+  name: 'New Pattern',
+  tempo: 120,
+  swing: 0,
+  stepCount: 16,
+  tracks: [
+    { id: 'kick', name: 'Kick', sampleUrl: '/samples/drums/kick.wav', steps: createEmptySteps(16) },
+    { id: 'snare', name: 'Snare', sampleUrl: '/samples/drums/snare.wav', steps: createEmptySteps(16) },
+    { id: 'hihat-closed', name: 'HH Closed', sampleUrl: '/samples/drums/hihat-closed.wav', steps: createEmptySteps(16) },
+    { id: 'hihat-open', name: 'HH Open', sampleUrl: '/samples/drums/hihat-open.wav', steps: createEmptySteps(16) },
+  ],
+};
+
+export const DEFAULT_DRUM_SEQUENCER_PARAMS: DrumSequencerParams = {
+  pattern: DEFAULT_DRUM_PATTERN,
+  currentStep: 0,
+  isPlaying: false,
+  selectedTrack: 0,
+  volume: -6,
+};
+
+export const DRUM_SEQUENCER_RANGES = {
+  tempo: { min: 60, max: 200, step: 1 },
+  swing: { min: 0, max: 1, step: 0.01 },
+  volume: { min: -60, max: 0, step: 0.5 },
+} as const;
+
+// Drum Sequencing Challenge
+export interface DrumSequencingChallenge {
+  id: string;
+  title: string;
+  description: string;
+  difficulty: 1 | 2 | 3;
+  module: string;
+  challengeType: 'match-beat' | 'fix-groove' | 'add-dynamics' | 'genre-challenge' | 'complete-loop';
+  /** Starting pattern (may be empty or partial) */
+  startingPattern: DrumPattern;
+  /** Target pattern to match */
+  targetPattern: DrumPattern;
+  /** Which aspects to evaluate */
+  evaluationFocus: ('pattern' | 'velocity' | 'swing' | 'tempo')[];
+  hints: string[];
+}
+
+/** Type guard for DrumSequencingChallenge */
+export function isDrumSequencingChallenge(challenge: AnyChallenge): challenge is DrumSequencingChallenge {
+  return 'challengeType' in challenge &&
+    ['match-beat', 'fix-groove', 'add-dynamics', 'genre-challenge', 'complete-loop'].includes(
+      (challenge as DrumSequencingChallenge).challengeType
+    );
 }
