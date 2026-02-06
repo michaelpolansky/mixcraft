@@ -45,3 +45,6 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 # Claude (development)
 .claude/
 .vercel
+
+# Git worktrees
+.worktrees/
