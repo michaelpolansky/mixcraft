@@ -15,16 +15,18 @@ const AdditiveSynthView = lazy(() => import('./ui/views/AdditiveSynthView.tsx').
 const SamplerView = lazy(() => import('./ui/views/SamplerView.tsx').then(m => ({ default: m.SamplerView })));
 const SamplerChallengeView = lazy(() => import('./ui/views/SamplerChallengeView.tsx').then(m => ({ default: m.SamplerChallengeView })));
 const DrumSequencerView = lazy(() => import('./ui/views/DrumSequencerView.tsx').then(m => ({ default: m.DrumSequencerView })));
+const DrumSequencerChallengeView = lazy(() => import('./ui/views/DrumSequencerChallengeView.tsx').then(m => ({ default: m.DrumSequencerChallengeView })));
 import { useSynthStore } from './ui/stores/synth-store.ts';
 import { useChallengeStore } from './ui/stores/challenge-store.ts';
 import { useMixingStore } from './ui/stores/mixing-store.ts';
 import { useProductionStore } from './ui/stores/production-store.ts';
 import { useSamplerStore } from './ui/stores/sampler-store.ts';
+import { useDrumSequencerStore } from './ui/stores/drum-sequencer-store.ts';
 import { allChallenges, modules, allSamplingChallenges, samplingModules, getSamplingChallenge, getNextSamplingChallenge } from './data/challenges/index.ts';
 import { allMixingChallenges, mixingModules, getMixingChallenge, getNextMixingChallenge } from './data/challenges/mixing/index.ts';
 import { allProductionChallenges, productionModules, getProductionChallenge, getNextProductionChallenge } from './data/challenges/production/index.ts';
 import { useIsMobile } from './ui/hooks/useMediaQuery.ts';
-import type { MixingChallenge, ProductionChallenge, SamplingChallenge } from './core/types.ts';
+import type { MixingChallenge, ProductionChallenge, SamplingChallenge, DrumSequencingChallenge } from './core/types.ts';
 
 // Loading fallback for lazy-loaded views
 function LoadingFallback() {
@@ -59,7 +61,7 @@ function LoadingFallback() {
   );
 }
 
-type View = 'menu' | 'sandbox' | 'fm-sandbox' | 'additive-sandbox' | 'sampler' | 'drum-sequencer' | 'challenge' | 'mixing-challenge' | 'production-challenge' | 'sampling-challenge';
+type View = 'menu' | 'sandbox' | 'fm-sandbox' | 'additive-sandbox' | 'sampler' | 'drum-sequencer' | 'challenge' | 'mixing-challenge' | 'production-challenge' | 'sampling-challenge' | 'drum-sequencer-challenge';
 
 export function App() {
   const [view, setView] = useState<View>('menu');
@@ -71,6 +73,7 @@ export function App() {
   const [currentMixingChallenge, setCurrentMixingChallenge] = useState<MixingChallenge | null>(null);
   const [currentProductionChallenge, setCurrentProductionChallenge] = useState<ProductionChallenge | null>(null);
   const [currentSamplingChallenge, setCurrentSamplingChallenge] = useState<SamplingChallenge | null>(null);
+  const [currentDrumSequencingChallenge, setCurrentDrumSequencingChallenge] = useState<DrumSequencingChallenge | null>(null);
   const isMobile = useIsMobile();
 
   // Onboarding state - show for first-time users
@@ -150,6 +153,7 @@ export function App() {
     setCurrentMixingChallenge(null);
     setCurrentProductionChallenge(null);
     setCurrentSamplingChallenge(null);
+    setCurrentDrumSequencingChallenge(null);
     setView('menu');
   };
 
@@ -173,6 +177,21 @@ export function App() {
         setView('menu');
       }
     }
+  };
+
+  // Start a drum sequencing challenge
+  const handleStartDrumSequencingChallenge = (challenge: DrumSequencingChallenge) => {
+    setCurrentDrumSequencingChallenge(challenge);
+    setView('drum-sequencer-challenge');
+  };
+
+  // Handle next drum sequencing challenge
+  // Note: getNextDrumSequencingChallenge will be implemented when challenges are created
+  const handleNextDrumSequencingChallenge = () => {
+    // For now, just exit to menu
+    // When challenges exist, this will fetch the next challenge
+    setCurrentDrumSequencingChallenge(null);
+    setView('menu');
   };
 
   // Not initialized - show start screen
@@ -285,6 +304,22 @@ export function App() {
           challenge={currentSamplingChallenge}
           onExit={handleExitChallenge}
           onNext={handleNextSamplingChallenge}
+          hasNext={hasNext}
+        />
+      </Suspense>
+    );
+  }
+
+  // Drum sequencer challenge view
+  if (view === 'drum-sequencer-challenge' && currentDrumSequencingChallenge) {
+    // Note: hasNext will be determined when challenges are implemented
+    const hasNext = false;
+    return (
+      <Suspense fallback={<LoadingFallback />}>
+        <DrumSequencerChallengeView
+          challenge={currentDrumSequencingChallenge}
+          onExit={handleExitChallenge}
+          onNext={handleNextDrumSequencingChallenge}
           hasNext={hasNext}
         />
       </Suspense>
