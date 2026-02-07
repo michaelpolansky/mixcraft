@@ -1038,6 +1038,7 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
           targetParams={currentChallenge.targetParams}
           challenge={currentChallenge}
           attemptNumber={currentAttempt}
+          synthesisType={synthesisType}
           onRetry={retry}
           onNext={nextChallenge}
           hasNextChallenge={hasNext}

@@ -4,7 +4,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import type { ScoreResult } from '../../core/sound-comparison.ts';
-import type { SynthParams, Challenge } from '../../core/types.ts';
+import type { SynthParams, FMSynthParams, AdditiveSynthParams, Challenge } from '../../core/types.ts';
 import { generateSummary } from '../../core/sound-comparison.ts';
 import { ScoreBar } from './ScoreBar.tsx';
 import { trpc } from '../api/trpc.ts';
@@ -27,10 +27,11 @@ function generateConfetti(count: number) {
 
 interface ResultsModalProps {
   result: ScoreResult;
-  playerParams: SynthParams;
-  targetParams: SynthParams;
+  playerParams: SynthParams | FMSynthParams | AdditiveSynthParams;
+  targetParams: SynthParams | FMSynthParams | AdditiveSynthParams;
   challenge: Challenge;
   attemptNumber: number;
+  synthesisType?: 'subtractive' | 'fm' | 'additive';
   onRetry: () => void;
   onNext: () => void;
   hasNextChallenge: boolean;
@@ -42,6 +43,7 @@ export function ResultsModal({
   targetParams,
   challenge,
   attemptNumber,
+  synthesisType = 'subtractive',
   onRetry,
   onNext,
   hasNextChallenge,
@@ -65,18 +67,74 @@ export function ResultsModal({
 
     async function fetchFeedback() {
       try {
-        const response = await trpc.feedback.generate.mutate({
-          result,
-          playerParams,
-          targetParams,
-          challenge: {
-            id: challenge.id,
-            title: challenge.title,
-            description: challenge.description,
-            module: challenge.module,
-          },
-          attemptNumber,
-        });
+        let response: { feedback: string };
+
+        if (synthesisType === 'fm') {
+          // FM Synthesis feedback
+          const fmPlayerParams = playerParams as FMSynthParams;
+          const fmTargetParams = targetParams as FMSynthParams;
+          response = await trpc.feedback.generateFMSynthesis.mutate({
+            result: {
+              overall: result.overall,
+              stars: result.stars as 1 | 2 | 3,
+              passed: result.passed,
+              breakdown: {
+                harmonicity: (result as unknown as { breakdown: { harmonicity: number } }).breakdown.harmonicity ?? 0,
+                modulationIndex: (result as unknown as { breakdown: { modulationIndex: number } }).breakdown.modulationIndex ?? 0,
+                carrierType: (result as unknown as { breakdown: { carrierType: number } }).breakdown.carrierType ?? 0,
+                modulatorType: (result as unknown as { breakdown: { modulatorType: number } }).breakdown.modulatorType ?? 0,
+                envelope: (result as unknown as { breakdown: { envelope: number } }).breakdown.envelope ?? 0,
+              },
+            },
+            playerParams: fmPlayerParams,
+            targetParams: fmTargetParams,
+            challenge: {
+              id: challenge.id,
+              title: challenge.title,
+              description: challenge.description,
+              module: challenge.module,
+            },
+            attemptNumber,
+          });
+        } else if (synthesisType === 'additive') {
+          // Additive Synthesis feedback
+          const additivePlayerParams = playerParams as AdditiveSynthParams;
+          const additiveTargetParams = targetParams as AdditiveSynthParams;
+          response = await trpc.feedback.generateAdditiveSynthesis.mutate({
+            result: {
+              overall: result.overall,
+              stars: result.stars as 1 | 2 | 3,
+              passed: result.passed,
+              breakdown: {
+                harmonics: (result as unknown as { breakdown: { harmonics: number } }).breakdown.harmonics ?? 0,
+                envelope: (result as unknown as { breakdown: { envelope: number } }).breakdown.envelope ?? 0,
+              },
+            },
+            playerParams: additivePlayerParams,
+            targetParams: additiveTargetParams,
+            challenge: {
+              id: challenge.id,
+              title: challenge.title,
+              description: challenge.description,
+              module: challenge.module,
+            },
+            attemptNumber,
+          });
+        } else {
+          // Subtractive Synthesis feedback (default)
+          response = await trpc.feedback.generate.mutate({
+            result,
+            playerParams: playerParams as SynthParams,
+            targetParams: targetParams as SynthParams,
+            challenge: {
+              id: challenge.id,
+              title: challenge.title,
+              description: challenge.description,
+              module: challenge.module,
+            },
+            attemptNumber,
+          });
+        }
 
         if (!cancelled) {
           setAiFeedback(response.feedback);
@@ -96,7 +154,7 @@ export function ResultsModal({
     return () => {
       cancelled = true;
     };
-  }, [result, playerParams, targetParams, challenge, attemptNumber]);
+  }, [result, playerParams, targetParams, challenge, attemptNumber, synthesisType]);
 
   // Star display
   const stars = Array.from({ length: 3 }, (_, i) => (
@@ -265,26 +323,71 @@ export function ResultsModal({
             Breakdown
           </div>
 
-          <ScoreBar
-            label="Brightness"
-            score={result.breakdown.brightness.score}
-            feedback={result.breakdown.brightness.feedback}
-          />
-          <ScoreBar
-            label="Attack"
-            score={result.breakdown.attack.score}
-            feedback={result.breakdown.attack.feedback}
-          />
-          <ScoreBar
-            label="Filter"
-            score={result.breakdown.filter.score}
-            feedback={result.breakdown.filter.feedback}
-          />
-          <ScoreBar
-            label="Envelope"
-            score={result.breakdown.envelope.score}
-            feedback={result.breakdown.envelope.feedback}
-          />
+          {synthesisType === 'fm' ? (
+            <>
+              <ScoreBar
+                label="Harmonicity"
+                score={(result as unknown as { breakdown: { harmonicity: number } }).breakdown.harmonicity ?? 0}
+                feedback="Frequency ratio between carrier and modulator"
+              />
+              <ScoreBar
+                label="Mod Index"
+                score={(result as unknown as { breakdown: { modulationIndex: number } }).breakdown.modulationIndex ?? 0}
+                feedback="Depth of frequency modulation"
+              />
+              <ScoreBar
+                label="Carrier"
+                score={(result as unknown as { breakdown: { carrierType: number } }).breakdown.carrierType ?? 0}
+                feedback="Carrier waveform match"
+              />
+              <ScoreBar
+                label="Modulator"
+                score={(result as unknown as { breakdown: { modulatorType: number } }).breakdown.modulatorType ?? 0}
+                feedback="Modulator waveform match"
+              />
+              <ScoreBar
+                label="Envelope"
+                score={(result as unknown as { breakdown: { envelope: number } }).breakdown.envelope ?? 0}
+                feedback="ADSR envelope shape"
+              />
+            </>
+          ) : synthesisType === 'additive' ? (
+            <>
+              <ScoreBar
+                label="Harmonics"
+                score={(result as unknown as { breakdown: { harmonics: number } }).breakdown.harmonics ?? 0}
+                feedback="Harmonic balance and timbre"
+              />
+              <ScoreBar
+                label="Envelope"
+                score={(result as unknown as { breakdown: { envelope: number } }).breakdown.envelope ?? 0}
+                feedback="ADSR envelope shape"
+              />
+            </>
+          ) : (
+            <>
+              <ScoreBar
+                label="Brightness"
+                score={result.breakdown.brightness.score}
+                feedback={result.breakdown.brightness.feedback}
+              />
+              <ScoreBar
+                label="Attack"
+                score={result.breakdown.attack.score}
+                feedback={result.breakdown.attack.feedback}
+              />
+              <ScoreBar
+                label="Filter"
+                score={result.breakdown.filter.score}
+                feedback={result.breakdown.filter.feedback}
+              />
+              <ScoreBar
+                label="Envelope"
+                score={result.breakdown.envelope.score}
+                feedback={result.breakdown.envelope.feedback}
+              />
+            </>
+          )}
         </div>
 
         {/* Actions */}
