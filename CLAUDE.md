@@ -160,3 +160,4 @@ Sound design is the entry point. It teaches concepts that make mixing and produc
 | 18 | 2026-02-06 | TypeScript strict mode cleanup - fixed 95+ errors across comparison functions, stores, components, Zod schemas |
 | 19 | 2026-02-06 | Ableton-style synth UI - XY Pad, preset system (30 presets), sequencer (9 patterns + drums), ModuleCard visual redesign, WAV recording |
 | 20 | 2026-02-06 | Layout polish - horizontal signal-flow layout, fixed header/menu overlap, compact visualizers, RecordingControl compact mode |
+| 21 | 2026-02-06 | Performance optimization - Canvas visualizer fixes (cached gradients, reused TypedArrays, conditional shadows), React.memo on all visualizers |
