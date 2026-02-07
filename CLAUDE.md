@@ -60,7 +60,7 @@ docs/
 
 ## Five-Track Curriculum
 
-1. **Sound Design** (50 challenges) — subtractive synthesis, FM synthesis, additive synthesis.
+1. **Sound Design** (56 challenges) — subtractive synthesis, FM synthesis, additive synthesis.
 2. **Production** (20 challenges) — layering, arrangement, frequency stacking.
 3. **Mixing** (136 challenges) — EQ, compression, reverb, stereo, levels.
 4. **Sampling** (24 challenges) — sample manipulation, chopping, pitch/time, flipping.
@@ -70,12 +70,12 @@ Sound design is the entry point. It teaches concepts that make mixing and produc
 
 ## Current State
 
-**All 254 challenges complete across five tracks.** Deployed to production with AI feedback on all tracks.
+**All 260 challenges complete across five tracks.** Deployed to production with AI feedback on all tracks.
 
 ### Sound Design Track (50 challenges, SD1-SD9)
 - **Subtractive synthesis (SD1-SD7):** oscillator, filter, dual ADSR envelopes, LFO, effects chain
 - **FM synthesis (SD8, 12 challenges):** harmonicity, modulation index, carrier/modulator waveforms
-- **Additive synthesis (SD9, 6 challenges):** harmonic drawbars, Fourier synthesis
+- **Additive synthesis (SD9, 12 challenges):** harmonic drawbars, Fourier synthesis, timbres
 - Effects chain: distortion, delay, reverb, chorus (all with dry/wet mix)
 - Challenge system with scoring (70% audio features, 30% parameter proximity)
 - AI feedback via Claude API (separate endpoints for subtractive, FM, additive)

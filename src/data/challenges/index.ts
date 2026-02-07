@@ -116,6 +116,12 @@ import { challenge as sd9_03 } from './sd9/sd9-03-bright-saw.ts';
 import { challenge as sd9_04 } from './sd9/sd9-04-hollow-square.ts';
 import { challenge as sd9_05 } from './sd9/sd9-05-soft-triangle.ts';
 import { challenge as sd9_06 } from './sd9/sd9-06-organ-tone.ts';
+import { challenge as sd9_07 } from './sd9/sd9-07-clarinet.ts';
+import { challenge as sd9_08 } from './sd9/sd9-08-brass-stab.ts';
+import { challenge as sd9_09 } from './sd9/sd9-09-bell-tone.ts';
+import { challenge as sd9_10 } from './sd9/sd9-10-choir-pad.ts';
+import { challenge as sd9_11 } from './sd9/sd9-11-nasal-reed.ts';
+import { challenge as sd9_12 } from './sd9/sd9-12-shimmer.ts';
 
 /**
  * All challenges indexed by ID
@@ -171,6 +177,12 @@ export const challengesById: Record<string, Challenge> = {
   'sd9-04-hollow-square': sd9_04,
   'sd9-05-soft-triangle': sd9_05,
   'sd9-06-organ-tone': sd9_06,
+  'sd9-07-clarinet': sd9_07,
+  'sd9-08-brass-stab': sd9_08,
+  'sd9-09-bell-tone': sd9_09,
+  'sd9-10-choir-pad': sd9_10,
+  'sd9-11-nasal-reed': sd9_11,
+  'sd9-12-shimmer': sd9_12,
 };
 
 /**
@@ -185,7 +197,7 @@ export const challengesByModule: Record<string, Challenge[]> = {
   SD6: [sd6_01, sd6_02, sd6_03, sd6_04, sd6_05, sd6_06],
   SD7: [sd7_01, sd7_02, sd7_03, sd7_04, sd7_05, sd7_06],
   SD8: [sd8_01, sd8_02, sd8_03, sd8_04, sd8_05, sd8_06, sd8_07, sd8_08, sd8_09, sd8_10, sd8_11, sd8_12],
-  SD9: [sd9_01, sd9_02, sd9_03, sd9_04, sd9_05, sd9_06],
+  SD9: [sd9_01, sd9_02, sd9_03, sd9_04, sd9_05, sd9_06, sd9_07, sd9_08, sd9_09, sd9_10, sd9_11, sd9_12],
 };
 
 /**
@@ -251,6 +263,12 @@ export const allChallenges: Challenge[] = [
   sd9_04,
   sd9_05,
   sd9_06,
+  sd9_07,
+  sd9_08,
+  sd9_09,
+  sd9_10,
+  sd9_11,
+  sd9_12,
 ];
 
 /**
@@ -309,7 +327,7 @@ export const modules = {
     id: 'SD9',
     title: 'Additive Synthesis',
     description: 'Build sounds from individual harmonics using Fourier synthesis.',
-    challengeCount: 6,
+    challengeCount: 12,
   },
 } as const;
 
