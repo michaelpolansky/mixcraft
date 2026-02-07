@@ -23,6 +23,8 @@ interface SynthStore {
   isPlaying: boolean;
   currentNote: string;
   isInitialized: boolean;
+  isInitializing: boolean;
+  initError: string | null;
   currentPreset: string;
 
   // Initialization
@@ -91,6 +93,8 @@ export const useSynthStore = create<SynthStore>((set, get) => ({
   isPlaying: false,
   currentNote: 'C4',
   isInitialized: false,
+  isInitializing: false,
+  initError: null,
   currentPreset: 'Default',
 
   // Initialize the synth engine
@@ -106,9 +110,24 @@ export const useSynthStore = create<SynthStore>((set, get) => ({
   // Start the audio context (requires user gesture)
   startAudio: async () => {
     const { engine } = get();
-    if (engine && !get().isInitialized) {
-      await engine.start();
-      set({ isInitialized: true });
+    if (engine && !get().isInitialized && !get().isInitializing) {
+      set({ isInitializing: true, initError: null });
+      try {
+        await engine.start();
+        set({ isInitialized: true, isInitializing: false });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        // Provide user-friendly error messages
+        let userMessage = 'Failed to start audio engine. ';
+        if (message.includes('NotAllowedError') || message.includes('user gesture')) {
+          userMessage += 'Please click the button to enable audio.';
+        } else if (message.includes('NotSupportedError')) {
+          userMessage += 'Your browser may not support Web Audio.';
+        } else {
+          userMessage += 'Please try refreshing the page.';
+        }
+        set({ isInitializing: false, initError: userMessage });
+      }
     }
   },
 

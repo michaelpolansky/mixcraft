@@ -34,6 +34,8 @@ export function FMSynthView() {
     params,
     engine,
     isInitialized,
+    isInitializing,
+    initError,
     initEngine,
     startAudio,
     playNote,
@@ -103,23 +105,45 @@ export function FMSynthView() {
         <p style={{ color: '#666', marginBottom: '32px' }}>FM Synthesizer</p>
         <button
           onClick={handleStartAudio}
+          disabled={isInitializing}
           style={{
             padding: '16px 48px',
             fontSize: '16px',
-            background: 'linear-gradient(145deg, #f97316, #ea580c)',
+            background: isInitializing
+              ? 'linear-gradient(145deg, #9a3412, #7c2d12)'
+              : 'linear-gradient(145deg, #f97316, #ea580c)',
             border: 'none',
             borderRadius: '8px',
             color: '#fff',
-            cursor: 'pointer',
+            cursor: isInitializing ? 'wait' : 'pointer',
             fontWeight: 600,
-            boxShadow: '0 4px 12px rgba(249, 115, 22, 0.3)',
+            boxShadow: isInitializing
+              ? '0 4px 12px rgba(249, 115, 22, 0.15)'
+              : '0 4px 12px rgba(249, 115, 22, 0.3)',
+            opacity: isInitializing ? 0.8 : 1,
+            transition: 'all 0.2s ease',
           }}
         >
-          Start Audio Engine
+          {isInitializing ? 'Starting Audio...' : 'Start Audio Engine'}
         </button>
         <p style={{ color: '#444', fontSize: '12px', marginTop: '16px' }}>
           Click to enable audio (browser requirement)
         </p>
+        {initError && (
+          <div style={{
+            marginTop: '24px',
+            padding: '12px 20px',
+            background: 'rgba(239, 68, 68, 0.1)',
+            border: '1px solid rgba(239, 68, 68, 0.3)',
+            borderRadius: '8px',
+            color: '#f87171',
+            fontSize: '13px',
+            maxWidth: '400px',
+            textAlign: 'center',
+          }}>
+            {initError}
+          </div>
+        )}
       </div>
     );
   }
