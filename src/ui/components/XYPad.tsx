@@ -334,6 +334,8 @@ export function XYPad({
         width={size}
         height={size}
         style={{
+          width: size,
+          height: size,
           borderRadius: '8px',
           border: `2px solid ${accentColor}`,
           cursor: isDragging ? 'grabbing' : 'grab',
