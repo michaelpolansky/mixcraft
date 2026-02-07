@@ -63,7 +63,7 @@ export function Oscilloscope({
     }
 
     const dataArray = dataArrayRef.current;
-    analyser.getFloatTimeDomainData(dataArray);
+    analyser.getFloatTimeDomainData(dataArray as Float32Array<ArrayBuffer>);
 
     const centerY = height / 2;
     const amplitude = height * 0.4; // Leave some padding
@@ -71,7 +71,7 @@ export function Oscilloscope({
     // Find a good starting point (zero crossing going up) for stable display
     let startIndex = 0;
     for (let i = 0; i < dataArray.length - 1; i++) {
-      if (dataArray[i] <= 0 && dataArray[i + 1] > 0) {
+      if ((dataArray[i] ?? 0) <= 0 && (dataArray[i + 1] ?? 0) > 0) {
         startIndex = i;
         break;
       }
@@ -86,7 +86,7 @@ export function Oscilloscope({
     ctx.moveTo(0, centerY);
 
     for (let i = 0; i < samplesToShow; i++) {
-      const sample = dataArray[startIndex + i];
+      const sample = dataArray[startIndex + i] ?? 0;
       const x = i * sliceWidth;
       const y = centerY - sample * amplitude;
 
@@ -110,7 +110,7 @@ export function Oscilloscope({
     ctx.moveTo(0, centerY);
 
     for (let i = 0; i < samplesToShow; i++) {
-      const sample = dataArray[startIndex + i];
+      const sample = dataArray[startIndex + i] ?? 0;
       const x = i * sliceWidth;
       const y = centerY - sample * amplitude;
       ctx.lineTo(x, y);

@@ -12,7 +12,10 @@ import { DEFAULT_FM_SYNTH_PARAMS } from '../../core/types.ts';
 function createFeatures(overrides: Partial<SoundFeatures> = {}): SoundFeatures {
   return {
     spectralCentroid: overrides.spectralCentroid ?? 2000,
+    spectralSpread: overrides.spectralSpread ?? 500,
+    spectralFlatness: overrides.spectralFlatness ?? 0.3,
     attackTime: overrides.attackTime ?? 5,
+    sustainLevel: overrides.sustainLevel ?? 0.7,
     rmsEnvelope: overrides.rmsEnvelope ?? new Array(50).fill(0.5),
     averageSpectrum: overrides.averageSpectrum ?? new Array(128).fill(0.5),
   };

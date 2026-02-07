@@ -164,7 +164,7 @@ export function WaveformEditor({
         let min = 0;
         let max = 0;
         for (let i = startSample; i < endSample; i++) {
-          const sample = waveformData[i];
+          const sample = waveformData[i] ?? 0;
           if (sample < min) min = sample;
           if (sample > max) max = sample;
         }

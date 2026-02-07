@@ -15,6 +15,7 @@ function createLayerState(overrides: Partial<LayerState> & { id: string; name: s
     volume: overrides.volume ?? 0,
     pan: overrides.pan ?? 0,
     muted: overrides.muted ?? false,
+    solo: overrides.solo ?? false,
     eqLow: overrides.eqLow ?? 0,
     eqHigh: overrides.eqHigh ?? 0,
   };

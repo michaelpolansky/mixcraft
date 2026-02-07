@@ -324,10 +324,10 @@ describe('SamplerEngine', () => {
 
       const slices = freshEngine.autoSlice(4);
       expect(slices).toHaveLength(4);
-      expect(slices[0].start).toBe(0);
-      expect(slices[0].end).toBe(2.5);
-      expect(slices[1].start).toBe(2.5);
-      expect(slices[1].end).toBe(5);
+      expect(slices[0]!.start).toBe(0);
+      expect(slices[0]!.end).toBe(2.5);
+      expect(slices[1]!.start).toBe(2.5);
+      expect(slices[1]!.end).toBe(5);
     });
 
     it('clears existing slices', () => {

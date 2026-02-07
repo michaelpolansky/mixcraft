@@ -26,7 +26,7 @@ function matchesPreset(harmonics: number[], preset: AdditivePreset): boolean {
   const tolerance = 0.01;
 
   for (let i = 0; i < 16; i++) {
-    if (Math.abs(harmonics[i] - presetValues[i]) > tolerance) {
+    if (Math.abs((harmonics[i] ?? 0) - (presetValues[i] ?? 0)) > tolerance) {
       return false;
     }
   }

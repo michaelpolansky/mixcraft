@@ -4,13 +4,13 @@
  * With labeled phases and timing information
  */
 
-import type { ADSREnvelope, FilterEnvelope } from '../../core/types.ts';
+import type { ADSREnvelope, FilterEnvelopeParams } from '../../core/types.ts';
 
 interface EnvelopeVisualizerProps {
   /** Amplitude envelope */
   amplitudeEnvelope: ADSREnvelope;
   /** Filter envelope (optional) */
-  filterEnvelope?: FilterEnvelope;
+  filterEnvelope?: FilterEnvelopeParams;
   /** Canvas width */
   width?: number;
   /** Canvas height */

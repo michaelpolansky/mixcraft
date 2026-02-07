@@ -97,7 +97,8 @@ vi.mock('tone', () => {
 
 // Import after mocking
 import { createDrumSequencerEngine, clamp, DrumSequencerEngine } from '../../core/drum-sequencer-engine.ts';
-import { DEFAULT_DRUM_SEQUENCER_PARAMS, DRUM_SEQUENCER_RANGES, DrumPattern } from '../../core/types.ts';
+import { DEFAULT_DRUM_SEQUENCER_PARAMS, DRUM_SEQUENCER_RANGES } from '../../core/types.ts';
+import type { DrumPattern } from '../../core/types.ts';
 import * as Tone from 'tone';
 
 describe('Helper Functions', () => {
@@ -192,12 +193,12 @@ describe('DrumSequencerEngine', () => {
 
       // Mutate original pattern
       customPattern.tempo = 200;
-      customPattern.tracks[0].steps[0].active = true;
+      customPattern.tracks[0]!.steps[0]!.active = true;
 
       // Engine should not be affected
       const params = engine.getParams();
       expect(params.pattern.tempo).toBe(120);
-      expect(params.pattern.tracks[0].steps[0].active).toBe(false);
+      expect(params.pattern.tracks[0]!.steps[0]!.active).toBe(false);
     });
   });
 
@@ -271,12 +272,12 @@ describe('DrumSequencerEngine', () => {
   describe('toggleStep', () => {
     it('toggles step from inactive to active', () => {
       const params = engine.getParams();
-      expect(params.pattern.tracks[0].steps[0].active).toBe(false);
+      expect(params.pattern.tracks[0]!.steps[0]!.active).toBe(false);
 
       engine.toggleStep(0, 0);
 
       const updatedParams = engine.getParams();
-      expect(updatedParams.pattern.tracks[0].steps[0].active).toBe(true);
+      expect(updatedParams.pattern.tracks[0]!.steps[0]!.active).toBe(true);
     });
 
     it('toggles step from active to inactive', () => {
@@ -284,7 +285,7 @@ describe('DrumSequencerEngine', () => {
       engine.toggleStep(0, 0); // Toggle back
 
       const params = engine.getParams();
-      expect(params.pattern.tracks[0].steps[0].active).toBe(false);
+      expect(params.pattern.tracks[0]!.steps[0]!.active).toBe(false);
     });
 
     it('handles invalid track index gracefully', () => {
@@ -304,13 +305,13 @@ describe('DrumSequencerEngine', () => {
   describe('setStepActive', () => {
     it('sets step to active', () => {
       engine.setStepActive(0, 0, true);
-      expect(engine.getParams().pattern.tracks[0].steps[0].active).toBe(true);
+      expect(engine.getParams().pattern.tracks[0]!.steps[0]!.active).toBe(true);
     });
 
     it('sets step to inactive', () => {
       engine.setStepActive(0, 0, true);
       engine.setStepActive(0, 0, false);
-      expect(engine.getParams().pattern.tracks[0].steps[0].active).toBe(false);
+      expect(engine.getParams().pattern.tracks[0]!.steps[0]!.active).toBe(false);
     });
 
     it('handles invalid indices gracefully', () => {
@@ -322,17 +323,17 @@ describe('DrumSequencerEngine', () => {
   describe('setStepVelocity', () => {
     it('sets step velocity within valid range', () => {
       engine.setStepVelocity(0, 0, 0.5);
-      expect(engine.getParams().pattern.tracks[0].steps[0].velocity).toBe(0.5);
+      expect(engine.getParams().pattern.tracks[0]!.steps[0]!.velocity).toBe(0.5);
     });
 
     it('clamps velocity to maximum (1)', () => {
       engine.setStepVelocity(0, 0, 1.5);
-      expect(engine.getParams().pattern.tracks[0].steps[0].velocity).toBe(1);
+      expect(engine.getParams().pattern.tracks[0]!.steps[0]!.velocity).toBe(1);
     });
 
     it('clamps velocity to minimum (0)', () => {
       engine.setStepVelocity(0, 0, -0.5);
-      expect(engine.getParams().pattern.tracks[0].steps[0].velocity).toBe(0);
+      expect(engine.getParams().pattern.tracks[0]!.steps[0]!.velocity).toBe(0);
     });
 
     it('handles invalid indices gracefully', () => {
@@ -350,16 +351,16 @@ describe('DrumSequencerEngine', () => {
 
       // Verify steps are active
       let params = engine.getParams();
-      expect(params.pattern.tracks[0].steps[0].active).toBe(true);
-      expect(params.pattern.tracks[0].steps[4].active).toBe(true);
-      expect(params.pattern.tracks[0].steps[8].active).toBe(true);
+      expect(params.pattern.tracks[0]!.steps[0]!.active).toBe(true);
+      expect(params.pattern.tracks[0]!.steps[4]!.active).toBe(true);
+      expect(params.pattern.tracks[0]!.steps[8]!.active).toBe(true);
 
       // Clear track
       engine.clearTrack(0);
 
       // Verify all steps are cleared
       params = engine.getParams();
-      expect(params.pattern.tracks[0].steps.every(s => !s.active)).toBe(true);
+      expect(params.pattern.tracks[0]!.steps.every(s => !s.active)).toBe(true);
     });
 
     it('handles invalid track index gracefully', () => {
@@ -375,8 +376,8 @@ describe('DrumSequencerEngine', () => {
       engine.clearTrack(0);
 
       const params = engine.getParams();
-      expect(params.pattern.tracks[0].steps[0].active).toBe(false);
-      expect(params.pattern.tracks[1].steps[0].active).toBe(true);
+      expect(params.pattern.tracks[0]!.steps[0]!.active).toBe(false);
+      expect(params.pattern.tracks[1]!.steps[0]!.active).toBe(true);
     });
   });
 
@@ -405,12 +406,12 @@ describe('DrumSequencerEngine', () => {
 
       // Mutate the returned pattern
       pattern.tempo = 200;
-      pattern.tracks[0].steps[0].active = true;
+      pattern.tracks[0]!.steps[0]!.active = true;
 
       // Original should not be affected
       const originalParams = engine.getParams();
       expect(originalParams.pattern.tempo).toBe(120);
-      expect(originalParams.pattern.tracks[0].steps[0].active).toBe(false);
+      expect(originalParams.pattern.tracks[0]!.steps[0]!.active).toBe(false);
     });
   });
 
@@ -566,7 +567,7 @@ describe('DrumSequencerEngine', () => {
       const params = engine.getParams();
       expect(params.pattern.tempo).toBe(140);
       expect(params.pattern.swing).toBe(0.3);
-      expect(params.pattern.tracks[0].steps[0].active).toBe(true);
+      expect(params.pattern.tracks[0]!.steps[0]!.active).toBe(true);
     });
 
     it('deep copies the pattern', async () => {
@@ -587,12 +588,12 @@ describe('DrumSequencerEngine', () => {
 
       // Mutate original
       newPattern.tempo = 200;
-      newPattern.tracks[0].steps[0].active = true;
+      newPattern.tracks[0]!.steps[0]!.active = true;
 
       // Engine should not be affected
       const params = engine.getParams();
       expect(params.pattern.tempo).toBe(150);
-      expect(params.pattern.tracks[0].steps[0].active).toBe(false);
+      expect(params.pattern.tracks[0]!.steps[0]!.active).toBe(false);
     });
   });
 

@@ -416,12 +416,12 @@ export const useDrumSequencerStore = create<DrumSequencerStore>()(
               [challengeId]: {
                 challengeId,
                 bestScore: isNewBest ? score : existing.bestScore,
-                stars: isNewBest ? stars : Math.max(existing.stars, stars),
+                stars: isNewBest ? stars : Math.max(existing.stars, stars) as 0 | 1 | 2 | 3,
                 completed: true,
                 attempts: (existing?.attempts ?? 0) + 1,
               },
             },
-          };
+          } as Partial<DrumSequencerStore>;
         });
       },
 

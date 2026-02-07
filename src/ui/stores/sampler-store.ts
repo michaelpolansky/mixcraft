@@ -331,7 +331,7 @@ export const useSamplerStore = create<SamplerStore>()(
                 attempts: (existing?.attempts ?? 0) + 1,
               },
             },
-          };
+          } as Partial<SamplerStore>;
         });
       },
 

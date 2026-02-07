@@ -185,7 +185,7 @@ const MixingScoreResultSchema = z.object({
       release: z.number().optional(),
       total: z.number(),
     }).optional(),
-    tracks: z.record(z.object({
+    tracks: z.record(z.string(), z.object({
       low: z.number(),
       mid: z.number(),
       high: z.number(),
@@ -197,7 +197,7 @@ const MixingScoreResultSchema = z.object({
   feedback: z.array(z.string()),
 });
 
-const TrackParamsSchema = z.record(z.object({
+const TrackParamsSchema = z.record(z.string(), z.object({
   low: z.number(),
   mid: z.number(),
   high: z.number(),
