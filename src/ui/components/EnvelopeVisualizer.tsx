@@ -1,9 +1,11 @@
 /**
  * EnvelopeVisualizer - Draggable ADSR envelope visualization
- * Ableton Learning Synths-style interactive envelope display
+ * Ableton Learning Synths-style interactive envelope display with animated playhead
  */
 
 import React, { useRef, useEffect, useCallback, useState, memo } from 'react';
+
+type EnvelopePhase = 'idle' | 'attack' | 'decay' | 'sustain' | 'release';
 
 interface EnvelopeVisualizerProps {
   attack: number;      // 0-2 seconds
@@ -21,6 +23,8 @@ interface EnvelopeVisualizerProps {
   playheadPosition?: number; // 0-1 normalized position through envelope
   label?: string;
   compact?: boolean; // Remove labels and reduce padding for small sizes
+  /** When true, animates a playhead dot along the envelope curve */
+  isTriggered?: boolean;
 }
 
 // Parameter ranges
@@ -50,10 +54,19 @@ const EnvelopeVisualizerComponent: React.FC<EnvelopeVisualizerProps> = ({
   playheadPosition,
   label,
   compact = false,
+  isTriggered = false,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [dragTarget, setDragTarget] = useState<'attack' | 'decay' | 'sustain' | 'release' | null>(null);
   const [hoverTarget, setHoverTarget] = useState<'attack' | 'decay' | 'sustain' | 'release' | null>(null);
+
+  // Animation state for playhead
+  const [animPhase, setAnimPhase] = useState<EnvelopePhase>('idle');
+  const [playheadX, setPlayheadX] = useState(0);
+  const [playheadY, setPlayheadY] = useState(0);
+  const animationRef = useRef<number | undefined>(undefined);
+  const phaseStartTimeRef = useRef<number>(0);
+  const wasTriggeredRef = useRef(false);
 
   // Convert parameters to pixel positions
   const getEnvelopePoints = useCallback((w: number, h: number) => {
@@ -102,6 +115,98 @@ const EnvelopeVisualizerComponent: React.FC<EnvelopeVisualizerProps> = ({
 
     return null;
   }, []);
+
+  // Animation loop for playhead
+  useEffect(() => {
+    if (animPhase === 'idle') return;
+
+    const points = getEnvelopePoints(width, height);
+    const animate = () => {
+      const now = performance.now();
+      const elapsed = (now - phaseStartTimeRef.current) / 1000;
+
+      let newX = points.start.x;
+      let newY = points.start.y;
+      let nextPhase: EnvelopePhase = animPhase;
+
+      if (animPhase === 'attack') {
+        const progress = Math.min(elapsed / Math.max(attack, 0.001), 1);
+        // Interpolate from start to attack peak
+        newX = points.start.x + progress * (points.attackPeak.x - points.start.x);
+        newY = points.start.y + progress * (points.attackPeak.y - points.start.y);
+        if (progress >= 1) {
+          nextPhase = 'decay';
+          phaseStartTimeRef.current = now;
+        }
+      } else if (animPhase === 'decay') {
+        const progress = Math.min(elapsed / Math.max(decay, 0.001), 1);
+        // Interpolate from attack peak to decay end
+        newX = points.attackPeak.x + progress * (points.decayEnd.x - points.attackPeak.x);
+        newY = points.attackPeak.y + progress * (points.decayEnd.y - points.attackPeak.y);
+        if (progress >= 1) {
+          nextPhase = 'sustain';
+          phaseStartTimeRef.current = now;
+        }
+      } else if (animPhase === 'sustain') {
+        // Move slowly across sustain section (1 second max)
+        const sustainDisplayTime = 1;
+        const progress = Math.min(elapsed / sustainDisplayTime, 1);
+        newX = points.decayEnd.x + progress * (points.sustainEnd.x - points.decayEnd.x);
+        newY = points.sustainEnd.y;
+        // Stay in sustain until note is released
+      } else if (animPhase === 'release') {
+        const progress = Math.min(elapsed / Math.max(release, 0.001), 1);
+        // Interpolate from sustain end to release end
+        newX = points.sustainEnd.x + progress * (points.releaseEnd.x - points.sustainEnd.x);
+        newY = points.sustainEnd.y + progress * (points.releaseEnd.y - points.sustainEnd.y);
+        if (progress >= 1) {
+          nextPhase = 'idle';
+        }
+      }
+
+      setPlayheadX(newX);
+      setPlayheadY(newY);
+
+      if (nextPhase !== animPhase) {
+        setAnimPhase(nextPhase);
+      }
+
+      if (nextPhase !== 'idle') {
+        animationRef.current = requestAnimationFrame(animate);
+      }
+    };
+
+    animationRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, [animPhase, attack, decay, release, width, height, getEnvelopePoints]);
+
+  // Handle trigger state changes
+  useEffect(() => {
+    const points = getEnvelopePoints(width, height);
+
+    if (isTriggered && !wasTriggeredRef.current) {
+      // Note pressed - start attack phase
+      setAnimPhase('attack');
+      phaseStartTimeRef.current = performance.now();
+      setPlayheadX(points.start.x);
+      setPlayheadY(points.start.y);
+    } else if (!isTriggered && wasTriggeredRef.current && animPhase !== 'idle' && animPhase !== 'release') {
+      // Note released - start release phase
+      setAnimPhase('release');
+      phaseStartTimeRef.current = performance.now();
+      // Reset playhead to sustain end for release phase
+      setPlayheadX(points.sustainEnd.x);
+      setPlayheadY(points.sustainEnd.y);
+    }
+    wasTriggeredRef.current = isTriggered;
+  }, [isTriggered, animPhase, width, height, getEnvelopePoints]);
+
+  const isAnimating = animPhase !== 'idle';
 
   // Draw the envelope
   useEffect(() => {
@@ -241,21 +346,42 @@ const EnvelopeVisualizerComponent: React.FC<EnvelopeVisualizerProps> = ({
       ctx.fillText(`${(release * 1000).toFixed(0)}ms`, points.releaseEnd.x, points.releaseEnd.y - 12);
     }
 
-    // Draw playhead if provided
+    // Draw playhead line if position provided externally
     if (playheadPosition !== undefined && playheadPosition >= 0 && playheadPosition <= 1) {
-      const playheadX = points.padding + playheadPosition * points.drawWidth;
+      const phX = points.padding + playheadPosition * points.drawWidth;
 
       ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = 2;
       ctx.setLineDash([4, 4]);
       ctx.beginPath();
-      ctx.moveTo(playheadX, points.topPadding);
-      ctx.lineTo(playheadX, points.topPadding + points.drawHeight);
+      ctx.moveTo(phX, points.topPadding);
+      ctx.lineTo(phX, points.topPadding + points.drawHeight);
       ctx.stroke();
       ctx.setLineDash([]);
     }
 
-  }, [width, height, attack, decay, sustain, release, accentColor, dragTarget, hoverTarget, activePhase, playheadPosition, getEnvelopePoints, label, compact]);
+    // Draw animated playhead dot when triggered
+    if (isAnimating) {
+      // Glow
+      ctx.beginPath();
+      ctx.arc(playheadX, playheadY, 10, 0, Math.PI * 2);
+      ctx.fillStyle = `${accentColor}40`;
+      ctx.fill();
+
+      // Main dot
+      ctx.beginPath();
+      ctx.arc(playheadX, playheadY, 6, 0, Math.PI * 2);
+      ctx.fillStyle = accentColor;
+      ctx.fill();
+
+      // White center
+      ctx.beginPath();
+      ctx.arc(playheadX, playheadY, 3, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+    }
+
+  }, [width, height, attack, decay, sustain, release, accentColor, dragTarget, hoverTarget, activePhase, playheadPosition, getEnvelopePoints, label, compact, isAnimating, playheadX, playheadY]);
 
   // Mouse handlers
   const handleMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -342,7 +468,8 @@ const EnvelopeVisualizerComponent: React.FC<EnvelopeVisualizerProps> = ({
         maxWidth: '100%',
         cursor: dragTarget ? 'grabbing' : hoverTarget ? 'grab' : 'default',
         borderRadius: 8,
-        border: `1px solid ${accentColor}40`,
+        border: `1px solid ${isAnimating ? accentColor : `${accentColor}40`}`,
+        transition: 'border-color 0.15s',
       }}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}

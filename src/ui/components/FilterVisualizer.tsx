@@ -15,6 +15,8 @@ interface FilterVisualizerProps {
   height?: number;
   accentColor?: string;
   compact?: boolean; // Remove labels and reduce padding for small sizes
+  /** Real-time modulated cutoff value for animated display */
+  modulatedCutoff?: number;
 }
 
 // Frequency range (logarithmic)
@@ -114,16 +116,24 @@ const FilterVisualizerComponent: React.FC<FilterVisualizerProps> = ({
   height = 250,
   accentColor = '#06b6d4',
   compact = false,
+  modulatedCutoff,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
+  const animationRef = useRef<number>(0);
 
   const padding = compact ? 10 : 40;
   const topPadding = compact ? 10 : 40;
   const bottomPadding = compact ? 10 : 30;
   const drawWidth = width - padding * 2;
   const drawHeight = height - topPadding - bottomPadding;
+
+  // Check if modulation is active
+  const modulationThreshold = (MAX_FREQ - MIN_FREQ) * 0.005;
+  const isModulated = modulatedCutoff !== undefined &&
+    Math.abs(modulatedCutoff - cutoff) > modulationThreshold;
+  const displayCutoff = isModulated ? modulatedCutoff : cutoff;
 
   // Draw the visualization
   useEffect(() => {
@@ -194,16 +204,35 @@ const FilterVisualizerComponent: React.FC<FilterVisualizerProps> = ({
       ctx.fillText('-12', padding - 4, dbToY(-12, drawHeight, topPadding) + 3);
     }
 
-    // Draw filter response curve with glow
-    ctx.shadowColor = accentColor;
+    const steps = 300;
+
+    // When modulated, draw ghost curve at base cutoff position
+    if (isModulated) {
+      ctx.beginPath();
+      for (let i = 0; i <= steps; i++) {
+        const x = padding + (i / steps) * drawWidth;
+        const freq = xToFreq(x, drawWidth, padding);
+        const db = calculateResponse(filterType, cutoff, resonance, freq);
+        const y = dbToY(db, drawHeight, topPadding);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.strokeStyle = `${accentColor}40`;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([4, 4]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // Draw filter response curve at current (modulated) position with glow
+    ctx.shadowColor = isModulated ? '#22d3ee' : accentColor;
     ctx.shadowBlur = 15;
 
     ctx.beginPath();
-    const steps = 300;
     for (let i = 0; i <= steps; i++) {
       const x = padding + (i / steps) * drawWidth;
       const freq = xToFreq(x, drawWidth, padding);
-      const db = calculateResponse(filterType, cutoff, resonance, freq);
+      const db = calculateResponse(filterType, displayCutoff, resonance, freq);
       const y = dbToY(db, drawHeight, topPadding);
 
       if (i === 0) {
@@ -213,7 +242,7 @@ const FilterVisualizerComponent: React.FC<FilterVisualizerProps> = ({
       }
     }
 
-    ctx.strokeStyle = accentColor;
+    ctx.strokeStyle = isModulated ? '#22d3ee' : accentColor;
     ctx.lineWidth = 3;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
@@ -227,45 +256,62 @@ const FilterVisualizerComponent: React.FC<FilterVisualizerProps> = ({
     for (let i = 0; i <= steps; i++) {
       const x = padding + (i / steps) * drawWidth;
       const freq = xToFreq(x, drawWidth, padding);
-      const db = calculateResponse(filterType, cutoff, resonance, freq);
+      const db = calculateResponse(filterType, displayCutoff, resonance, freq);
       const y = dbToY(db, drawHeight, topPadding);
       ctx.lineTo(x, y);
     }
     ctx.lineTo(padding + drawWidth, topPadding + drawHeight);
     ctx.closePath();
-    ctx.fillStyle = `${accentColor}20`;
+    ctx.fillStyle = isModulated ? '#22d3ee20' : `${accentColor}20`;
     ctx.fill();
 
-    // Draw cutoff control point
-    const cutoffX = freqToX(cutoff, drawWidth, padding);
-    const cutoffDb = calculateResponse(filterType, cutoff, resonance, cutoff);
-    const cutoffY = dbToY(cutoffDb, drawHeight, topPadding);
+    // Draw base cutoff control point (for dragging)
+    const baseCutoffX = freqToX(cutoff, drawWidth, padding);
+    const baseCutoffDb = calculateResponse(filterType, cutoff, resonance, cutoff);
+    const baseCutoffY = dbToY(baseCutoffDb, drawHeight, topPadding);
 
-    // Resonance peak indicator
+    // Draw modulated cutoff indicator when active
+    if (isModulated) {
+      const modCutoffX = freqToX(displayCutoff, drawWidth, padding);
+      const modCutoffDb = calculateResponse(filterType, displayCutoff, resonance, displayCutoff);
+      const modCutoffY = dbToY(modCutoffDb, drawHeight, topPadding);
+
+      // Modulated position marker (cyan)
+      ctx.beginPath();
+      ctx.arc(modCutoffX, modCutoffY, 10, 0, Math.PI * 2);
+      ctx.fillStyle = '#22d3ee60';
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(modCutoffX, modCutoffY, 6, 0, Math.PI * 2);
+      ctx.fillStyle = '#22d3ee';
+      ctx.fill();
+    }
+
+    // Resonance peak indicator at base position
     if (resonance > 2) {
       const peakDb = calculateResponse(filterType, cutoff, resonance, cutoff);
       const peakY = dbToY(peakDb, drawHeight, topPadding);
 
       // Glow around peak
-      const gradient = ctx.createRadialGradient(cutoffX, peakY, 0, cutoffX, peakY, 30);
+      const gradient = ctx.createRadialGradient(baseCutoffX, peakY, 0, baseCutoffX, peakY, 30);
       gradient.addColorStop(0, `${accentColor}40`);
       gradient.addColorStop(1, 'transparent');
       ctx.fillStyle = gradient;
-      ctx.fillRect(cutoffX - 30, peakY - 30, 60, 60);
+      ctx.fillRect(baseCutoffX - 30, peakY - 30, 60, 60);
     }
 
-    // Control point (larger when hovering/dragging)
+    // Base cutoff control point (larger when hovering/dragging)
     const radius = isDragging ? 12 : isHovering ? 10 : 8;
 
     // Outer glow
     ctx.beginPath();
-    ctx.arc(cutoffX, cutoffY, radius + 4, 0, Math.PI * 2);
+    ctx.arc(baseCutoffX, baseCutoffY, radius + 4, 0, Math.PI * 2);
     ctx.fillStyle = `${accentColor}40`;
     ctx.fill();
 
     // Main circle
     ctx.beginPath();
-    ctx.arc(cutoffX, cutoffY, radius, 0, Math.PI * 2);
+    ctx.arc(baseCutoffX, baseCutoffY, radius, 0, Math.PI * 2);
     ctx.fillStyle = isDragging || isHovering ? '#ffffff' : accentColor;
     ctx.fill();
 
@@ -281,13 +327,21 @@ const FilterVisualizerComponent: React.FC<FilterVisualizerProps> = ({
       ctx.textAlign = 'center';
 
       const cutoffLabel = cutoff >= 1000 ? `${(cutoff / 1000).toFixed(1)}kHz` : `${Math.round(cutoff)}Hz`;
-      ctx.fillText(cutoffLabel, cutoffX, cutoffY - 18);
+      ctx.fillText(cutoffLabel, baseCutoffX, baseCutoffY - 18);
+
+      // Show modulated value when active
+      if (isModulated) {
+        const modLabel = displayCutoff >= 1000 ? `${(displayCutoff / 1000).toFixed(1)}kHz` : `${Math.round(displayCutoff)}Hz`;
+        ctx.fillStyle = '#22d3ee';
+        ctx.fillText(modLabel, freqToX(displayCutoff, drawWidth, padding), dbToY(calculateResponse(filterType, displayCutoff, resonance, displayCutoff), drawHeight, topPadding) - 18);
+      }
 
       ctx.textAlign = 'left';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
       ctx.fillText(`Q: ${resonance.toFixed(1)}`, width - padding - 50, topPadding + 20);
     }
 
-  }, [filterType, cutoff, resonance, width, height, accentColor, isDragging, isHovering, padding, topPadding, drawWidth, drawHeight, compact]);
+  }, [filterType, cutoff, resonance, width, height, accentColor, isDragging, isHovering, padding, topPadding, drawWidth, drawHeight, compact, isModulated, displayCutoff]);
 
   // Mouse handlers
   const handleMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {

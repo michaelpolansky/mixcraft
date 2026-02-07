@@ -75,6 +75,7 @@ export function SynthView() {
     isInitialized,
     isInitializing,
     initError,
+    isPlaying,
     initEngine,
     startAudio,
     playNote,
@@ -604,6 +605,7 @@ export function SynthView() {
               height={120}
               accentColor={COLORS.filter}
               compact
+              modulatedCutoff={modulatedValues?.filterCutoff}
             />
             <div style={{ marginTop: '12px' }}>
               <FilterTypeSelector value={params.filter.type} onChange={setFilterType} />
@@ -630,6 +632,7 @@ export function SynthView() {
               height={120}
               accentColor={COLORS.amp}
               compact
+              isTriggered={isPlaying}
             />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '12px' }}>
               <MiniSlider label="A" value={params.amplitudeEnvelope.attack} min={0.001} max={2} onChange={setAmplitudeAttack} />
@@ -654,6 +657,7 @@ export function SynthView() {
               height={100}
               accentColor={COLORS.filterEnv}
               compact
+              isTriggered={isPlaying}
             />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '12px' }}>
               <MiniSlider label="A" value={params.filterEnvelope.attack} min={0.001} max={2} onChange={setFilterEnvelopeAttack} color={COLORS.filterEnv} />
@@ -840,6 +844,7 @@ export function SynthView() {
               height={100}
               accentColor={COLORS.pitchEnv}
               compact
+              isTriggered={isPlaying}
             />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '12px' }}>
               <MiniSlider label="A" value={params.pitchEnvelope.attack} min={0.001} max={2} onChange={setPitchEnvelopeAttack} color={COLORS.pitchEnv} />
@@ -867,6 +872,7 @@ export function SynthView() {
               height={100}
               accentColor={COLORS.modEnv}
               compact
+              isTriggered={isPlaying}
             />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '12px' }}>
               <MiniSlider label="A" value={params.modEnvelope.attack} min={0.001} max={2} onChange={setModEnvelopeAttack} color={COLORS.modEnv} />
@@ -894,6 +900,7 @@ export function SynthView() {
               height={100}
               accentColor={COLORS.pwmEnv}
               compact
+              isTriggered={isPlaying}
             />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '12px' }}>
               <MiniSlider label="A" value={params.pwmEnvelope.attack} min={0.001} max={2} onChange={setPWMEnvelopeAttack} color={COLORS.pwmEnv} />
