@@ -125,8 +125,8 @@ export class SynthSequencer {
 
     this.noteSequence = new Tone.Part((time, event) => {
       if (this.synth) {
-        // Schedule the note
-        this.synth.triggerAttackRelease(event.note, event.duration);
+        // Schedule the note with velocity
+        this.synth.triggerAttackRelease(event.note, event.duration, event.velocity);
       }
 
       // Schedule the UI callback on the animation frame
