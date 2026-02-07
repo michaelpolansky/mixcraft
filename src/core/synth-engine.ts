@@ -383,25 +383,112 @@ export class SynthEngine {
   }
 
   /**
+   * Calculates the current LFO value based on time and waveform.
+   * Returns a value between 0 and 1.
+   */
+  private getLfoValue(rate: number, waveform: LFOWaveform, time: number): number {
+    const phase = (time * rate) % 1; // Phase 0 to 1
+
+    switch (waveform) {
+      case 'sine':
+        return Math.sin(phase * 2 * Math.PI) * 0.5 + 0.5;
+      case 'triangle':
+        return phase < 0.5 ? phase * 2 : 2 - phase * 2;
+      case 'sawtooth':
+        return phase;
+      case 'square':
+        return phase < 0.5 ? 1 : 0;
+      default:
+        return 0.5;
+    }
+  }
+
+  /**
    * Gets the current real-time modulated values for all modulation destinations.
-   * These values reflect actual modulation from LFOs, envelopes, and mod matrix routes.
+   * Calculates actual modulation from LFOs and mod matrix routes.
    * Use this for real-time UI display of oscillating/modulated parameter values.
    */
   getModulatedValues(): Record<ModDestination, number> {
-    // Tone.js Frequency values may be strings - convert to numbers
-    const toNumber = (val: Tone.Unit.Frequency): number => {
-      if (typeof val === 'number') return val;
-      return Tone.Frequency(val).toFrequency();
+    // Calculate LFO values from time and frequency
+    // LFO outputs 0 to 1, convert to bipolar (-0.5 to +0.5) for modulation
+    const now = Tone.now();
+    const lfo1Phase = this.getLfoValue(this.params.lfo.rate, this.params.lfo.waveform, now);
+    const lfo1Value = lfo1Phase - 0.5;
+    const lfo2Value = this.params.lfo2.enabled
+      ? this.getLfoValue(this.params.lfo2.rate, this.params.lfo2.type, now) - 0.5
+      : 0;
+
+    // Base values from params
+    const baseValues: Record<ModDestination, number> = {
+      pitch: this.params.oscillator.detune,
+      pan: this.params.pan,
+      amplitude: 1, // Normalized amplitude
+      filterCutoff: this.params.filter.cutoff,
+      osc2Mix: this.params.oscillator2.enabled ? this.params.oscillator2.mix : 0,
+      lfo1Rate: this.params.lfo.rate,
+      lfo2Rate: this.params.lfo2.rate,
     };
 
+    // Destination scales (how much modulation affects each destination)
+    const scales: Record<ModDestination, number> = {
+      pitch: 1200,        // ±1 octave in cents
+      pan: 1,             // Full range
+      amplitude: 0.5,     // ±50%
+      filterCutoff: 4000, // ±4kHz
+      osc2Mix: 0.5,       // ±50%
+      lfo1Rate: 10,       // ±10 Hz
+      lfo2Rate: 10,       // ±10 Hz
+    };
+
+    // Calculate modulation from mod matrix routes
+    const modulation: Record<ModDestination, number> = {
+      pitch: 0,
+      pan: 0,
+      amplitude: 0,
+      filterCutoff: 0,
+      osc2Mix: 0,
+      lfo1Rate: 0,
+      lfo2Rate: 0,
+    };
+
+    // Sum modulation from all enabled routes
+    for (const route of this.params.modMatrix.routes) {
+      if (!route.enabled || route.amount === 0) continue;
+
+      // Get source value (bipolar -0.5 to +0.5)
+      let sourceValue = 0;
+      switch (route.source) {
+        case 'lfo1':
+          sourceValue = lfo1Value;
+          break;
+        case 'lfo2':
+          sourceValue = lfo2Value;
+          break;
+        // Envelopes would need current envelope value - skip for now
+        case 'ampEnv':
+        case 'filterEnv':
+          continue;
+      }
+
+      // Calculate contribution: sourceValue * amount * scale
+      const contribution = sourceValue * route.amount * scales[route.destination];
+      modulation[route.destination] += contribution;
+    }
+
+    // Also add the direct LFO-to-filter modulation (the legacy connection)
+    // LFO depth controls how much the filter cutoff is modulated
+    const directLfoToFilter = lfo1Value * this.params.lfo.depth * this.params.filter.cutoff;
+    modulation.filterCutoff += directLfoToFilter;
+
+    // Return base + modulation for each destination
     return {
-      pitch: this.synth.detune.value as number,
-      pan: this.panner.pan.value as number,
-      amplitude: this.outputGain.gain.value as number,
-      filterCutoff: toNumber(this.synth.filter.frequency.value),
-      osc2Mix: this.osc2Gain.gain.value as number,
-      lfo1Rate: toNumber(this.lfo.frequency.value),
-      lfo2Rate: toNumber(this.lfo2.frequency.value),
+      pitch: baseValues.pitch + modulation.pitch,
+      pan: Math.max(-1, Math.min(1, baseValues.pan + modulation.pan)),
+      amplitude: Math.max(0, Math.min(1, baseValues.amplitude + modulation.amplitude)),
+      filterCutoff: Math.max(20, Math.min(20000, baseValues.filterCutoff + modulation.filterCutoff)),
+      osc2Mix: Math.max(0, Math.min(1, baseValues.osc2Mix + modulation.osc2Mix)),
+      lfo1Rate: Math.max(0.1, Math.min(20, baseValues.lfo1Rate + modulation.lfo1Rate)),
+      lfo2Rate: Math.max(0.1, Math.min(20, baseValues.lfo2Rate + modulation.lfo2Rate)),
     };
   }
 

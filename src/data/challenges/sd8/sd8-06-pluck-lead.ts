@@ -26,6 +26,20 @@ export const challenge: Challenge = {
       release: 0.4,
     },
     modulationEnvelopeAmount: 0.8,
+    subOsc: {
+      enabled: false,
+      type: 'sine',
+      octave: -1,
+      level: 0.5,
+    },
+    oscillator2: {
+      enabled: false,
+      type: 'sawtooth',
+      octave: 0,
+      detune: 7,
+      pulseWidth: 0.5,
+      mix: 0.5,
+    },
     effects: {
       distortion: { amount: 0, mix: 0 },
       delay: { time: 0.3, feedback: 0.25, mix: 0.2 },
