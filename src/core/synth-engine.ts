@@ -14,6 +14,7 @@ import type {
   ModEnvelopeParams,
   PWMEnvelopeParams,
   LFOParams,
+  LFO2Params,
   LFOWaveform,
   LFOSyncDivision,
   NoiseParams,
@@ -25,6 +26,8 @@ import type {
   DelayParams,
   ReverbParams,
   ChorusParams,
+  SubOscillatorParams,
+  Oscillator2Params,
 } from './types.ts';
 import {
   DEFAULT_SYNTH_PARAMS,
@@ -82,8 +85,26 @@ export class SynthEngine {
   private noiseGain: Tone.Gain;
   private noiseFilter: Tone.Filter;
 
+  // Sub oscillator (simple sine/square one octave below)
+  private subOsc: Tone.Oscillator;
+  private subOscGain: Tone.Gain;
+  private subOscEnvelope: Tone.AmplitudeEnvelope;
+
+  // Oscillator 2 (full second oscillator)
+  private osc2: Tone.Oscillator;
+  private osc2Gain: Tone.Gain;
+  private osc2Envelope: Tone.AmplitudeEnvelope;
+  private osc2Filter: Tone.Filter;
+
   // For tracking current frequency (used with glide)
   private currentFrequency: number = 440;
+
+  // LFO2 - secondary LFO for modulation matrix
+  private lfo2: Tone.LFO;
+  private lfo2Gain: Tone.Gain;
+
+  // Panner for stereo positioning
+  private panner: Tone.Panner;
 
   constructor(initialParams: Partial<SynthParams> = {}) {
     this.params = { ...DEFAULT_SYNTH_PARAMS, ...initialParams };
@@ -181,10 +202,68 @@ export class SynthEngine {
     // Noise starts immediately (level controls if it's heard)
     this.noise.start();
 
+    // Create sub oscillator
+    this.subOsc = new Tone.Oscillator({
+      type: this.params.subOsc.type,
+      frequency: 440, // Will be set on note trigger
+    });
+    this.subOscGain = new Tone.Gain(this.params.subOsc.enabled ? this.params.subOsc.level : 0);
+    this.subOscEnvelope = new Tone.AmplitudeEnvelope({
+      attack: this.params.amplitudeEnvelope.attack,
+      decay: this.params.amplitudeEnvelope.decay,
+      sustain: this.params.amplitudeEnvelope.sustain,
+      release: this.params.amplitudeEnvelope.release,
+    });
+    // Sub osc -> envelope -> gain
+    this.subOsc.connect(this.subOscEnvelope);
+    this.subOscEnvelope.connect(this.subOscGain);
+    this.subOsc.start();
+
+    // Create oscillator 2
+    this.osc2 = new Tone.Oscillator({
+      type: this.params.oscillator2.type,
+      frequency: 440, // Will be set on note trigger
+      detune: this.params.oscillator2.detune,
+    });
+    // OSC2 has its own filter that tracks main filter settings
+    this.osc2Filter = new Tone.Filter({
+      type: toToneFilterType(this.params.filter.type),
+      frequency: this.params.filter.cutoff,
+      Q: this.params.filter.resonance,
+    });
+    this.osc2Gain = new Tone.Gain(this.params.oscillator2.enabled ? this.params.oscillator2.mix : 0);
+    this.osc2Envelope = new Tone.AmplitudeEnvelope({
+      attack: this.params.amplitudeEnvelope.attack,
+      decay: this.params.amplitudeEnvelope.decay,
+      sustain: this.params.amplitudeEnvelope.sustain,
+      release: this.params.amplitudeEnvelope.release,
+    });
+    // OSC2 -> filter -> envelope -> gain
+    this.osc2.connect(this.osc2Filter);
+    this.osc2Filter.connect(this.osc2Envelope);
+    this.osc2Envelope.connect(this.osc2Gain);
+    this.osc2.start();
+
     // Set up portamento/glide if enabled
     if (this.params.glide.enabled) {
       this.synth.portamento = this.params.glide.time;
     }
+
+    // Create LFO2 - secondary LFO for modulation matrix
+    // LFO2 is similar to LFO1 but will be routed through the mod matrix
+    this.lfo2 = new Tone.LFO({
+      frequency: this.params.lfo2.rate,
+      type: this.params.lfo2.type,
+      min: 0,
+      max: 1,
+    });
+    this.lfo2Gain = new Tone.Gain(this.params.lfo2.enabled ? this.params.lfo2.depth : 0);
+    this.lfo2.connect(this.lfo2Gain);
+    // Start LFO2 (mod matrix will control where it routes)
+    this.lfo2.start();
+
+    // Create panner for stereo positioning
+    this.panner = new Tone.Panner(this.params.pan);
 
     // Create effects chain
     this.effectsChain = new EffectsChain(this.params.effects);
@@ -193,11 +272,14 @@ export class SynthEngine {
     this.analyser = Tone.getContext().createAnalyser();
     this.configureAnalyser(DEFAULT_ANALYSER_CONFIG);
 
-    // Wire: synth → effectsChain → analyser → destination
-    // Also wire noise: noiseGain → effectsChain
+    // Wire: synth → effectsChain → panner → analyser → destination
+    // Also wire noise, sub osc, and osc2
     this.synth.connect(this.effectsChain.input);
     this.noiseGain.connect(this.effectsChain.input);
-    this.effectsChain.connect(this.analyser);
+    this.subOscGain.connect(this.effectsChain.input);
+    this.osc2Gain.connect(this.effectsChain.input);
+    this.effectsChain.connect(this.panner);
+    this.panner.connect(this.analyser);
     Tone.connect(this.analyser, Tone.getDestination());
   }
 
@@ -342,6 +424,87 @@ export class SynthEngine {
   }
 
   // ============================================
+  // Sub Oscillator Controls
+  // ============================================
+
+  setSubOsc(subOscParams: Partial<SubOscillatorParams>): void {
+    this.params.subOsc = { ...this.params.subOsc, ...subOscParams };
+
+    if (subOscParams.enabled !== undefined) {
+      this.subOscGain.gain.value = subOscParams.enabled ? this.params.subOsc.level : 0;
+    }
+    if (subOscParams.type !== undefined) {
+      this.subOsc.type = subOscParams.type;
+    }
+    if (subOscParams.level !== undefined && this.params.subOsc.enabled) {
+      this.subOscGain.gain.value = subOscParams.level;
+    }
+    // Octave is applied when triggering notes
+  }
+
+  setSubOscEnabled(enabled: boolean): void {
+    this.setSubOsc({ enabled });
+  }
+
+  setSubOscType(type: 'sine' | 'square'): void {
+    this.setSubOsc({ type });
+  }
+
+  setSubOscOctave(octave: -1 | -2): void {
+    this.setSubOsc({ octave });
+  }
+
+  setSubOscLevel(level: number): void {
+    this.setSubOsc({ level });
+  }
+
+  // ============================================
+  // Oscillator 2 Controls
+  // ============================================
+
+  setOsc2(osc2Params: Partial<Oscillator2Params>): void {
+    this.params.oscillator2 = { ...this.params.oscillator2, ...osc2Params };
+
+    if (osc2Params.enabled !== undefined) {
+      this.osc2Gain.gain.value = osc2Params.enabled ? this.params.oscillator2.mix : 0;
+    }
+    if (osc2Params.type !== undefined) {
+      this.osc2.type = osc2Params.type;
+    }
+    if (osc2Params.detune !== undefined) {
+      this.osc2.detune.value = osc2Params.detune;
+    }
+    if (osc2Params.mix !== undefined && this.params.oscillator2.enabled) {
+      this.osc2Gain.gain.value = osc2Params.mix;
+    }
+    // Octave and pulseWidth are applied when triggering notes
+  }
+
+  setOsc2Enabled(enabled: boolean): void {
+    this.setOsc2({ enabled });
+  }
+
+  setOsc2Type(type: OscillatorType): void {
+    this.setOsc2({ type });
+  }
+
+  setOsc2Octave(octave: number): void {
+    this.setOsc2({ octave });
+  }
+
+  setOsc2Detune(cents: number): void {
+    this.setOsc2({ detune: cents });
+  }
+
+  setOsc2PulseWidth(width: number): void {
+    this.setOsc2({ pulseWidth: Math.max(0.1, Math.min(0.9, width)) });
+  }
+
+  setOsc2Mix(mix: number): void {
+    this.setOsc2({ mix });
+  }
+
+  // ============================================
   // Filter Controls
   // ============================================
 
@@ -349,12 +512,14 @@ export class SynthEngine {
     this.params.filter.type = type;
     this.synth.filter.type = toToneFilterType(type);
     this.noiseFilter.type = toToneFilterType(type);
+    this.osc2Filter.type = toToneFilterType(type);
   }
 
   setFilterCutoff(frequency: number): void {
     this.params.filter.cutoff = frequency;
     this.synth.filter.frequency.value = frequency;
     this.noiseFilter.frequency.value = frequency;
+    this.osc2Filter.frequency.value = frequency;
     // Also update the filter envelope's base frequency
     this.synth.filterEnvelope.baseFrequency = frequency;
     // Update LFO gain (depth is relative to cutoff)
@@ -365,6 +530,7 @@ export class SynthEngine {
     this.params.filter.resonance = q;
     this.synth.filter.Q.value = q;
     this.noiseFilter.Q.value = q;
+    this.osc2Filter.Q.value = q;
   }
 
   setFilterKeyTracking(amount: number): void {
@@ -393,15 +559,23 @@ export class SynthEngine {
 
     if (envelope.attack !== undefined) {
       this.synth.envelope.attack = envelope.attack;
+      this.subOscEnvelope.attack = envelope.attack;
+      this.osc2Envelope.attack = envelope.attack;
     }
     if (envelope.decay !== undefined) {
       this.synth.envelope.decay = envelope.decay;
+      this.subOscEnvelope.decay = envelope.decay;
+      this.osc2Envelope.decay = envelope.decay;
     }
     if (envelope.sustain !== undefined) {
       this.synth.envelope.sustain = envelope.sustain;
+      this.subOscEnvelope.sustain = envelope.sustain;
+      this.osc2Envelope.sustain = envelope.sustain;
     }
     if (envelope.release !== undefined) {
       this.synth.envelope.release = envelope.release;
+      this.subOscEnvelope.release = envelope.release;
+      this.osc2Envelope.release = envelope.release;
     }
   }
 
@@ -514,6 +688,52 @@ export class SynthEngine {
 
   setLFOSyncDivision(syncDivision: LFOSyncDivision): void {
     this.setLFO({ syncDivision });
+  }
+
+  // ============================================
+  // LFO2 Controls
+  // ============================================
+
+  setLFO2(lfo2Params: Partial<LFO2Params>): void {
+    this.params.lfo2 = { ...this.params.lfo2, ...lfo2Params };
+
+    if (lfo2Params.rate !== undefined) {
+      this.lfo2.frequency.value = lfo2Params.rate;
+    }
+    if (lfo2Params.type !== undefined) {
+      this.lfo2.type = lfo2Params.type;
+    }
+    if (lfo2Params.depth !== undefined) {
+      this.lfo2Gain.gain.value = this.params.lfo2.enabled ? lfo2Params.depth : 0;
+    }
+    if (lfo2Params.enabled !== undefined) {
+      this.lfo2Gain.gain.value = lfo2Params.enabled ? this.params.lfo2.depth : 0;
+    }
+  }
+
+  setLFO2Rate(rate: number): void {
+    this.setLFO2({ rate });
+  }
+
+  setLFO2Depth(depth: number): void {
+    this.setLFO2({ depth });
+  }
+
+  setLFO2Type(type: LFOWaveform): void {
+    this.setLFO2({ type });
+  }
+
+  setLFO2Enabled(enabled: boolean): void {
+    this.setLFO2({ enabled });
+  }
+
+  // ============================================
+  // Pan Control
+  // ============================================
+
+  setPan(pan: number): void {
+    this.params.pan = Math.max(-1, Math.min(1, pan));
+    this.panner.pan.value = this.params.pan;
   }
 
   // ============================================
@@ -774,6 +994,20 @@ export class SynthEngine {
 
     this.synth.triggerAttack(adjustedFreq);
 
+    // Set sub oscillator frequency (one or two octaves below)
+    const subOscFreq = applyOctaveOffset(adjustedFreq, this.params.subOsc.octave);
+    this.subOsc.frequency.value = subOscFreq;
+    if (this.params.subOsc.enabled) {
+      this.subOscEnvelope.triggerAttack();
+    }
+
+    // Set oscillator 2 frequency (with its own octave offset)
+    const osc2Freq = applyOctaveOffset(frequency, this.params.oscillator2.octave);
+    this.osc2.frequency.value = osc2Freq;
+    if (this.params.oscillator2.enabled) {
+      this.osc2Envelope.triggerAttack();
+    }
+
     // Trigger additional envelopes
     this.pitchEnvelope.triggerAttack();
     this.modEnvelope.triggerAttack();
@@ -784,6 +1018,10 @@ export class SynthEngine {
    */
   triggerRelease(): void {
     this.synth.triggerRelease();
+
+    // Release sub oscillator and oscillator 2 envelopes
+    this.subOscEnvelope.triggerRelease();
+    this.osc2Envelope.triggerRelease();
 
     // Release additional envelopes
     this.pitchEnvelope.triggerRelease();
@@ -820,6 +1058,20 @@ export class SynthEngine {
     this.applyVelocity(velocity);
 
     this.synth.triggerAttackRelease(adjustedFreq, duration);
+
+    // Trigger sub oscillator with correct frequency
+    const subOscFreq = applyOctaveOffset(adjustedFreq, this.params.subOsc.octave);
+    this.subOsc.frequency.value = subOscFreq;
+    if (this.params.subOsc.enabled) {
+      this.subOscEnvelope.triggerAttackRelease(duration);
+    }
+
+    // Trigger oscillator 2 with correct frequency
+    const osc2Freq = applyOctaveOffset(frequency, this.params.oscillator2.octave);
+    this.osc2.frequency.value = osc2Freq;
+    if (this.params.oscillator2.enabled) {
+      this.osc2Envelope.triggerAttackRelease(duration);
+    }
 
     // Trigger additional envelopes with matching duration
     this.pitchEnvelope.triggerAttackRelease(duration);
@@ -890,6 +1142,14 @@ export class SynthEngine {
       this.setPWMEnvelope(params.pwmEnvelope);
     }
 
+    if (params.subOsc) {
+      this.setSubOsc(params.subOsc);
+    }
+
+    if (params.oscillator2) {
+      this.setOsc2(params.oscillator2);
+    }
+
     if (params.effects) {
       if (params.effects.distortion) {
         this.setDistortion(params.effects.distortion);
@@ -908,6 +1168,14 @@ export class SynthEngine {
     if (params.volume !== undefined) {
       this.setVolume(params.volume);
     }
+
+    if (params.lfo2) {
+      this.setLFO2(params.lfo2);
+    }
+
+    if (params.pan !== undefined) {
+      this.setPan(params.pan);
+    }
   }
 
   // ============================================
@@ -921,6 +1189,10 @@ export class SynthEngine {
     this.lfo.stop();
     this.lfo.dispose();
     this.lfoGain.dispose();
+    // Clean up LFO2
+    this.lfo2.stop();
+    this.lfo2.dispose();
+    this.lfo2Gain.dispose();
     this.pitchEnvelope.dispose();
     this.pitchEnvelopeScale.dispose();
     this.modEnvelope.dispose();
@@ -929,6 +1201,19 @@ export class SynthEngine {
     this.noise.dispose();
     this.noiseGain.dispose();
     this.noiseFilter.dispose();
+    // Clean up sub oscillator
+    this.subOsc.stop();
+    this.subOsc.dispose();
+    this.subOscEnvelope.dispose();
+    this.subOscGain.dispose();
+    // Clean up oscillator 2
+    this.osc2.stop();
+    this.osc2.dispose();
+    this.osc2Envelope.dispose();
+    this.osc2Filter.dispose();
+    this.osc2Gain.dispose();
+    // Clean up panner
+    this.panner.dispose();
     this.effectsChain.dispose();
     this.synth.dispose();
   }
