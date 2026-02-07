@@ -16,7 +16,9 @@ import {
   PianoKeyboard,
   InfoPanel,
   XYPad,
+  PresetDropdown,
 } from '../components/index.ts';
+import { SUBTRACTIVE_PRESETS } from '../../data/presets/subtractive-presets.ts';
 import { InfoPanelProvider } from '../context/InfoPanelContext.tsx';
 import { PARAM_RANGES } from '../../core/types.ts';
 
@@ -94,6 +96,8 @@ export function SynthView() {
     setChorusMix,
     setVolume,
     resetToDefaults,
+    currentPreset,
+    loadPreset,
   } = useSynthStore();
 
   // Initialize engine on mount
@@ -272,20 +276,28 @@ export function SynthView() {
           </span>
         </div>
 
-        <button
-          onClick={resetToDefaults}
-          style={{
-            padding: '8px 16px',
-            background: '#1a1a1a',
-            border: '1px solid #333',
-            borderRadius: '4px',
-            color: '#888',
-            cursor: 'pointer',
-            fontSize: '12px',
-          }}
-        >
-          Reset
-        </button>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <PresetDropdown
+            presets={SUBTRACTIVE_PRESETS}
+            currentPreset={currentPreset}
+            onSelect={loadPreset}
+            accentColor="#4ade80"
+          />
+          <button
+            onClick={resetToDefaults}
+            style={{
+              padding: '8px 16px',
+              background: '#1a1a1a',
+              border: '1px solid #333',
+              borderRadius: '4px',
+              color: '#888',
+              cursor: 'pointer',
+              fontSize: '12px',
+            }}
+          >
+            Reset
+          </button>
+        </div>
       </div>
 
       {/* Main Layout */}

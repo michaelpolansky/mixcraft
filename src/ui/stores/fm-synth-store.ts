@@ -7,6 +7,7 @@ import { create } from 'zustand';
 import { FMSynthEngine, createFMSynthEngine } from '../../core/fm-synth-engine.ts';
 import type { FMSynthParams, OscillatorType, ADSREnvelope } from '../../core/types.ts';
 import { DEFAULT_FM_SYNTH_PARAMS, HARMONICITY_PRESETS } from '../../core/types.ts';
+import { FM_PRESETS } from '../../data/presets/fm-presets.ts';
 
 interface FMSynthStore {
   // State
@@ -15,6 +16,7 @@ interface FMSynthStore {
   isPlaying: boolean;
   currentNote: string;
   isInitialized: boolean;
+  currentPreset: string;
 
   // Initialization
   initEngine: () => void;
@@ -57,6 +59,9 @@ interface FMSynthStore {
   // Reset
   resetToDefaults: () => void;
 
+  // Presets
+  loadPreset: (name: string) => void;
+
   // Cleanup
   dispose: () => void;
 }
@@ -68,6 +73,7 @@ export const useFMSynthStore = create<FMSynthStore>((set, get) => ({
   isPlaying: false,
   currentNote: 'C4',
   isInitialized: false,
+  currentPreset: 'Default',
 
   // Initialize the FM synth engine
   initEngine: () => {
@@ -295,7 +301,19 @@ export const useFMSynthStore = create<FMSynthStore>((set, get) => ({
     if (!engine) return;
 
     engine.setParams(DEFAULT_FM_SYNTH_PARAMS);
-    set({ params: engine.getParams() });
+    set({ params: engine.getParams(), currentPreset: 'Default' });
+  },
+
+  // Load preset
+  loadPreset: (name: string) => {
+    const { engine } = get();
+    if (!engine) return;
+
+    const preset = FM_PRESETS.find((p) => p.name === name);
+    if (preset) {
+      engine.setParams(preset.params);
+      set({ params: engine.getParams(), currentPreset: name });
+    }
   },
 
   // Cleanup

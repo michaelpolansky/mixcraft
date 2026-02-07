@@ -12,7 +12,9 @@ import {
   Knob,
   InfoPanel,
   XYPad,
+  PresetDropdown,
 } from '../components/index.ts';
+import { ADDITIVE_PRESETS } from '../../data/presets/additive-presets.ts';
 import { InfoPanelProvider } from '../context/InfoPanelContext.tsx';
 import { PARAM_RANGES } from '../../core/types.ts';
 
@@ -79,6 +81,8 @@ export function AdditiveSynthView() {
     setChorusMix,
     setVolume,
     resetToDefaults,
+    currentPreset,
+    loadPreset,
   } = useAdditiveSynthStore();
 
   // Initialize engine on mount
@@ -257,20 +261,28 @@ export function AdditiveSynthView() {
           </span>
         </div>
 
-        <button
-          onClick={resetToDefaults}
-          style={{
-            padding: '8px 16px',
-            background: '#1a1a1a',
-            border: '1px solid #333',
-            borderRadius: '4px',
-            color: '#888',
-            cursor: 'pointer',
-            fontSize: '12px',
-          }}
-        >
-          Reset
-        </button>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <PresetDropdown
+            presets={ADDITIVE_PRESETS}
+            currentPreset={currentPreset}
+            onSelect={loadPreset}
+            accentColor="#06b6d4"
+          />
+          <button
+            onClick={resetToDefaults}
+            style={{
+              padding: '8px 16px',
+              background: '#1a1a1a',
+              border: '1px solid #333',
+              borderRadius: '4px',
+              color: '#888',
+              cursor: 'pointer',
+              fontSize: '12px',
+            }}
+          >
+            Reset
+          </button>
+        </div>
       </div>
 
       {/* Main Layout */}

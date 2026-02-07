@@ -14,6 +14,7 @@ import type {
   LFOWaveform,
 } from '../../core/types.ts';
 import { DEFAULT_SYNTH_PARAMS } from '../../core/types.ts';
+import { SUBTRACTIVE_PRESETS } from '../../data/presets/subtractive-presets.ts';
 
 interface SynthStore {
   // State
@@ -22,6 +23,7 @@ interface SynthStore {
   isPlaying: boolean;
   currentNote: string;
   isInitialized: boolean;
+  currentPreset: string;
 
   // Initialization
   initEngine: () => void;
@@ -77,6 +79,9 @@ interface SynthStore {
 
   // Reset
   resetToDefaults: () => void;
+
+  // Presets
+  loadPreset: (name: string) => void;
 }
 
 export const useSynthStore = create<SynthStore>((set, get) => ({
@@ -86,6 +91,7 @@ export const useSynthStore = create<SynthStore>((set, get) => ({
   isPlaying: false,
   currentNote: 'C4',
   isInitialized: false,
+  currentPreset: 'Default',
 
   // Initialize the synth engine
   initEngine: () => {
@@ -490,6 +496,16 @@ export const useSynthStore = create<SynthStore>((set, get) => ({
   resetToDefaults: () => {
     const { engine } = get();
     engine?.setParams(DEFAULT_SYNTH_PARAMS);
-    set({ params: { ...DEFAULT_SYNTH_PARAMS } });
+    set({ params: { ...DEFAULT_SYNTH_PARAMS }, currentPreset: 'Default' });
+  },
+
+  // Load preset
+  loadPreset: (name: string) => {
+    const { engine } = get();
+    const preset = SUBTRACTIVE_PRESETS.find((p) => p.name === name);
+    if (preset) {
+      engine?.setParams(preset.params);
+      set({ params: { ...preset.params }, currentPreset: name });
+    }
   },
 }));

@@ -11,7 +11,9 @@ import {
   PianoKeyboard,
   InfoPanel,
   XYPad,
+  PresetDropdown,
 } from '../components/index.ts';
+import { FM_PRESETS } from '../../data/presets/fm-presets.ts';
 import { InfoPanelProvider } from '../context/InfoPanelContext.tsx';
 
 /**
@@ -71,6 +73,8 @@ export function FMSynthView() {
     setAmplitudeRelease,
     setVolume,
     resetToDefaults,
+    currentPreset,
+    loadPreset,
   } = useFMSynthStore();
 
   // Initialize engine on mount
@@ -251,20 +255,28 @@ export function FMSynthView() {
           </span>
         </div>
 
-        <button
-          onClick={resetToDefaults}
-          style={{
-            padding: '8px 16px',
-            background: '#1a1a1a',
-            border: '1px solid #333',
-            borderRadius: '4px',
-            color: '#888',
-            cursor: 'pointer',
-            fontSize: '12px',
-          }}
-        >
-          Reset
-        </button>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <PresetDropdown
+            presets={FM_PRESETS}
+            currentPreset={currentPreset}
+            onSelect={loadPreset}
+            accentColor="#f97316"
+          />
+          <button
+            onClick={resetToDefaults}
+            style={{
+              padding: '8px 16px',
+              background: '#1a1a1a',
+              border: '1px solid #333',
+              borderRadius: '4px',
+              color: '#888',
+              cursor: 'pointer',
+              fontSize: '12px',
+            }}
+          >
+            Reset
+          </button>
+        </div>
       </div>
 
       {/* Main Layout */}

@@ -7,6 +7,7 @@ import { create } from 'zustand';
 import { AdditiveSynthEngine, createAdditiveSynthEngine } from '../../core/additive-synth-engine.ts';
 import type { AdditiveSynthParams, AdditivePreset } from '../../core/types.ts';
 import { DEFAULT_ADDITIVE_SYNTH_PARAMS } from '../../core/types.ts';
+import { ADDITIVE_PRESETS } from '../../data/presets/additive-presets.ts';
 
 interface AdditiveSynthStore {
   // State
@@ -15,6 +16,7 @@ interface AdditiveSynthStore {
   isPlaying: boolean;
   currentNote: string;
   isInitialized: boolean;
+  currentPreset: string;
 
   // Initialization
   initEngine: () => void;
@@ -54,6 +56,9 @@ interface AdditiveSynthStore {
   // Reset
   resetToDefaults: () => void;
 
+  // Presets
+  loadPreset: (name: string) => void;
+
   // Cleanup
   dispose: () => void;
 }
@@ -65,6 +70,7 @@ export const useAdditiveSynthStore = create<AdditiveSynthStore>((set, get) => ({
   isPlaying: false,
   currentNote: 'C4',
   isInitialized: false,
+  currentPreset: 'Default',
 
   // Initialize the Additive synth engine
   initEngine: () => {
@@ -263,7 +269,19 @@ export const useAdditiveSynthStore = create<AdditiveSynthStore>((set, get) => ({
     if (!engine) return;
 
     engine.setParams(DEFAULT_ADDITIVE_SYNTH_PARAMS);
-    set({ params: engine.getParams() });
+    set({ params: engine.getParams(), currentPreset: 'Default' });
+  },
+
+  // Load preset
+  loadPreset: (name: string) => {
+    const { engine } = get();
+    if (!engine) return;
+
+    const preset = ADDITIVE_PRESETS.find((p) => p.name === name);
+    if (preset) {
+      engine.setParams(preset.params);
+      set({ params: engine.getParams(), currentPreset: name });
+    }
   },
 
   // Cleanup

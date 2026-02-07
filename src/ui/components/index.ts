@@ -31,3 +31,4 @@ export { WaveformEditor } from './WaveformEditor.tsx';
 export { StepGrid } from './StepGrid.tsx';
 export { VelocityLane } from './VelocityLane.tsx';
 export { XYPad } from './XYPad.tsx';
+export { PresetDropdown } from './PresetDropdown.tsx';
