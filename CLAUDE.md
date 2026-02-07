@@ -79,7 +79,7 @@ Sound design is the entry point. It teaches concepts that make mixing and produc
 **All 260 challenges complete across five tracks.** Deployed to production with AI feedback on all tracks.
 
 ### Sound Design Track (50 challenges, SD1-SD9)
-- **Subtractive synthesis (SD1-SD7):** oscillator, filter, dual ADSR envelopes, LFO, effects chain
+- **Subtractive synthesis (SD1-SD7):** oscillator, filter, 5 envelopes (Amp, Filter, Pitch, Mod, PWM), LFO, effects chain
 - **FM synthesis (SD8, 12 challenges):** harmonicity, modulation index, carrier/modulator waveforms
 - **Additive synthesis (SD9, 12 challenges):** harmonic drawbars, Fourier synthesis, timbres
 - Effects chain: distortion, delay, reverb, chorus (all with dry/wet mix)
@@ -162,3 +162,4 @@ Sound design is the entry point. It teaches concepts that make mixing and produc
 | 20 | 2026-02-06 | Layout polish - horizontal signal-flow layout, fixed header/menu overlap, compact visualizers, RecordingControl compact mode |
 | 21 | 2026-02-06 | Performance optimization - Canvas visualizer fixes (cached gradients, reused TypedArrays, conditional shadows), React.memo on all visualizers |
 | 22 | 2026-02-06 | UX polish - loading states for audio initialization, error handling with user-friendly messages, canvas overflow fix (maxWidth + overflow:hidden) |
+| 23 | 2026-02-06 | Modulation envelopes - separate LFO/Filter Env modules, add Pitch/Mod/PWM envelopes with full ADSR + Amount controls, fix WaveformSelector overflow |
