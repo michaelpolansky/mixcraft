@@ -186,6 +186,7 @@ const FMVisualizerComponent: React.FC<FMVisualizerProps> = ({
       style={{
         width,
         height,
+        maxWidth: '100%',
         borderRadius: 8,
         border: `1px solid ${accentColor}40`,
       }}

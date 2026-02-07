@@ -218,6 +218,7 @@ const LFOVisualizerComponent: React.FC<LFOVisualizerProps> = ({
       style={{
         width,
         height,
+        maxWidth: '100%',
         borderRadius: 8,
         border: `1px solid ${accentColor}40`,
       }}

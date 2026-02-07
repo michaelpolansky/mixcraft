@@ -491,6 +491,7 @@ function StageCard({
       flex: extraWide ? '3 1 400px' : wide ? '2 1 280px' : '1 1 180px',
       maxWidth: extraWide ? '500px' : wide ? '400px' : '240px',
       alignSelf: 'flex-start',
+      overflow: 'hidden',
     }}>
       <div style={{
         fontSize: '11px',

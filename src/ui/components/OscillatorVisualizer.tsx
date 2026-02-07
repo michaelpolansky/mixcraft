@@ -214,6 +214,7 @@ const OscillatorVisualizerComponent: React.FC<OscillatorVisualizerProps> = ({
       style={{
         width,
         height,
+        maxWidth: '100%',
         borderRadius: 8,
         border: `1px solid ${accentColor}40`,
       }}

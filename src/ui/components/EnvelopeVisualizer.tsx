@@ -339,6 +339,7 @@ const EnvelopeVisualizerComponent: React.FC<EnvelopeVisualizerProps> = ({
       style={{
         width,
         height,
+        maxWidth: '100%',
         cursor: dragTarget ? 'grabbing' : hoverTarget ? 'grab' : 'default',
         borderRadius: 8,
         border: `1px solid ${accentColor}40`,

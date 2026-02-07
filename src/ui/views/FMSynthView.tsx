@@ -468,6 +468,7 @@ function StageCard({
       flex: wide ? '2 1 280px' : '1 1 180px',
       maxWidth: wide ? '400px' : '240px',
       alignSelf: 'flex-start',
+      overflow: 'hidden',
     }}>
       <div style={{
         fontSize: '11px',

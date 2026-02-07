@@ -336,6 +336,7 @@ const FilterVisualizerComponent: React.FC<FilterVisualizerProps> = ({
       style={{
         width,
         height,
+        maxWidth: '100%',
         cursor: isDragging ? 'grabbing' : isHovering ? 'grab' : 'crosshair',
         borderRadius: 8,
         border: `1px solid ${accentColor}40`,
