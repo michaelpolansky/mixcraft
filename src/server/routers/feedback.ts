@@ -530,6 +530,104 @@ const DrumSequencingFeedbackInputSchema = z.object({
   attemptNumber: z.number(),
 });
 
+// ============================================
+// FM Synthesis Feedback Schemas
+// ============================================
+
+const FMScoreResultSchema = z.object({
+  overall: z.number(),
+  stars: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+  passed: z.boolean(),
+  breakdown: z.object({
+    harmonicity: z.number(),
+    modulationIndex: z.number(),
+    carrierType: z.number(),
+    modulatorType: z.number(),
+    envelope: z.number(),
+  }),
+});
+
+const FMSynthParamsSchema = z.object({
+  harmonicity: z.number(),
+  modulationIndex: z.number(),
+  carrierType: z.enum(['sine', 'square', 'sawtooth', 'triangle']),
+  modulatorType: z.enum(['sine', 'square', 'sawtooth', 'triangle']),
+  amplitudeEnvelope: z.object({
+    attack: z.number(),
+    decay: z.number(),
+    sustain: z.number(),
+    release: z.number(),
+  }),
+  modulationEnvelopeAmount: z.number(),
+  effects: EffectsParamsSchema,
+  volume: z.number(),
+});
+
+const FMChallengeInfoSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  description: z.string(),
+  module: z.string(),
+});
+
+const FMFeedbackInputSchema = z.object({
+  result: FMScoreResultSchema,
+  playerParams: FMSynthParamsSchema,
+  targetParams: FMSynthParamsSchema,
+  challenge: FMChallengeInfoSchema,
+  attemptNumber: z.number(),
+});
+
+/**
+ * Build prompt for FM synthesis feedback
+ */
+function buildFMSynthesisFeedbackPrompt(input: z.infer<typeof FMFeedbackInputSchema>): string {
+  const { result, playerParams, targetParams, challenge, attemptNumber } = input;
+
+  const paramComparison = `
+Player's FM settings:
+- Harmonicity: ${playerParams.harmonicity.toFixed(1)} (carrier:modulator frequency ratio)
+- Modulation Index: ${playerParams.modulationIndex.toFixed(1)} (depth of FM)
+- Carrier: ${playerParams.carrierType} wave
+- Modulator: ${playerParams.modulatorType} wave
+- Amp Envelope: A=${playerParams.amplitudeEnvelope.attack}s D=${playerParams.amplitudeEnvelope.decay}s S=${playerParams.amplitudeEnvelope.sustain} R=${playerParams.amplitudeEnvelope.release}s
+- Mod Envelope Amount: ${(playerParams.modulationEnvelopeAmount * 100).toFixed(0)}%
+
+Target FM settings:
+- Harmonicity: ${targetParams.harmonicity.toFixed(1)}
+- Modulation Index: ${targetParams.modulationIndex.toFixed(1)}
+- Carrier: ${targetParams.carrierType} wave
+- Modulator: ${targetParams.modulatorType} wave
+- Amp Envelope: A=${targetParams.amplitudeEnvelope.attack}s D=${targetParams.amplitudeEnvelope.decay}s S=${targetParams.amplitudeEnvelope.sustain} R=${targetParams.amplitudeEnvelope.release}s
+- Mod Envelope Amount: ${(targetParams.modulationEnvelopeAmount * 100).toFixed(0)}%`;
+
+  return `You are a friendly FM synthesis mentor helping someone learn frequency modulation synthesis. A student just attempted an FM sound design challenge.
+
+Challenge: "${challenge.title}"
+Description: ${challenge.description}
+Module: ${challenge.module}
+Attempt #${attemptNumber}
+
+Score: ${result.overall}% (${result.stars} star${result.stars > 1 ? 's' : ''})
+${result.passed ? 'PASSED' : 'NOT YET PASSED'}
+
+Score breakdown:
+- Harmonicity (frequency ratio): ${result.breakdown.harmonicity.toFixed(0)}%
+- Modulation Index (FM depth): ${result.breakdown.modulationIndex.toFixed(0)}%
+- Carrier waveform: ${result.breakdown.carrierType.toFixed(0)}%
+- Modulator waveform: ${result.breakdown.modulatorType.toFixed(0)}%
+- Envelope shape: ${result.breakdown.envelope.toFixed(0)}%
+
+${paramComparison}
+
+Give brief, encouraging feedback (2-3 sentences max). Focus on:
+1. What they did well (any aspect scoring above 70%)
+2. The ONE most important FM parameter to adjust
+3. A specific, actionable tip that explains the FM concept (e.g., "try increasing the modulation index to add more harmonic sidebands" or "non-integer harmonicity creates bell-like inharmonic tones")
+
+Be warm and encouraging. Explain FM concepts in accessible terms - how changing harmonicity or modulation index affects the sound. If they passed, congratulate them and explain what made the FM sound work.`;
+}
+
 /**
  * Build prompt for drum sequencing feedback
  */
@@ -699,6 +797,32 @@ export const feedbackRouter = router({
     .mutation(async ({ input }) => {
       const client = getAnthropicClient();
       const prompt = buildDrumSequencingFeedbackPrompt(input);
+
+      const response = await client.messages.create({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 300,
+        messages: [
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+      });
+
+      const textBlock = response.content.find((block) => block.type === 'text');
+      const feedback = textBlock?.type === 'text' ? textBlock.text : 'Unable to generate feedback.';
+
+      return { feedback };
+    }),
+
+  /**
+   * Generate AI feedback for an FM synthesis challenge attempt
+   */
+  generateFMSynthesis: publicProcedure
+    .input(FMFeedbackInputSchema)
+    .mutation(async ({ input }) => {
+      const client = getAnthropicClient();
+      const prompt = buildFMSynthesisFeedbackPrompt(input);
 
       const response = await client.messages.create({
         model: 'claude-sonnet-4-20250514',

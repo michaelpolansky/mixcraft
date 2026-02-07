@@ -102,6 +102,12 @@ import { challenge as sd8_03 } from './sd8/sd8-03-electric-piano.ts';
 import { challenge as sd8_04 } from './sd8/sd8-04-fm-bass.ts';
 import { challenge as sd8_05 } from './sd8/sd8-05-metallic-hit.ts';
 import { challenge as sd8_06 } from './sd8/sd8-06-pluck-lead.ts';
+import { challenge as sd8_07 } from './sd8/sd8-07-bright-pad.ts';
+import { challenge as sd8_08 } from './sd8/sd8-08-marimba.ts';
+import { challenge as sd8_09 } from './sd8/sd8-09-glass-harmonica.ts';
+import { challenge as sd8_10 } from './sd8/sd8-10-fm-brass.ts';
+import { challenge as sd8_11 } from './sd8/sd8-11-synth-organ.ts';
+import { challenge as sd8_12 } from './sd8/sd8-12-glockenspiel.ts';
 
 // SD9 - Additive Synthesis
 import { challenge as sd9_01 } from './sd9/sd9-01-fundamental.ts';
@@ -153,6 +159,12 @@ export const challengesById: Record<string, Challenge> = {
   'sd8-04-fm-bass': sd8_04,
   'sd8-05-metallic-hit': sd8_05,
   'sd8-06-pluck-lead': sd8_06,
+  'sd8-07-bright-pad': sd8_07,
+  'sd8-08-marimba': sd8_08,
+  'sd8-09-glass-harmonica': sd8_09,
+  'sd8-10-fm-brass': sd8_10,
+  'sd8-11-synth-organ': sd8_11,
+  'sd8-12-glockenspiel': sd8_12,
   'sd9-01-fundamental': sd9_01,
   'sd9-02-octave-stack': sd9_02,
   'sd9-03-bright-saw': sd9_03,
@@ -172,7 +184,7 @@ export const challengesByModule: Record<string, Challenge[]> = {
   SD5: [sd5_01, sd5_02, sd5_03, sd5_04],
   SD6: [sd6_01, sd6_02, sd6_03, sd6_04, sd6_05, sd6_06],
   SD7: [sd7_01, sd7_02, sd7_03, sd7_04, sd7_05, sd7_06],
-  SD8: [sd8_01, sd8_02, sd8_03, sd8_04, sd8_05, sd8_06],
+  SD8: [sd8_01, sd8_02, sd8_03, sd8_04, sd8_05, sd8_06, sd8_07, sd8_08, sd8_09, sd8_10, sd8_11, sd8_12],
   SD9: [sd9_01, sd9_02, sd9_03, sd9_04, sd9_05, sd9_06],
 };
 
@@ -226,6 +238,12 @@ export const allChallenges: Challenge[] = [
   sd8_04,
   sd8_05,
   sd8_06,
+  sd8_07,
+  sd8_08,
+  sd8_09,
+  sd8_10,
+  sd8_11,
+  sd8_12,
   // SD9 - Additive Synthesis
   sd9_01,
   sd9_02,
@@ -285,7 +303,7 @@ export const modules = {
     id: 'SD8',
     title: 'FM Synthesis',
     description: 'Master frequency modulation to create bells, electric pianos, and metallic sounds.',
-    challengeCount: 6,
+    challengeCount: 12,
   },
   SD9: {
     id: 'SD9',
