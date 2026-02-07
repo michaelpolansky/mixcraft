@@ -37,6 +37,7 @@ const COLORS = {
   amp: '#22c55e',
   filterEnv: '#eab308',
   lfo: '#ef4444',
+  velocity: '#fb923c', // Orange for velocity
   pitchEnv: '#f472b6', // Pink for pitch envelope
   modEnv: '#a855f7',   // Purple for mod envelope
   pwmEnv: '#14b8a6',   // Teal for PWM envelope
@@ -125,6 +126,11 @@ export function SynthView() {
     setGlideTime,
     setLFOSync,
     setLFOSyncDivision,
+    setPulseWidth,
+    setFilterKeyTracking,
+    setVelocityAmpAmount,
+    setVelocityFilterAmount,
+    randomize,
   } = useSynthStore();
 
   // Bottom strip state: 'keys' or 'xy'
@@ -249,6 +255,21 @@ export function SynthView() {
               accentColor="#4ade80"
             />
             <button
+              onClick={randomize}
+              style={{
+                padding: '6px 12px',
+                background: 'linear-gradient(145deg, #8b5cf6, #7c3aed)',
+                border: 'none',
+                borderRadius: '4px',
+                color: '#fff',
+                cursor: 'pointer',
+                fontSize: '11px',
+                fontWeight: 600,
+              }}
+            >
+              Randomize
+            </button>
+            <button
               onClick={resetToDefaults}
               style={{
                 padding: '6px 12px',
@@ -297,6 +318,9 @@ export function SynthView() {
             <div style={{ display: 'flex', gap: '12px', marginTop: '12px', justifyContent: 'center' }}>
               <Knob label="Oct" value={params.oscillator.octave} min={-2} max={2} step={1} onChange={setOctave} formatValue={(v) => v >= 0 ? `+${v}` : `${v}`} size={40} paramId="oscillator.octave" />
               <Knob label="Detune" value={params.oscillator.detune} min={-100} max={100} step={1} onChange={setDetune} formatValue={(v) => `${v}`} size={40} paramId="oscillator.detune" />
+              {params.oscillator.type === 'square' && (
+                <Knob label="PW" value={params.oscillator.pulseWidth} min={0.1} max={0.9} step={0.01} onChange={setPulseWidth} formatValue={(v) => `${Math.round(v * 100)}%`} size={40} paramId="oscillator.pulseWidth" />
+              )}
             </div>
             {/* Glide controls */}
             <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #222' }}>
@@ -394,6 +418,7 @@ export function SynthView() {
             <div style={{ display: 'flex', gap: '12px', marginTop: '12px', justifyContent: 'center' }}>
               <Knob label="Cutoff" value={params.filter.cutoff} min={PARAM_RANGES.cutoff.min} max={PARAM_RANGES.cutoff.max} step={1} onChange={setFilterCutoff} formatValue={formatHz} logarithmic size={40} paramId="filter.cutoff" />
               <Knob label="Res" value={params.filter.resonance} min={0} max={20} step={0.1} onChange={setFilterResonance} formatValue={(v) => v.toFixed(1)} size={40} paramId="filter.resonance" />
+              <Knob label="Key" value={params.filter.keyTracking} min={0} max={1} step={0.01} onChange={setFilterKeyTracking} formatValue={formatPercent} size={40} paramId="filter.keyTracking" />
             </div>
           </StageCard>
 
@@ -507,6 +532,40 @@ export function SynthView() {
               >
                 {params.lfo.sync ? 'SYNC ON' : 'SYNC OFF'}
               </button>
+            </div>
+          </StageCard>
+
+          {/* VELOCITY Stage */}
+          <StageCard title="VELOCITY" color={COLORS.velocity}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+              <div style={{ fontSize: '10px', color: '#888', textAlign: 'center', marginBottom: '4px' }}>
+                How note velocity affects sound
+              </div>
+              <Knob
+                label="Amp"
+                value={params.velocity.ampAmount}
+                min={0}
+                max={1}
+                step={0.01}
+                onChange={setVelocityAmpAmount}
+                formatValue={formatPercent}
+                size={48}
+                paramId="velocity.ampAmount"
+              />
+              <Knob
+                label="Filter"
+                value={params.velocity.filterAmount}
+                min={0}
+                max={1}
+                step={0.01}
+                onChange={setVelocityFilterAmount}
+                formatValue={formatPercent}
+                size={48}
+                paramId="velocity.filterAmount"
+              />
+              <div style={{ fontSize: '9px', color: '#666', textAlign: 'center' }}>
+                0% = no velocity effect
+              </div>
             </div>
           </StageCard>
 

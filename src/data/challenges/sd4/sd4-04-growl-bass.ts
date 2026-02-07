@@ -24,12 +24,15 @@ export const challenge: Challenge = {
       type: 'sawtooth',
       octave: -1,
       detune: 0,
+      pulseWidth: 0.5
     },
     filter: {
       type: 'lowpass',
       cutoff: 600,
       resonance: 12,
+      keyTracking: 0
     },
+
     filterEnvelope: {
       attack: 0.01,
       decay: 0.2,
@@ -49,6 +52,10 @@ export const challenge: Challenge = {
       waveform: 'sawtooth',
       sync: false,
       syncDivision: '4n',
+    },
+    velocity: {
+      ampAmount: 0,
+      filterAmount: 0,
     },
     noise: {
       type: 'white',

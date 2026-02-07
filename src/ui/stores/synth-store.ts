@@ -17,6 +17,7 @@ import type {
   LFOWaveform,
   LFOSyncDivision,
   NoiseType,
+  VelocityParams,
 } from '../../core/types.ts';
 import { DEFAULT_SYNTH_PARAMS } from '../../core/types.ts';
 import { SUBTRACTIVE_PRESETS } from '../../data/presets/subtractive-presets.ts';
@@ -54,10 +55,18 @@ interface SynthStore {
   setGlideEnabled: (enabled: boolean) => void;
   setGlideTime: (time: number) => void;
 
+  // Oscillator pulse width
+  setPulseWidth: (width: number) => void;
+
   // Filter actions
   setFilterType: (type: FilterType) => void;
   setFilterCutoff: (frequency: number) => void;
   setFilterResonance: (q: number) => void;
+  setFilterKeyTracking: (amount: number) => void;
+
+  // Velocity actions
+  setVelocityAmpAmount: (amount: number) => void;
+  setVelocityFilterAmount: (amount: number) => void;
 
   // Amplitude envelope actions
   setAmplitudeAttack: (time: number) => void;
@@ -120,6 +129,9 @@ interface SynthStore {
 
   // Presets
   loadPreset: (name: string) => void;
+
+  // Randomize
+  randomize: () => void;
 }
 
 export const useSynthStore = create<SynthStore>((set, get) => ({
@@ -225,6 +237,17 @@ export const useSynthStore = create<SynthStore>((set, get) => ({
     });
   },
 
+  setPulseWidth: (width: number) => {
+    const { engine, params } = get();
+    engine?.setPulseWidth(width);
+    set({
+      params: {
+        ...params,
+        oscillator: { ...params.oscillator, pulseWidth: width },
+      },
+    });
+  },
+
   // Noise actions
   setNoiseType: (type: NoiseType) => {
     const { engine, params } = get();
@@ -301,6 +324,40 @@ export const useSynthStore = create<SynthStore>((set, get) => ({
       params: {
         ...params,
         filter: { ...params.filter, resonance: q },
+      },
+    });
+  },
+
+  setFilterKeyTracking: (amount: number) => {
+    const { engine, params } = get();
+    engine?.setFilterKeyTracking(amount);
+    set({
+      params: {
+        ...params,
+        filter: { ...params.filter, keyTracking: amount },
+      },
+    });
+  },
+
+  // Velocity actions
+  setVelocityAmpAmount: (amount: number) => {
+    const { engine, params } = get();
+    engine?.setVelocityAmpAmount(amount);
+    set({
+      params: {
+        ...params,
+        velocity: { ...params.velocity, ampAmount: amount },
+      },
+    });
+  },
+
+  setVelocityFilterAmount: (amount: number) => {
+    const { engine, params } = get();
+    engine?.setVelocityFilterAmount(amount);
+    set({
+      params: {
+        ...params,
+        velocity: { ...params.velocity, filterAmount: amount },
       },
     });
   },
@@ -798,5 +855,109 @@ export const useSynthStore = create<SynthStore>((set, get) => ({
       engine?.setParams(preset.params);
       set({ params: { ...preset.params }, currentPreset: name });
     }
+  },
+
+  // Randomize all parameters
+  randomize: () => {
+    const { engine } = get();
+    const rand = (min: number, max: number) => Math.random() * (max - min) + min;
+    const randInt = (min: number, max: number) => Math.floor(rand(min, max + 1));
+    const pick = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)] as T;
+
+    const oscTypes: OscillatorType[] = ['sine', 'sawtooth', 'square', 'triangle'];
+    const filterTypes: FilterType[] = ['lowpass', 'highpass', 'bandpass'];
+    const lfoWaveforms: LFOWaveform[] = ['sine', 'triangle', 'square', 'sawtooth'];
+
+    const randomParams: SynthParams = {
+      oscillator: {
+        type: pick(oscTypes),
+        octave: randInt(-2, 2),
+        detune: randInt(-50, 50),
+        pulseWidth: rand(0.1, 0.9),
+      },
+      noise: {
+        type: pick(['white', 'pink', 'brown'] as const),
+        level: Math.random() < 0.3 ? rand(0, 0.3) : 0, // 30% chance of noise
+      },
+      glide: {
+        enabled: Math.random() < 0.2, // 20% chance
+        time: rand(0.01, 0.3),
+      },
+      filter: {
+        type: pick(filterTypes),
+        cutoff: rand(200, 8000),
+        resonance: rand(0.5, 8),
+        keyTracking: Math.random() < 0.3 ? rand(0, 0.5) : 0,
+      },
+      filterEnvelope: {
+        attack: rand(0.001, 0.5),
+        decay: rand(0.05, 0.8),
+        sustain: rand(0.1, 0.8),
+        release: rand(0.1, 1.5),
+        amount: rand(-2, 3),
+      },
+      amplitudeEnvelope: {
+        attack: rand(0.001, 0.4),
+        decay: rand(0.05, 0.5),
+        sustain: rand(0.2, 0.9),
+        release: rand(0.1, 1),
+      },
+      pitchEnvelope: {
+        attack: rand(0.001, 0.1),
+        decay: rand(0.05, 0.3),
+        sustain: 0,
+        release: rand(0.05, 0.2),
+        amount: Math.random() < 0.2 ? randInt(-12, 12) : 0, // 20% chance
+      },
+      modEnvelope: {
+        attack: rand(0.1, 1),
+        decay: rand(0.2, 1),
+        sustain: rand(0.2, 0.8),
+        release: rand(0.2, 1),
+        amount: Math.random() < 0.3 ? rand(0, 0.5) : 0,
+      },
+      pwmEnvelope: {
+        attack: rand(0.01, 0.5),
+        decay: rand(0.1, 0.5),
+        sustain: rand(0.3, 0.7),
+        release: rand(0.1, 0.5),
+        amount: 0,
+      },
+      lfo: {
+        rate: rand(0.5, 8),
+        depth: Math.random() < 0.5 ? rand(0, 0.4) : 0, // 50% chance of LFO
+        waveform: pick(lfoWaveforms),
+        sync: false,
+        syncDivision: '4n',
+      },
+      velocity: {
+        ampAmount: Math.random() < 0.3 ? rand(0, 0.5) : 0,
+        filterAmount: Math.random() < 0.2 ? rand(0, 0.5) : 0,
+      },
+      effects: {
+        distortion: {
+          amount: Math.random() < 0.2 ? rand(0, 0.4) : 0,
+          mix: rand(0.3, 0.7),
+        },
+        delay: {
+          time: rand(0.1, 0.5),
+          feedback: rand(0.2, 0.5),
+          mix: Math.random() < 0.3 ? rand(0, 0.4) : 0,
+        },
+        reverb: {
+          decay: rand(0.5, 4),
+          mix: Math.random() < 0.4 ? rand(0, 0.5) : 0,
+        },
+        chorus: {
+          rate: rand(0.5, 3),
+          depth: rand(0.2, 0.6),
+          mix: Math.random() < 0.3 ? rand(0, 0.4) : 0,
+        },
+      },
+      volume: rand(-18, -8),
+    };
+
+    engine?.setParams(randomParams);
+    set({ params: randomParams, currentPreset: 'Random' });
   },
 }));

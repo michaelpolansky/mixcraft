@@ -15,6 +15,8 @@ export interface OscillatorParams {
   octave: number;
   /** Detune in cents (-100 to +100) */
   detune: number;
+  /** Pulse width for square wave (0.1 to 0.9, 0.5 = 50% duty cycle) */
+  pulseWidth: number;
 }
 
 // ============================================
@@ -29,6 +31,8 @@ export interface FilterParams {
   cutoff: number;
   /** Resonance / Q factor (0.1 to 20) */
   resonance: number;
+  /** Key tracking amount (0 to 1) - how much filter follows pitch */
+  keyTracking: number;
 }
 
 // ============================================
@@ -113,6 +117,17 @@ export interface GlideParams {
 }
 
 // ============================================
+// Velocity Sensitivity
+// ============================================
+
+export interface VelocityParams {
+  /** How much velocity affects amplitude (0 to 1) */
+  ampAmount: number;
+  /** How much velocity affects filter envelope (0 to 1) */
+  filterAmount: number;
+}
+
+// ============================================
 // Effects Types
 // ============================================
 
@@ -176,6 +191,8 @@ export interface SynthParams {
   pwmEnvelope: PWMEnvelopeParams;
   /** LFO modulating filter cutoff */
   lfo: LFOParams;
+  /** Velocity sensitivity settings */
+  velocity: VelocityParams;
   /** Effects processors */
   effects: EffectsParams;
   /** Master volume in dB (-60 to 0) */
@@ -190,12 +207,14 @@ export const DEFAULT_OSCILLATOR: OscillatorParams = {
   type: 'sawtooth',
   octave: 0,
   detune: 0,
+  pulseWidth: 0.5,
 };
 
 export const DEFAULT_FILTER: FilterParams = {
   type: 'lowpass',
   cutoff: 2000,
   resonance: 1,
+  keyTracking: 0,
 };
 
 export const DEFAULT_AMPLITUDE_ENVELOPE: ADSREnvelope = {
@@ -255,6 +274,11 @@ export const DEFAULT_GLIDE: GlideParams = {
   time: 0.1,
 };
 
+export const DEFAULT_VELOCITY: VelocityParams = {
+  ampAmount: 0,
+  filterAmount: 0,
+};
+
 export const DEFAULT_DISTORTION: DistortionParams = {
   amount: 0,
   mix: 0,
@@ -295,6 +319,7 @@ export const DEFAULT_SYNTH_PARAMS: SynthParams = {
   modEnvelope: DEFAULT_MOD_ENVELOPE,
   pwmEnvelope: DEFAULT_PWM_ENVELOPE,
   lfo: DEFAULT_LFO,
+  velocity: DEFAULT_VELOCITY,
   effects: DEFAULT_EFFECTS,
   volume: -12,
 };

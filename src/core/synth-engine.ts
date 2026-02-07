@@ -19,6 +19,7 @@ import type {
   NoiseParams,
   NoiseType,
   GlideParams,
+  VelocityParams,
   AnalyserConfig,
   DistortionParams,
   DelayParams,
@@ -287,6 +288,13 @@ export class SynthEngine {
     this.synth.detune.value = cents;
   }
 
+  setPulseWidth(width: number): void {
+    this.params.oscillator.pulseWidth = Math.max(0.1, Math.min(0.9, width));
+    // Pulse width only applies to square/pulse waves
+    // Note: Standard Tone.js MonoSynth doesn't support PWM directly
+    // This stores the value for UI display; PWM envelope modulation is handled separately
+  }
+
   // ============================================
   // Noise Controls
   // ============================================
@@ -357,6 +365,23 @@ export class SynthEngine {
     this.params.filter.resonance = q;
     this.synth.filter.Q.value = q;
     this.noiseFilter.Q.value = q;
+  }
+
+  setFilterKeyTracking(amount: number): void {
+    this.params.filter.keyTracking = Math.max(0, Math.min(1, amount));
+    // Key tracking is applied when triggering notes - see triggerAttack
+  }
+
+  // ============================================
+  // Velocity Controls
+  // ============================================
+
+  setVelocityAmpAmount(amount: number): void {
+    this.params.velocity.ampAmount = Math.max(0, Math.min(1, amount));
+  }
+
+  setVelocityFilterAmount(amount: number): void {
+    this.params.velocity.filterAmount = Math.max(0, Math.min(1, amount));
   }
 
   // ============================================
@@ -694,16 +719,59 @@ export class SynthEngine {
   // ============================================
 
   /**
+   * Applies key tracking to filter - adjusts cutoff based on note frequency
+   */
+  private applyKeyTracking(frequency: number): void {
+    if (this.params.filter.keyTracking === 0) return;
+
+    // Reference frequency is middle C (C4 = 261.63 Hz)
+    const referenceFreq = 261.63;
+    // Calculate octave offset from reference
+    const octaveOffset = Math.log2(frequency / referenceFreq);
+    // Apply key tracking: each octave adds/subtracts cutoff based on tracking amount
+    // At 100% tracking, cutoff doubles for each octave up
+    const trackingMultiplier = Math.pow(2, octaveOffset * this.params.filter.keyTracking);
+    const newCutoff = Math.min(20000, Math.max(20, this.params.filter.cutoff * trackingMultiplier));
+
+    this.synth.filter.frequency.value = newCutoff;
+    this.noiseFilter.frequency.value = newCutoff;
+  }
+
+  /**
+   * Applies velocity sensitivity to amplitude and filter
+   */
+  private applyVelocity(velocity: number): void {
+    // Velocity affects amplitude: at 0 sensitivity, always full volume
+    // At 100% sensitivity, velocity directly controls volume
+    const ampScale = 1 - this.params.velocity.ampAmount + (this.params.velocity.ampAmount * velocity);
+    // Apply by adjusting the synth volume temporarily
+    // Store original and apply scaled version
+    const velocityDb = 20 * Math.log10(ampScale);
+    this.synth.volume.value = this.params.volume + velocityDb;
+
+    // Velocity affects filter envelope amount
+    const filterScale = 1 - this.params.velocity.filterAmount + (this.params.velocity.filterAmount * velocity);
+    this.synth.filterEnvelope.octaves = this.params.filterEnvelope.amount * filterScale;
+  }
+
+  /**
    * Triggers a note with the current envelope settings
    * @param note - Note name (e.g., 'C4', 'A3') or frequency in Hz
-   * @param duration - Optional duration (e.g., '8n', '4n', or seconds)
+   * @param velocity - Note velocity (0-1, default 1)
    */
-  triggerAttack(note: string | number): void {
+  triggerAttack(note: string | number, velocity: number = 1): void {
     const frequency = typeof note === 'number'
       ? note
       : Tone.Frequency(note).toFrequency();
 
     const adjustedFreq = applyOctaveOffset(frequency, this.params.oscillator.octave);
+
+    // Apply key tracking before triggering
+    this.applyKeyTracking(adjustedFreq);
+
+    // Apply velocity sensitivity
+    this.applyVelocity(velocity);
+
     this.synth.triggerAttack(adjustedFreq);
 
     // Trigger additional envelopes
@@ -720,19 +788,37 @@ export class SynthEngine {
     // Release additional envelopes
     this.pitchEnvelope.triggerRelease();
     this.modEnvelope.triggerRelease();
+
+    // Reset filter to base cutoff after release
+    this.synth.filter.frequency.value = this.params.filter.cutoff;
+    this.noiseFilter.frequency.value = this.params.filter.cutoff;
+
+    // Reset volume to base level
+    this.synth.volume.value = this.params.volume;
+
+    // Reset filter envelope amount
+    this.synth.filterEnvelope.octaves = this.params.filterEnvelope.amount;
   }
 
   /**
    * Triggers a note for a specific duration
    * @param note - Note name or frequency
    * @param duration - Duration in seconds or Tone.js time notation
+   * @param velocity - Note velocity (0-1, default 1)
    */
-  triggerAttackRelease(note: string | number, duration: number | string = '8n'): void {
+  triggerAttackRelease(note: string | number, duration: number | string = '8n', velocity: number = 1): void {
     const frequency = typeof note === 'number'
       ? note
       : Tone.Frequency(note).toFrequency();
 
     const adjustedFreq = applyOctaveOffset(frequency, this.params.oscillator.octave);
+
+    // Apply key tracking
+    this.applyKeyTracking(adjustedFreq);
+
+    // Apply velocity sensitivity
+    this.applyVelocity(velocity);
+
     this.synth.triggerAttackRelease(adjustedFreq, duration);
 
     // Trigger additional envelopes with matching duration

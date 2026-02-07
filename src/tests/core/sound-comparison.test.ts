@@ -24,8 +24,8 @@ function createFeatures(overrides: Partial<SoundFeatures> = {}): SoundFeatures {
 // Helper to create default synth params
 function createParams(overrides: Partial<SynthParams> = {}): SynthParams {
   return {
-    oscillator: overrides.oscillator ?? { type: 'sawtooth', octave: 0, detune: 0 },
-    filter: overrides.filter ?? { type: 'lowpass', cutoff: 2000, resonance: 1 },
+    oscillator: overrides.oscillator ?? { type: 'sawtooth', octave: 0, detune: 0, pulseWidth: 0.5 },
+    filter: overrides.filter ?? { type: 'lowpass', cutoff: 2000, resonance: 1, keyTracking: 0 },
     filterEnvelope: overrides.filterEnvelope ?? {
       attack: 0.01,
       decay: 0.3,
@@ -63,6 +63,7 @@ function createParams(overrides: Partial<SynthParams> = {}): SynthParams {
     lfo: overrides.lfo ?? { rate: 1, depth: 0, waveform: 'sine', sync: false, syncDivision: '4n' },
     noise: overrides.noise ?? { type: 'white', level: 0 },
     glide: overrides.glide ?? { enabled: false, time: 0.1 },
+    velocity: overrides.velocity ?? { ampAmount: 0, filterAmount: 0 },
     effects: overrides.effects ?? {
       distortion: { amount: 0, mix: 0 },
       delay: { time: 0.25, feedback: 0.3, mix: 0 },
@@ -193,7 +194,7 @@ describe('compareSounds', () => {
     it('gives high filter score when filter params match', () => {
       const features = createFeatures();
       const params = createParams({
-        filter: { type: 'lowpass', cutoff: 2000, resonance: 1 },
+        filter: { type: 'lowpass', cutoff: 2000, resonance: 1, keyTracking: 0 },
       });
 
       const result = compareSounds(features, features, params, params);
@@ -204,10 +205,10 @@ describe('compareSounds', () => {
     it('penalizes wrong filter type', () => {
       const features = createFeatures();
       const playerParams = createParams({
-        filter: { type: 'highpass', cutoff: 2000, resonance: 1 },
+        filter: { type: 'highpass', cutoff: 2000, resonance: 1, keyTracking: 0 },
       });
       const targetParams = createParams({
-        filter: { type: 'lowpass', cutoff: 2000, resonance: 1 },
+        filter: { type: 'lowpass', cutoff: 2000, resonance: 1, keyTracking: 0 },
       });
 
       const result = compareSounds(features, features, playerParams, targetParams);
@@ -218,10 +219,10 @@ describe('compareSounds', () => {
     it('gives feedback for cutoff being too high', () => {
       const features = createFeatures();
       const playerParams = createParams({
-        filter: { type: 'lowpass', cutoff: 4000, resonance: 1 },
+        filter: { type: 'lowpass', cutoff: 4000, resonance: 1, keyTracking: 0 },
       });
       const targetParams = createParams({
-        filter: { type: 'lowpass', cutoff: 2000, resonance: 1 },
+        filter: { type: 'lowpass', cutoff: 2000, resonance: 1, keyTracking: 0 },
       });
 
       const result = compareSounds(features, features, playerParams, targetParams);
@@ -232,10 +233,10 @@ describe('compareSounds', () => {
     it('gives feedback for cutoff being too low', () => {
       const features = createFeatures();
       const playerParams = createParams({
-        filter: { type: 'lowpass', cutoff: 500, resonance: 1 },
+        filter: { type: 'lowpass', cutoff: 500, resonance: 1, keyTracking: 0 },
       });
       const targetParams = createParams({
-        filter: { type: 'lowpass', cutoff: 2000, resonance: 1 },
+        filter: { type: 'lowpass', cutoff: 2000, resonance: 1, keyTracking: 0 },
       });
 
       const result = compareSounds(features, features, playerParams, targetParams);
@@ -248,10 +249,10 @@ describe('compareSounds', () => {
     it('penalizes wrong waveform type', () => {
       const features = createFeatures();
       const playerParams = createParams({
-        oscillator: { type: 'sine', octave: 0, detune: 0 },
+        oscillator: { type: 'sine', octave: 0, detune: 0, pulseWidth: 0.5 },
       });
       const targetParams = createParams({
-        oscillator: { type: 'sawtooth', octave: 0, detune: 0 },
+        oscillator: { type: 'sawtooth', octave: 0, detune: 0, pulseWidth: 0.5 },
       });
 
       const result = compareSounds(features, features, playerParams, targetParams);
@@ -265,10 +266,10 @@ describe('compareSounds', () => {
     it('penalizes octave mismatch', () => {
       const features = createFeatures();
       const playerParams = createParams({
-        oscillator: { type: 'sawtooth', octave: 2, detune: 0 },
+        oscillator: { type: 'sawtooth', octave: 2, detune: 0, pulseWidth: 0.5 },
       });
       const targetParams = createParams({
-        oscillator: { type: 'sawtooth', octave: 0, detune: 0 },
+        oscillator: { type: 'sawtooth', octave: 0, detune: 0, pulseWidth: 0.5 },
       });
 
       const result = compareSounds(features, features, playerParams, targetParams);
@@ -345,12 +346,12 @@ describe('compareSounds', () => {
       });
 
       const playerParams = createParams({
-        oscillator: { type: 'sine', octave: 2, detune: 50 },
-        filter: { type: 'highpass', cutoff: 5000, resonance: 10 },
+        oscillator: { type: 'sine', octave: 2, detune: 50, pulseWidth: 0.5 },
+        filter: { type: 'highpass', cutoff: 5000, resonance: 10, keyTracking: 0 },
       });
       const targetParams = createParams({
-        oscillator: { type: 'sawtooth', octave: -1, detune: 0 },
-        filter: { type: 'lowpass', cutoff: 500, resonance: 1 },
+        oscillator: { type: 'sawtooth', octave: -1, detune: 0, pulseWidth: 0.5 },
+        filter: { type: 'lowpass', cutoff: 500, resonance: 1, keyTracking: 0 },
       });
 
       const result = compareSounds(playerFeatures, targetFeatures, playerParams, targetParams);
@@ -364,10 +365,10 @@ describe('compareSounds', () => {
       // With perfect audio features but imperfect params
       const features = createFeatures();
       const playerParams = createParams({
-        oscillator: { type: 'sine', octave: 0, detune: 0 }, // Wrong type
+        oscillator: { type: 'sine', octave: 0, detune: 0, pulseWidth: 0.5 }, // Wrong type
       });
       const targetParams = createParams({
-        oscillator: { type: 'sawtooth', octave: 0, detune: 0 },
+        oscillator: { type: 'sawtooth', octave: 0, detune: 0, pulseWidth: 0.5 },
       });
 
       const result = compareSounds(features, features, playerParams, targetParams);

@@ -23,12 +23,15 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         type: 'sawtooth',
         octave: -1,
         detune: 0,
+        pulseWidth: 0.5
       },
       filter: {
         type: 'lowpass',
         cutoff: 400,
         resonance: 8,
+        keyTracking: 0
       },
+
       filterEnvelope: {
         attack: 0.01,
         decay: 0.4,
@@ -48,6 +51,10 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         waveform: 'sine',
         sync: false,
         syncDivision: '4n',
+      },
+      velocity: {
+        ampAmount: 0,
+        filterAmount: 0,
       },
       noise: {
         type: 'white',
@@ -89,12 +96,15 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         type: 'sawtooth',
         octave: 0,
         detune: 7,
+        pulseWidth: 0.5
       },
       filter: {
         type: 'lowpass',
         cutoff: 3500,
         resonance: 4,
+        keyTracking: 0
       },
+
       filterEnvelope: {
         attack: 0.01,
         decay: 0.2,
@@ -114,6 +124,10 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         waveform: 'triangle',
         sync: false,
         syncDivision: '4n',
+      },
+      velocity: {
+        ampAmount: 0,
+        filterAmount: 0,
       },
       noise: {
         type: 'white',
@@ -158,12 +172,15 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         type: 'sawtooth',
         octave: 0,
         detune: 15,
+        pulseWidth: 0.5
       },
       filter: {
         type: 'lowpass',
         cutoff: 2000,
         resonance: 1,
+        keyTracking: 0
       },
+
       filterEnvelope: {
         attack: 0.5,
         decay: 0.3,
@@ -183,6 +200,10 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         waveform: 'sine',
         sync: false,
         syncDivision: '4n',
+      },
+      velocity: {
+        ampAmount: 0,
+        filterAmount: 0,
       },
       noise: {
         type: 'white',
@@ -228,12 +249,15 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         type: 'triangle',
         octave: 0,
         detune: 0,
+        pulseWidth: 0.5
       },
       filter: {
         type: 'lowpass',
         cutoff: 800,
         resonance: 2,
+        keyTracking: 0
       },
+
       filterEnvelope: {
         attack: 0.001,
         decay: 0.15,
@@ -253,6 +277,10 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         waveform: 'sine',
         sync: false,
         syncDivision: '4n',
+      },
+      velocity: {
+        ampAmount: 0,
+        filterAmount: 0,
       },
       noise: {
         type: 'white',
@@ -297,12 +325,15 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         type: 'sawtooth',
         octave: 0,
         detune: 5,
+        pulseWidth: 0.5
       },
       filter: {
         type: 'lowpass',
         cutoff: 1200,
         resonance: 3,
+        keyTracking: 0
       },
+
       filterEnvelope: {
         attack: 0.08,
         decay: 0.2,
@@ -322,6 +353,10 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         waveform: 'triangle',
         sync: false,
         syncDivision: '4n',
+      },
+      velocity: {
+        ampAmount: 0,
+        filterAmount: 0,
       },
       noise: {
         type: 'white',
@@ -363,12 +398,15 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         type: 'square',
         octave: 0,
         detune: 0,
+        pulseWidth: 0.5
       },
       filter: {
         type: 'lowpass',
         cutoff: 4000,
         resonance: 0.5,
+        keyTracking: 0
       },
+
       filterEnvelope: {
         attack: 0.01,
         decay: 0.1,
@@ -388,6 +426,10 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         waveform: 'sine',
         sync: false,
         syncDivision: '4n',
+      },
+      velocity: {
+        ampAmount: 0,
+        filterAmount: 0,
       },
       noise: {
         type: 'white',
@@ -433,12 +475,15 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         type: 'sine',
         octave: 1,
         detune: 0,
+        pulseWidth: 0.5
       },
       filter: {
         type: 'lowpass',
         cutoff: 8000,
         resonance: 1,
+        keyTracking: 0
       },
+
       filterEnvelope: {
         attack: 0.01,
         decay: 0.1,
@@ -458,6 +503,10 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         waveform: 'sine',
         sync: false,
         syncDivision: '4n',
+      },
+      velocity: {
+        ampAmount: 0,
+        filterAmount: 0,
       },
       noise: {
         type: 'white',
@@ -499,12 +548,15 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         type: 'sine',
         octave: -2,
         detune: 0,
+        pulseWidth: 0.5
       },
       filter: {
         type: 'lowpass',
         cutoff: 200,
         resonance: 1,
+        keyTracking: 0
       },
+
       filterEnvelope: {
         attack: 0.001,
         decay: 0.08,
@@ -524,6 +576,10 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         waveform: 'sine',
         sync: false,
         syncDivision: '4n',
+      },
+      velocity: {
+        ampAmount: 0,
+        filterAmount: 0,
       },
       noise: {
         type: 'white',
@@ -568,12 +624,15 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         type: 'square',
         octave: 2,
         detune: 50,
+        pulseWidth: 0.5
       },
       filter: {
         type: 'highpass',
         cutoff: 8000,
         resonance: 2,
+        keyTracking: 0
       },
+
       filterEnvelope: {
         attack: 0.001,
         decay: 0.05,
@@ -593,6 +652,10 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         waveform: 'sine',
         sync: false,
         syncDivision: '4n',
+      },
+      velocity: {
+        ampAmount: 0,
+        filterAmount: 0,
       },
       noise: {
         type: 'white',

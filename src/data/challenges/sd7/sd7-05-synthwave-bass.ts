@@ -24,12 +24,15 @@ export const challenge: Challenge = {
       type: 'square',
       octave: -1,
       detune: 0,
+      pulseWidth: 0.5
     },
     filter: {
       type: 'lowpass',
       cutoff: 800,
       resonance: 5,
+      keyTracking: 0
     },
+
     filterEnvelope: {
       attack: 0.01,
       decay: 0.2,
@@ -49,6 +52,10 @@ export const challenge: Challenge = {
       waveform: 'sine',
       sync: false,
       syncDivision: '4n',
+    },
+    velocity: {
+      ampAmount: 0,
+      filterAmount: 0,
     },
     noise: {
       type: 'white',
