@@ -1,4 +1,5 @@
 import type { Challenge } from '../../../core/types.ts';
+import { DEFAULT_LFO2, DEFAULT_MOD_MATRIX } from '../../../core/types.ts';
 
 /**
  * SD6-01: Acid Bass
@@ -87,6 +88,20 @@ export const challenge: Challenge = {
       release: 0.3,
       amount: 0,
     },
+    subOsc: {
+      enabled: false,
+      type: 'sine',
+      octave: -1,
+      level: 0.5,
+    },
+    oscillator2: {
+      enabled: false,
+      type: 'sawtooth',
+      octave: 0,
+      detune: 7,
+      pulseWidth: 0.5,
+      mix: 0.5,
+    },
     effects: {
       distortion: { amount: 0.2, mix: 0.3 },
       delay: { time: 0.25, feedback: 0.3, mix: 0 },
@@ -94,5 +109,8 @@ export const challenge: Challenge = {
       chorus: { rate: 1.5, depth: 0.5, mix: 0 },
     },
     volume: -12,
+    lfo2: DEFAULT_LFO2,
+    modMatrix: DEFAULT_MOD_MATRIX,
+    pan: 0,
   },
 };

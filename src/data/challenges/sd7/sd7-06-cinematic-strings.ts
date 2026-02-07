@@ -1,4 +1,5 @@
 import type { Challenge } from '../../../core/types.ts';
+import { DEFAULT_LFO2, DEFAULT_MOD_MATRIX } from '../../../core/types.ts';
 
 /**
  * SD7-06: Cinematic Strings
@@ -87,6 +88,20 @@ export const challenge: Challenge = {
       release: 0.3,
       amount: 0,
     },
+    subOsc: {
+      enabled: false,
+      type: 'sine',
+      octave: -1,
+      level: 0.5,
+    },
+    oscillator2: {
+      enabled: false,
+      type: 'sawtooth',
+      octave: 0,
+      detune: 7,
+      pulseWidth: 0.5,
+      mix: 0.5,
+    },
     effects: {
       distortion: { amount: 0, mix: 0 },
       delay: { time: 0.4, feedback: 0.35, mix: 0.25 },
@@ -94,5 +109,8 @@ export const challenge: Challenge = {
       chorus: { rate: 0.6, depth: 0.5, mix: 0.5 },
     },
     volume: -12,
+    lfo2: DEFAULT_LFO2,
+    modMatrix: DEFAULT_MOD_MATRIX,
+    pan: 0,
   },
 };

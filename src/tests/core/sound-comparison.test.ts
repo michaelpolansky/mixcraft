@@ -6,7 +6,7 @@ import { describe, it, expect } from 'vitest';
 import { compareSounds, generateSummary, compareFMParams, type ScoreResult } from '../../core/sound-comparison.ts';
 import type { SoundFeatures } from '../../core/sound-analysis.ts';
 import type { SynthParams, FMSynthParams } from '../../core/types.ts';
-import { DEFAULT_FM_SYNTH_PARAMS } from '../../core/types.ts';
+import { DEFAULT_FM_SYNTH_PARAMS, DEFAULT_LFO2, DEFAULT_MOD_MATRIX } from '../../core/types.ts';
 
 // Helper to create default sound features
 function createFeatures(overrides: Partial<SoundFeatures> = {}): SoundFeatures {
@@ -64,6 +64,8 @@ function createParams(overrides: Partial<SynthParams> = {}): SynthParams {
     noise: overrides.noise ?? { type: 'white', level: 0 },
     glide: overrides.glide ?? { enabled: false, time: 0.1 },
     velocity: overrides.velocity ?? { ampAmount: 0, filterAmount: 0 },
+    subOsc: overrides.subOsc ?? { enabled: false, type: 'sine', octave: -1, level: 0.5 },
+    oscillator2: overrides.oscillator2 ?? { enabled: false, type: 'sawtooth', octave: 0, detune: 7, pulseWidth: 0.5, mix: 0.5 },
     effects: overrides.effects ?? {
       distortion: { amount: 0, mix: 0 },
       delay: { time: 0.25, feedback: 0.3, mix: 0 },
@@ -71,6 +73,9 @@ function createParams(overrides: Partial<SynthParams> = {}): SynthParams {
       chorus: { rate: 1.5, depth: 0.5, mix: 0 },
     },
     volume: overrides.volume ?? -12,
+    lfo2: overrides.lfo2 ?? DEFAULT_LFO2,
+    modMatrix: overrides.modMatrix ?? DEFAULT_MOD_MATRIX,
+    pan: overrides.pan ?? 0,
   };
 }
 
