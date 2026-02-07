@@ -1,6 +1,6 @@
 /**
  * Main Synthesizer View
- * Complete subtractive synth interface with real-time spectrum analysis
+ * Ableton Learning Synths-style centered layout with large interactive visualizations
  */
 
 import { useEffect, useCallback } from 'react';
@@ -12,21 +12,31 @@ import {
   FilterTypeSelector,
   LFOWaveformSelector,
   SpectrumAnalyzer,
-  EnvelopeDisplay,
   PianoKeyboard,
   InfoPanel,
-  XYPad,
   PresetDropdown,
   Sequencer,
-  ModuleCard,
-  MODULE_COLORS,
-  WaveformIcon,
   RecordingControl,
+  OscillatorVisualizer,
+  FilterVisualizer,
+  EnvelopeVisualizer,
+  LFOVisualizer,
+  EffectCard,
 } from '../components/index.ts';
 import { SUBTRACTIVE_PRESETS } from '../../data/presets/subtractive-presets.ts';
 import { InfoPanelProvider } from '../context/InfoPanelContext.tsx';
 import { PARAM_RANGES } from '../../core/types.ts';
 
+// Module colors
+const COLORS = {
+  oscillator: '#3b82f6',
+  filter: '#06b6d4',
+  ampEnvelope: '#22c55e',
+  filterEnvelope: '#eab308',
+  lfo: '#ef4444',
+  effects: '#8b5cf6',
+  output: '#f97316',
+};
 
 export function SynthView() {
   const {
@@ -101,44 +111,6 @@ export function SynthView() {
   const formatOctave = (value: number) => (value >= 0 ? `+${value}` : `${value}`);
   const formatCents = (value: number) => (value >= 0 ? `+${value}` : `${value}`);
 
-  // XY Pad value conversions (using logarithmic scale for cutoff)
-  const cutoffRange: [number, number] = [200, 8000];
-  const resonanceRange: [number, number] = [0, 20];
-
-  // Convert actual cutoff to normalized (logarithmic)
-  const cutoffToNormalized = (cutoff: number): number => {
-    const minLog = Math.log(cutoffRange[0]);
-    const maxLog = Math.log(cutoffRange[1]);
-    return (Math.log(cutoff) - minLog) / (maxLog - minLog);
-  };
-
-  // Convert normalized to actual cutoff (logarithmic)
-  const normalizedToCutoff = (normalized: number): number => {
-    const minLog = Math.log(cutoffRange[0]);
-    const maxLog = Math.log(cutoffRange[1]);
-    return Math.exp(minLog + normalized * (maxLog - minLog));
-  };
-
-  // Resonance is linear
-  const resonanceToNormalized = (resonance: number): number => {
-    return (resonance - resonanceRange[0]) / (resonanceRange[1] - resonanceRange[0]);
-  };
-
-  const normalizedToResonance = (normalized: number): number => {
-    return resonanceRange[0] + normalized * (resonanceRange[1] - resonanceRange[0]);
-  };
-
-  // XY Pad change handlers
-  const handleXYPadXChange = useCallback((normalized: number) => {
-    const cutoff = normalizedToCutoff(normalized);
-    setFilterCutoff(Math.round(cutoff));
-  }, [setFilterCutoff]);
-
-  const handleXYPadYChange = useCallback((normalized: number) => {
-    const resonance = normalizedToResonance(normalized);
-    setFilterResonance(Math.round(resonance * 10) / 10);
-  }, [setFilterResonance]);
-
   // Not initialized - show start button
   if (!isInitialized) {
     return (
@@ -149,27 +121,15 @@ export function SynthView() {
           alignItems: 'center',
           justifyContent: 'center',
           minHeight: '100vh',
-          background: '#0a0a0a',
+          background: '#0a0a0f',
           color: '#fff',
           fontFamily: 'system-ui, -apple-system, sans-serif',
         }}
       >
-        <h1
-          style={{
-            fontSize: '32px',
-            fontWeight: 300,
-            marginBottom: '8px',
-            color: '#4ade80',
-          }}
-        >
+        <h1 style={{ fontSize: '32px', fontWeight: 300, marginBottom: '8px', color: '#4ade80' }}>
           MIXCRAFT
         </h1>
-        <p
-          style={{
-            color: '#666',
-            marginBottom: '32px',
-          }}
-        >
+        <p style={{ color: '#666', marginBottom: '32px' }}>
           Subtractive Synthesizer
         </p>
         <button
@@ -191,13 +151,7 @@ export function SynthView() {
         >
           Start Audio Engine
         </button>
-        <p
-          style={{
-            color: '#444',
-            fontSize: '12px',
-            marginTop: '16px',
-          }}
-        >
+        <p style={{ color: '#444', fontSize: '12px', marginTop: '16px' }}>
           Click to enable audio (browser requirement)
         </p>
       </div>
@@ -206,131 +160,85 @@ export function SynthView() {
 
   return (
     <InfoPanelProvider>
-    <div
-      style={{
-        minHeight: '100vh',
-        background: '#0a0a0a',
-        color: '#fff',
-        fontFamily: 'system-ui, -apple-system, sans-serif',
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    >
-    <div style={{ padding: '24px', flex: 1 }}>
-      {/* Header */}
       <div
         style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '24px',
+          minHeight: '100vh',
+          background: '#0a0a0f',
+          color: '#fff',
+          fontFamily: 'system-ui, -apple-system, sans-serif',
         }}
       >
-        <div>
-          <h1
-            style={{
-              fontSize: '24px',
-              fontWeight: 300,
-              margin: 0,
-              color: '#4ade80',
-            }}
-          >
-            MIXCRAFT
-          </h1>
-          <span
-            style={{
-              fontSize: '12px',
-              color: '#666',
-            }}
-          >
-            Subtractive Synthesizer
-          </span>
-        </div>
-
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-          <PresetDropdown
-            presets={SUBTRACTIVE_PRESETS}
-            currentPreset={currentPreset}
-            onSelect={loadPreset}
-            accentColor="#4ade80"
-          />
-          <button
-            onClick={resetToDefaults}
-            style={{
-              padding: '8px 16px',
-              background: '#1a1a1a',
-              border: '1px solid #333',
-              borderRadius: '4px',
-              color: '#888',
-              cursor: 'pointer',
-              fontSize: '12px',
-            }}
-          >
-            Reset
-          </button>
-        </div>
-      </div>
-
-      {/* Main Layout */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: '24px',
-          maxWidth: '1200px',
-        }}
-      >
-        {/* Left Column - Controls */}
+        {/* Centered content column */}
         <div
           style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '16px',
+            maxWidth: '640px',
+            margin: '0 auto',
+            padding: '24px 20px',
           }}
         >
-          {/* XY Pad - Filter Control */}
-          <ModuleCard
-            title="Filter XY Pad"
-            color={MODULE_COLORS.xypad}
-            icon={<WaveformIcon type="filter" size={20} color={MODULE_COLORS.xypad} animated={false} />}
+          {/* Header */}
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '32px',
+            }}
           >
-            <div style={{ display: 'flex', justifyContent: 'center' }}>
-              <XYPad
-                xValue={cutoffToNormalized(params.filter.cutoff)}
-                yValue={resonanceToNormalized(params.filter.resonance)}
-                xLabel="Cutoff"
-                yLabel="Resonance"
-                xRange={cutoffRange}
-                yRange={resonanceRange}
-                onXChange={handleXYPadXChange}
-                onYChange={handleXYPadYChange}
-                size={200}
-                accentColor="#4ade80"
-                formatXValue={formatHz}
-                formatYValue={(v) => v.toFixed(1)}
-              />
+            <div>
+              <h1 style={{ fontSize: '24px', fontWeight: 300, margin: 0, color: '#4ade80' }}>
+                MIXCRAFT
+              </h1>
+              <span style={{ fontSize: '12px', color: '#666' }}>
+                Subtractive Synthesizer
+              </span>
             </div>
-          </ModuleCard>
 
-          {/* Oscillator Section */}
-          <ModuleCard
-            title="Oscillator"
-            color={MODULE_COLORS.oscillator}
-            icon={<WaveformIcon type={params.oscillator.type} size={20} color={MODULE_COLORS.oscillator} />}
-          >
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '16px',
-              }}
-            >
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+              <PresetDropdown
+                presets={SUBTRACTIVE_PRESETS}
+                currentPreset={currentPreset}
+                onSelect={loadPreset}
+                accentColor="#4ade80"
+              />
+              <button
+                onClick={resetToDefaults}
+                style={{
+                  padding: '8px 16px',
+                  background: '#1a1a1a',
+                  border: '1px solid #333',
+                  borderRadius: '4px',
+                  color: '#888',
+                  cursor: 'pointer',
+                  fontSize: '12px',
+                }}
+              >
+                Reset
+              </button>
+            </div>
+          </div>
+
+          {/* Spectrum Analyzer - Always visible at top */}
+          <div style={{ marginBottom: '32px' }}>
+            <SpectrumAnalyzer width={600} height={120} barCount={80} />
+          </div>
+
+          {/* Oscillator Module */}
+          <ModuleSection title="OSCILLATOR" color={COLORS.oscillator}>
+            <OscillatorVisualizer
+              waveform={params.oscillator.type}
+              octave={params.oscillator.octave}
+              detune={params.oscillator.detune}
+              width={600}
+              height={200}
+              accentColor={COLORS.oscillator}
+            />
+            <div style={{ marginTop: '16px' }}>
               <WaveformSelector
                 value={params.oscillator.type}
                 onChange={setOscillatorType}
               />
-
-              <div style={{ display: 'flex', gap: '24px' }}>
+              <div style={{ display: 'flex', gap: '24px', marginTop: '16px', justifyContent: 'center' }}>
                 <Knob
                   label="Octave"
                   value={params.oscillator.octave}
@@ -353,27 +261,26 @@ export function SynthView() {
                 />
               </div>
             </div>
-          </ModuleCard>
+          </ModuleSection>
 
-          {/* Filter Section */}
-          <ModuleCard
-            title="Filter"
-            color={MODULE_COLORS.filter}
-            icon={<WaveformIcon type="filter" size={20} color={MODULE_COLORS.filter} animated={false} />}
-          >
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '16px',
-              }}
-            >
+          {/* Filter Module */}
+          <ModuleSection title="FILTER" color={COLORS.filter}>
+            <FilterVisualizer
+              filterType={params.filter.type}
+              cutoff={params.filter.cutoff}
+              resonance={params.filter.resonance}
+              onCutoffChange={setFilterCutoff}
+              onResonanceChange={setFilterResonance}
+              width={600}
+              height={250}
+              accentColor={COLORS.filter}
+            />
+            <div style={{ marginTop: '16px' }}>
               <FilterTypeSelector
                 value={params.filter.type}
                 onChange={setFilterType}
               />
-
-              <div style={{ display: 'flex', gap: '24px' }}>
+              <div style={{ display: 'flex', gap: '24px', marginTop: '16px', justifyContent: 'center' }}>
                 <Knob
                   label="Cutoff"
                   value={params.filter.cutoff}
@@ -397,181 +304,159 @@ export function SynthView() {
                 />
               </div>
             </div>
-          </ModuleCard>
+          </ModuleSection>
 
-          {/* Amplitude Envelope */}
-          <ModuleCard
-            title="Amplitude Envelope"
-            color={MODULE_COLORS.ampEnvelope}
-            icon={<WaveformIcon type="envelope" size={20} color={MODULE_COLORS.ampEnvelope} animated={false} />}
-          >
-            <div
-              style={{
-                display: 'flex',
-                gap: '16px',
-                alignItems: 'flex-start',
-              }}
-            >
-              <EnvelopeDisplay
-                envelope={params.amplitudeEnvelope}
-                width={140}
-                height={70}
+          {/* Amplitude Envelope Module */}
+          <ModuleSection title="AMPLITUDE ENVELOPE" color={COLORS.ampEnvelope}>
+            <EnvelopeVisualizer
+              attack={params.amplitudeEnvelope.attack}
+              decay={params.amplitudeEnvelope.decay}
+              sustain={params.amplitudeEnvelope.sustain}
+              release={params.amplitudeEnvelope.release}
+              onAttackChange={setAmplitudeAttack}
+              onDecayChange={setAmplitudeDecay}
+              onSustainChange={setAmplitudeSustain}
+              onReleaseChange={setAmplitudeRelease}
+              width={600}
+              height={200}
+              accentColor={COLORS.ampEnvelope}
+            />
+            <div style={{ display: 'flex', gap: '16px', marginTop: '16px', justifyContent: 'center' }}>
+              <Slider
+                label="Attack"
+                value={params.amplitudeEnvelope.attack}
+                min={PARAM_RANGES.attack.min}
+                max={PARAM_RANGES.attack.max}
+                step={PARAM_RANGES.attack.step}
+                onChange={setAmplitudeAttack}
+                formatValue={formatMs}
+                logarithmic
+                paramId="amplitude.attack"
               />
-
-              <div style={{ display: 'flex', gap: '12px' }}>
-                <Slider
-                  label="A"
-                  value={params.amplitudeEnvelope.attack}
-                  min={PARAM_RANGES.attack.min}
-                  max={PARAM_RANGES.attack.max}
-                  step={PARAM_RANGES.attack.step}
-                  onChange={setAmplitudeAttack}
-                  formatValue={formatMs}
-                  logarithmic
-                  paramId="amplitude.attack"
-                />
-                <Slider
-                  label="D"
-                  value={params.amplitudeEnvelope.decay}
-                  min={PARAM_RANGES.decay.min}
-                  max={PARAM_RANGES.decay.max}
-                  step={PARAM_RANGES.decay.step}
-                  onChange={setAmplitudeDecay}
-                  formatValue={formatMs}
-                  logarithmic
-                  paramId="amplitude.decay"
-                />
-                <Slider
-                  label="S"
-                  value={params.amplitudeEnvelope.sustain}
-                  min={PARAM_RANGES.sustain.min}
-                  max={PARAM_RANGES.sustain.max}
-                  step={PARAM_RANGES.sustain.step}
-                  onChange={setAmplitudeSustain}
-                  formatValue={formatPercent}
-                  paramId="amplitude.sustain"
-                />
-                <Slider
-                  label="R"
-                  value={params.amplitudeEnvelope.release}
-                  min={PARAM_RANGES.release.min}
-                  max={PARAM_RANGES.release.max}
-                  step={PARAM_RANGES.release.step}
-                  onChange={setAmplitudeRelease}
-                  formatValue={formatMs}
-                  logarithmic
-                  paramId="amplitude.release"
-                />
-              </div>
+              <Slider
+                label="Decay"
+                value={params.amplitudeEnvelope.decay}
+                min={PARAM_RANGES.decay.min}
+                max={PARAM_RANGES.decay.max}
+                step={PARAM_RANGES.decay.step}
+                onChange={setAmplitudeDecay}
+                formatValue={formatMs}
+                logarithmic
+                paramId="amplitude.decay"
+              />
+              <Slider
+                label="Sustain"
+                value={params.amplitudeEnvelope.sustain}
+                min={PARAM_RANGES.sustain.min}
+                max={PARAM_RANGES.sustain.max}
+                step={PARAM_RANGES.sustain.step}
+                onChange={setAmplitudeSustain}
+                formatValue={formatPercent}
+                paramId="amplitude.sustain"
+              />
+              <Slider
+                label="Release"
+                value={params.amplitudeEnvelope.release}
+                min={PARAM_RANGES.release.min}
+                max={PARAM_RANGES.release.max}
+                step={PARAM_RANGES.release.step}
+                onChange={setAmplitudeRelease}
+                formatValue={formatMs}
+                logarithmic
+                paramId="amplitude.release"
+              />
             </div>
-          </ModuleCard>
+          </ModuleSection>
 
-          {/* Filter Envelope */}
-          <ModuleCard
-            title="Filter Envelope"
-            color={MODULE_COLORS.filterEnvelope}
-            icon={<WaveformIcon type="envelope" size={20} color={MODULE_COLORS.filterEnvelope} animated={false} />}
-          >
-            <div
-              style={{
-                display: 'flex',
-                gap: '16px',
-                alignItems: 'flex-start',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '8px',
-                }}
-              >
-                <EnvelopeDisplay
-                  envelope={params.filterEnvelope}
-                  width={140}
-                  height={70}
-                  color="#3b82f6"
-                />
-                <Knob
-                  label="Amount"
-                  value={params.filterEnvelope.amount}
-                  min={PARAM_RANGES.filterEnvAmount.min}
-                  max={PARAM_RANGES.filterEnvAmount.max}
-                  step={PARAM_RANGES.filterEnvAmount.step}
-                  onChange={setFilterEnvelopeAmount}
-                  formatValue={(v) => `${v > 0 ? '+' : ''}${v.toFixed(1)} oct`}
-                  size={48}
-                  paramId="filterEnv.amount"
-                />
-              </div>
-
-              <div style={{ display: 'flex', gap: '12px' }}>
-                <Slider
-                  label="A"
-                  value={params.filterEnvelope.attack}
-                  min={PARAM_RANGES.attack.min}
-                  max={PARAM_RANGES.attack.max}
-                  step={PARAM_RANGES.attack.step}
-                  onChange={setFilterEnvelopeAttack}
-                  formatValue={formatMs}
-                  logarithmic
-                  paramId="filterEnv.attack"
-                />
-                <Slider
-                  label="D"
-                  value={params.filterEnvelope.decay}
-                  min={PARAM_RANGES.decay.min}
-                  max={PARAM_RANGES.decay.max}
-                  step={PARAM_RANGES.decay.step}
-                  onChange={setFilterEnvelopeDecay}
-                  formatValue={formatMs}
-                  logarithmic
-                  paramId="filterEnv.decay"
-                />
-                <Slider
-                  label="S"
-                  value={params.filterEnvelope.sustain}
-                  min={PARAM_RANGES.sustain.min}
-                  max={PARAM_RANGES.sustain.max}
-                  step={PARAM_RANGES.sustain.step}
-                  onChange={setFilterEnvelopeSustain}
-                  formatValue={formatPercent}
-                  paramId="filterEnv.sustain"
-                />
-                <Slider
-                  label="R"
-                  value={params.filterEnvelope.release}
-                  min={PARAM_RANGES.release.min}
-                  max={PARAM_RANGES.release.max}
-                  step={PARAM_RANGES.release.step}
-                  onChange={setFilterEnvelopeRelease}
-                  formatValue={formatMs}
-                  logarithmic
-                  paramId="filterEnv.release"
-                />
-              </div>
+          {/* Filter Envelope Module */}
+          <ModuleSection title="FILTER ENVELOPE" color={COLORS.filterEnvelope}>
+            <EnvelopeVisualizer
+              attack={params.filterEnvelope.attack}
+              decay={params.filterEnvelope.decay}
+              sustain={params.filterEnvelope.sustain}
+              release={params.filterEnvelope.release}
+              onAttackChange={setFilterEnvelopeAttack}
+              onDecayChange={setFilterEnvelopeDecay}
+              onSustainChange={setFilterEnvelopeSustain}
+              onReleaseChange={setFilterEnvelopeRelease}
+              width={600}
+              height={200}
+              accentColor={COLORS.filterEnvelope}
+            />
+            <div style={{ display: 'flex', gap: '16px', marginTop: '16px', justifyContent: 'center', alignItems: 'flex-end' }}>
+              <Knob
+                label="Amount"
+                value={params.filterEnvelope.amount}
+                min={PARAM_RANGES.filterEnvAmount.min}
+                max={PARAM_RANGES.filterEnvAmount.max}
+                step={PARAM_RANGES.filterEnvAmount.step}
+                onChange={setFilterEnvelopeAmount}
+                formatValue={(v) => `${v > 0 ? '+' : ''}${v.toFixed(1)} oct`}
+                size={56}
+                paramId="filterEnv.amount"
+              />
+              <Slider
+                label="Attack"
+                value={params.filterEnvelope.attack}
+                min={PARAM_RANGES.attack.min}
+                max={PARAM_RANGES.attack.max}
+                step={PARAM_RANGES.attack.step}
+                onChange={setFilterEnvelopeAttack}
+                formatValue={formatMs}
+                logarithmic
+                paramId="filterEnv.attack"
+              />
+              <Slider
+                label="Decay"
+                value={params.filterEnvelope.decay}
+                min={PARAM_RANGES.decay.min}
+                max={PARAM_RANGES.decay.max}
+                step={PARAM_RANGES.decay.step}
+                onChange={setFilterEnvelopeDecay}
+                formatValue={formatMs}
+                logarithmic
+                paramId="filterEnv.decay"
+              />
+              <Slider
+                label="Sustain"
+                value={params.filterEnvelope.sustain}
+                min={PARAM_RANGES.sustain.min}
+                max={PARAM_RANGES.sustain.max}
+                step={PARAM_RANGES.sustain.step}
+                onChange={setFilterEnvelopeSustain}
+                formatValue={formatPercent}
+                paramId="filterEnv.sustain"
+              />
+              <Slider
+                label="Release"
+                value={params.filterEnvelope.release}
+                min={PARAM_RANGES.release.min}
+                max={PARAM_RANGES.release.max}
+                step={PARAM_RANGES.release.step}
+                onChange={setFilterEnvelopeRelease}
+                formatValue={formatMs}
+                logarithmic
+                paramId="filterEnv.release"
+              />
             </div>
-          </ModuleCard>
+          </ModuleSection>
 
-          {/* LFO */}
-          <ModuleCard
-            title="LFO (Filter Modulation)"
-            color={MODULE_COLORS.lfo}
-            icon={<WaveformIcon type="sine" size={20} color={MODULE_COLORS.lfo} />}
-          >
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '16px',
-              }}
-            >
+          {/* LFO Module */}
+          <ModuleSection title="LFO" color={COLORS.lfo}>
+            <LFOVisualizer
+              waveform={params.lfo.waveform}
+              rate={params.lfo.rate}
+              depth={params.lfo.depth}
+              width={600}
+              height={180}
+              accentColor={COLORS.lfo}
+            />
+            <div style={{ marginTop: '16px' }}>
               <LFOWaveformSelector
                 value={params.lfo.waveform}
                 onChange={setLFOWaveform}
               />
-
-              <div style={{ display: 'flex', gap: '24px' }}>
+              <div style={{ display: 'flex', gap: '24px', marginTop: '16px', justifyContent: 'center' }}>
                 <Knob
                   label="Rate"
                   value={params.lfo.rate}
@@ -594,112 +479,119 @@ export function SynthView() {
                 />
               </div>
             </div>
-          </ModuleCard>
+          </ModuleSection>
 
-          {/* Effects */}
-          <ModuleCard
-            title="Effects"
-            color={MODULE_COLORS.effects}
-            icon={<WaveformIcon type="noise" size={20} color={MODULE_COLORS.effects} animated={false} />}
-          >
+          {/* Effects Module */}
+          <ModuleSection title="EFFECTS" color={COLORS.effects}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-              {/* Distortion */}
+              <EffectCard
+                type="distortion"
+                mix={params.effects.distortion.mix}
+                param1={params.effects.distortion.amount}
+                width={290}
+                height={150}
+              />
+              <EffectCard
+                type="delay"
+                mix={params.effects.delay.mix}
+                param1={params.effects.delay.time}
+                param2={params.effects.delay.feedback}
+                width={290}
+                height={150}
+              />
+              <EffectCard
+                type="reverb"
+                mix={params.effects.reverb.mix}
+                param1={params.effects.reverb.decay}
+                width={290}
+                height={150}
+              />
+              <EffectCard
+                type="chorus"
+                mix={params.effects.chorus.mix}
+                param1={params.effects.chorus.rate}
+                param2={params.effects.chorus.depth}
+                width={290}
+                height={150}
+              />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginTop: '24px' }}>
+              {/* Distortion Controls */}
               <div>
-                <div style={{ fontSize: '10px', color: '#666', marginBottom: '8px', textTransform: 'uppercase' }}>Distortion</div>
-                <div style={{ display: 'flex', gap: '12px' }}>
-                  <Knob label="Amt" value={params.effects.distortion.amount} min={PARAM_RANGES.distortionAmount.min} max={PARAM_RANGES.distortionAmount.max} step={PARAM_RANGES.distortionAmount.step} onChange={setDistortionAmount} formatValue={formatPercent} size={40} paramId="distortion.amount" />
-                  <Knob label="Mix" value={params.effects.distortion.mix} min={PARAM_RANGES.distortionMix.min} max={PARAM_RANGES.distortionMix.max} step={PARAM_RANGES.distortionMix.step} onChange={setDistortionMix} formatValue={formatPercent} size={40} paramId="distortion.mix" />
+                <div style={{ fontSize: '11px', color: '#ef4444', marginBottom: '8px', fontWeight: 600 }}>DISTORTION</div>
+                <div style={{ display: 'flex', gap: '16px' }}>
+                  <Knob label="Amount" value={params.effects.distortion.amount} min={PARAM_RANGES.distortionAmount.min} max={PARAM_RANGES.distortionAmount.max} step={PARAM_RANGES.distortionAmount.step} onChange={setDistortionAmount} formatValue={formatPercent} size={48} paramId="distortion.amount" />
+                  <Knob label="Mix" value={params.effects.distortion.mix} min={PARAM_RANGES.distortionMix.min} max={PARAM_RANGES.distortionMix.max} step={PARAM_RANGES.distortionMix.step} onChange={setDistortionMix} formatValue={formatPercent} size={48} paramId="distortion.mix" />
                 </div>
               </div>
-              {/* Delay */}
+              {/* Delay Controls */}
               <div>
-                <div style={{ fontSize: '10px', color: '#666', marginBottom: '8px', textTransform: 'uppercase' }}>Delay</div>
+                <div style={{ fontSize: '11px', color: '#3b82f6', marginBottom: '8px', fontWeight: 600 }}>DELAY</div>
                 <div style={{ display: 'flex', gap: '12px' }}>
-                  <Knob label="Time" value={params.effects.delay.time} min={PARAM_RANGES.delayTime.min} max={PARAM_RANGES.delayTime.max} step={PARAM_RANGES.delayTime.step} onChange={setDelayTime} formatValue={(v) => `${Math.round(v * 1000)}ms`} size={40} paramId="delay.time" />
-                  <Knob label="FB" value={params.effects.delay.feedback} min={PARAM_RANGES.delayFeedback.min} max={PARAM_RANGES.delayFeedback.max} step={PARAM_RANGES.delayFeedback.step} onChange={setDelayFeedback} formatValue={formatPercent} size={40} paramId="delay.feedback" />
-                  <Knob label="Mix" value={params.effects.delay.mix} min={PARAM_RANGES.delayMix.min} max={PARAM_RANGES.delayMix.max} step={PARAM_RANGES.delayMix.step} onChange={setDelayMix} formatValue={formatPercent} size={40} paramId="delay.mix" />
+                  <Knob label="Time" value={params.effects.delay.time} min={PARAM_RANGES.delayTime.min} max={PARAM_RANGES.delayTime.max} step={PARAM_RANGES.delayTime.step} onChange={setDelayTime} formatValue={(v) => `${Math.round(v * 1000)}ms`} size={44} paramId="delay.time" />
+                  <Knob label="FB" value={params.effects.delay.feedback} min={PARAM_RANGES.delayFeedback.min} max={PARAM_RANGES.delayFeedback.max} step={PARAM_RANGES.delayFeedback.step} onChange={setDelayFeedback} formatValue={formatPercent} size={44} paramId="delay.feedback" />
+                  <Knob label="Mix" value={params.effects.delay.mix} min={PARAM_RANGES.delayMix.min} max={PARAM_RANGES.delayMix.max} step={PARAM_RANGES.delayMix.step} onChange={setDelayMix} formatValue={formatPercent} size={44} paramId="delay.mix" />
                 </div>
               </div>
-              {/* Reverb */}
+              {/* Reverb Controls */}
               <div>
-                <div style={{ fontSize: '10px', color: '#666', marginBottom: '8px', textTransform: 'uppercase' }}>Reverb</div>
-                <div style={{ display: 'flex', gap: '12px' }}>
-                  <Knob label="Decay" value={params.effects.reverb.decay} min={PARAM_RANGES.reverbDecay.min} max={PARAM_RANGES.reverbDecay.max} step={PARAM_RANGES.reverbDecay.step} onChange={setReverbDecay} formatValue={(v) => `${v.toFixed(1)}s`} size={40} paramId="reverb.decay" />
-                  <Knob label="Mix" value={params.effects.reverb.mix} min={PARAM_RANGES.reverbMix.min} max={PARAM_RANGES.reverbMix.max} step={PARAM_RANGES.reverbMix.step} onChange={setReverbMix} formatValue={formatPercent} size={40} paramId="reverb.mix" />
+                <div style={{ fontSize: '11px', color: '#8b5cf6', marginBottom: '8px', fontWeight: 600 }}>REVERB</div>
+                <div style={{ display: 'flex', gap: '16px' }}>
+                  <Knob label="Decay" value={params.effects.reverb.decay} min={PARAM_RANGES.reverbDecay.min} max={PARAM_RANGES.reverbDecay.max} step={PARAM_RANGES.reverbDecay.step} onChange={setReverbDecay} formatValue={(v) => `${v.toFixed(1)}s`} size={48} paramId="reverb.decay" />
+                  <Knob label="Mix" value={params.effects.reverb.mix} min={PARAM_RANGES.reverbMix.min} max={PARAM_RANGES.reverbMix.max} step={PARAM_RANGES.reverbMix.step} onChange={setReverbMix} formatValue={formatPercent} size={48} paramId="reverb.mix" />
                 </div>
               </div>
-              {/* Chorus */}
+              {/* Chorus Controls */}
               <div>
-                <div style={{ fontSize: '10px', color: '#666', marginBottom: '8px', textTransform: 'uppercase' }}>Chorus</div>
+                <div style={{ fontSize: '11px', color: '#06b6d4', marginBottom: '8px', fontWeight: 600 }}>CHORUS</div>
                 <div style={{ display: 'flex', gap: '12px' }}>
-                  <Knob label="Rate" value={params.effects.chorus.rate} min={PARAM_RANGES.chorusRate.min} max={PARAM_RANGES.chorusRate.max} step={PARAM_RANGES.chorusRate.step} onChange={setChorusRate} formatValue={(v) => `${v.toFixed(1)}Hz`} size={40} paramId="chorus.rate" />
-                  <Knob label="Depth" value={params.effects.chorus.depth} min={PARAM_RANGES.chorusDepth.min} max={PARAM_RANGES.chorusDepth.max} step={PARAM_RANGES.chorusDepth.step} onChange={setChorusDepth} formatValue={formatPercent} size={40} paramId="chorus.depth" />
-                  <Knob label="Mix" value={params.effects.chorus.mix} min={PARAM_RANGES.chorusMix.min} max={PARAM_RANGES.chorusMix.max} step={PARAM_RANGES.chorusMix.step} onChange={setChorusMix} formatValue={formatPercent} size={40} paramId="chorus.mix" />
+                  <Knob label="Rate" value={params.effects.chorus.rate} min={PARAM_RANGES.chorusRate.min} max={PARAM_RANGES.chorusRate.max} step={PARAM_RANGES.chorusRate.step} onChange={setChorusRate} formatValue={(v) => `${v.toFixed(1)}Hz`} size={44} paramId="chorus.rate" />
+                  <Knob label="Depth" value={params.effects.chorus.depth} min={PARAM_RANGES.chorusDepth.min} max={PARAM_RANGES.chorusDepth.max} step={PARAM_RANGES.chorusDepth.step} onChange={setChorusDepth} formatValue={formatPercent} size={44} paramId="chorus.depth" />
+                  <Knob label="Mix" value={params.effects.chorus.mix} min={PARAM_RANGES.chorusMix.min} max={PARAM_RANGES.chorusMix.max} step={PARAM_RANGES.chorusMix.step} onChange={setChorusMix} formatValue={formatPercent} size={44} paramId="chorus.mix" />
                 </div>
               </div>
             </div>
-          </ModuleCard>
+          </ModuleSection>
 
-          {/* Volume */}
-          <ModuleCard
-            title="Output"
-            color={MODULE_COLORS.output}
-            icon={<WaveformIcon type="speaker" size={20} color={MODULE_COLORS.output} animated={false} />}
-          >
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
-                <Knob
-                  label="Volume"
-                  value={params.volume}
-                  min={PARAM_RANGES.volume.min}
-                  max={PARAM_RANGES.volume.max}
-                  step={PARAM_RANGES.volume.step}
-                  onChange={setVolume}
-                  formatValue={formatDb}
-                  size={56}
-                  paramId="volume"
-                />
-              </div>
+          {/* Output & Recording */}
+          <ModuleSection title="OUTPUT" color={COLORS.output}>
+            <div style={{ display: 'flex', gap: '32px', alignItems: 'center', justifyContent: 'center' }}>
+              <Knob
+                label="Volume"
+                value={params.volume}
+                min={PARAM_RANGES.volume.min}
+                max={PARAM_RANGES.volume.max}
+                step={PARAM_RANGES.volume.step}
+                onChange={setVolume}
+                formatValue={formatDb}
+                size={64}
+                paramId="volume"
+              />
               <RecordingControl
                 sourceNode={engine?.getOutputNode() ?? null}
                 accentColor="#ef4444"
               />
             </div>
-          </ModuleCard>
-        </div>
-
-        {/* Right Column - Visualization & Keyboard */}
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '16px',
-          }}
-        >
-          {/* Spectrum Analyzer */}
-          <ModuleCard
-            title="Spectrum Analyzer"
-            color={MODULE_COLORS.spectrum}
-            icon={<WaveformIcon type="harmonics" size={20} color={MODULE_COLORS.spectrum} />}
-          >
-            <SpectrumAnalyzer width={500} height={250} barCount={80} />
-          </ModuleCard>
+          </ModuleSection>
 
           {/* Sequencer */}
-          <ModuleCard
-            title="Sequencer"
-            color={MODULE_COLORS.sequencer}
-          >
+          <ModuleSection title="SEQUENCER" color="#4ade80">
             <Sequencer
               engine={engine}
               accentColor="#4ade80"
             />
-          </ModuleCard>
+          </ModuleSection>
 
-          {/* Keyboard */}
-          <ModuleCard
-            title="Keyboard"
-            color={MODULE_COLORS.keyboard}
+          {/* Keyboard - sticky at bottom */}
+          <div
+            style={{
+              position: 'sticky',
+              bottom: 0,
+              background: '#0a0a0f',
+              paddingTop: '16px',
+              paddingBottom: '24px',
+              marginTop: '32px',
+            }}
           >
             <PianoKeyboard
               onNoteOn={playNote}
@@ -707,12 +599,31 @@ export function SynthView() {
               octave={4}
               octaves={2}
             />
-          </ModuleCard>
+          </div>
         </div>
+
+        <InfoPanel />
       </div>
-    </div>
-    <InfoPanel />
-    </div>
     </InfoPanelProvider>
+  );
+}
+
+// Simple module section wrapper
+function ModuleSection({ title, color, children }: { title: string; color: string; children: React.ReactNode }) {
+  return (
+    <div style={{ marginBottom: '48px' }}>
+      <div
+        style={{
+          fontSize: '12px',
+          fontWeight: 600,
+          color: color,
+          letterSpacing: '0.5px',
+          marginBottom: '16px',
+        }}
+      >
+        {title}
+      </div>
+      {children}
+    </div>
   );
 }

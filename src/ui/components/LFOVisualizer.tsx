@@ -1,24 +1,17 @@
 /**
- * LFO Visualizer
- * Shows the LFO waveform shape, rate, and modulation depth
- * Animated to show the oscillation in real-time
+ * LFOVisualizer - Animated modulation wave visualization
+ * Ableton Learning Synths-style interactive LFO display
  */
 
-import { useRef, useEffect, useCallback } from 'react';
+import React, { useRef, useEffect, useCallback } from 'react';
 import type { LFOWaveform } from '../../core/types.ts';
 
 interface LFOVisualizerProps {
-  /** LFO waveform type */
   waveform: LFOWaveform;
-  /** LFO rate in Hz */
-  rate: number;
-  /** LFO depth (0-1) */
-  depth: number;
-  /** Canvas width */
+  rate: number;         // Hz
+  depth: number;        // 0-1
   width?: number;
-  /** Canvas height */
   height?: number;
-  /** Accent color */
   accentColor?: string;
 }
 
@@ -41,14 +34,14 @@ function getWaveformValue(waveform: LFOWaveform, phase: number): number {
   }
 }
 
-export function LFOVisualizer({
+export const LFOVisualizer: React.FC<LFOVisualizerProps> = ({
   waveform,
   rate,
   depth,
-  width = 450,
-  height = 150,
-  accentColor = '#4ade80',
-}: LFOVisualizerProps) {
+  width = 500,
+  height = 180,
+  accentColor = '#ef4444',
+}) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>(0);
   const startTimeRef = useRef<number>(Date.now());
@@ -60,52 +53,72 @@ export function LFOVisualizer({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const padding = 16;
-    const labelHeight = 24;
-    const graphHeight = height - labelHeight - padding;
-    const graphWidth = width - padding * 2;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    ctx.scale(dpr, dpr);
 
-    // Clear canvas
-    ctx.fillStyle = '#141414';
-    ctx.fillRect(0, 0, width, height);
+    const padding = 30;
+    const topPadding = 40;
+    const drawWidth = width - padding * 2 - 50; // Reserve space for "now" indicator
+    const drawHeight = height - topPadding - 30;
 
     // Calculate current phase based on time
     const elapsed = (Date.now() - startTimeRef.current) / 1000;
     const currentPhase = (elapsed * rate) % 1;
 
-    // Draw the modulation range indicator (background)
-    const centerY = padding + graphHeight / 2;
-    const maxAmplitude = (graphHeight / 2) * depth;
+    // Clear
+    ctx.fillStyle = '#0a0a0f';
+    ctx.fillRect(0, 0, width, height);
 
-    // Depth range background
-    ctx.fillStyle = 'rgba(74, 222, 128, 0.1)';
-    ctx.fillRect(padding, centerY - maxAmplitude, graphWidth, maxAmplitude * 2);
+    // Draw label
+    ctx.fillStyle = accentColor;
+    ctx.font = 'bold 14px system-ui';
+    ctx.textAlign = 'left';
+    ctx.fillText('LFO', padding, 24);
 
-    // Center line (no modulation)
-    ctx.strokeStyle = '#444';
+    // Draw waveform type and rate
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+    ctx.font = '12px system-ui';
+    ctx.textAlign = 'right';
+    ctx.fillText(`${waveform.toUpperCase()} • ${rate.toFixed(1)} Hz`, width - padding, 24);
+
+    const centerY = topPadding + drawHeight / 2;
+    const maxAmplitude = (drawHeight / 2 - 5) * depth;
+
+    // Draw depth range background
+    ctx.fillStyle = `${accentColor}15`;
+    ctx.fillRect(padding, centerY - maxAmplitude, drawWidth, maxAmplitude * 2);
+
+    // Draw grid lines
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
     ctx.lineWidth = 1;
+
+    // Center line
     ctx.setLineDash([4, 4]);
     ctx.beginPath();
     ctx.moveTo(padding, centerY);
-    ctx.lineTo(padding + graphWidth, centerY);
+    ctx.lineTo(padding + drawWidth, centerY);
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Draw max/min lines
-    ctx.strokeStyle = '#333';
+    // Max/min lines
     ctx.beginPath();
     ctx.moveTo(padding, centerY - maxAmplitude);
-    ctx.lineTo(padding + graphWidth, centerY - maxAmplitude);
+    ctx.lineTo(padding + drawWidth, centerY - maxAmplitude);
     ctx.moveTo(padding, centerY + maxAmplitude);
-    ctx.lineTo(padding + graphWidth, centerY + maxAmplitude);
+    ctx.lineTo(padding + drawWidth, centerY + maxAmplitude);
     ctx.stroke();
 
-    // Draw waveform (2 full cycles)
+    // Draw waveform (2 full cycles, scrolling)
     const cycles = 2;
-    ctx.beginPath();
+    ctx.shadowColor = accentColor;
+    ctx.shadowBlur = 10;
 
-    for (let i = 0; i <= graphWidth; i++) {
-      const phase = (i / graphWidth) * cycles;
+    ctx.beginPath();
+    for (let i = 0; i <= drawWidth; i++) {
+      // Scroll the wave based on current phase
+      const phase = currentPhase + (i / drawWidth) * cycles;
       const value = getWaveformValue(waveform, phase);
       const y = centerY - value * maxAmplitude;
 
@@ -117,70 +130,61 @@ export function LFOVisualizer({
     }
 
     ctx.strokeStyle = accentColor;
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+
+    ctx.shadowBlur = 0;
+
+    // Draw "now" vertical line indicator
+    const nowX = padding + drawWidth + 20;
+
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(nowX, topPadding);
+    ctx.lineTo(nowX, topPadding + drawHeight);
+    ctx.stroke();
+
+    // Draw current value marker on the "now" line
+    const currentValue = getWaveformValue(waveform, currentPhase);
+    const markerY = centerY - currentValue * maxAmplitude;
+
+    // Glow
+    ctx.beginPath();
+    ctx.arc(nowX, markerY, 12, 0, Math.PI * 2);
+    ctx.fillStyle = `${accentColor}40`;
+    ctx.fill();
+
+    // Main marker
+    ctx.beginPath();
+    ctx.arc(nowX, markerY, 8, 0, Math.PI * 2);
+    ctx.fillStyle = accentColor;
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    // Draw current position marker (animated dot)
-    const markerPhase = (currentPhase * cycles) % cycles;
-    const markerX = padding + (markerPhase / cycles) * graphWidth;
-    const markerValue = getWaveformValue(waveform, currentPhase);
-    const markerY = centerY - markerValue * maxAmplitude;
-
-    // Glow effect
-    ctx.beginPath();
-    ctx.arc(markerX, markerY, 8, 0, Math.PI * 2);
-    ctx.fillStyle = accentColor + '40';
-    ctx.fill();
-
-    // Marker dot
-    ctx.beginPath();
-    ctx.arc(markerX, markerY, 5, 0, Math.PI * 2);
-    ctx.fillStyle = accentColor;
-    ctx.fill();
-
-    // Draw modulation target indicator (right side)
-    const targetX = width - 40;
-    const targetHeight = graphHeight * 0.6;
-    const targetY = centerY - targetHeight / 2;
-
-    // Filter cutoff bar (modulated)
-    const modulatedHeight = targetHeight * (0.5 + markerValue * depth * 0.5);
-    const modulatedY = centerY + targetHeight / 2 - modulatedHeight;
-
-    ctx.fillStyle = '#333';
-    ctx.fillRect(targetX, targetY, 24, targetHeight);
-
-    ctx.fillStyle = accentColor + '80';
-    ctx.fillRect(targetX, modulatedY, 24, modulatedHeight);
-
-    // Labels
-    ctx.fillStyle = '#888';
-    ctx.font = '10px system-ui, sans-serif';
+    // "NOW" label
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+    ctx.font = '9px system-ui';
     ctx.textAlign = 'center';
+    ctx.fillText('NOW', nowX, topPadding - 8);
 
-    // Waveform label
-    ctx.fillStyle = accentColor;
-    ctx.font = '11px system-ui, sans-serif';
-    ctx.fillText(waveform.toUpperCase(), padding + graphWidth / 4, height - 6);
-
-    // Rate label
-    ctx.fillStyle = '#888';
-    ctx.fillText(`${rate.toFixed(1)} Hz`, padding + graphWidth / 2, height - 6);
-
-    // Depth label
-    ctx.fillText(`${Math.round(depth * 100)}% depth`, padding + (graphWidth / 4) * 3, height - 6);
-
-    // Target label
-    ctx.font = '9px system-ui, sans-serif';
-    ctx.fillText('CUTOFF', targetX + 12, targetY - 4);
+    // Draw depth percentage
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.font = '11px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillText(`DEPTH: ${Math.round(depth * 100)}%`, padding + drawWidth / 2, height - 8);
 
     // Y-axis labels
     ctx.textAlign = 'right';
-    ctx.fillStyle = '#666';
-    ctx.font = '9px system-ui, sans-serif';
-    ctx.fillText('+', padding - 4, centerY - maxAmplitude + 4);
-    ctx.fillText('0', padding - 4, centerY + 3);
-    ctx.fillText('-', padding - 4, centerY + maxAmplitude + 4);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+    ctx.font = '9px system-ui';
+    ctx.fillText('+', padding - 6, centerY - maxAmplitude + 4);
+    ctx.fillText('0', padding - 6, centerY + 3);
+    ctx.fillText('-', padding - 6, centerY + maxAmplitude + 4);
 
     // Schedule next frame
     animationRef.current = requestAnimationFrame(draw);
@@ -199,12 +203,33 @@ export function LFOVisualizer({
   return (
     <canvas
       ref={canvasRef}
+      style={{
+        width,
+        height,
+        borderRadius: 8,
+        border: `1px solid ${accentColor}40`,
+      }}
+    />
+  );
+};
+
+// Legacy export for backwards compatibility
+export function LFOVisualizerLegacy({
+  waveform,
+  rate,
+  depth,
+  width = 450,
+  height = 150,
+  accentColor = '#4ade80',
+}: LFOVisualizerProps) {
+  return (
+    <LFOVisualizer
+      waveform={waveform}
+      rate={rate}
+      depth={depth}
       width={width}
       height={height}
-      style={{
-        borderRadius: '8px',
-        display: 'block',
-      }}
+      accentColor={accentColor}
     />
   );
 }

@@ -23,7 +23,7 @@ import {
   InfoPanel,
   Oscilloscope,
   FilterResponse,
-  EnvelopeVisualizer,
+  EnvelopeVisualizerReadOnly,
   LFOVisualizer,
   EffectsVisualizer,
 } from '../components/index.ts';
@@ -932,7 +932,7 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
           )}
           {visualizationType === 'envelope' && (
             <Section title="Envelope Shape">
-              <EnvelopeVisualizer
+              <EnvelopeVisualizerReadOnly
                 amplitudeEnvelope={params.amplitudeEnvelope}
                 filterEnvelope={params.filterEnvelope}
                 width={450}
