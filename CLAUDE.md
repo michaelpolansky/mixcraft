@@ -143,3 +143,4 @@ Sound design is the entry point. It teaches concepts that make mixing and produc
 | 14 | 2026-02-06 | Drum Sequencing Track - DrumSequencerEngine (60 tests), StepGrid, VelocityLane, store, views, DS1-DS6 (24 challenges) |
 | 15 | 2026-02-06 | Drum samples (16 synthesized sounds), AI feedback for Sampling and Drum Sequencing tracks |
 | 16 | 2026-02-06 | FM Synthesis Track expansion - 6 new SD8 challenges (12 total), generateFMSynthesis AI feedback endpoint |
+| 17 | 2026-02-06 | Additive AI feedback - generateAdditiveSynthesis endpoint, ResultsModal routing for FM/Additive/Subtractive |
