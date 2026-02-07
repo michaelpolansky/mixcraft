@@ -17,6 +17,7 @@ import {
   InfoPanel,
   XYPad,
   PresetDropdown,
+  Sequencer,
 } from '../components/index.ts';
 import { SUBTRACTIVE_PRESETS } from '../../data/presets/subtractive-presets.ts';
 import { InfoPanelProvider } from '../context/InfoPanelContext.tsx';
@@ -61,6 +62,7 @@ function Section({
 export function SynthView() {
   const {
     params,
+    engine,
     isInitialized,
     initEngine,
     startAudio,
@@ -670,6 +672,14 @@ export function SynthView() {
           {/* Spectrum Analyzer */}
           <Section title="Spectrum Analyzer">
             <SpectrumAnalyzer width={500} height={250} barCount={80} />
+          </Section>
+
+          {/* Sequencer */}
+          <Section title="Sequencer">
+            <Sequencer
+              engine={engine}
+              accentColor="#4ade80"
+            />
           </Section>
 
           {/* Keyboard */}

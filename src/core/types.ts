@@ -862,3 +862,46 @@ export function isDrumSequencingChallenge(challenge: AnyChallenge): challenge is
       (challenge as DrumSequencingChallenge).challengeType
     );
 }
+
+// ============================================
+// Synth Sequencer Types
+// ============================================
+
+/**
+ * A single note in a sequence
+ */
+export interface SequenceNote {
+  time: string;       // Tone.js time notation (e.g., '0:0:0', '0:1:0')
+  note: string;       // Note name (e.g., 'C4', 'E3')
+  duration: string;   // Tone.js duration (e.g., '8n', '4n', '2n')
+  velocity?: number;  // Optional velocity (0-1), defaults to 0.8
+}
+
+/**
+ * A complete note sequence with metadata
+ */
+export interface NoteSequence {
+  id: string;
+  name: string;
+  tempo: number;
+  notes: SequenceNote[];
+  withDrums: boolean;
+  drumPattern?: DrumPatternStep[];
+  loopLength: string; // e.g., '1m', '2m' for 1 or 2 measures
+}
+
+/**
+ * A single step in a sequencer drum pattern
+ */
+export interface DrumPatternStep {
+  time: string;       // Tone.js time notation
+  sample: string;     // Sample name (e.g., 'kick', 'snare', 'hihat-closed')
+  velocity?: number;  // Optional velocity (0-1)
+}
+
+/**
+ * Interface for any synth engine that can play notes
+ */
+export interface SynthEngineInterface {
+  triggerAttackRelease(note: string | number, duration: number | string, velocity?: number): void;
+}

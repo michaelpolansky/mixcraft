@@ -13,6 +13,7 @@ import {
   InfoPanel,
   XYPad,
   PresetDropdown,
+  Sequencer,
 } from '../components/index.ts';
 import { ADDITIVE_PRESETS } from '../../data/presets/additive-presets.ts';
 import { InfoPanelProvider } from '../context/InfoPanelContext.tsx';
@@ -375,6 +376,14 @@ export function AdditiveSynthView() {
               </div>
             </div>
           </div>
+        </Section>
+
+        {/* Sequencer */}
+        <Section title="Sequencer">
+          <Sequencer
+            engine={engine}
+            accentColor="#06b6d4"
+          />
         </Section>
 
         {/* Piano Keyboard */}

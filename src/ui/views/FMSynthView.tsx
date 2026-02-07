@@ -12,6 +12,7 @@ import {
   InfoPanel,
   XYPad,
   PresetDropdown,
+  Sequencer,
 } from '../components/index.ts';
 import { FM_PRESETS } from '../../data/presets/fm-presets.ts';
 import { InfoPanelProvider } from '../context/InfoPanelContext.tsx';
@@ -334,6 +335,14 @@ export function FMSynthView() {
           onReleaseChange={setAmplitudeRelease}
           onVolumeChange={setVolume}
         />
+
+        {/* Sequencer */}
+        <Section title="Sequencer">
+          <Sequencer
+            engine={engine}
+            accentColor="#f97316"
+          />
+        </Section>
 
         {/* Piano Keyboard */}
         <Section title="Keyboard">

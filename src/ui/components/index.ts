@@ -32,3 +32,4 @@ export { StepGrid } from './StepGrid.tsx';
 export { VelocityLane } from './VelocityLane.tsx';
 export { XYPad } from './XYPad.tsx';
 export { PresetDropdown } from './PresetDropdown.tsx';
+export { Sequencer } from './Sequencer.tsx';
