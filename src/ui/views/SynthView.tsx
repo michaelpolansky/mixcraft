@@ -23,10 +23,11 @@ import {
   LFOVisualizer,
   XYPad,
   Oscilloscope,
+  Tooltip,
 } from '../components/index.ts';
 import type { LFOSyncDivision, NoiseType } from '../../core/types.ts';
 import { SUBTRACTIVE_PRESETS } from '../../data/presets/subtractive-presets.ts';
-import { InfoPanelProvider } from '../context/InfoPanelContext.tsx';
+import { InfoPanelProvider, useInfoPanel } from '../context/InfoPanelContext.tsx';
 import { PARAM_RANGES } from '../../core/types.ts';
 
 // Stage colors following signal flow
@@ -283,8 +284,12 @@ export function SynthView() {
             >
               Reset
             </button>
+            <HelpModeButton />
           </div>
         </div>
+
+        {/* Floating tooltip (shows when Help Mode is ON) */}
+        <Tooltip accentColor="#4ade80" />
 
         {/* Spectrum Analyzer */}
         <div style={{ padding: '12px 24px', background: '#050508' }}>
@@ -823,6 +828,36 @@ export function SynthView() {
         <InfoPanel />
       </div>
     </InfoPanelProvider>
+  );
+}
+
+// Help mode toggle button
+function HelpModeButton() {
+  const { helpMode, toggleHelpMode } = useInfoPanel();
+
+  return (
+    <button
+      onClick={toggleHelpMode}
+      style={{
+        padding: '6px 12px',
+        background: helpMode
+          ? 'linear-gradient(145deg, #06b6d4, #0891b2)'
+          : '#1a1a1a',
+        border: helpMode ? 'none' : '1px solid #333',
+        borderRadius: '4px',
+        color: helpMode ? '#fff' : '#888',
+        cursor: 'pointer',
+        fontSize: '11px',
+        fontWeight: 600,
+        display: 'flex',
+        alignItems: 'center',
+        gap: '4px',
+      }}
+      title={helpMode ? 'Disable help tooltips' : 'Enable help tooltips'}
+    >
+      <span style={{ fontSize: '14px' }}>?</span>
+      {helpMode ? 'Help ON' : 'Help'}
+    </button>
   );
 }
 

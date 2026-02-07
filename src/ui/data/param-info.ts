@@ -29,6 +29,34 @@ export const PARAM_INFO: Record<string, ParamInfo> = {
     description: 'Fine-tunes the pitch in cents (1/100th of a semitone). Creates thickness when layered.',
     tips: 'Subtle detune (5-15 cents) adds warmth. Heavy detune creates dissonance.',
   },
+  'oscillator.pulseWidth': {
+    name: 'Pulse Width',
+    description: 'The duty cycle of the square wave (ratio of high to low). Only affects square waves.',
+    tips: '50% = classic hollow square. 10-30% = thin, nasal. 70-90% = different thin character. PWM sweeps sound lush.',
+  },
+
+  // ===========================================
+  // Glide (Portamento)
+  // ===========================================
+  'glide.time': {
+    name: 'Glide Time',
+    description: 'Time to slide from one note to the next. Creates smooth pitch transitions.',
+    tips: 'Short (50ms) = subtle smoothing. Long (500ms+) = dramatic slides. Classic for bass and lead lines.',
+  },
+
+  // ===========================================
+  // Noise
+  // ===========================================
+  'noise.type': {
+    name: 'Noise Type',
+    description: 'The color of the noise generator.',
+    tips: 'White = all frequencies equal, bright. Pink = 1/f spectrum, natural. Brown = low rumble, dark.',
+  },
+  'noise.level': {
+    name: 'Noise Level',
+    description: 'Amount of noise mixed with the oscillator.',
+    tips: 'Adds texture and breath. Low amounts add transient snap. High amounts for percussive sounds.',
+  },
 
   // ===========================================
   // Subtractive Synthesis - Filter
@@ -47,6 +75,25 @@ export const PARAM_INFO: Record<string, ParamInfo> = {
     name: 'Resonance',
     description: 'Boosts frequencies right at the cutoff point, creating a peak or "ring".',
     tips: 'Low resonance = smooth rolloff. High resonance = sharp, whistling quality. Classic acid bass uses high resonance.',
+  },
+  'filter.keyTracking': {
+    name: 'Key Tracking',
+    description: 'Makes the filter cutoff follow the pitch. Higher notes = higher cutoff.',
+    tips: '0% = fixed cutoff. 100% = cutoff doubles per octave. Mimics acoustic instruments where higher notes are brighter.',
+  },
+
+  // ===========================================
+  // Velocity
+  // ===========================================
+  'velocity.ampAmount': {
+    name: 'Velocity to Amp',
+    description: 'How much note velocity (how hard you play) affects volume.',
+    tips: '0% = constant volume. 100% = full velocity response. Essential for expressive playing.',
+  },
+  'velocity.filterAmount': {
+    name: 'Velocity to Filter',
+    description: 'How much note velocity affects filter envelope depth.',
+    tips: 'Higher velocity = brighter attack. Creates dynamic, expressive timbres.',
   },
 
   // ===========================================

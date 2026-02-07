@@ -106,9 +106,17 @@ export function Knob({
 
   const displayValue = formatValue ? formatValue(value) : value.toFixed(2);
 
+  // Track mouse position for tooltip placement
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (paramId) {
+      setHoveredParam(paramId, { x: e.clientX, y: e.clientY });
+    }
+  }, [paramId, setHoveredParam]);
+
   return (
     <div
-      onMouseEnter={() => paramId && setHoveredParam(paramId)}
+      onMouseEnter={(e) => paramId && setHoveredParam(paramId, { x: e.clientX, y: e.clientY })}
+      onMouseMove={handleMouseMove}
       onMouseLeave={() => setHoveredParam(null)}
       style={{
         display: 'flex',
