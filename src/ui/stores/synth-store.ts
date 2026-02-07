@@ -18,8 +18,15 @@ import type {
   LFOSyncDivision,
   NoiseType,
   VelocityParams,
+  SubOscillatorParams,
+  Oscillator2Params,
+  LFO2Params,
+  ModSource,
+  ModDestination,
+  ModRoute,
+  ModMatrixParams,
 } from '../../core/types.ts';
-import { DEFAULT_SYNTH_PARAMS } from '../../core/types.ts';
+import { DEFAULT_SYNTH_PARAMS, DEFAULT_LFO2, DEFAULT_MOD_MATRIX } from '../../core/types.ts';
 import { SUBTRACTIVE_PRESETS } from '../../data/presets/subtractive-presets.ts';
 
 interface SynthStore {
@@ -55,6 +62,20 @@ interface SynthStore {
   setGlideEnabled: (enabled: boolean) => void;
   setGlideTime: (time: number) => void;
 
+  // Sub oscillator actions
+  setSubOscEnabled: (enabled: boolean) => void;
+  setSubOscType: (type: 'sine' | 'square') => void;
+  setSubOscOctave: (octave: -1 | -2) => void;
+  setSubOscLevel: (level: number) => void;
+
+  // Oscillator 2 actions
+  setOsc2Enabled: (enabled: boolean) => void;
+  setOsc2Type: (type: OscillatorType) => void;
+  setOsc2Octave: (octave: number) => void;
+  setOsc2Detune: (cents: number) => void;
+  setOsc2PulseWidth: (width: number) => void;
+  setOsc2Mix: (mix: number) => void;
+
   // Oscillator pulse width
   setPulseWidth: (width: number) => void;
 
@@ -87,6 +108,21 @@ interface SynthStore {
   setLFOWaveform: (waveform: LFOWaveform) => void;
   setLFOSync: (sync: boolean) => void;
   setLFOSyncDivision: (division: LFOSyncDivision) => void;
+
+  // LFO2 actions
+  setLfo2Rate: (rate: number) => void;
+  setLfo2Depth: (depth: number) => void;
+  setLfo2Type: (type: LFOWaveform) => void;
+  setLfo2Enabled: (enabled: boolean) => void;
+
+  // Pan action
+  setPan: (pan: number) => void;
+
+  // Mod Matrix actions
+  setModRouteSource: (index: number, source: ModSource) => void;
+  setModRouteDestination: (index: number, destination: ModDestination) => void;
+  setModRouteAmount: (index: number, amount: number) => void;
+  setModRouteEnabled: (index: number, enabled: boolean) => void;
 
   // Pitch envelope actions
   setPitchEnvelopeAttack: (time: number) => void;
@@ -290,6 +326,118 @@ export const useSynthStore = create<SynthStore>((set, get) => ({
       params: {
         ...params,
         glide: { ...params.glide, time },
+      },
+    });
+  },
+
+  // Sub oscillator actions
+  setSubOscEnabled: (enabled: boolean) => {
+    const { engine, params } = get();
+    engine?.setSubOscEnabled(enabled);
+    set({
+      params: {
+        ...params,
+        subOsc: { ...params.subOsc, enabled },
+      },
+    });
+  },
+
+  setSubOscType: (type: 'sine' | 'square') => {
+    const { engine, params } = get();
+    engine?.setSubOscType(type);
+    set({
+      params: {
+        ...params,
+        subOsc: { ...params.subOsc, type },
+      },
+    });
+  },
+
+  setSubOscOctave: (octave: -1 | -2) => {
+    const { engine, params } = get();
+    engine?.setSubOscOctave(octave);
+    set({
+      params: {
+        ...params,
+        subOsc: { ...params.subOsc, octave },
+      },
+    });
+  },
+
+  setSubOscLevel: (level: number) => {
+    const { engine, params } = get();
+    engine?.setSubOscLevel(level);
+    set({
+      params: {
+        ...params,
+        subOsc: { ...params.subOsc, level },
+      },
+    });
+  },
+
+  // Oscillator 2 actions
+  setOsc2Enabled: (enabled: boolean) => {
+    const { engine, params } = get();
+    engine?.setOsc2Enabled(enabled);
+    set({
+      params: {
+        ...params,
+        oscillator2: { ...params.oscillator2, enabled },
+      },
+    });
+  },
+
+  setOsc2Type: (type: OscillatorType) => {
+    const { engine, params } = get();
+    engine?.setOsc2Type(type);
+    set({
+      params: {
+        ...params,
+        oscillator2: { ...params.oscillator2, type },
+      },
+    });
+  },
+
+  setOsc2Octave: (octave: number) => {
+    const { engine, params } = get();
+    engine?.setOsc2Octave(octave);
+    set({
+      params: {
+        ...params,
+        oscillator2: { ...params.oscillator2, octave },
+      },
+    });
+  },
+
+  setOsc2Detune: (cents: number) => {
+    const { engine, params } = get();
+    engine?.setOsc2Detune(cents);
+    set({
+      params: {
+        ...params,
+        oscillator2: { ...params.oscillator2, detune: cents },
+      },
+    });
+  },
+
+  setOsc2PulseWidth: (width: number) => {
+    const { engine, params } = get();
+    engine?.setOsc2PulseWidth(width);
+    set({
+      params: {
+        ...params,
+        oscillator2: { ...params.oscillator2, pulseWidth: width },
+      },
+    });
+  },
+
+  setOsc2Mix: (mix: number) => {
+    const { engine, params } = get();
+    engine?.setOsc2Mix(mix);
+    set({
+      params: {
+        ...params,
+        oscillator2: { ...params.oscillator2, mix },
       },
     });
   },
@@ -517,6 +665,112 @@ export const useSynthStore = create<SynthStore>((set, get) => ({
         lfo: { ...params.lfo, syncDivision },
       },
     });
+  },
+
+  // LFO2 actions
+  setLfo2Rate: (rate: number) => {
+    set((state) => ({
+      params: { ...state.params, lfo2: { ...state.params.lfo2, rate } },
+    }));
+    get().engine?.setLFO2({ rate });
+  },
+
+  setLfo2Depth: (depth: number) => {
+    set((state) => ({
+      params: { ...state.params, lfo2: { ...state.params.lfo2, depth } },
+    }));
+    get().engine?.setLFO2({ depth });
+  },
+
+  setLfo2Type: (type: LFOWaveform) => {
+    set((state) => ({
+      params: { ...state.params, lfo2: { ...state.params.lfo2, type } },
+    }));
+    get().engine?.setLFO2({ type });
+  },
+
+  setLfo2Enabled: (enabled: boolean) => {
+    set((state) => ({
+      params: { ...state.params, lfo2: { ...state.params.lfo2, enabled } },
+    }));
+    get().engine?.setLFO2({ enabled });
+  },
+
+  // Pan action
+  setPan: (pan: number) => {
+    set((state) => ({
+      params: { ...state.params, pan },
+    }));
+    get().engine?.setPan(pan);
+  },
+
+  // Mod Matrix actions
+  setModRouteSource: (index: number, source: ModSource) => {
+    set((state) => {
+      const routes = [...state.params.modMatrix.routes] as [ModRoute, ModRoute, ModRoute, ModRoute];
+      const oldRoute = routes[index]!;
+      routes[index] = {
+        source,
+        destination: oldRoute.destination,
+        amount: oldRoute.amount,
+        enabled: oldRoute.enabled,
+      };
+      return {
+        params: { ...state.params, modMatrix: { routes } },
+      };
+    });
+    get().engine?.setModMatrix(get().params.modMatrix);
+  },
+
+  setModRouteDestination: (index: number, destination: ModDestination) => {
+    set((state) => {
+      const routes = [...state.params.modMatrix.routes] as [ModRoute, ModRoute, ModRoute, ModRoute];
+      const oldRoute = routes[index]!;
+      routes[index] = {
+        source: oldRoute.source,
+        destination,
+        amount: oldRoute.amount,
+        enabled: oldRoute.enabled,
+      };
+      return {
+        params: { ...state.params, modMatrix: { routes } },
+      };
+    });
+    get().engine?.setModMatrix(get().params.modMatrix);
+  },
+
+  setModRouteAmount: (index: number, amount: number) => {
+    set((state) => {
+      const routes = [...state.params.modMatrix.routes] as [ModRoute, ModRoute, ModRoute, ModRoute];
+      const oldRoute = routes[index]!;
+      routes[index] = {
+        source: oldRoute.source,
+        destination: oldRoute.destination,
+        amount,
+        enabled: oldRoute.enabled,
+      };
+      return {
+        params: { ...state.params, modMatrix: { routes } },
+      };
+    });
+    get().engine?.setModMatrix(get().params.modMatrix);
+  },
+
+  setModRouteEnabled: (index: number, enabled: boolean) => {
+    set((state) => {
+      const routes = [...state.params.modMatrix.routes] as [ModRoute, ModRoute, ModRoute, ModRoute];
+      const oldRoute = routes[index]!;
+      routes[index] = {
+        source: oldRoute.source,
+        destination: oldRoute.destination,
+        amount: oldRoute.amount,
+        enabled,
+      };
+      return {
+        params: { ...state.params, modMatrix: { routes } },
+      };
+    });
+    get().engine?.setModMatrix(get().params.modMatrix);
   },
 
   // Pitch envelope actions
@@ -883,6 +1137,20 @@ export const useSynthStore = create<SynthStore>((set, get) => ({
         enabled: Math.random() < 0.2, // 20% chance
         time: rand(0.01, 0.3),
       },
+      subOsc: {
+        enabled: Math.random() < 0.3, // 30% chance for bass boost
+        type: pick(['sine', 'square'] as const),
+        octave: pick([-1, -2] as const),
+        level: rand(0.3, 0.7),
+      },
+      oscillator2: {
+        enabled: Math.random() < 0.4, // 40% chance for layered sound
+        type: pick(oscTypes),
+        octave: randInt(-1, 1),
+        detune: randInt(-15, 15),
+        pulseWidth: rand(0.1, 0.9),
+        mix: rand(0.3, 0.7),
+      },
       filter: {
         type: pick(filterTypes),
         cutoff: rand(200, 8000),
@@ -930,6 +1198,12 @@ export const useSynthStore = create<SynthStore>((set, get) => ({
         sync: false,
         syncDivision: '4n',
       },
+      lfo2: {
+        rate: rand(0.5, 8),
+        depth: Math.random() < 0.3 ? rand(0, 0.4) : 0, // 30% chance of LFO2
+        type: pick(lfoWaveforms),
+        enabled: Math.random() < 0.3, // 30% chance enabled
+      },
       velocity: {
         ampAmount: Math.random() < 0.3 ? rand(0, 0.5) : 0,
         filterAmount: Math.random() < 0.2 ? rand(0, 0.5) : 0,
@@ -955,6 +1229,8 @@ export const useSynthStore = create<SynthStore>((set, get) => ({
         },
       },
       volume: rand(-18, -8),
+      pan: rand(-0.5, 0.5), // Subtle pan variation
+      modMatrix: { ...DEFAULT_MOD_MATRIX }, // Keep mod matrix at defaults (too complex for random)
     };
 
     engine?.setParams(randomParams);
