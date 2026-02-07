@@ -22,8 +22,12 @@ src/
   core/           # All game logic. No React imports. Pure functions.
     types.ts      # All TypeScript interfaces and type definitions
     synth-engine.ts
+    fm-synth-engine.ts
+    additive-synth-engine.ts
     sampler-engine.ts
     drum-sequencer-engine.ts
+    synth-sequencer.ts    # Note sequencer for synth views
+    audio-recorder.ts     # WAV recording from audio nodes
     sound-analysis.ts
     sound-comparison.ts
     sampling-evaluation.ts
@@ -31,11 +35,13 @@ src/
     mixing-evaluation.ts
     production-evaluation.ts
   ui/             # React components. Imports from core/ only.
-    components/   # Reusable UI (Knob, Slider, StepGrid, VelocityLane, WaveformEditor, etc.)
-    views/        # Full-screen views (SynthView, ChallengeView, SamplerView, DrumSequencerView)
-    stores/       # Zustand stores (synth-store.ts, sampler-store.ts, drum-sequencer-store.ts)
+    components/   # Reusable UI (Knob, Slider, XYPad, ModuleCard, Sequencer, RecordingControl, etc.)
+    views/        # Full-screen views (SynthView, FMSynthView, AdditiveSynthView, ChallengeView, etc.)
+    stores/       # Zustand stores (synth-store.ts, fm-synth-store.ts, additive-synth-store.ts, etc.)
   data/           # Static data files
-    challenges/   # Challenge definitions by track (sd1-sd7/, sm1-sm6/, ds1-ds6/, etc.)
+    challenges/   # Challenge definitions by track (sd1-sd9/, sm1-sm6/, ds1-ds6/, etc.)
+    presets/      # Synth presets (subtractive, FM, additive)
+    sequences/    # Note sequences for synth sequencer
   server/         # tRPC backend
     routers/      # API routers (feedback.ts for AI feedback)
   tests/          # Mirrors src/ structure
@@ -109,6 +115,13 @@ Sound design is the entry point. It teaches concepts that make mixing and produc
 - Modules: Grid Basics, Hi-hats, Groove & Swing, Velocity, Genre Patterns, Loop Construction
 - AI feedback via Claude API
 
+### Synth Sandbox Features (Ableton-inspired)
+- **XY Pad:** 2D parameter control with Canvas crosshair and drag interaction
+- **Preset System:** 30 presets (10 per synth type) with dropdown selector
+- **Sequencer:** 9 note patterns with optional drum backing, visual note indicator
+- **Visual Redesign:** Color-coded ModuleCards with animated WaveformIcons
+- **Recording:** WAV capture up to 30 seconds with playback and download
+
 ### Polish
 - Progress persistence (localStorage via Zustand)
 - Progress display in menu header (stars, completion %)
@@ -145,3 +158,4 @@ Sound design is the entry point. It teaches concepts that make mixing and produc
 | 16 | 2026-02-06 | FM Synthesis Track expansion - 6 new SD8 challenges (12 total), generateFMSynthesis AI feedback endpoint |
 | 17 | 2026-02-06 | Additive AI feedback - generateAdditiveSynthesis endpoint, ResultsModal routing for FM/Additive/Subtractive |
 | 18 | 2026-02-06 | TypeScript strict mode cleanup - fixed 95+ errors across comparison functions, stores, components, Zod schemas |
+| 19 | 2026-02-06 | Ableton-style synth UI - XY Pad, preset system (30 presets), sequencer (9 patterns + drums), ModuleCard visual redesign, WAV recording |
