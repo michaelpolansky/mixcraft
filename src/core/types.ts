@@ -19,6 +19,34 @@ export interface OscillatorParams {
   pulseWidth: number;
 }
 
+/** Sub oscillator - simple sine/square one octave below */
+export interface SubOscillatorParams {
+  /** Whether sub oscillator is enabled */
+  enabled: boolean;
+  /** Sub oscillator waveform (sine or square only) */
+  type: 'sine' | 'square';
+  /** Octave offset from main oscillator (-1 or -2) */
+  octave: -1 | -2;
+  /** Level/mix of sub oscillator (0 to 1) */
+  level: number;
+}
+
+/** Second oscillator with full controls */
+export interface Oscillator2Params {
+  /** Whether oscillator 2 is enabled */
+  enabled: boolean;
+  /** Waveform type */
+  type: OscillatorType;
+  /** Octave offset from base frequency (-2 to +2) */
+  octave: number;
+  /** Detune in cents (-100 to +100) */
+  detune: number;
+  /** Pulse width for square wave */
+  pulseWidth: number;
+  /** Mix level of OSC2 relative to OSC1 (0 to 1, 0.5 = equal) */
+  mix: number;
+}
+
 // ============================================
 // Filter Types
 // ============================================
@@ -90,6 +118,46 @@ export interface LFOParams {
   sync: boolean;
   /** Sync division when sync is enabled */
   syncDivision: LFOSyncDivision;
+}
+
+/** LFO2 - Independent secondary LFO for modulation matrix */
+export interface LFO2Params {
+  /** LFO2 rate in Hz (0.1 to 20) */
+  rate: number;
+  /** LFO2 depth/amount (0 to 1) */
+  depth: number;
+  /** LFO2 waveform shape */
+  type: LFOWaveform;
+  /** Whether LFO2 is enabled */
+  enabled: boolean;
+}
+
+// ============================================
+// Modulation Matrix Types
+// ============================================
+
+/** Available modulation sources */
+export type ModSource = 'lfo1' | 'lfo2' | 'ampEnv' | 'filterEnv';
+
+/** Available modulation destinations */
+export type ModDestination = 'pitch' | 'pan' | 'amplitude' | 'filterCutoff' | 'osc2Mix' | 'lfo1Rate' | 'lfo2Rate';
+
+/** A single modulation routing */
+export interface ModRoute {
+  /** Source of modulation */
+  source: ModSource;
+  /** Destination to modulate */
+  destination: ModDestination;
+  /** Amount of modulation (-1 to +1, bipolar) */
+  amount: number;
+  /** Whether this route is active */
+  enabled: boolean;
+}
+
+/** Modulation matrix with fixed 4 slots */
+export interface ModMatrixParams {
+  /** Fixed 4 modulation routes */
+  routes: [ModRoute, ModRoute, ModRoute, ModRoute];
 }
 
 // ============================================
@@ -176,6 +244,10 @@ export interface EffectsParams {
 
 export interface SynthParams {
   oscillator: OscillatorParams;
+  /** Sub oscillator for bass reinforcement */
+  subOsc: SubOscillatorParams;
+  /** Second oscillator for richer sounds */
+  oscillator2: Oscillator2Params;
   /** Noise generator mixed with oscillator */
   noise: NoiseParams;
   /** Portamento/glide between notes */
@@ -191,12 +263,18 @@ export interface SynthParams {
   pwmEnvelope: PWMEnvelopeParams;
   /** LFO modulating filter cutoff */
   lfo: LFOParams;
+  /** Secondary LFO for modulation matrix */
+  lfo2: LFO2Params;
+  /** Modulation matrix for flexible routing */
+  modMatrix: ModMatrixParams;
   /** Velocity sensitivity settings */
   velocity: VelocityParams;
   /** Effects processors */
   effects: EffectsParams;
   /** Master volume in dB (-60 to 0) */
   volume: number;
+  /** Master pan position (-1 to +1, 0 = center) */
+  pan: number;
 }
 
 // ============================================
@@ -208,6 +286,22 @@ export const DEFAULT_OSCILLATOR: OscillatorParams = {
   octave: 0,
   detune: 0,
   pulseWidth: 0.5,
+};
+
+export const DEFAULT_SUB_OSCILLATOR: SubOscillatorParams = {
+  enabled: false,
+  type: 'sine',
+  octave: -1,
+  level: 0.5,
+};
+
+export const DEFAULT_OSCILLATOR_2: Oscillator2Params = {
+  enabled: false,
+  type: 'sawtooth',
+  octave: 0,
+  detune: 7,
+  pulseWidth: 0.5,
+  mix: 0.5,
 };
 
 export const DEFAULT_FILTER: FilterParams = {
@@ -264,6 +358,29 @@ export const DEFAULT_LFO: LFOParams = {
   syncDivision: '4n',
 };
 
+export const DEFAULT_LFO2: LFO2Params = {
+  rate: 2,
+  depth: 0.5,
+  type: 'sine',
+  enabled: false,
+};
+
+export const DEFAULT_MOD_ROUTE: ModRoute = {
+  source: 'lfo1',
+  destination: 'pitch',
+  amount: 0,
+  enabled: false,
+};
+
+export const DEFAULT_MOD_MATRIX: ModMatrixParams = {
+  routes: [
+    { ...DEFAULT_MOD_ROUTE },
+    { ...DEFAULT_MOD_ROUTE },
+    { ...DEFAULT_MOD_ROUTE },
+    { ...DEFAULT_MOD_ROUTE },
+  ],
+};
+
 export const DEFAULT_NOISE: NoiseParams = {
   type: 'white',
   level: 0,
@@ -310,6 +427,8 @@ export const DEFAULT_EFFECTS: EffectsParams = {
 
 export const DEFAULT_SYNTH_PARAMS: SynthParams = {
   oscillator: DEFAULT_OSCILLATOR,
+  subOsc: DEFAULT_SUB_OSCILLATOR,
+  oscillator2: DEFAULT_OSCILLATOR_2,
   noise: DEFAULT_NOISE,
   glide: DEFAULT_GLIDE,
   filter: DEFAULT_FILTER,
@@ -319,9 +438,12 @@ export const DEFAULT_SYNTH_PARAMS: SynthParams = {
   modEnvelope: DEFAULT_MOD_ENVELOPE,
   pwmEnvelope: DEFAULT_PWM_ENVELOPE,
   lfo: DEFAULT_LFO,
+  lfo2: DEFAULT_LFO2,
+  modMatrix: DEFAULT_MOD_MATRIX,
   velocity: DEFAULT_VELOCITY,
   effects: DEFAULT_EFFECTS,
   volume: -12,
+  pan: 0,
 };
 
 // ============================================
@@ -352,6 +474,9 @@ export const PARAM_RANGES = {
   chorusRate: { min: 0.1, max: 10, step: 0.1 },
   chorusDepth: { min: 0, max: 1, step: 0.01 },
   chorusMix: { min: 0, max: 1, step: 0.01 },
+  // Pan and Mod Matrix
+  pan: { min: -1, max: 1, step: 0.01 },
+  modAmount: { min: -1, max: 1, step: 0.01 },
 } as const;
 
 // ============================================
