@@ -21,7 +21,7 @@ const ScoreBreakdownItemSchema = z.object({
 
 const ScoreResultSchema = z.object({
   overall: z.number(),
-  stars: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+  stars: z.union([z.literal(0), z.literal(1), z.literal(2), z.literal(3)]),
   breakdown: z.object({
     brightness: ScoreBreakdownItemSchema,
     attack: ScoreBreakdownItemSchema,
@@ -169,7 +169,7 @@ const MixingConditionResultSchema = z.object({
 
 const MixingScoreResultSchema = z.object({
   overall: z.number(),
-  stars: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+  stars: z.union([z.literal(0), z.literal(1), z.literal(2), z.literal(3)]),
   passed: z.boolean(),
   breakdown: z.object({
     eq: z.object({
@@ -303,7 +303,7 @@ const ProductionLayerScoreSchema = z.object({
 
 const ProductionScoreResultSchema = z.object({
   overall: z.number(),
-  stars: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+  stars: z.union([z.literal(0), z.literal(1), z.literal(2), z.literal(3)]),
   passed: z.boolean(),
   breakdown: z.object({
     type: z.enum(['reference', 'goal']),
@@ -401,7 +401,7 @@ Be warm and encouraging. Explain how different elements work together in a produ
 
 const SamplingScoreResultSchema = z.object({
   overall: z.number(),
-  stars: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+  stars: z.union([z.literal(0), z.literal(1), z.literal(2), z.literal(3)]),
   passed: z.boolean(),
   breakdown: z.object({
     type: z.string(),
@@ -495,7 +495,7 @@ Be warm and encouraging. Explain the creative possibilities of sampling. If they
 
 const DrumSequencingScoreResultSchema = z.object({
   overall: z.number(),
-  stars: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+  stars: z.union([z.literal(0), z.literal(1), z.literal(2), z.literal(3)]),
   passed: z.boolean(),
   breakdown: z.object({
     patternScore: z.number().optional(),
@@ -536,7 +536,7 @@ const DrumSequencingFeedbackInputSchema = z.object({
 
 const FMScoreResultSchema = z.object({
   overall: z.number(),
-  stars: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+  stars: z.union([z.literal(0), z.literal(1), z.literal(2), z.literal(3)]),
   passed: z.boolean(),
   breakdown: z.object({
     harmonicity: z.number(),
@@ -634,7 +634,7 @@ Be warm and encouraging. Explain FM concepts in accessible terms - how changing 
 
 const AdditiveScoreResultSchema = z.object({
   overall: z.number(),
-  stars: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+  stars: z.union([z.literal(0), z.literal(1), z.literal(2), z.literal(3)]),
   passed: z.boolean(),
   breakdown: z.object({
     harmonics: z.number(),

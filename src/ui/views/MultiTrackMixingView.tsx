@@ -169,6 +169,7 @@ export function MultiTrackMixingView({
     setFeedbackLoading(true);
 
     async function fetchFeedback() {
+      if (!lastResult) return;
       try {
         const response = await trpc.feedback.generateMixing.mutate({
           result: lastResult,
@@ -350,7 +351,7 @@ export function MultiTrackMixingView({
             {/* Track Strips */}
             <div style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
               {tracks.map((track) => {
-                const params = trackParams[track.id] ?? { low: 0, mid: 0, high: 0, volume: 0 };
+                const params: TrackEQParams = trackParams[track.id] ?? { low: 0, mid: 0, high: 0, volume: 0, pan: 0, reverbMix: 0, reverbSize: 50 };
                 return (
                   <div
                     key={track.id}

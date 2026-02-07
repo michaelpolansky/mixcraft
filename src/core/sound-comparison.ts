@@ -23,8 +23,8 @@ export interface ScoreBreakdown {
 export interface ScoreResult {
   /** Overall score 0-100 */
   overall: number;
-  /** Star rating based on score thresholds */
-  stars: 1 | 2 | 3;
+  /** Star rating based on score thresholds (0 = failed, 1-3 = passed) */
+  stars: 0 | 1 | 2 | 3;
   /** Detailed breakdown by category */
   breakdown: ScoreBreakdown;
   /** Whether the challenge is passed (>= 60%) */
@@ -54,8 +54,8 @@ const WEIGHTS = {
 export function compareSounds(
   playerFeatures: SoundFeatures,
   targetFeatures: SoundFeatures,
-  playerParams: SynthParams,
-  targetParams: SynthParams
+  playerParams: SynthParams | FMSynthParams | AdditiveSynthParams,
+  targetParams: SynthParams | FMSynthParams | AdditiveSynthParams
 ): ScoreResult {
   // Calculate audio feature scores (70% of total)
   const brightnessScore = compareBrightness(playerFeatures, targetFeatures);
@@ -238,7 +238,15 @@ function compareSpectrum(player: SoundFeatures, target: SoundFeatures): number {
 /**
  * Compare filter parameters
  */
-function compareFilterParams(player: SynthParams, target: SynthParams): number {
+function compareFilterParams(
+  player: SynthParams | FMSynthParams | AdditiveSynthParams,
+  target: SynthParams | FMSynthParams | AdditiveSynthParams
+): number {
+  // Only compare filter params for subtractive synths
+  if (!('filter' in player) || !('filter' in target)) {
+    return 0.75; // Neutral score for non-subtractive synths
+  }
+
   // Cutoff comparison (logarithmic scale)
   const cutoffRatio = player.filter.cutoff / target.filter.cutoff;
   const cutoffScore = 1 - Math.min(1, Math.abs(Math.log2(cutoffRatio)) / 2);
@@ -256,7 +264,15 @@ function compareFilterParams(player: SynthParams, target: SynthParams): number {
 /**
  * Compare oscillator parameters
  */
-function compareOscillatorParams(player: SynthParams, target: SynthParams): number {
+function compareOscillatorParams(
+  player: SynthParams | FMSynthParams | AdditiveSynthParams,
+  target: SynthParams | FMSynthParams | AdditiveSynthParams
+): number {
+  // Only compare oscillator params for subtractive synths
+  if (!('oscillator' in player) || !('oscillator' in target)) {
+    return 0.75; // Neutral score for non-subtractive synths
+  }
+
   // Waveform type is most important
   const typeMatch = player.oscillator.type === target.oscillator.type ? 1 : 0;
 
@@ -274,7 +290,11 @@ function compareOscillatorParams(player: SynthParams, target: SynthParams): numb
 /**
  * Compare envelope parameters
  */
-function compareEnvelopeParams(player: SynthParams, target: SynthParams): number {
+function compareEnvelopeParams(
+  player: SynthParams | FMSynthParams | AdditiveSynthParams,
+  target: SynthParams | FMSynthParams | AdditiveSynthParams
+): number {
+  // All synth types have amplitudeEnvelope
   const pEnv = player.amplitudeEnvelope;
   const tEnv = target.amplitudeEnvelope;
 
@@ -299,7 +319,15 @@ function compareLogTime(player: number, target: number): number {
 /**
  * Generate feedback for filter settings
  */
-function getFilterFeedback(player: SynthParams, target: SynthParams): string {
+function getFilterFeedback(
+  player: SynthParams | FMSynthParams | AdditiveSynthParams,
+  target: SynthParams | FMSynthParams | AdditiveSynthParams
+): string {
+  // Only provide filter feedback for subtractive synths
+  if (!('filter' in player) || !('filter' in target)) {
+    return 'N/A for this synthesis type';
+  }
+
   const cutoffRatio = player.filter.cutoff / target.filter.cutoff;
 
   if (player.filter.type !== target.filter.type) {
