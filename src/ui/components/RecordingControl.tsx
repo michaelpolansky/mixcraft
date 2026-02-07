@@ -11,6 +11,8 @@ interface RecordingControlProps {
   sourceNode: AudioNode | null;
   /** Accent color for UI elements */
   accentColor?: string;
+  /** Compact mode - vertical layout with just essential controls */
+  compact?: boolean;
 }
 
 type RecordingState = 'idle' | 'recording' | 'stopped';
@@ -27,6 +29,7 @@ function formatTime(seconds: number): string {
 export function RecordingControl({
   sourceNode,
   accentColor = '#ef4444',
+  compact = false,
 }: RecordingControlProps) {
   const [state, setState] = useState<RecordingState>('idle');
   const [elapsedTime, setElapsedTime] = useState(0);
@@ -182,6 +185,183 @@ export function RecordingControl({
   }, []);
 
   const isDisabled = !sourceNode;
+
+  // Compact vertical layout for narrow spaces
+  if (compact) {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '8px',
+          padding: '8px',
+          background: '#1a1a1a',
+          borderRadius: '6px',
+          border: '1px solid #333',
+        }}
+      >
+        {/* Record/Stop Button */}
+        {state === 'idle' && (
+          <button
+            onClick={handleStartRecording}
+            disabled={isDisabled}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '36px',
+              height: '36px',
+              background: isDisabled ? '#333' : accentColor,
+              border: 'none',
+              borderRadius: '50%',
+              cursor: isDisabled ? 'not-allowed' : 'pointer',
+              boxShadow: isDisabled ? 'none' : `0 2px 8px ${accentColor}40`,
+            }}
+            title="Start Recording"
+          >
+            <div
+              style={{
+                width: '14px',
+                height: '14px',
+                background: isDisabled ? '#555' : '#fff',
+                borderRadius: '50%',
+              }}
+            />
+          </button>
+        )}
+
+        {state === 'recording' && (
+          <button
+            onClick={handleStopRecording}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '36px',
+              height: '36px',
+              background: accentColor,
+              border: 'none',
+              borderRadius: '50%',
+              cursor: 'pointer',
+              animation: 'pulse 1.5s ease-in-out infinite',
+              boxShadow: `0 2px 12px ${accentColor}60`,
+            }}
+            title="Stop Recording"
+          >
+            <div
+              style={{
+                width: '12px',
+                height: '12px',
+                background: '#fff',
+                borderRadius: '2px',
+              }}
+            />
+          </button>
+        )}
+
+        {state === 'stopped' && (
+          <button
+            onClick={handleNewRecording}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '36px',
+              height: '36px',
+              background: '#333',
+              border: `2px solid ${accentColor}`,
+              borderRadius: '50%',
+              cursor: 'pointer',
+            }}
+            title="New Recording"
+          >
+            <div
+              style={{
+                width: '14px',
+                height: '14px',
+                background: accentColor,
+                borderRadius: '50%',
+              }}
+            />
+          </button>
+        )}
+
+        {/* Timer */}
+        <div
+          style={{
+            fontFamily: 'monospace',
+            fontSize: '11px',
+            color: state === 'recording' ? accentColor : '#666',
+          }}
+        >
+          {formatTime(elapsedTime)}/{formatTime(maxTime)}
+        </div>
+
+        {/* Playback controls when stopped */}
+        {state === 'stopped' && recordedBlob && (
+          <div style={{ display: 'flex', gap: '6px' }}>
+            <button
+              onClick={isPlaying ? handleStopPlayback : handlePlay}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '28px',
+                height: '28px',
+                background: '#333',
+                border: '1px solid #555',
+                borderRadius: '4px',
+                cursor: 'pointer',
+              }}
+              title={isPlaying ? 'Stop' : 'Play'}
+            >
+              {isPlaying ? (
+                <svg width="12" height="12" viewBox="0 0 14 14" fill="#fff">
+                  <rect x="2" y="1" width="4" height="12" rx="1" />
+                  <rect x="8" y="1" width="4" height="12" rx="1" />
+                </svg>
+              ) : (
+                <svg width="12" height="12" viewBox="0 0 14 14" fill="#fff">
+                  <path d="M3 1.5v11l9-5.5z" />
+                </svg>
+              )}
+            </button>
+            <button
+              onClick={handleDownload}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '28px',
+                height: '28px',
+                background: '#4ade80',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+              }}
+              title="Download WAV"
+            >
+              <svg width="12" height="12" viewBox="0 0 14 14" fill="#000">
+                <path d="M7 9.5L3 5.5h2.5V1h3v4.5H11L7 9.5z" />
+                <path d="M2 11v1.5h10V11H2z" />
+              </svg>
+            </button>
+          </div>
+        )}
+
+        {/* Pulse animation */}
+        <style>
+          {`
+            @keyframes pulse {
+              0%, 100% { opacity: 1; box-shadow: 0 2px 12px ${accentColor}60; }
+              50% { opacity: 0.8; box-shadow: 0 2px 20px ${accentColor}80; }
+            }
+          `}
+        </style>
+      </div>
+    );
+  }
 
   return (
     <div

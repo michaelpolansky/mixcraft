@@ -163,6 +163,7 @@ export function SynthView() {
           justifyContent: 'space-between',
           alignItems: 'center',
           padding: '16px 24px',
+          paddingLeft: '120px', // Room for fixed menu button
           borderBottom: '1px solid #1a1a1a',
         }}>
           <div>
@@ -219,6 +220,7 @@ export function SynthView() {
               width={200}
               height={120}
               accentColor={COLORS.oscillator}
+              compact
             />
             <div style={{ marginTop: '12px' }}>
               <WaveformSelector value={params.oscillator.type} onChange={setOscillatorType} />
@@ -240,6 +242,7 @@ export function SynthView() {
               width={200}
               height={120}
               accentColor={COLORS.filter}
+              compact
             />
             <div style={{ marginTop: '12px' }}>
               <FilterTypeSelector value={params.filter.type} onChange={setFilterType} />
@@ -264,6 +267,7 @@ export function SynthView() {
               width={200}
               height={120}
               accentColor={COLORS.amp}
+              compact
             />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '12px' }}>
               <MiniSlider label="A" value={params.amplitudeEnvelope.attack} min={0.001} max={2} onChange={setAmplitudeAttack} />
@@ -290,6 +294,7 @@ export function SynthView() {
                   width={95}
                   height={60}
                   accentColor={COLORS.mod}
+                  compact
                 />
               </div>
               <div style={{ flex: 1 }}>
@@ -301,6 +306,7 @@ export function SynthView() {
                   width={95}
                   height={60}
                   accentColor={COLORS.mod}
+                  compact
                 />
               </div>
             </div>
@@ -356,7 +362,7 @@ export function SynthView() {
 
           {/* OUTPUT Stage */}
           <StageCard title="OUTPUT" color={COLORS.output}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', padding: '16px 0' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
               <Knob
                 label="Volume"
                 value={params.volume}
@@ -371,6 +377,7 @@ export function SynthView() {
               <RecordingControl
                 sourceNode={engine?.getOutputNode() ?? null}
                 accentColor={COLORS.output}
+                compact
               />
             </div>
           </StageCard>
@@ -500,6 +507,7 @@ function StageCard({
       minWidth: wide ? '280px' : '180px',
       flex: wide ? '2 1 280px' : '1 1 180px',
       maxWidth: wide ? '400px' : '240px',
+      alignSelf: 'flex-start',
     }}>
       <div style={{
         fontSize: '11px',

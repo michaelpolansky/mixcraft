@@ -20,6 +20,7 @@ interface EnvelopeVisualizerProps {
   activePhase?: 'attack' | 'decay' | 'sustain' | 'release' | null;
   playheadPosition?: number; // 0-1 normalized position through envelope
   label?: string;
+  compact?: boolean; // Remove labels and reduce padding for small sizes
 }
 
 // Parameter ranges
@@ -48,6 +49,7 @@ export const EnvelopeVisualizer: React.FC<EnvelopeVisualizerProps> = ({
   activePhase = null,
   playheadPosition,
   label,
+  compact = false,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [dragTarget, setDragTarget] = useState<'attack' | 'decay' | 'sustain' | 'release' | null>(null);
@@ -55,10 +57,11 @@ export const EnvelopeVisualizer: React.FC<EnvelopeVisualizerProps> = ({
 
   // Convert parameters to pixel positions
   const getEnvelopePoints = useCallback((w: number, h: number) => {
-    const padding = 30;
-    const topPadding = label ? 40 : 20;
+    const padding = compact ? 8 : 30;
+    const topPadding = compact ? 8 : (label ? 40 : 20);
+    const bottomPadding = compact ? 8 : 30;
     const drawWidth = w - padding * 2;
-    const drawHeight = h - topPadding - padding;
+    const drawHeight = h - topPadding - bottomPadding;
 
     // Calculate x positions based on parameter values and segment allocations
     const attackX = padding + (attack / ATTACK_MAX) * ATTACK_WIDTH * drawWidth;
@@ -82,7 +85,7 @@ export const EnvelopeVisualizer: React.FC<EnvelopeVisualizerProps> = ({
       drawWidth,
       drawHeight,
     };
-  }, [attack, decay, sustain, release, label]);
+  }, [attack, decay, sustain, release, label, compact]);
 
   // Check if point is near a control point
   const getControlPointAt = useCallback((x: number, y: number, points: ReturnType<typeof getEnvelopePoints>) => {
@@ -119,42 +122,44 @@ export const EnvelopeVisualizer: React.FC<EnvelopeVisualizerProps> = ({
 
     const points = getEnvelopePoints(width, height);
 
-    // Draw label if provided
-    if (label) {
+    // Draw label if provided (and not in compact mode)
+    if (label && !compact) {
       ctx.fillStyle = accentColor;
       ctx.font = 'bold 14px system-ui';
       ctx.textAlign = 'left';
       ctx.fillText(label, points.padding, 24);
     }
 
-    // Draw grid
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-    ctx.lineWidth = 1;
+    // Draw grid (only in non-compact mode)
+    if (!compact) {
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+      ctx.lineWidth = 1;
 
-    // Horizontal lines (amplitude levels)
-    for (let i = 0; i <= 4; i++) {
-      const y = points.topPadding + (points.drawHeight / 4) * i;
-      ctx.beginPath();
-      ctx.moveTo(points.padding, y);
-      ctx.lineTo(points.padding + points.drawWidth, y);
-      ctx.stroke();
+      // Horizontal lines (amplitude levels)
+      for (let i = 0; i <= 4; i++) {
+        const y = points.topPadding + (points.drawHeight / 4) * i;
+        ctx.beginPath();
+        ctx.moveTo(points.padding, y);
+        ctx.lineTo(points.padding + points.drawWidth, y);
+        ctx.stroke();
+      }
+
+      // Draw segment labels
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.font = '11px system-ui';
+      ctx.textAlign = 'center';
+
+      const segmentCenters = [
+        { x: points.padding + ATTACK_WIDTH * points.drawWidth * 0.5, label: 'A' },
+        { x: points.padding + (ATTACK_WIDTH + DECAY_WIDTH * 0.5) * points.drawWidth, label: 'D' },
+        { x: points.padding + (ATTACK_WIDTH + DECAY_WIDTH + SUSTAIN_WIDTH * 0.5) * points.drawWidth, label: 'S' },
+        { x: points.padding + (ATTACK_WIDTH + DECAY_WIDTH + SUSTAIN_WIDTH + RELEASE_WIDTH * 0.5) * points.drawWidth, label: 'R' },
+      ];
+
+      segmentCenters.forEach(({ x, label: segLabel }) => {
+        ctx.fillText(segLabel, x, height - 8);
+      });
     }
-
-    // Draw segment labels
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-    ctx.font = '11px system-ui';
-    ctx.textAlign = 'center';
-
-    const segmentCenters = [
-      { x: points.padding + ATTACK_WIDTH * points.drawWidth * 0.5, label: 'A' },
-      { x: points.padding + (ATTACK_WIDTH + DECAY_WIDTH * 0.5) * points.drawWidth, label: 'D' },
-      { x: points.padding + (ATTACK_WIDTH + DECAY_WIDTH + SUSTAIN_WIDTH * 0.5) * points.drawWidth, label: 'S' },
-      { x: points.padding + (ATTACK_WIDTH + DECAY_WIDTH + SUSTAIN_WIDTH + RELEASE_WIDTH * 0.5) * points.drawWidth, label: 'R' },
-    ];
-
-    segmentCenters.forEach(({ x, label: segLabel }) => {
-      ctx.fillText(segLabel, x, height - 8);
-    });
 
     // Draw envelope curve with glow
     ctx.shadowColor = accentColor;
@@ -220,19 +225,21 @@ export const EnvelopeVisualizer: React.FC<EnvelopeVisualizerProps> = ({
     drawControlPoint(sustainControlX, points.sustainEnd.y, 'sustain');
     drawControlPoint(points.releaseEnd.x, points.releaseEnd.y, 'release');
 
-    // Draw value labels near control points
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-    ctx.font = '10px system-ui';
-    ctx.textAlign = 'center';
+    // Draw value labels near control points (only in non-compact mode)
+    if (!compact) {
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+      ctx.font = '10px system-ui';
+      ctx.textAlign = 'center';
 
-    // Attack time
-    ctx.fillText(`${(attack * 1000).toFixed(0)}ms`, points.attackPeak.x, points.attackPeak.y - 12);
-    // Decay time
-    ctx.fillText(`${(decay * 1000).toFixed(0)}ms`, points.decayEnd.x, points.decayEnd.y - 12);
-    // Sustain level
-    ctx.fillText(`${Math.round(sustain * 100)}%`, sustainControlX, points.sustainEnd.y - 12);
-    // Release time
-    ctx.fillText(`${(release * 1000).toFixed(0)}ms`, points.releaseEnd.x, points.releaseEnd.y - 12);
+      // Attack time
+      ctx.fillText(`${(attack * 1000).toFixed(0)}ms`, points.attackPeak.x, points.attackPeak.y - 12);
+      // Decay time
+      ctx.fillText(`${(decay * 1000).toFixed(0)}ms`, points.decayEnd.x, points.decayEnd.y - 12);
+      // Sustain level
+      ctx.fillText(`${Math.round(sustain * 100)}%`, sustainControlX, points.sustainEnd.y - 12);
+      // Release time
+      ctx.fillText(`${(release * 1000).toFixed(0)}ms`, points.releaseEnd.x, points.releaseEnd.y - 12);
+    }
 
     // Draw playhead if provided
     if (playheadPosition !== undefined && playheadPosition >= 0 && playheadPosition <= 1) {
@@ -248,7 +255,7 @@ export const EnvelopeVisualizer: React.FC<EnvelopeVisualizerProps> = ({
       ctx.setLineDash([]);
     }
 
-  }, [width, height, attack, decay, sustain, release, accentColor, dragTarget, hoverTarget, activePhase, playheadPosition, getEnvelopePoints, label]);
+  }, [width, height, attack, decay, sustain, release, accentColor, dragTarget, hoverTarget, activePhase, playheadPosition, getEnvelopePoints, label, compact]);
 
   // Mouse handlers
   const handleMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {

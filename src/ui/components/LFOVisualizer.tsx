@@ -13,6 +13,7 @@ interface LFOVisualizerProps {
   width?: number;
   height?: number;
   accentColor?: string;
+  compact?: boolean; // Remove labels and reduce padding for small sizes
 }
 
 /**
@@ -41,6 +42,7 @@ export const LFOVisualizer: React.FC<LFOVisualizerProps> = ({
   width = 500,
   height = 180,
   accentColor = '#ef4444',
+  compact = false,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>(0);
@@ -58,10 +60,12 @@ export const LFOVisualizer: React.FC<LFOVisualizerProps> = ({
     canvas.height = height * dpr;
     ctx.scale(dpr, dpr);
 
-    const padding = 30;
-    const topPadding = 40;
-    const drawWidth = width - padding * 2 - 50; // Reserve space for "now" indicator
-    const drawHeight = height - topPadding - 30;
+    const padding = compact ? 8 : 30;
+    const topPadding = compact ? 8 : 40;
+    const bottomPadding = compact ? 8 : 30;
+    const nowIndicatorSpace = compact ? 0 : 50;
+    const drawWidth = width - padding * 2 - nowIndicatorSpace;
+    const drawHeight = height - topPadding - bottomPadding;
 
     // Calculate current phase based on time
     const elapsed = (Date.now() - startTimeRef.current) / 1000;
@@ -71,17 +75,18 @@ export const LFOVisualizer: React.FC<LFOVisualizerProps> = ({
     ctx.fillStyle = '#0a0a0f';
     ctx.fillRect(0, 0, width, height);
 
-    // Draw label
-    ctx.fillStyle = accentColor;
-    ctx.font = 'bold 14px system-ui';
-    ctx.textAlign = 'left';
-    ctx.fillText('LFO', padding, 24);
+    // Draw labels only in non-compact mode
+    if (!compact) {
+      ctx.fillStyle = accentColor;
+      ctx.font = 'bold 14px system-ui';
+      ctx.textAlign = 'left';
+      ctx.fillText('LFO', padding, 24);
 
-    // Draw waveform type and rate
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-    ctx.font = '12px system-ui';
-    ctx.textAlign = 'right';
-    ctx.fillText(`${waveform.toUpperCase()} • ${rate.toFixed(1)} Hz`, width - padding, 24);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+      ctx.font = '12px system-ui';
+      ctx.textAlign = 'right';
+      ctx.fillText(`${waveform.toUpperCase()} • ${rate.toFixed(1)} Hz`, width - padding, 24);
+    }
 
     const centerY = topPadding + drawHeight / 2;
     const maxAmplitude = (drawHeight / 2 - 5) * depth;
@@ -137,58 +142,60 @@ export const LFOVisualizer: React.FC<LFOVisualizerProps> = ({
 
     ctx.shadowBlur = 0;
 
-    // Draw "now" vertical line indicator
-    const nowX = padding + drawWidth + 20;
+    // Draw "now" indicator only in non-compact mode
+    if (!compact) {
+      const nowX = padding + drawWidth + 20;
 
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(nowX, topPadding);
-    ctx.lineTo(nowX, topPadding + drawHeight);
-    ctx.stroke();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(nowX, topPadding);
+      ctx.lineTo(nowX, topPadding + drawHeight);
+      ctx.stroke();
 
-    // Draw current value marker on the "now" line
-    const currentValue = getWaveformValue(waveform, currentPhase);
-    const markerY = centerY - currentValue * maxAmplitude;
+      // Draw current value marker on the "now" line
+      const currentValue = getWaveformValue(waveform, currentPhase);
+      const markerY = centerY - currentValue * maxAmplitude;
 
-    // Glow
-    ctx.beginPath();
-    ctx.arc(nowX, markerY, 12, 0, Math.PI * 2);
-    ctx.fillStyle = `${accentColor}40`;
-    ctx.fill();
+      // Glow
+      ctx.beginPath();
+      ctx.arc(nowX, markerY, 12, 0, Math.PI * 2);
+      ctx.fillStyle = `${accentColor}40`;
+      ctx.fill();
 
-    // Main marker
-    ctx.beginPath();
-    ctx.arc(nowX, markerY, 8, 0, Math.PI * 2);
-    ctx.fillStyle = accentColor;
-    ctx.fill();
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 2;
-    ctx.stroke();
+      // Main marker
+      ctx.beginPath();
+      ctx.arc(nowX, markerY, 8, 0, Math.PI * 2);
+      ctx.fillStyle = accentColor;
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.stroke();
 
-    // "NOW" label
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-    ctx.font = '9px system-ui';
-    ctx.textAlign = 'center';
-    ctx.fillText('NOW', nowX, topPadding - 8);
+      // "NOW" label
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+      ctx.font = '9px system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillText('NOW', nowX, topPadding - 8);
 
-    // Draw depth percentage
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-    ctx.font = '11px system-ui';
-    ctx.textAlign = 'center';
-    ctx.fillText(`DEPTH: ${Math.round(depth * 100)}%`, padding + drawWidth / 2, height - 8);
+      // Draw depth percentage
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+      ctx.font = '11px system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillText(`DEPTH: ${Math.round(depth * 100)}%`, padding + drawWidth / 2, height - 8);
 
-    // Y-axis labels
-    ctx.textAlign = 'right';
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-    ctx.font = '9px system-ui';
-    ctx.fillText('+', padding - 6, centerY - maxAmplitude + 4);
-    ctx.fillText('0', padding - 6, centerY + 3);
-    ctx.fillText('-', padding - 6, centerY + maxAmplitude + 4);
+      // Y-axis labels
+      ctx.textAlign = 'right';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.font = '9px system-ui';
+      ctx.fillText('+', padding - 6, centerY - maxAmplitude + 4);
+      ctx.fillText('0', padding - 6, centerY + 3);
+      ctx.fillText('-', padding - 6, centerY + maxAmplitude + 4);
+    }
 
     // Schedule next frame
     animationRef.current = requestAnimationFrame(draw);
-  }, [waveform, rate, depth, width, height, accentColor]);
+  }, [waveform, rate, depth, width, height, accentColor, compact]);
 
   useEffect(() => {
     startTimeRef.current = Date.now();

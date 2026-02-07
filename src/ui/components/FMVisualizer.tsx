@@ -14,6 +14,7 @@ interface FMVisualizerProps {
   width?: number;
   height?: number;
   accentColor?: string;
+  compact?: boolean; // Remove labels and reduce padding for small sizes
 }
 
 /**
@@ -43,6 +44,7 @@ export const FMVisualizer: React.FC<FMVisualizerProps> = ({
   width = 600,
   height = 200,
   accentColor = '#f97316',
+  compact = false,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>(0);
@@ -71,23 +73,25 @@ export const FMVisualizer: React.FC<FMVisualizerProps> = ({
     ctx.fillStyle = '#0a0a0f';
     ctx.fillRect(0, 0, width, height);
 
-    const padding = 30;
-    const topPadding = 40;
+    const padding = compact ? 8 : 30;
+    const topPadding = compact ? 8 : 40;
+    const bottomPadding = compact ? 8 : 30;
     const drawWidth = width - padding * 2;
-    const drawHeight = height - topPadding - 30;
+    const drawHeight = height - topPadding - bottomPadding;
     const centerY = topPadding + drawHeight / 2;
 
-    // Draw label
-    ctx.fillStyle = accentColor;
-    ctx.font = 'bold 14px system-ui';
-    ctx.textAlign = 'left';
-    ctx.fillText('FM SYNTHESIS', padding, 24);
+    // Draw labels only in non-compact mode
+    if (!compact) {
+      ctx.fillStyle = accentColor;
+      ctx.font = 'bold 14px system-ui';
+      ctx.textAlign = 'left';
+      ctx.fillText('FM SYNTHESIS', padding, 24);
 
-    // Draw info
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-    ctx.font = '12px system-ui';
-    ctx.textAlign = 'right';
-    ctx.fillText(`H:${harmonicity.toFixed(1)} • MI:${modulationIndex.toFixed(1)}`, width - padding, 24);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+      ctx.font = '12px system-ui';
+      ctx.textAlign = 'right';
+      ctx.fillText(`H:${harmonicity.toFixed(1)} • MI:${modulationIndex.toFixed(1)}`, width - padding, 24);
+    }
 
     // Draw grid
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
@@ -149,15 +153,17 @@ export const FMVisualizer: React.FC<FMVisualizerProps> = ({
     ctx.stroke();
     ctx.shadowBlur = 0;
 
-    // Draw waveform type labels
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-    ctx.font = '11px system-ui';
-    ctx.textAlign = 'center';
-    ctx.fillText(`Carrier: ${carrierType.toUpperCase()} • Modulator: ${modulatorType.toUpperCase()}`, padding + drawWidth / 2, height - 8);
+    // Draw waveform type labels only in non-compact mode
+    if (!compact) {
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+      ctx.font = '11px system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillText(`Carrier: ${carrierType.toUpperCase()} • Modulator: ${modulatorType.toUpperCase()}`, padding + drawWidth / 2, height - 8);
+    }
 
     // Schedule next frame
     animationRef.current = requestAnimationFrame(draw);
-  }, [carrierType, modulatorType, harmonicity, modulationIndex, width, height, accentColor]);
+  }, [carrierType, modulatorType, harmonicity, modulationIndex, width, height, accentColor, compact]);
 
   useEffect(() => {
     lastTimeRef.current = Date.now();

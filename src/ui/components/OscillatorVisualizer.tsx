@@ -15,6 +15,7 @@ interface OscillatorVisualizerProps {
   accentColor?: string;
   isPlaying?: boolean;
   amplitude?: number; // 0-1 for envelope modulation
+  compact?: boolean; // Remove labels and reduce padding for small sizes
 }
 
 /**
@@ -45,6 +46,7 @@ export const OscillatorVisualizer: React.FC<OscillatorVisualizerProps> = ({
   accentColor = '#3b82f6',
   isPlaying = false,
   amplitude = 1,
+  compact = false,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>(0);
@@ -76,23 +78,25 @@ export const OscillatorVisualizer: React.FC<OscillatorVisualizerProps> = ({
     ctx.fillStyle = '#0a0a0f';
     ctx.fillRect(0, 0, width, height);
 
-    const padding = 30;
-    const topPadding = 40;
+    const padding = compact ? 8 : 30;
+    const topPadding = compact ? 8 : 40;
+    const bottomPadding = compact ? 8 : 30;
     const drawWidth = width - padding * 2;
-    const drawHeight = height - topPadding - padding;
+    const drawHeight = height - topPadding - bottomPadding;
     const centerY = topPadding + drawHeight / 2;
 
-    // Draw label
-    ctx.fillStyle = accentColor;
-    ctx.font = 'bold 14px system-ui';
-    ctx.textAlign = 'left';
-    ctx.fillText('OSCILLATOR', padding, 24);
+    // Draw labels only in non-compact mode
+    if (!compact) {
+      ctx.fillStyle = accentColor;
+      ctx.font = 'bold 14px system-ui';
+      ctx.textAlign = 'left';
+      ctx.fillText('OSCILLATOR', padding, 24);
 
-    // Draw waveform type
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-    ctx.font = '12px system-ui';
-    ctx.textAlign = 'right';
-    ctx.fillText(waveform.toUpperCase(), width - padding, 24);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+      ctx.font = '12px system-ui';
+      ctx.textAlign = 'right';
+      ctx.fillText(waveform.toUpperCase(), width - padding, 24);
+    }
 
     // Draw grid lines
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
@@ -163,29 +167,31 @@ export const OscillatorVisualizer: React.FC<OscillatorVisualizerProps> = ({
       ctx.stroke();
     }
 
-    // Draw octave and detune labels at bottom
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-    ctx.font = '11px system-ui';
-    ctx.textAlign = 'center';
-    ctx.fillText(`OCT ${octave}`, padding + drawWidth * 0.25, height - 10);
-    ctx.fillText(`DETUNE ${detune > 0 ? '+' : ''}${detune}¢`, padding + drawWidth * 0.75, height - 10);
+    // Draw octave and detune labels at bottom (only in non-compact mode)
+    if (!compact) {
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+      ctx.font = '11px system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillText(`OCT ${octave}`, padding + drawWidth * 0.25, height - 10);
+      ctx.fillText(`DETUNE ${detune > 0 ? '+' : ''}${detune}¢`, padding + drawWidth * 0.75, height - 10);
 
-    // Amplitude indicator (right side bar)
-    const barWidth = 8;
-    const barX = width - padding + 10;
-    const barHeight = drawHeight * 0.8;
-    const barY = topPadding + (drawHeight - barHeight) / 2;
+      // Amplitude indicator (right side bar)
+      const barWidth = 8;
+      const barX = width - padding + 10;
+      const barHeight = drawHeight * 0.8;
+      const barY = topPadding + (drawHeight - barHeight) / 2;
 
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-    ctx.fillRect(barX, barY, barWidth, barHeight);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+      ctx.fillRect(barX, barY, barWidth, barHeight);
 
-    ctx.fillStyle = `${accentColor}80`;
-    const filledHeight = barHeight * currentAmplitude;
-    ctx.fillRect(barX, barY + barHeight - filledHeight, barWidth, filledHeight);
+      ctx.fillStyle = `${accentColor}80`;
+      const filledHeight = barHeight * currentAmplitude;
+      ctx.fillRect(barX, barY + barHeight - filledHeight, barWidth, filledHeight);
+    }
 
     // Schedule next frame
     animationRef.current = requestAnimationFrame(draw);
-  }, [waveform, octave, detune, width, height, accentColor, isPlaying, amplitude]);
+  }, [waveform, octave, detune, width, height, accentColor, isPlaying, amplitude, compact]);
 
   useEffect(() => {
     lastTimeRef.current = Date.now();

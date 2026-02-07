@@ -14,6 +14,7 @@ interface FilterVisualizerProps {
   width?: number;
   height?: number;
   accentColor?: string;
+  compact?: boolean; // Remove labels and reduce padding for small sizes
 }
 
 // Frequency range (logarithmic)
@@ -112,15 +113,17 @@ export const FilterVisualizer: React.FC<FilterVisualizerProps> = ({
   width = 500,
   height = 250,
   accentColor = '#06b6d4',
+  compact = false,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
 
-  const padding = 40;
-  const topPadding = 40;
+  const padding = compact ? 10 : 40;
+  const topPadding = compact ? 10 : 40;
+  const bottomPadding = compact ? 10 : 30;
   const drawWidth = width - padding * 2;
-  const drawHeight = height - topPadding - 30;
+  const drawHeight = height - topPadding - bottomPadding;
 
   // Draw the visualization
   useEffect(() => {
@@ -139,53 +142,57 @@ export const FilterVisualizer: React.FC<FilterVisualizerProps> = ({
     ctx.fillStyle = '#0a0a0f';
     ctx.fillRect(0, 0, width, height);
 
-    // Draw label
-    ctx.fillStyle = accentColor;
-    ctx.font = 'bold 14px system-ui';
-    ctx.textAlign = 'left';
-    ctx.fillText('FILTER', padding, 24);
+    // Draw labels only in non-compact mode
+    if (!compact) {
+      ctx.fillStyle = accentColor;
+      ctx.font = 'bold 14px system-ui';
+      ctx.textAlign = 'left';
+      ctx.fillText('FILTER', padding, 24);
 
-    // Draw filter type
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-    ctx.font = '12px system-ui';
-    ctx.textAlign = 'right';
-    ctx.fillText(filterType.toUpperCase(), width - padding, 24);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+      ctx.font = '12px system-ui';
+      ctx.textAlign = 'right';
+      ctx.fillText(filterType.toUpperCase(), width - padding, 24);
+    }
 
     // Draw frequency grid lines
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
     ctx.lineWidth = 1;
 
-    const freqMarkers = [100, 1000, 10000];
-    ctx.font = '9px system-ui';
-    ctx.textAlign = 'center';
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+    // Draw frequency grid and labels (reduced in compact mode)
+    if (!compact) {
+      const freqMarkers = [100, 1000, 10000];
+      ctx.font = '9px system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
 
-    freqMarkers.forEach(freq => {
-      const x = freqToX(freq, drawWidth, padding);
+      freqMarkers.forEach(freq => {
+        const x = freqToX(freq, drawWidth, padding);
+        ctx.beginPath();
+        ctx.moveTo(x, topPadding);
+        ctx.lineTo(x, topPadding + drawHeight);
+        ctx.stroke();
+
+        const label = freq >= 1000 ? `${freq / 1000}k` : `${freq}`;
+        ctx.fillText(label, x, height - 8);
+      });
+
+      // Draw 0dB reference line
+      const zeroY = dbToY(0, drawHeight, topPadding);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+      ctx.setLineDash([4, 4]);
       ctx.beginPath();
-      ctx.moveTo(x, topPadding);
-      ctx.lineTo(x, topPadding + drawHeight);
+      ctx.moveTo(padding, zeroY);
+      ctx.lineTo(padding + drawWidth, zeroY);
       ctx.stroke();
+      ctx.setLineDash([]);
 
-      const label = freq >= 1000 ? `${freq / 1000}k` : `${freq}`;
-      ctx.fillText(label, x, height - 8);
-    });
-
-    // Draw 0dB reference line
-    const zeroY = dbToY(0, drawHeight, topPadding);
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-    ctx.setLineDash([4, 4]);
-    ctx.beginPath();
-    ctx.moveTo(padding, zeroY);
-    ctx.lineTo(padding + drawWidth, zeroY);
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    // Draw dB labels
-    ctx.textAlign = 'right';
-    ctx.fillText('0dB', padding - 4, zeroY + 3);
-    ctx.fillText('+12', padding - 4, dbToY(12, drawHeight, topPadding) + 3);
-    ctx.fillText('-12', padding - 4, dbToY(-12, drawHeight, topPadding) + 3);
+      // Draw dB labels
+      ctx.textAlign = 'right';
+      ctx.fillText('0dB', padding - 4, zeroY + 3);
+      ctx.fillText('+12', padding - 4, dbToY(12, drawHeight, topPadding) + 3);
+      ctx.fillText('-12', padding - 4, dbToY(-12, drawHeight, topPadding) + 3);
+    }
 
     // Draw filter response curve with glow
     ctx.shadowColor = accentColor;
@@ -267,18 +274,20 @@ export const FilterVisualizer: React.FC<FilterVisualizerProps> = ({
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    // Draw cutoff and resonance values
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-    ctx.font = '11px system-ui';
-    ctx.textAlign = 'center';
+    // Draw cutoff and resonance values (only in non-compact mode)
+    if (!compact) {
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+      ctx.font = '11px system-ui';
+      ctx.textAlign = 'center';
 
-    const cutoffLabel = cutoff >= 1000 ? `${(cutoff / 1000).toFixed(1)}kHz` : `${Math.round(cutoff)}Hz`;
-    ctx.fillText(cutoffLabel, cutoffX, cutoffY - 18);
+      const cutoffLabel = cutoff >= 1000 ? `${(cutoff / 1000).toFixed(1)}kHz` : `${Math.round(cutoff)}Hz`;
+      ctx.fillText(cutoffLabel, cutoffX, cutoffY - 18);
 
-    ctx.textAlign = 'left';
-    ctx.fillText(`Q: ${resonance.toFixed(1)}`, width - padding - 50, topPadding + 20);
+      ctx.textAlign = 'left';
+      ctx.fillText(`Q: ${resonance.toFixed(1)}`, width - padding - 50, topPadding + 20);
+    }
 
-  }, [filterType, cutoff, resonance, width, height, accentColor, isDragging, isHovering, padding, topPadding, drawWidth, drawHeight]);
+  }, [filterType, cutoff, resonance, width, height, accentColor, isDragging, isHovering, padding, topPadding, drawWidth, drawHeight, compact]);
 
   // Mouse handlers
   const handleMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {

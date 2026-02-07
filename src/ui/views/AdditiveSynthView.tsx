@@ -1,13 +1,12 @@
 /**
  * Additive Synthesizer View
- * Ableton Learning Synths-style centered layout with large interactive visualizations
+ * Horizontal signal-flow layout: HARMONICS → AMP → FX → OUTPUT
  */
 
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import { useAdditiveSynthStore } from '../stores/additive-synth-store.ts';
 import {
   Knob,
-  Slider,
   SpectrumAnalyzer,
   PianoKeyboard,
   InfoPanel,
@@ -16,17 +15,18 @@ import {
   RecordingControl,
   HarmonicBarsVisualizer,
   EnvelopeVisualizer,
+  XYPad,
 } from '../components/index.ts';
 import { ADDITIVE_PRESETS } from '../../data/presets/additive-presets.ts';
 import { InfoPanelProvider } from '../context/InfoPanelContext.tsx';
 import { PARAM_RANGES } from '../../core/types.ts';
 
-// Module colors
+// Stage colors following signal flow
 const COLORS = {
   harmonics: '#06b6d4',
-  envelope: '#22c55e',
+  amp: '#22c55e',
   effects: '#8b5cf6',
-  output: '#ef4444',
+  output: '#f97316',
 };
 
 export function AdditiveSynthView() {
@@ -60,35 +60,19 @@ export function AdditiveSynthView() {
     loadPreset,
   } = useAdditiveSynthStore();
 
+  // Bottom strip state
+  const [bottomMode, setBottomMode] = useState<'keys' | 'xy'>('keys');
+  const [bottomExpanded, setBottomExpanded] = useState(false);
+
   // Initialize engine on mount
   useEffect(() => {
     initEngine();
   }, [initEngine]);
 
-  // Handle audio context start (requires user gesture)
+  // Handle audio context start
   const handleStartAudio = useCallback(async () => {
     await startAudio();
   }, [startAudio]);
-
-  // Handle first interaction for Web Audio API
-  const handleFirstInteraction = useCallback(async () => {
-    if (!isInitialized) {
-      await startAudio();
-    }
-  }, [isInitialized, startAudio]);
-
-  // Note handlers
-  const handleNoteOn = useCallback(
-    async (note: string) => {
-      await handleFirstInteraction();
-      playNote(note);
-    },
-    [handleFirstInteraction, playNote]
-  );
-
-  const handleNoteOff = useCallback(() => {
-    stopNote();
-  }, [stopNote]);
 
   // Get analyser for spectrum visualization
   const getAnalyser = useCallback(() => {
@@ -96,14 +80,10 @@ export function AdditiveSynthView() {
   }, [engine]);
 
   // Format helpers
-  const formatMs = (value: number) => {
-    if (value >= 1) return `${value.toFixed(2)}s`;
-    return `${Math.round(value * 1000)}ms`;
-  };
   const formatDb = (value: number) => `${value.toFixed(1)}dB`;
   const formatPercent = (value: number) => `${Math.round(value * 100)}%`;
 
-  // Harmonic presets matching AdditivePreset type
+  // Harmonic presets
   const HARMONIC_PRESETS = [
     { label: 'Saw', key: 'saw' as const },
     { label: 'Square', key: 'square' as const },
@@ -111,27 +91,35 @@ export function AdditiveSynthView() {
     { label: 'Organ', key: 'organ' as const },
   ];
 
+  // XY Pad - controls fundamental (H1) and brightness (sum of high harmonics)
+  // X = fundamental volume, Y = high harmonic mix
+  const xRange: [number, number] = [0, 1];
+  const yRange: [number, number] = [0, 1];
+
+  const normalizeValue = (value: number, min: number, max: number) => (value - min) / (max - min);
+  const denormalizeValue = (normalized: number, min: number, max: number) => min + normalized * (max - min);
+
+  // Calculate current XY values from harmonics
+  const fundamentalLevel = params.harmonics[0] ?? 1;
+  const highHarmonicsMix = params.harmonics.slice(4).reduce((sum, h) => sum + h, 0) / 4; // avg of H5-H8
+
   // Not initialized - show start button
   if (!isInitialized) {
     return (
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: '100vh',
-          background: '#0a0a0f',
-          color: '#fff',
-          fontFamily: 'system-ui, -apple-system, sans-serif',
-        }}
-      >
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '100vh',
+        background: '#0a0a0f',
+        color: '#fff',
+        fontFamily: 'system-ui, -apple-system, sans-serif',
+      }}>
         <h1 style={{ fontSize: '32px', fontWeight: 300, marginBottom: '8px', color: '#06b6d4' }}>
           MIXCRAFT
         </h1>
-        <p style={{ color: '#666', marginBottom: '32px' }}>
-          Additive Synthesizer
-        </p>
+        <p style={{ color: '#666', marginBottom: '32px' }}>Additive Synthesizer</p>
         <button
           onClick={handleStartAudio}
           style={{
@@ -144,10 +132,7 @@ export function AdditiveSynthView() {
             cursor: 'pointer',
             fontWeight: 600,
             boxShadow: '0 4px 12px rgba(6, 182, 212, 0.3)',
-            transition: 'transform 0.1s ease',
           }}
-          onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.98)')}
-          onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
         >
           Start Audio Engine
         </button>
@@ -160,101 +145,92 @@ export function AdditiveSynthView() {
 
   return (
     <InfoPanelProvider>
-      <div
-        style={{
-          minHeight: '100vh',
-          background: '#0a0a0f',
-          color: '#fff',
-          fontFamily: 'system-ui, -apple-system, sans-serif',
-        }}
-      >
-        {/* Centered content column */}
-        <div
-          style={{
-            maxWidth: '640px',
-            margin: '0 auto',
-            padding: '24px 20px',
-          }}
-        >
-          {/* Header */}
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '32px',
-            }}
-          >
-            <div>
-              <h1 style={{ fontSize: '24px', fontWeight: 300, margin: 0, color: '#06b6d4' }}>
-                MIXCRAFT
-              </h1>
-              <span style={{ fontSize: '12px', color: '#666' }}>
-                Additive Synthesizer
-              </span>
-            </div>
-
-            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-              <PresetDropdown
-                presets={ADDITIVE_PRESETS}
-                currentPreset={currentPreset}
-                onSelect={loadPreset}
-                accentColor="#06b6d4"
-              />
-              <button
-                onClick={resetToDefaults}
-                style={{
-                  padding: '8px 16px',
-                  background: '#1a1a1a',
-                  border: '1px solid #333',
-                  borderRadius: '4px',
-                  color: '#888',
-                  cursor: 'pointer',
-                  fontSize: '12px',
-                }}
-              >
-                Reset
-              </button>
-            </div>
+      <div style={{
+        minHeight: '100vh',
+        background: '#0a0a0f',
+        color: '#fff',
+        fontFamily: 'system-ui, -apple-system, sans-serif',
+        display: 'flex',
+        flexDirection: 'column',
+      }}>
+        {/* Header */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '16px 24px',
+          paddingLeft: '120px', // Room for fixed menu button
+          borderBottom: '1px solid #1a1a1a',
+        }}>
+          <div>
+            <h1 style={{ fontSize: '20px', fontWeight: 300, margin: 0, color: '#06b6d4' }}>
+              MIXCRAFT
+            </h1>
+            <span style={{ fontSize: '11px', color: '#666' }}>Additive Synthesizer</span>
           </div>
-
-          {/* Spectrum Analyzer */}
-          <div style={{ marginBottom: '32px' }}>
-            <SpectrumAnalyzer
-              getAnalyser={getAnalyser}
-              width={600}
-              height={120}
-              barCount={80}
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <PresetDropdown
+              presets={ADDITIVE_PRESETS}
+              currentPreset={currentPreset}
+              onSelect={loadPreset}
+              accentColor="#06b6d4"
             />
+            <button
+              onClick={resetToDefaults}
+              style={{
+                padding: '6px 12px',
+                background: '#1a1a1a',
+                border: '1px solid #333',
+                borderRadius: '4px',
+                color: '#888',
+                cursor: 'pointer',
+                fontSize: '11px',
+              }}
+            >
+              Reset
+            </button>
           </div>
+        </div>
 
-          {/* Harmonics Module */}
-          <ModuleSection title="HARMONICS" color={COLORS.harmonics}>
+        {/* Spectrum Analyzer */}
+        <div style={{ padding: '12px 24px', background: '#050508' }}>
+          <SpectrumAnalyzer getAnalyser={getAnalyser} width={window.innerWidth - 48} height={80} barCount={100} />
+        </div>
+
+        {/* Signal Flow - Horizontal flex wrap */}
+        <div style={{
+          flex: 1,
+          padding: '16px',
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '16px',
+          alignContent: 'flex-start',
+          overflow: 'auto',
+        }}>
+          {/* HARMONICS Stage - extra wide for the bars */}
+          <StageCard title="HARMONICS" color={COLORS.harmonics} extraWide>
             <HarmonicBarsVisualizer
               harmonics={params.harmonics}
               onHarmonicChange={setHarmonic}
-              width={600}
-              height={250}
+              width={400}
+              height={140}
               accentColor={COLORS.harmonics}
             />
-
-            {/* Harmonic Presets */}
-            <div style={{ marginTop: '16px' }}>
-              <div style={{ fontSize: '11px', color: '#888', marginBottom: '8px' }}>QUICK PRESETS</div>
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <div style={{ marginTop: '8px' }}>
+              <div style={{ fontSize: '9px', color: '#666', marginBottom: '4px' }}>PRESETS</div>
+              <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
                 {HARMONIC_PRESETS.map((preset) => (
                   <button
                     key={preset.key}
                     onClick={() => applyPreset(preset.key)}
                     style={{
-                      padding: '6px 12px',
+                      padding: '4px 8px',
                       background: '#1a1a1a',
                       border: '1px solid #333',
                       borderRadius: '4px',
                       color: '#888',
                       cursor: 'pointer',
-                      fontSize: '11px',
-                      transition: 'all 0.1s ease',
+                      fontSize: '10px',
                     }}
                     onMouseOver={(e) => {
                       e.currentTarget.style.borderColor = COLORS.harmonics;
@@ -270,10 +246,10 @@ export function AdditiveSynthView() {
                 ))}
               </div>
             </div>
-          </ModuleSection>
+          </StageCard>
 
-          {/* Amplitude Envelope Module */}
-          <ModuleSection title="AMPLITUDE ENVELOPE" color={COLORS.envelope}>
+          {/* AMP Stage */}
+          <StageCard title="AMP" color={COLORS.amp}>
             <EnvelopeVisualizer
               attack={params.amplitudeEnvelope.attack}
               decay={params.amplitudeEnvelope.decay}
@@ -283,191 +259,62 @@ export function AdditiveSynthView() {
               onDecayChange={setAmplitudeDecay}
               onSustainChange={setAmplitudeSustain}
               onReleaseChange={setAmplitudeRelease}
-              width={600}
-              height={200}
-              accentColor={COLORS.envelope}
+              width={200}
+              height={120}
+              accentColor={COLORS.amp}
+              compact
             />
-            <div style={{ display: 'flex', gap: '16px', marginTop: '16px', justifyContent: 'center' }}>
-              <Slider
-                label="Attack"
-                value={params.amplitudeEnvelope.attack}
-                min={0.001}
-                max={2}
-                step={0.001}
-                onChange={setAmplitudeAttack}
-                formatValue={formatMs}
-                logarithmic
-                paramId="amplitude.attack"
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '12px' }}>
+              <MiniSlider label="A" value={params.amplitudeEnvelope.attack} min={0.001} max={2} onChange={setAmplitudeAttack} color={COLORS.amp} />
+              <MiniSlider label="D" value={params.amplitudeEnvelope.decay} min={0.001} max={2} onChange={setAmplitudeDecay} color={COLORS.amp} />
+              <MiniSlider label="S" value={params.amplitudeEnvelope.sustain} min={0} max={1} onChange={setAmplitudeSustain} color={COLORS.amp} />
+              <MiniSlider label="R" value={params.amplitudeEnvelope.release} min={0.001} max={4} onChange={setAmplitudeRelease} color={COLORS.amp} />
+            </div>
+          </StageCard>
+
+          {/* FX Stage */}
+          <StageCard title="FX" color={COLORS.effects} wide>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <EffectMini
+                name="DIST"
+                color="#ef4444"
+                knobs={[
+                  { label: 'Amt', value: params.effects.distortion.amount, onChange: setDistortionAmount, max: 1 },
+                  { label: 'Mix', value: params.effects.distortion.mix, onChange: setDistortionMix, max: 1 },
+                ]}
               />
-              <Slider
-                label="Decay"
-                value={params.amplitudeEnvelope.decay}
-                min={0.001}
-                max={2}
-                step={0.001}
-                onChange={setAmplitudeDecay}
-                formatValue={formatMs}
-                logarithmic
-                paramId="amplitude.decay"
+              <EffectMini
+                name="DELAY"
+                color="#3b82f6"
+                knobs={[
+                  { label: 'Time', value: params.effects.delay.time, onChange: setDelayTime, max: 1 },
+                  { label: 'FB', value: params.effects.delay.feedback, onChange: setDelayFeedback, max: 0.9 },
+                  { label: 'Mix', value: params.effects.delay.mix, onChange: setDelayMix, max: 1 },
+                ]}
               />
-              <Slider
-                label="Sustain"
-                value={params.amplitudeEnvelope.sustain}
-                min={0}
-                max={1}
-                step={0.01}
-                onChange={setAmplitudeSustain}
-                formatValue={formatPercent}
-                paramId="amplitude.sustain"
+              <EffectMini
+                name="REVERB"
+                color="#8b5cf6"
+                knobs={[
+                  { label: 'Decay', value: params.effects.reverb.decay, onChange: setReverbDecay, max: 10 },
+                  { label: 'Mix', value: params.effects.reverb.mix, onChange: setReverbMix, max: 1 },
+                ]}
               />
-              <Slider
-                label="Release"
-                value={params.amplitudeEnvelope.release}
-                min={0.001}
-                max={4}
-                step={0.001}
-                onChange={setAmplitudeRelease}
-                formatValue={formatMs}
-                logarithmic
-                paramId="amplitude.release"
+              <EffectMini
+                name="CHORUS"
+                color="#06b6d4"
+                knobs={[
+                  { label: 'Rate', value: params.effects.chorus.rate, onChange: setChorusRate, max: 10 },
+                  { label: 'Depth', value: params.effects.chorus.depth, onChange: setChorusDepth, max: 1 },
+                  { label: 'Mix', value: params.effects.chorus.mix, onChange: setChorusMix, max: 1 },
+                ]}
               />
             </div>
-          </ModuleSection>
+          </StageCard>
 
-          {/* Effects Module */}
-          <ModuleSection title="EFFECTS" color={COLORS.effects}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
-              {/* Distortion */}
-              <EffectGroup title="DISTORTION">
-                <Knob
-                  label="Amount"
-                  value={params.effects.distortion.amount}
-                  min={PARAM_RANGES.distortionAmount.min}
-                  max={PARAM_RANGES.distortionAmount.max}
-                  step={PARAM_RANGES.distortionAmount.step}
-                  onChange={setDistortionAmount}
-                  formatValue={formatPercent}
-                  size={48}
-                  paramId="distortion.amount"
-                />
-                <Knob
-                  label="Mix"
-                  value={params.effects.distortion.mix}
-                  min={PARAM_RANGES.distortionMix.min}
-                  max={PARAM_RANGES.distortionMix.max}
-                  step={PARAM_RANGES.distortionMix.step}
-                  onChange={setDistortionMix}
-                  formatValue={formatPercent}
-                  size={48}
-                  paramId="distortion.mix"
-                />
-              </EffectGroup>
-
-              {/* Delay */}
-              <EffectGroup title="DELAY">
-                <Knob
-                  label="Time"
-                  value={params.effects.delay.time}
-                  min={PARAM_RANGES.delayTime.min}
-                  max={PARAM_RANGES.delayTime.max}
-                  step={PARAM_RANGES.delayTime.step}
-                  onChange={setDelayTime}
-                  formatValue={(v) => `${Math.round(v * 1000)}ms`}
-                  size={48}
-                  paramId="delay.time"
-                />
-                <Knob
-                  label="Feedback"
-                  value={params.effects.delay.feedback}
-                  min={PARAM_RANGES.delayFeedback.min}
-                  max={PARAM_RANGES.delayFeedback.max}
-                  step={PARAM_RANGES.delayFeedback.step}
-                  onChange={setDelayFeedback}
-                  formatValue={formatPercent}
-                  size={48}
-                  paramId="delay.feedback"
-                />
-                <Knob
-                  label="Mix"
-                  value={params.effects.delay.mix}
-                  min={PARAM_RANGES.delayMix.min}
-                  max={PARAM_RANGES.delayMix.max}
-                  step={PARAM_RANGES.delayMix.step}
-                  onChange={setDelayMix}
-                  formatValue={formatPercent}
-                  size={48}
-                  paramId="delay.mix"
-                />
-              </EffectGroup>
-
-              {/* Reverb */}
-              <EffectGroup title="REVERB">
-                <Knob
-                  label="Decay"
-                  value={params.effects.reverb.decay}
-                  min={PARAM_RANGES.reverbDecay.min}
-                  max={PARAM_RANGES.reverbDecay.max}
-                  step={PARAM_RANGES.reverbDecay.step}
-                  onChange={setReverbDecay}
-                  formatValue={(v) => `${v.toFixed(1)}s`}
-                  size={48}
-                  paramId="reverb.decay"
-                />
-                <Knob
-                  label="Mix"
-                  value={params.effects.reverb.mix}
-                  min={PARAM_RANGES.reverbMix.min}
-                  max={PARAM_RANGES.reverbMix.max}
-                  step={PARAM_RANGES.reverbMix.step}
-                  onChange={setReverbMix}
-                  formatValue={formatPercent}
-                  size={48}
-                  paramId="reverb.mix"
-                />
-              </EffectGroup>
-
-              {/* Chorus */}
-              <EffectGroup title="CHORUS">
-                <Knob
-                  label="Rate"
-                  value={params.effects.chorus.rate}
-                  min={PARAM_RANGES.chorusRate.min}
-                  max={PARAM_RANGES.chorusRate.max}
-                  step={PARAM_RANGES.chorusRate.step}
-                  onChange={setChorusRate}
-                  formatValue={(v) => `${v.toFixed(1)}Hz`}
-                  size={48}
-                  paramId="chorus.rate"
-                />
-                <Knob
-                  label="Depth"
-                  value={params.effects.chorus.depth}
-                  min={PARAM_RANGES.chorusDepth.min}
-                  max={PARAM_RANGES.chorusDepth.max}
-                  step={PARAM_RANGES.chorusDepth.step}
-                  onChange={setChorusDepth}
-                  formatValue={formatPercent}
-                  size={48}
-                  paramId="chorus.depth"
-                />
-                <Knob
-                  label="Mix"
-                  value={params.effects.chorus.mix}
-                  min={PARAM_RANGES.chorusMix.min}
-                  max={PARAM_RANGES.chorusMix.max}
-                  step={PARAM_RANGES.chorusMix.step}
-                  onChange={setChorusMix}
-                  formatValue={formatPercent}
-                  size={48}
-                  paramId="chorus.mix"
-                />
-              </EffectGroup>
-            </div>
-          </ModuleSection>
-
-          {/* Output & Recording */}
-          <ModuleSection title="OUTPUT" color={COLORS.output}>
-            <div style={{ display: 'flex', gap: '32px', alignItems: 'center', justifyContent: 'center' }}>
+          {/* OUTPUT Stage */}
+          <StageCard title="OUTPUT" color={COLORS.output}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
               <Knob
                 label="Volume"
                 value={params.volume}
@@ -476,41 +323,117 @@ export function AdditiveSynthView() {
                 step={0.5}
                 onChange={setVolume}
                 formatValue={formatDb}
-                size={64}
+                size={56}
                 paramId="volume"
               />
               <RecordingControl
                 sourceNode={engine?.getOutputNode() ?? null}
-                accentColor="#ef4444"
+                accentColor={COLORS.output}
+                compact
               />
             </div>
-          </ModuleSection>
+          </StageCard>
+        </div>
 
-          {/* Sequencer */}
-          <ModuleSection title="SEQUENCER" color="#06b6d4">
-            <Sequencer
-              engine={engine}
-              accentColor="#06b6d4"
-            />
-          </ModuleSection>
+        {/* Sequencer */}
+        <div style={{ padding: '12px 24px', borderTop: '1px solid #1a1a1a' }}>
+          <Sequencer engine={engine} accentColor="#06b6d4" />
+        </div>
 
-          {/* Keyboard - sticky at bottom */}
+        {/* Bottom Control Strip */}
+        <div style={{
+          borderTop: '1px solid #1a1a1a',
+          background: '#0d0d12',
+        }}>
+          {/* Tabs */}
+          <div style={{ display: 'flex', borderBottom: '1px solid #1a1a1a' }}>
+            <button
+              onClick={() => setBottomMode('xy')}
+              style={{
+                padding: '8px 16px',
+                background: bottomMode === 'xy' ? '#1a1a1a' : 'transparent',
+                border: 'none',
+                borderBottom: bottomMode === 'xy' ? `2px solid ${COLORS.harmonics}` : '2px solid transparent',
+                color: bottomMode === 'xy' ? '#fff' : '#666',
+                cursor: 'pointer',
+                fontSize: '11px',
+                fontWeight: 600,
+              }}
+            >
+              XY
+            </button>
+            <button
+              onClick={() => setBottomMode('keys')}
+              style={{
+                padding: '8px 16px',
+                background: bottomMode === 'keys' ? '#1a1a1a' : 'transparent',
+                border: 'none',
+                borderBottom: bottomMode === 'keys' ? `2px solid ${COLORS.harmonics}` : '2px solid transparent',
+                color: bottomMode === 'keys' ? '#fff' : '#666',
+                cursor: 'pointer',
+                fontSize: '11px',
+                fontWeight: 600,
+              }}
+            >
+              KEYS
+            </button>
+            <div style={{ flex: 1 }} />
+            <button
+              onClick={() => setBottomExpanded(!bottomExpanded)}
+              style={{
+                padding: '8px 16px',
+                background: 'transparent',
+                border: 'none',
+                color: '#666',
+                cursor: 'pointer',
+                fontSize: '11px',
+              }}
+            >
+              {bottomExpanded ? '▼' : '▲'}
+            </button>
+          </div>
+
+          {/* Content */}
           <div
             style={{
-              position: 'sticky',
-              bottom: 0,
-              background: '#0a0a0f',
-              paddingTop: '16px',
-              paddingBottom: '24px',
-              marginTop: '32px',
+              height: bottomExpanded ? '140px' : '50px',
+              transition: 'height 0.2s ease',
+              overflow: 'hidden',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '8px 24px',
             }}
+            onClick={() => !bottomExpanded && setBottomExpanded(true)}
           >
-            <PianoKeyboard
-              onNoteOn={handleNoteOn}
-              onNoteOff={handleNoteOff}
-              octave={3}
-              octaves={3}
-            />
+            {bottomMode === 'keys' ? (
+              <PianoKeyboard
+                onNoteOn={playNote}
+                onNoteOff={stopNote}
+                octave={3}
+                octaves={bottomExpanded ? 3 : 1}
+              />
+            ) : (
+              <XYPad
+                xValue={fundamentalLevel}
+                yValue={highHarmonicsMix}
+                xLabel="Fundamental"
+                yLabel="Brightness"
+                xRange={xRange}
+                yRange={yRange}
+                onXChange={(v) => setHarmonic(0, v)}
+                onYChange={(v) => {
+                  // Adjust high harmonics (H5-H8) proportionally
+                  for (let i = 4; i < 8; i++) {
+                    setHarmonic(i, v);
+                  }
+                }}
+                size={bottomExpanded ? 120 : 40}
+                accentColor={COLORS.harmonics}
+                formatXValue={formatPercent}
+                formatYValue={formatPercent}
+              />
+            )}
           </div>
         </div>
 
@@ -520,19 +443,38 @@ export function AdditiveSynthView() {
   );
 }
 
-// Simple module section wrapper
-function ModuleSection({ title, color, children }: { title: string; color: string; children: React.ReactNode }) {
+// Stage card component
+function StageCard({
+  title,
+  color,
+  wide = false,
+  extraWide = false,
+  children
+}: {
+  title: string;
+  color: string;
+  wide?: boolean;
+  extraWide?: boolean;
+  children: React.ReactNode;
+}) {
   return (
-    <div style={{ marginBottom: '48px' }}>
-      <div
-        style={{
-          fontSize: '12px',
-          fontWeight: 600,
-          color: color,
-          letterSpacing: '0.5px',
-          marginBottom: '16px',
-        }}
-      >
+    <div style={{
+      background: '#111',
+      border: `1px solid ${color}40`,
+      borderRadius: '8px',
+      padding: '12px',
+      minWidth: extraWide ? '400px' : wide ? '280px' : '180px',
+      flex: extraWide ? '3 1 400px' : wide ? '2 1 280px' : '1 1 180px',
+      maxWidth: extraWide ? '500px' : wide ? '400px' : '240px',
+      alignSelf: 'flex-start',
+    }}>
+      <div style={{
+        fontSize: '11px',
+        fontWeight: 600,
+        color: color,
+        letterSpacing: '0.5px',
+        marginBottom: '12px',
+      }}>
         {title}
       </div>
       {children}
@@ -540,15 +482,83 @@ function ModuleSection({ title, color, children }: { title: string; color: strin
   );
 }
 
-// Effect group wrapper
-function EffectGroup({ title, children }: { title: string; children: React.ReactNode }) {
+// Mini slider for ADSR
+function MiniSlider({
+  label,
+  value,
+  min,
+  max,
+  onChange,
+  color,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  onChange: (v: number) => void;
+  color: string;
+}) {
+  const percent = ((value - min) / (max - min)) * 100;
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+      <span style={{ fontSize: '10px', color: '#666', width: '12px' }}>{label}</span>
+      <div
+        style={{
+          flex: 1,
+          height: '4px',
+          background: '#222',
+          borderRadius: '2px',
+          cursor: 'pointer',
+          position: 'relative',
+        }}
+        onClick={(e) => {
+          const rect = e.currentTarget.getBoundingClientRect();
+          const x = (e.clientX - rect.left) / rect.width;
+          onChange(min + x * (max - min));
+        }}
+      >
+        <div style={{
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          height: '100%',
+          width: `${percent}%`,
+          background: color,
+          borderRadius: '2px',
+        }} />
+      </div>
+    </div>
+  );
+}
+
+// Mini effect control
+function EffectMini({
+  name,
+  color,
+  knobs,
+}: {
+  name: string;
+  color: string;
+  knobs: Array<{ label: string; value: number; onChange: (v: number) => void; max: number }>;
+}) {
   return (
     <div>
-      <div style={{ fontSize: '10px', color: '#666', marginBottom: '12px', letterSpacing: '0.5px' }}>
-        {title}
-      </div>
-      <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
-        {children}
+      <div style={{ fontSize: '9px', color, marginBottom: '6px', fontWeight: 600 }}>{name}</div>
+      <div style={{ display: 'flex', gap: '6px' }}>
+        {knobs.map((k) => (
+          <Knob
+            key={k.label}
+            label={k.label}
+            value={k.value}
+            min={0}
+            max={k.max}
+            step={0.01}
+            onChange={k.onChange}
+            formatValue={(v) => `${Math.round((v / k.max) * 100)}%`}
+            size={32}
+            paramId={`effect.${name.toLowerCase()}.${k.label.toLowerCase()}`}
+          />
+        ))}
       </div>
     </div>
   );
