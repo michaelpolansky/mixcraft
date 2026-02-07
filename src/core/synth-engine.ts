@@ -382,6 +382,29 @@ export class SynthEngine {
     return data;
   }
 
+  /**
+   * Gets the current real-time modulated values for all modulation destinations.
+   * These values reflect actual modulation from LFOs, envelopes, and mod matrix routes.
+   * Use this for real-time UI display of oscillating/modulated parameter values.
+   */
+  getModulatedValues(): Record<ModDestination, number> {
+    // Tone.js Frequency values may be strings - convert to numbers
+    const toNumber = (val: Tone.Unit.Frequency): number => {
+      if (typeof val === 'number') return val;
+      return Tone.Frequency(val).toFrequency();
+    };
+
+    return {
+      pitch: this.synth.detune.value as number,
+      pan: this.panner.pan.value as number,
+      amplitude: this.outputGain.gain.value as number,
+      filterCutoff: toNumber(this.synth.filter.frequency.value),
+      osc2Mix: this.osc2Gain.gain.value as number,
+      lfo1Rate: toNumber(this.lfo.frequency.value),
+      lfo2Rate: toNumber(this.lfo2.frequency.value),
+    };
+  }
+
   // ============================================
   // Oscillator Controls
   // ============================================

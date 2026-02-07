@@ -5,6 +5,7 @@
 
 import { useEffect, useCallback, useState } from 'react';
 import { useSynthStore } from '../stores/synth-store.ts';
+import { useModulatedValues } from '../hooks/useModulatedValues.ts';
 import {
   Knob,
   Slider,
@@ -159,6 +160,9 @@ export function SynthView() {
   // Bottom strip state: 'keys' or 'xy'
   const [bottomMode, setBottomMode] = useState<'keys' | 'xy'>('keys');
   const [bottomExpanded, setBottomExpanded] = useState(false);
+
+  // Real-time modulated values for UI display
+  const modulatedValues = useModulatedValues();
 
   // Initialize engine on mount
   useEffect(() => {
@@ -534,6 +538,7 @@ export function SynthView() {
                       formatValue={(v) => `${Math.round(v * 100)}%`}
                       size={36}
                       paramId="osc2.mix"
+                      modulatedValue={modulatedValues?.osc2Mix}
                     />
                   </div>
                 </>
@@ -604,7 +609,7 @@ export function SynthView() {
               <FilterTypeSelector value={params.filter.type} onChange={setFilterType} />
             </div>
             <div style={{ display: 'flex', gap: '12px', marginTop: '12px', justifyContent: 'center' }}>
-              <Knob label="Cutoff" value={params.filter.cutoff} min={PARAM_RANGES.cutoff.min} max={PARAM_RANGES.cutoff.max} step={1} onChange={setFilterCutoff} formatValue={formatHz} logarithmic size={40} paramId="filter.cutoff" />
+              <Knob label="Cutoff" value={params.filter.cutoff} min={PARAM_RANGES.cutoff.min} max={PARAM_RANGES.cutoff.max} step={1} onChange={setFilterCutoff} formatValue={formatHz} logarithmic size={40} paramId="filter.cutoff" modulatedValue={modulatedValues?.filterCutoff} />
               <Knob label="Res" value={params.filter.resonance} min={0} max={20} step={0.1} onChange={setFilterResonance} formatValue={(v) => v.toFixed(1)} size={40} paramId="filter.resonance" />
               <Knob label="Key" value={params.filter.keyTracking} min={0} max={1} step={0.01} onChange={setFilterKeyTracking} formatValue={formatPercent} size={40} paramId="filter.keyTracking" />
             </div>
@@ -678,7 +683,7 @@ export function SynthView() {
             <div style={{ display: 'flex', gap: '12px', marginTop: '12px', justifyContent: 'center' }}>
               {/* Show Rate knob when not synced, Division selector when synced */}
               {!params.lfo.sync ? (
-                <Knob label="Rate" value={params.lfo.rate} min={0.1} max={20} step={0.1} onChange={setLFORate} formatValue={(v) => `${v.toFixed(1)}`} size={40} paramId="lfo.rate" />
+                <Knob label="Rate" value={params.lfo.rate} min={0.1} max={20} step={0.1} onChange={setLFORate} formatValue={(v) => `${v.toFixed(1)}`} size={40} paramId="lfo.rate" modulatedValue={modulatedValues?.lfo1Rate} />
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
                   <span style={{ fontSize: '9px', color: '#888' }}>Division</span>
@@ -763,6 +768,7 @@ export function SynthView() {
                       formatValue={(v) => `${v.toFixed(1)} Hz`}
                       size={40}
                       paramId="lfo2.rate"
+                      modulatedValue={modulatedValues?.lfo2Rate}
                     />
                     <Knob
                       label="Depth"
@@ -1079,6 +1085,7 @@ export function SynthView() {
                       }}
                       size={40}
                       paramId="pan"
+                      modulatedValue={modulatedValues?.pan}
                     />
                     <span style={{ fontSize: '9px', color: params.pan > 0 ? COLORS.output : '#666', fontWeight: params.pan > 0 ? 600 : 400 }}>R</span>
                   </div>

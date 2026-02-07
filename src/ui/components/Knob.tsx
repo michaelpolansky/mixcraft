@@ -21,6 +21,8 @@ interface KnobProps {
   logarithmic?: boolean;
   /** Parameter ID for info panel (e.g., "filter.cutoff") */
   paramId?: string;
+  /** Real-time modulated value (optional) - shows oscillating value when modulation is active */
+  modulatedValue?: number;
 }
 
 export function Knob({
@@ -34,6 +36,7 @@ export function Knob({
   size = 64,
   logarithmic = false,
   paramId,
+  modulatedValue,
 }: KnobProps) {
   const knobRef = useRef<HTMLDivElement>(null);
   const { setHoveredParam } = useInfoPanel();
@@ -106,6 +109,22 @@ export function Knob({
 
   const displayValue = formatValue ? formatValue(value) : value.toFixed(2);
 
+  // Check if modulation is active (value differs from base by threshold)
+  const modulationThreshold = (max - min) * 0.005; // 0.5% of range
+  const isModulated = modulatedValue !== undefined &&
+    Math.abs(modulatedValue - value) > modulationThreshold;
+
+  // Calculate modulated arc position (clamped to range)
+  const clampedModulatedValue = modulatedValue !== undefined
+    ? Math.max(min, Math.min(max, modulatedValue))
+    : value;
+  const modulatedPosition = valueToPosition(clampedModulatedValue);
+
+  // Format the modulated value for display
+  const modulatedDisplayValue = isModulated
+    ? (formatValue ? formatValue(clampedModulatedValue) : clampedModulatedValue.toFixed(2))
+    : null;
+
   // Track mouse position for tooltip placement
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (paramId) {
@@ -152,6 +171,7 @@ export function Knob({
           }}
           viewBox="0 0 100 100"
         >
+          {/* Background arc */}
           <circle
             cx="50"
             cy="50"
@@ -161,6 +181,7 @@ export function Knob({
             strokeWidth="4"
             strokeDasharray={`${270 * (Math.PI * 42) / 180} 1000`}
           />
+          {/* Base value arc */}
           <circle
             cx="50"
             cy="50"
@@ -170,6 +191,19 @@ export function Knob({
             strokeWidth="4"
             strokeDasharray={`${valueToPosition(value) * 270 * (Math.PI * 42) / 180} 1000`}
           />
+          {/* Modulated value arc indicator - shows current modulated position */}
+          {isModulated && (
+            <circle
+              cx="50"
+              cy="50"
+              r="38"
+              fill="none"
+              stroke="#22d3ee"
+              strokeWidth="3"
+              strokeDasharray={`${modulatedPosition * 270 * (Math.PI * 38) / 180} 1000`}
+              style={{ transition: 'none' }}
+            />
+          )}
         </svg>
 
         {/* Pointer line */}
@@ -213,15 +247,36 @@ export function Knob({
         {label}
       </span>
 
-      <span
-        style={{
-          fontSize: '11px',
-          color: '#4ade80',
-          fontFamily: 'monospace',
-        }}
-      >
-        {displayValue}
-      </span>
+      {/* Value display - shows modulated value when active */}
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        minHeight: isModulated ? '28px' : '16px',
+      }}>
+        <span
+          style={{
+            fontSize: isModulated ? '9px' : '11px',
+            color: isModulated ? '#666' : '#4ade80',
+            fontFamily: 'monospace',
+          }}
+        >
+          {displayValue}
+        </span>
+        {/* Modulated value display */}
+        {isModulated && modulatedDisplayValue && (
+          <span
+            style={{
+              fontSize: '11px',
+              color: '#22d3ee',
+              fontFamily: 'monospace',
+              fontWeight: 500,
+            }}
+          >
+            {modulatedDisplayValue}
+          </span>
+        )}
+      </div>
     </div>
   );
 }
