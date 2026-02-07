@@ -36,7 +36,7 @@ function getWaveformValue(waveform: OscillatorType, phase: number): number {
   }
 }
 
-export const FMVisualizer: React.FC<FMVisualizerProps> = ({
+const FMVisualizerComponent: React.FC<FMVisualizerProps> = ({
   carrierType,
   modulatorType,
   harmonicity,
@@ -50,6 +50,7 @@ export const FMVisualizer: React.FC<FMVisualizerProps> = ({
   const animationRef = useRef<number>(0);
   const phaseRef = useRef<number>(0);
   const lastTimeRef = useRef<number>(Date.now());
+  const canvasSizeRef = useRef<{ width: number; height: number; dpr: number }>({ width: 0, height: 0, dpr: 0 });
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -58,10 +59,14 @@ export const FMVisualizer: React.FC<FMVisualizerProps> = ({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    // Only update canvas dimensions when they actually change
     const dpr = window.devicePixelRatio || 1;
-    canvas.width = width * dpr;
-    canvas.height = height * dpr;
-    ctx.scale(dpr, dpr);
+    if (canvasSizeRef.current.width !== width || canvasSizeRef.current.height !== height || canvasSizeRef.current.dpr !== dpr) {
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      ctx.scale(dpr, dpr);
+      canvasSizeRef.current = { width, height, dpr };
+    }
 
     // Update phase
     const now = Date.now();
@@ -187,3 +192,5 @@ export const FMVisualizer: React.FC<FMVisualizerProps> = ({
     />
   );
 };
+
+export const FMVisualizer = React.memo(FMVisualizerComponent);

@@ -37,7 +37,7 @@ function getWaveformValue(waveform: OscillatorType, phase: number): number {
   }
 }
 
-export const OscillatorVisualizer: React.FC<OscillatorVisualizerProps> = ({
+const OscillatorVisualizerComponent: React.FC<OscillatorVisualizerProps> = ({
   waveform,
   octave,
   detune,
@@ -52,6 +52,7 @@ export const OscillatorVisualizer: React.FC<OscillatorVisualizerProps> = ({
   const animationRef = useRef<number>(0);
   const phaseRef = useRef<number>(0);
   const lastTimeRef = useRef<number>(Date.now());
+  const canvasSizeRef = useRef<{ width: number; height: number; dpr: number }>({ width: 0, height: 0, dpr: 0 });
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -60,10 +61,14 @@ export const OscillatorVisualizer: React.FC<OscillatorVisualizerProps> = ({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    // Only update canvas dimensions when they actually change
     const dpr = window.devicePixelRatio || 1;
-    canvas.width = width * dpr;
-    canvas.height = height * dpr;
-    ctx.scale(dpr, dpr);
+    if (canvasSizeRef.current.width !== width || canvasSizeRef.current.height !== height || canvasSizeRef.current.dpr !== dpr) {
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      ctx.scale(dpr, dpr);
+      canvasSizeRef.current = { width, height, dpr };
+    }
 
     // Update phase based on octave (higher octave = faster scrolling)
     const now = Date.now();
@@ -215,3 +220,5 @@ export const OscillatorVisualizer: React.FC<OscillatorVisualizerProps> = ({
     />
   );
 };
+
+export const OscillatorVisualizer = React.memo(OscillatorVisualizerComponent);

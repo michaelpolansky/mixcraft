@@ -3,7 +3,7 @@
  * Shows 16 harmonics as draggable bars with frequency labels
  */
 
-import React, { useRef, useEffect, useCallback, useState } from 'react';
+import React, { useRef, useEffect, useCallback, useState, memo } from 'react';
 
 interface HarmonicBarsVisualizerProps {
   harmonics: number[];  // 16 values, 0-1
@@ -13,7 +13,7 @@ interface HarmonicBarsVisualizerProps {
   accentColor?: string;
 }
 
-export const HarmonicBarsVisualizer: React.FC<HarmonicBarsVisualizerProps> = ({
+const HarmonicBarsVisualizerComponent: React.FC<HarmonicBarsVisualizerProps> = ({
   harmonics,
   onHarmonicChange,
   width = 600,
@@ -218,3 +218,5 @@ export const HarmonicBarsVisualizer: React.FC<HarmonicBarsVisualizerProps> = ({
     />
   );
 };
+
+export const HarmonicBarsVisualizer = memo(HarmonicBarsVisualizerComponent);

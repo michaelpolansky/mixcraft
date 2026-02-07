@@ -3,7 +3,7 @@
  * Ableton Learning Synths-style interactive filter display
  */
 
-import React, { useRef, useEffect, useCallback, useState } from 'react';
+import React, { useRef, useEffect, useCallback, useState, memo } from 'react';
 
 interface FilterVisualizerProps {
   filterType: 'lowpass' | 'highpass' | 'bandpass';
@@ -104,7 +104,7 @@ function calculateResponse(
   return Math.max(MIN_DB, Math.min(MAX_DB, db));
 }
 
-export const FilterVisualizer: React.FC<FilterVisualizerProps> = ({
+const FilterVisualizerComponent: React.FC<FilterVisualizerProps> = ({
   filterType,
   cutoff,
   resonance,
@@ -347,3 +347,5 @@ export const FilterVisualizer: React.FC<FilterVisualizerProps> = ({
     />
   );
 };
+
+export const FilterVisualizer = memo(FilterVisualizerComponent);

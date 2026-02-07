@@ -35,7 +35,7 @@ function getWaveformValue(waveform: LFOWaveform, phase: number): number {
   }
 }
 
-export const LFOVisualizer: React.FC<LFOVisualizerProps> = ({
+const LFOVisualizerComponent: React.FC<LFOVisualizerProps> = ({
   waveform,
   rate,
   depth,
@@ -47,6 +47,7 @@ export const LFOVisualizer: React.FC<LFOVisualizerProps> = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>(0);
   const startTimeRef = useRef<number>(Date.now());
+  const canvasSizeRef = useRef<{ width: number; height: number; dpr: number }>({ width: 0, height: 0, dpr: 0 });
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -55,10 +56,14 @@ export const LFOVisualizer: React.FC<LFOVisualizerProps> = ({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    // Only update canvas dimensions when they actually change
     const dpr = window.devicePixelRatio || 1;
-    canvas.width = width * dpr;
-    canvas.height = height * dpr;
-    ctx.scale(dpr, dpr);
+    if (canvasSizeRef.current.width !== width || canvasSizeRef.current.height !== height || canvasSizeRef.current.dpr !== dpr) {
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      ctx.scale(dpr, dpr);
+      canvasSizeRef.current = { width, height, dpr };
+    }
 
     const padding = compact ? 8 : 30;
     const topPadding = compact ? 8 : 40;
@@ -219,6 +224,8 @@ export const LFOVisualizer: React.FC<LFOVisualizerProps> = ({
     />
   );
 };
+
+export const LFOVisualizer = React.memo(LFOVisualizerComponent);
 
 // Legacy export for backwards compatibility
 export function LFOVisualizerLegacy({

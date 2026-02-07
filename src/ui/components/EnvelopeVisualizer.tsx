@@ -3,7 +3,7 @@
  * Ableton Learning Synths-style interactive envelope display
  */
 
-import React, { useRef, useEffect, useCallback, useState } from 'react';
+import React, { useRef, useEffect, useCallback, useState, memo } from 'react';
 
 interface EnvelopeVisualizerProps {
   attack: number;      // 0-2 seconds
@@ -34,7 +34,7 @@ const DECAY_WIDTH = 0.2;
 const SUSTAIN_WIDTH = 0.3;
 const RELEASE_WIDTH = 0.3;
 
-export const EnvelopeVisualizer: React.FC<EnvelopeVisualizerProps> = ({
+const EnvelopeVisualizerComponent: React.FC<EnvelopeVisualizerProps> = ({
   attack,
   decay,
   sustain,
@@ -350,6 +350,8 @@ export const EnvelopeVisualizer: React.FC<EnvelopeVisualizerProps> = ({
     />
   );
 };
+
+export const EnvelopeVisualizer = memo(EnvelopeVisualizerComponent);
 
 // Legacy export for backwards compatibility with existing usage
 export function EnvelopeVisualizerReadOnly({
