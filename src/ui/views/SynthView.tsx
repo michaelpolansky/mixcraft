@@ -25,7 +25,7 @@ import {
   Oscilloscope,
   Tooltip,
 } from '../components/index.ts';
-import type { LFOSyncDivision, NoiseType } from '../../core/types.ts';
+import type { LFOSyncDivision, LFOWaveform, NoiseType, OscillatorType } from '../../core/types.ts';
 import { SUBTRACTIVE_PRESETS } from '../../data/presets/subtractive-presets.ts';
 import { InfoPanelProvider, useInfoPanel } from '../context/InfoPanelContext.tsx';
 import { PARAM_RANGES } from '../../core/types.ts';
@@ -33,11 +33,14 @@ import { PARAM_RANGES } from '../../core/types.ts';
 // Stage colors following signal flow
 const COLORS = {
   oscillator: '#3b82f6',
+  subOsc: '#1e40af',   // Darker blue for sub oscillator
+  osc2: '#60a5fa',     // Lighter blue for oscillator 2
   noise: '#64748b',    // Slate gray for noise
   filter: '#06b6d4',
   amp: '#22c55e',
   filterEnv: '#eab308',
   lfo: '#ef4444',
+  lfo2: '#dc2626',     // Deeper red for LFO 2
   velocity: '#fb923c', // Orange for velocity
   pitchEnv: '#f472b6', // Pink for pitch envelope
   modEnv: '#a855f7',   // Purple for mod envelope
@@ -132,6 +135,19 @@ export function SynthView() {
     setVelocityAmpAmount,
     setVelocityFilterAmount,
     randomize,
+    setSubOscEnabled,
+    setSubOscType,
+    setSubOscOctave,
+    setSubOscLevel,
+    setOsc2Enabled,
+    setOsc2Type,
+    setOsc2Octave,
+    setOsc2Detune,
+    setOsc2Mix,
+    setLfo2Rate,
+    setLfo2Depth,
+    setLfo2Type,
+    setLfo2Enabled,
   } = useSynthStore();
 
   // Bottom strip state: 'keys' or 'xy'
@@ -362,6 +378,167 @@ export function SynthView() {
             </div>
           </StageCard>
 
+          {/* SUB OSC Stage */}
+          <StageCard title="SUB OSC" color={COLORS.subOsc}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+              {/* Enable toggle */}
+              <button
+                onClick={() => setSubOscEnabled(!params.subOsc.enabled)}
+                style={{
+                  padding: '6px 16px',
+                  background: params.subOsc.enabled ? COLORS.subOsc : '#222',
+                  border: `1px solid ${params.subOsc.enabled ? COLORS.subOsc : '#444'}`,
+                  borderRadius: '4px',
+                  color: params.subOsc.enabled ? '#fff' : '#888',
+                  fontSize: '11px',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                }}
+              >
+                {params.subOsc.enabled ? 'ON' : 'OFF'}
+              </button>
+
+              {params.subOsc.enabled && (
+                <>
+                  {/* Type selector */}
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    {(['sine', 'square'] as const).map((t) => (
+                      <button
+                        key={t}
+                        onClick={() => setSubOscType(t)}
+                        style={{
+                          padding: '6px 12px',
+                          background: params.subOsc.type === t ? COLORS.subOsc : '#1a1a1a',
+                          border: `1px solid ${params.subOsc.type === t ? COLORS.subOsc : '#333'}`,
+                          borderRadius: '4px',
+                          color: params.subOsc.type === t ? '#fff' : '#888',
+                          fontSize: '10px',
+                          cursor: 'pointer',
+                          fontWeight: 500,
+                          textTransform: 'capitalize',
+                        }}
+                      >
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Octave selector */}
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    {([-1, -2] as const).map((oct) => (
+                      <button
+                        key={oct}
+                        onClick={() => setSubOscOctave(oct)}
+                        style={{
+                          padding: '6px 12px',
+                          background: params.subOsc.octave === oct ? COLORS.subOsc : '#1a1a1a',
+                          border: `1px solid ${params.subOsc.octave === oct ? COLORS.subOsc : '#333'}`,
+                          borderRadius: '4px',
+                          color: params.subOsc.octave === oct ? '#fff' : '#888',
+                          fontSize: '10px',
+                          cursor: 'pointer',
+                          fontWeight: 500,
+                        }}
+                      >
+                        {oct} Oct
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Level knob */}
+                  <Knob
+                    label="Level"
+                    value={params.subOsc.level}
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    onChange={setSubOscLevel}
+                    formatValue={(v) => `${Math.round(v * 100)}%`}
+                    size={48}
+                    paramId="subOsc.level"
+                  />
+                </>
+              )}
+
+              <div style={{ fontSize: '9px', color: '#666', textAlign: 'center' }}>
+                Adds low-end weight
+              </div>
+            </div>
+          </StageCard>
+
+          {/* OSC 2 Stage */}
+          <StageCard title="OSC 2" color={COLORS.osc2}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+              {/* Enable toggle */}
+              <button
+                onClick={() => setOsc2Enabled(!params.oscillator2.enabled)}
+                style={{
+                  padding: '6px 16px',
+                  background: params.oscillator2.enabled ? COLORS.osc2 : '#222',
+                  border: `1px solid ${params.oscillator2.enabled ? COLORS.osc2 : '#444'}`,
+                  borderRadius: '4px',
+                  color: params.oscillator2.enabled ? '#000' : '#888',
+                  fontSize: '11px',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                }}
+              >
+                {params.oscillator2.enabled ? 'ON' : 'OFF'}
+              </button>
+
+              {params.oscillator2.enabled && (
+                <>
+                  {/* Waveform selector */}
+                  <WaveformSelector
+                    value={params.oscillator2.type}
+                    onChange={(t: OscillatorType) => setOsc2Type(t)}
+                  />
+
+                  {/* Control knobs */}
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                    <Knob
+                      label="Oct"
+                      value={params.oscillator2.octave}
+                      min={-2}
+                      max={2}
+                      step={1}
+                      onChange={setOsc2Octave}
+                      formatValue={(v) => v >= 0 ? `+${v}` : `${v}`}
+                      size={36}
+                      paramId="osc2.octave"
+                    />
+                    <Knob
+                      label="Detune"
+                      value={params.oscillator2.detune}
+                      min={-100}
+                      max={100}
+                      step={1}
+                      onChange={setOsc2Detune}
+                      formatValue={(v) => `${v}`}
+                      size={36}
+                      paramId="osc2.detune"
+                    />
+                    <Knob
+                      label="Mix"
+                      value={params.oscillator2.mix}
+                      min={0}
+                      max={1}
+                      step={0.01}
+                      onChange={setOsc2Mix}
+                      formatValue={(v) => `${Math.round(v * 100)}%`}
+                      size={36}
+                      paramId="osc2.mix"
+                    />
+                  </div>
+                </>
+              )}
+
+              <div style={{ fontSize: '9px', color: '#666', textAlign: 'center' }}>
+                Layered oscillator
+              </div>
+            </div>
+          </StageCard>
+
           {/* NOISE Stage */}
           <StageCard title="NOISE" color={COLORS.noise}>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
@@ -537,6 +714,68 @@ export function SynthView() {
               >
                 {params.lfo.sync ? 'SYNC ON' : 'SYNC OFF'}
               </button>
+            </div>
+          </StageCard>
+
+          {/* LFO 2 Stage */}
+          <StageCard title="LFO 2" color={COLORS.lfo2}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+              {/* Enable toggle */}
+              <button
+                onClick={() => setLfo2Enabled(!params.lfo2.enabled)}
+                style={{
+                  padding: '6px 16px',
+                  background: params.lfo2.enabled ? COLORS.lfo2 : '#222',
+                  border: `1px solid ${params.lfo2.enabled ? COLORS.lfo2 : '#444'}`,
+                  borderRadius: '4px',
+                  color: params.lfo2.enabled ? '#fff' : '#888',
+                  fontSize: '11px',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                }}
+              >
+                {params.lfo2.enabled ? 'ON' : 'OFF'}
+              </button>
+
+              {params.lfo2.enabled && (
+                <>
+                  {/* LFO Waveform Selector */}
+                  <LFOWaveformSelector
+                    value={params.lfo2.type}
+                    onChange={(waveform: LFOWaveform) => setLfo2Type(waveform)}
+                  />
+
+                  {/* Rate and Depth knobs */}
+                  <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                    <Knob
+                      label="Rate"
+                      value={params.lfo2.rate}
+                      min={0.1}
+                      max={20}
+                      step={0.1}
+                      onChange={setLfo2Rate}
+                      formatValue={(v) => `${v.toFixed(1)} Hz`}
+                      size={40}
+                      paramId="lfo2.rate"
+                    />
+                    <Knob
+                      label="Depth"
+                      value={params.lfo2.depth}
+                      min={0}
+                      max={1}
+                      step={0.01}
+                      onChange={setLfo2Depth}
+                      formatValue={formatPercent}
+                      size={40}
+                      paramId="lfo2.depth"
+                    />
+                  </div>
+                </>
+              )}
+
+              <div style={{ fontSize: '9px', color: '#666', textAlign: 'center' }}>
+                Secondary modulation source
+              </div>
             </div>
           </StageCard>
 
