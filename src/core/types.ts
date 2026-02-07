@@ -51,6 +51,21 @@ export interface FilterEnvelopeParams extends ADSREnvelope {
   amount: number;
 }
 
+export interface PitchEnvelopeParams extends ADSREnvelope {
+  /** How much the envelope affects pitch in semitones (-24 to +24) */
+  amount: number;
+}
+
+export interface ModEnvelopeParams extends ADSREnvelope {
+  /** How much the envelope affects LFO depth (0 to 1) */
+  amount: number;
+}
+
+export interface PWMEnvelopeParams extends ADSREnvelope {
+  /** How much the envelope affects pulse width (0 to 1, only for square wave) */
+  amount: number;
+}
+
 // ============================================
 // LFO Types
 // ============================================
@@ -118,6 +133,12 @@ export interface SynthParams {
   filter: FilterParams;
   filterEnvelope: FilterEnvelopeParams;
   amplitudeEnvelope: ADSREnvelope;
+  /** Pitch envelope for oscillator frequency modulation */
+  pitchEnvelope: PitchEnvelopeParams;
+  /** Mod envelope for LFO depth modulation */
+  modEnvelope: ModEnvelopeParams;
+  /** PWM envelope for pulse width modulation (square wave only) */
+  pwmEnvelope: PWMEnvelopeParams;
   /** LFO modulating filter cutoff */
   lfo: LFOParams;
   /** Effects processors */
@@ -155,6 +176,30 @@ export const DEFAULT_FILTER_ENVELOPE: FilterEnvelopeParams = {
   sustain: 0.3,
   release: 0.5,
   amount: 2,
+};
+
+export const DEFAULT_PITCH_ENVELOPE: PitchEnvelopeParams = {
+  attack: 0.001,
+  decay: 0.1,
+  sustain: 0,
+  release: 0.1,
+  amount: 0,
+};
+
+export const DEFAULT_MOD_ENVELOPE: ModEnvelopeParams = {
+  attack: 0.5,
+  decay: 0.5,
+  sustain: 0.5,
+  release: 0.5,
+  amount: 0,
+};
+
+export const DEFAULT_PWM_ENVELOPE: PWMEnvelopeParams = {
+  attack: 0.01,
+  decay: 0.3,
+  sustain: 0.5,
+  release: 0.3,
+  amount: 0,
 };
 
 export const DEFAULT_LFO: LFOParams = {
@@ -197,6 +242,9 @@ export const DEFAULT_SYNTH_PARAMS: SynthParams = {
   filter: DEFAULT_FILTER,
   filterEnvelope: DEFAULT_FILTER_ENVELOPE,
   amplitudeEnvelope: DEFAULT_AMPLITUDE_ENVELOPE,
+  pitchEnvelope: DEFAULT_PITCH_ENVELOPE,
+  modEnvelope: DEFAULT_MOD_ENVELOPE,
+  pwmEnvelope: DEFAULT_PWM_ENVELOPE,
   lfo: DEFAULT_LFO,
   effects: DEFAULT_EFFECTS,
   volume: -12,

@@ -11,6 +11,9 @@ import type {
   FilterType,
   ADSREnvelope,
   FilterEnvelopeParams,
+  PitchEnvelopeParams,
+  ModEnvelopeParams,
+  PWMEnvelopeParams,
   LFOWaveform,
 } from '../../core/types.ts';
 import { DEFAULT_SYNTH_PARAMS } from '../../core/types.ts';
@@ -63,6 +66,27 @@ interface SynthStore {
   setLFORate: (rate: number) => void;
   setLFODepth: (depth: number) => void;
   setLFOWaveform: (waveform: LFOWaveform) => void;
+
+  // Pitch envelope actions
+  setPitchEnvelopeAttack: (time: number) => void;
+  setPitchEnvelopeDecay: (time: number) => void;
+  setPitchEnvelopeSustain: (level: number) => void;
+  setPitchEnvelopeRelease: (time: number) => void;
+  setPitchEnvelopeAmount: (semitones: number) => void;
+
+  // Mod envelope actions
+  setModEnvelopeAttack: (time: number) => void;
+  setModEnvelopeDecay: (time: number) => void;
+  setModEnvelopeSustain: (level: number) => void;
+  setModEnvelopeRelease: (time: number) => void;
+  setModEnvelopeAmount: (amount: number) => void;
+
+  // PWM envelope actions
+  setPWMEnvelopeAttack: (time: number) => void;
+  setPWMEnvelopeDecay: (time: number) => void;
+  setPWMEnvelopeSustain: (level: number) => void;
+  setPWMEnvelopeRelease: (time: number) => void;
+  setPWMEnvelopeAmount: (amount: number) => void;
 
   // Effects actions
   setDistortionAmount: (amount: number) => void;
@@ -354,6 +378,174 @@ export const useSynthStore = create<SynthStore>((set, get) => ({
       params: {
         ...params,
         lfo: { ...params.lfo, waveform },
+      },
+    });
+  },
+
+  // Pitch envelope actions
+  setPitchEnvelopeAttack: (time: number) => {
+    const { engine, params } = get();
+    engine?.setPitchEnvelopeAttack(time);
+    set({
+      params: {
+        ...params,
+        pitchEnvelope: { ...params.pitchEnvelope, attack: time },
+      },
+    });
+  },
+
+  setPitchEnvelopeDecay: (time: number) => {
+    const { engine, params } = get();
+    engine?.setPitchEnvelopeDecay(time);
+    set({
+      params: {
+        ...params,
+        pitchEnvelope: { ...params.pitchEnvelope, decay: time },
+      },
+    });
+  },
+
+  setPitchEnvelopeSustain: (level: number) => {
+    const { engine, params } = get();
+    engine?.setPitchEnvelopeSustain(level);
+    set({
+      params: {
+        ...params,
+        pitchEnvelope: { ...params.pitchEnvelope, sustain: level },
+      },
+    });
+  },
+
+  setPitchEnvelopeRelease: (time: number) => {
+    const { engine, params } = get();
+    engine?.setPitchEnvelopeRelease(time);
+    set({
+      params: {
+        ...params,
+        pitchEnvelope: { ...params.pitchEnvelope, release: time },
+      },
+    });
+  },
+
+  setPitchEnvelopeAmount: (semitones: number) => {
+    const { engine, params } = get();
+    engine?.setPitchEnvelopeAmount(semitones);
+    set({
+      params: {
+        ...params,
+        pitchEnvelope: { ...params.pitchEnvelope, amount: semitones },
+      },
+    });
+  },
+
+  // Mod envelope actions
+  setModEnvelopeAttack: (time: number) => {
+    const { engine, params } = get();
+    engine?.setModEnvelopeAttack(time);
+    set({
+      params: {
+        ...params,
+        modEnvelope: { ...params.modEnvelope, attack: time },
+      },
+    });
+  },
+
+  setModEnvelopeDecay: (time: number) => {
+    const { engine, params } = get();
+    engine?.setModEnvelopeDecay(time);
+    set({
+      params: {
+        ...params,
+        modEnvelope: { ...params.modEnvelope, decay: time },
+      },
+    });
+  },
+
+  setModEnvelopeSustain: (level: number) => {
+    const { engine, params } = get();
+    engine?.setModEnvelopeSustain(level);
+    set({
+      params: {
+        ...params,
+        modEnvelope: { ...params.modEnvelope, sustain: level },
+      },
+    });
+  },
+
+  setModEnvelopeRelease: (time: number) => {
+    const { engine, params } = get();
+    engine?.setModEnvelopeRelease(time);
+    set({
+      params: {
+        ...params,
+        modEnvelope: { ...params.modEnvelope, release: time },
+      },
+    });
+  },
+
+  setModEnvelopeAmount: (amount: number) => {
+    const { engine, params } = get();
+    engine?.setModEnvelopeAmount(amount);
+    set({
+      params: {
+        ...params,
+        modEnvelope: { ...params.modEnvelope, amount },
+      },
+    });
+  },
+
+  // PWM envelope actions
+  setPWMEnvelopeAttack: (time: number) => {
+    const { engine, params } = get();
+    engine?.setPWMEnvelopeAttack(time);
+    set({
+      params: {
+        ...params,
+        pwmEnvelope: { ...params.pwmEnvelope, attack: time },
+      },
+    });
+  },
+
+  setPWMEnvelopeDecay: (time: number) => {
+    const { engine, params } = get();
+    engine?.setPWMEnvelopeDecay(time);
+    set({
+      params: {
+        ...params,
+        pwmEnvelope: { ...params.pwmEnvelope, decay: time },
+      },
+    });
+  },
+
+  setPWMEnvelopeSustain: (level: number) => {
+    const { engine, params } = get();
+    engine?.setPWMEnvelopeSustain(level);
+    set({
+      params: {
+        ...params,
+        pwmEnvelope: { ...params.pwmEnvelope, sustain: level },
+      },
+    });
+  },
+
+  setPWMEnvelopeRelease: (time: number) => {
+    const { engine, params } = get();
+    engine?.setPWMEnvelopeRelease(time);
+    set({
+      params: {
+        ...params,
+        pwmEnvelope: { ...params.pwmEnvelope, release: time },
+      },
+    });
+  },
+
+  setPWMEnvelopeAmount: (amount: number) => {
+    const { engine, params } = get();
+    engine?.setPWMEnvelopeAmount(amount);
+    set({
+      params: {
+        ...params,
+        pwmEnvelope: { ...params.pwmEnvelope, amount },
       },
     });
   },

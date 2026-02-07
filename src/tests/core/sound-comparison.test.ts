@@ -39,6 +39,27 @@ function createParams(overrides: Partial<SynthParams> = {}): SynthParams {
       sustain: 0.5,
       release: 0.3,
     },
+    pitchEnvelope: overrides.pitchEnvelope ?? {
+      attack: 0.001,
+      decay: 0.1,
+      sustain: 0,
+      release: 0.1,
+      amount: 0,
+    },
+    modEnvelope: overrides.modEnvelope ?? {
+      attack: 0.5,
+      decay: 0.5,
+      sustain: 0.5,
+      release: 0.5,
+      amount: 0,
+    },
+    pwmEnvelope: overrides.pwmEnvelope ?? {
+      attack: 0.01,
+      decay: 0.3,
+      sustain: 0.5,
+      release: 0.3,
+      amount: 0,
+    },
     lfo: overrides.lfo ?? { rate: 1, depth: 0, waveform: 'sine' },
     effects: overrides.effects ?? {
       distortion: { amount: 0, mix: 0 },

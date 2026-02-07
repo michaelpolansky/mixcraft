@@ -34,6 +34,9 @@ const COLORS = {
   amp: '#22c55e',
   filterEnv: '#eab308',
   lfo: '#ef4444',
+  pitchEnv: '#f472b6', // Pink for pitch envelope
+  modEnv: '#a855f7',   // Purple for mod envelope
+  pwmEnv: '#14b8a6',   // Teal for PWM envelope
   effects: '#8b5cf6',
   output: '#f97316',
 };
@@ -67,6 +70,21 @@ export function SynthView() {
     setLFORate,
     setLFODepth,
     setLFOWaveform,
+    setPitchEnvelopeAttack,
+    setPitchEnvelopeDecay,
+    setPitchEnvelopeSustain,
+    setPitchEnvelopeRelease,
+    setPitchEnvelopeAmount,
+    setModEnvelopeAttack,
+    setModEnvelopeDecay,
+    setModEnvelopeSustain,
+    setModEnvelopeRelease,
+    setModEnvelopeAmount,
+    setPWMEnvelopeAttack,
+    setPWMEnvelopeDecay,
+    setPWMEnvelopeSustain,
+    setPWMEnvelopeRelease,
+    setPWMEnvelopeAmount,
     setDistortionAmount,
     setDistortionMix,
     setDelayTime,
@@ -346,6 +364,90 @@ export function SynthView() {
             <div style={{ display: 'flex', gap: '12px', marginTop: '12px', justifyContent: 'center' }}>
               <Knob label="Rate" value={params.lfo.rate} min={0.1} max={20} step={0.1} onChange={setLFORate} formatValue={(v) => `${v.toFixed(1)}`} size={40} paramId="lfo.rate" />
               <Knob label="Depth" value={params.lfo.depth} min={0} max={1} step={0.01} onChange={setLFODepth} formatValue={formatPercent} size={40} paramId="lfo.depth" />
+            </div>
+          </StageCard>
+
+          {/* PITCH ENV Stage */}
+          <StageCard title="PITCH ENV" color={COLORS.pitchEnv}>
+            <EnvelopeVisualizer
+              attack={params.pitchEnvelope.attack}
+              decay={params.pitchEnvelope.decay}
+              sustain={params.pitchEnvelope.sustain}
+              release={params.pitchEnvelope.release}
+              onAttackChange={setPitchEnvelopeAttack}
+              onDecayChange={setPitchEnvelopeDecay}
+              onSustainChange={setPitchEnvelopeSustain}
+              onReleaseChange={setPitchEnvelopeRelease}
+              width={200}
+              height={100}
+              accentColor={COLORS.pitchEnv}
+              compact
+            />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '12px' }}>
+              <MiniSlider label="A" value={params.pitchEnvelope.attack} min={0.001} max={2} onChange={setPitchEnvelopeAttack} color={COLORS.pitchEnv} />
+              <MiniSlider label="D" value={params.pitchEnvelope.decay} min={0.001} max={2} onChange={setPitchEnvelopeDecay} color={COLORS.pitchEnv} />
+              <MiniSlider label="S" value={params.pitchEnvelope.sustain} min={0} max={1} onChange={setPitchEnvelopeSustain} color={COLORS.pitchEnv} />
+              <MiniSlider label="R" value={params.pitchEnvelope.release} min={0.001} max={4} onChange={setPitchEnvelopeRelease} color={COLORS.pitchEnv} />
+            </div>
+            <div style={{ display: 'flex', gap: '12px', marginTop: '12px', justifyContent: 'center' }}>
+              <Knob label="Amt" value={params.pitchEnvelope.amount} min={-24} max={24} step={1} onChange={setPitchEnvelopeAmount} formatValue={(v) => `${v > 0 ? '+' : ''}${v}st`} size={40} paramId="pitchEnv.amount" />
+            </div>
+          </StageCard>
+
+          {/* MOD ENV Stage */}
+          <StageCard title="MOD ENV" color={COLORS.modEnv}>
+            <EnvelopeVisualizer
+              attack={params.modEnvelope.attack}
+              decay={params.modEnvelope.decay}
+              sustain={params.modEnvelope.sustain}
+              release={params.modEnvelope.release}
+              onAttackChange={setModEnvelopeAttack}
+              onDecayChange={setModEnvelopeDecay}
+              onSustainChange={setModEnvelopeSustain}
+              onReleaseChange={setModEnvelopeRelease}
+              width={200}
+              height={100}
+              accentColor={COLORS.modEnv}
+              compact
+            />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '12px' }}>
+              <MiniSlider label="A" value={params.modEnvelope.attack} min={0.001} max={2} onChange={setModEnvelopeAttack} color={COLORS.modEnv} />
+              <MiniSlider label="D" value={params.modEnvelope.decay} min={0.001} max={2} onChange={setModEnvelopeDecay} color={COLORS.modEnv} />
+              <MiniSlider label="S" value={params.modEnvelope.sustain} min={0} max={1} onChange={setModEnvelopeSustain} color={COLORS.modEnv} />
+              <MiniSlider label="R" value={params.modEnvelope.release} min={0.001} max={4} onChange={setModEnvelopeRelease} color={COLORS.modEnv} />
+            </div>
+            <div style={{ display: 'flex', gap: '12px', marginTop: '12px', justifyContent: 'center' }}>
+              <Knob label="Amt" value={params.modEnvelope.amount} min={0} max={1} step={0.01} onChange={setModEnvelopeAmount} formatValue={formatPercent} size={40} paramId="modEnv.amount" />
+            </div>
+          </StageCard>
+
+          {/* PWM ENV Stage */}
+          <StageCard title="PWM ENV" color={COLORS.pwmEnv}>
+            <EnvelopeVisualizer
+              attack={params.pwmEnvelope.attack}
+              decay={params.pwmEnvelope.decay}
+              sustain={params.pwmEnvelope.sustain}
+              release={params.pwmEnvelope.release}
+              onAttackChange={setPWMEnvelopeAttack}
+              onDecayChange={setPWMEnvelopeDecay}
+              onSustainChange={setPWMEnvelopeSustain}
+              onReleaseChange={setPWMEnvelopeRelease}
+              width={200}
+              height={100}
+              accentColor={COLORS.pwmEnv}
+              compact
+            />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '12px' }}>
+              <MiniSlider label="A" value={params.pwmEnvelope.attack} min={0.001} max={2} onChange={setPWMEnvelopeAttack} color={COLORS.pwmEnv} />
+              <MiniSlider label="D" value={params.pwmEnvelope.decay} min={0.001} max={2} onChange={setPWMEnvelopeDecay} color={COLORS.pwmEnv} />
+              <MiniSlider label="S" value={params.pwmEnvelope.sustain} min={0} max={1} onChange={setPWMEnvelopeSustain} color={COLORS.pwmEnv} />
+              <MiniSlider label="R" value={params.pwmEnvelope.release} min={0.001} max={4} onChange={setPWMEnvelopeRelease} color={COLORS.pwmEnv} />
+            </div>
+            <div style={{ display: 'flex', gap: '12px', marginTop: '12px', justifyContent: 'center' }}>
+              <Knob label="Amt" value={params.pwmEnvelope.amount} min={0} max={1} step={0.01} onChange={setPWMEnvelopeAmount} formatValue={formatPercent} size={40} paramId="pwmEnv.amount" />
+            </div>
+            <div style={{ fontSize: '9px', color: '#666', textAlign: 'center', marginTop: '8px' }}>
+              (Pulse osc only)
             </div>
           </StageCard>
 

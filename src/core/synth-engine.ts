@@ -10,6 +10,9 @@ import type {
   FilterType,
   ADSREnvelope,
   FilterEnvelopeParams,
+  PitchEnvelopeParams,
+  ModEnvelopeParams,
+  PWMEnvelopeParams,
   LFOParams,
   LFOWaveform,
   AnalyserConfig,
@@ -62,6 +65,13 @@ export class SynthEngine {
   // Effects chain
   private effectsChain: EffectsChain;
 
+  // Additional envelopes
+  private pitchEnvelope: Tone.Envelope;
+  private pitchEnvelopeScale: Tone.Multiply;
+  private modEnvelope: Tone.Envelope;
+  private modEnvelopeScale: Tone.Multiply;
+  private baseLfoDepth: number;
+
   constructor(initialParams: Partial<SynthParams> = {}) {
     this.params = { ...DEFAULT_SYNTH_PARAMS, ...initialParams };
 
@@ -113,6 +123,36 @@ export class SynthEngine {
 
     // Start the LFO
     this.lfo.start();
+
+    // Store base LFO depth for mod envelope calculations
+    this.baseLfoDepth = this.params.lfo.depth;
+
+    // Create Pitch Envelope
+    // Converts semitones to cents (1 semitone = 100 cents) and modulates detune
+    this.pitchEnvelope = new Tone.Envelope({
+      attack: this.params.pitchEnvelope.attack,
+      decay: this.params.pitchEnvelope.decay,
+      sustain: this.params.pitchEnvelope.sustain,
+      release: this.params.pitchEnvelope.release,
+    });
+    // Scale envelope output (0-1) to cents range
+    const pitchCents = this.params.pitchEnvelope.amount * 100;
+    this.pitchEnvelopeScale = new Tone.Multiply(pitchCents);
+    this.pitchEnvelope.connect(this.pitchEnvelopeScale);
+    this.pitchEnvelopeScale.connect(this.synth.detune);
+
+    // Create Mod Envelope (modulates LFO depth)
+    // This envelope scales the LFO gain dynamically during note playback
+    this.modEnvelope = new Tone.Envelope({
+      attack: this.params.modEnvelope.attack,
+      decay: this.params.modEnvelope.decay,
+      sustain: this.params.modEnvelope.sustain,
+      release: this.params.modEnvelope.release,
+    });
+    // Scale envelope output to modulate the LFO gain
+    this.modEnvelopeScale = new Tone.Multiply(this.params.modEnvelope.amount * this.params.filter.cutoff);
+    this.modEnvelope.connect(this.modEnvelopeScale);
+    this.modEnvelopeScale.connect(this.lfoGain.gain);
 
     // Create effects chain
     this.effectsChain = new EffectsChain(this.params.effects);
@@ -350,6 +390,127 @@ export class SynthEngine {
   }
 
   // ============================================
+  // Pitch Envelope Controls
+  // ============================================
+
+  setPitchEnvelope(envelope: Partial<PitchEnvelopeParams>): void {
+    this.params.pitchEnvelope = { ...this.params.pitchEnvelope, ...envelope };
+
+    if (envelope.attack !== undefined) {
+      this.pitchEnvelope.attack = envelope.attack;
+    }
+    if (envelope.decay !== undefined) {
+      this.pitchEnvelope.decay = envelope.decay;
+    }
+    if (envelope.sustain !== undefined) {
+      this.pitchEnvelope.sustain = envelope.sustain;
+    }
+    if (envelope.release !== undefined) {
+      this.pitchEnvelope.release = envelope.release;
+    }
+    if (envelope.amount !== undefined) {
+      // Convert semitones to cents
+      this.pitchEnvelopeScale.value = envelope.amount * 100;
+    }
+  }
+
+  setPitchEnvelopeAttack(time: number): void {
+    this.setPitchEnvelope({ attack: time });
+  }
+
+  setPitchEnvelopeDecay(time: number): void {
+    this.setPitchEnvelope({ decay: time });
+  }
+
+  setPitchEnvelopeSustain(level: number): void {
+    this.setPitchEnvelope({ sustain: level });
+  }
+
+  setPitchEnvelopeRelease(time: number): void {
+    this.setPitchEnvelope({ release: time });
+  }
+
+  setPitchEnvelopeAmount(semitones: number): void {
+    this.setPitchEnvelope({ amount: semitones });
+  }
+
+  // ============================================
+  // Mod Envelope Controls
+  // ============================================
+
+  setModEnvelope(envelope: Partial<ModEnvelopeParams>): void {
+    this.params.modEnvelope = { ...this.params.modEnvelope, ...envelope };
+
+    if (envelope.attack !== undefined) {
+      this.modEnvelope.attack = envelope.attack;
+    }
+    if (envelope.decay !== undefined) {
+      this.modEnvelope.decay = envelope.decay;
+    }
+    if (envelope.sustain !== undefined) {
+      this.modEnvelope.sustain = envelope.sustain;
+    }
+    if (envelope.release !== undefined) {
+      this.modEnvelope.release = envelope.release;
+    }
+    if (envelope.amount !== undefined) {
+      // Scale by cutoff for audible modulation range
+      this.modEnvelopeScale.value = envelope.amount * this.params.filter.cutoff;
+    }
+  }
+
+  setModEnvelopeAttack(time: number): void {
+    this.setModEnvelope({ attack: time });
+  }
+
+  setModEnvelopeDecay(time: number): void {
+    this.setModEnvelope({ decay: time });
+  }
+
+  setModEnvelopeSustain(level: number): void {
+    this.setModEnvelope({ sustain: level });
+  }
+
+  setModEnvelopeRelease(time: number): void {
+    this.setModEnvelope({ release: time });
+  }
+
+  setModEnvelopeAmount(amount: number): void {
+    this.setModEnvelope({ amount });
+  }
+
+  // ============================================
+  // PWM Envelope Controls
+  // Note: PWM requires a pulse oscillator type to be audible.
+  // These controls store the values for future pulse oscillator support.
+  // ============================================
+
+  setPWMEnvelope(envelope: Partial<PWMEnvelopeParams>): void {
+    this.params.pwmEnvelope = { ...this.params.pwmEnvelope, ...envelope };
+    // PWM routing would connect here when pulse oscillator is implemented
+  }
+
+  setPWMEnvelopeAttack(time: number): void {
+    this.setPWMEnvelope({ attack: time });
+  }
+
+  setPWMEnvelopeDecay(time: number): void {
+    this.setPWMEnvelope({ decay: time });
+  }
+
+  setPWMEnvelopeSustain(level: number): void {
+    this.setPWMEnvelope({ sustain: level });
+  }
+
+  setPWMEnvelopeRelease(time: number): void {
+    this.setPWMEnvelope({ release: time });
+  }
+
+  setPWMEnvelopeAmount(amount: number): void {
+    this.setPWMEnvelope({ amount });
+  }
+
+  // ============================================
   // Effects Controls
   // ============================================
 
@@ -442,6 +603,10 @@ export class SynthEngine {
 
     const adjustedFreq = applyOctaveOffset(frequency, this.params.oscillator.octave);
     this.synth.triggerAttack(adjustedFreq);
+
+    // Trigger additional envelopes
+    this.pitchEnvelope.triggerAttack();
+    this.modEnvelope.triggerAttack();
   }
 
   /**
@@ -449,6 +614,10 @@ export class SynthEngine {
    */
   triggerRelease(): void {
     this.synth.triggerRelease();
+
+    // Release additional envelopes
+    this.pitchEnvelope.triggerRelease();
+    this.modEnvelope.triggerRelease();
   }
 
   /**
@@ -463,6 +632,10 @@ export class SynthEngine {
 
     const adjustedFreq = applyOctaveOffset(frequency, this.params.oscillator.octave);
     this.synth.triggerAttackRelease(adjustedFreq, duration);
+
+    // Trigger additional envelopes with matching duration
+    this.pitchEnvelope.triggerAttackRelease(duration);
+    this.modEnvelope.triggerAttackRelease(duration);
   }
 
   // ============================================
@@ -509,6 +682,18 @@ export class SynthEngine {
       this.setLFO(params.lfo);
     }
 
+    if (params.pitchEnvelope) {
+      this.setPitchEnvelope(params.pitchEnvelope);
+    }
+
+    if (params.modEnvelope) {
+      this.setModEnvelope(params.modEnvelope);
+    }
+
+    if (params.pwmEnvelope) {
+      this.setPWMEnvelope(params.pwmEnvelope);
+    }
+
     if (params.effects) {
       if (params.effects.distortion) {
         this.setDistortion(params.effects.distortion);
@@ -540,6 +725,10 @@ export class SynthEngine {
     this.lfo.stop();
     this.lfo.dispose();
     this.lfoGain.dispose();
+    this.pitchEnvelope.dispose();
+    this.pitchEnvelopeScale.dispose();
+    this.modEnvelope.dispose();
+    this.modEnvelopeScale.dispose();
     this.effectsChain.dispose();
     this.synth.dispose();
   }
