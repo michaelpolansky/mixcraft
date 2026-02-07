@@ -121,6 +121,10 @@ Sound design is the entry point. It teaches concepts that make mixing and produc
 - **Sequencer:** 9 note patterns with optional drum backing, visual note indicator
 - **Visual Redesign:** Color-coded ModuleCards with animated WaveformIcons
 - **Recording:** WAV capture up to 30 seconds with playback and download
+- **Noise Generator:** White/pink/brown noise with level control for transients and texture
+- **Portamento/Glide:** Smooth pitch sliding between notes with adjustable time
+- **LFO Sync:** Tempo-synced LFO with note division selector (1, 1/2, 1/4, 1/8, 1/16, 1/32)
+- **Oscilloscope:** Real-time waveform display in OUTPUT stage
 
 ### Polish
 - Progress persistence (localStorage via Zustand)
@@ -163,3 +167,4 @@ Sound design is the entry point. It teaches concepts that make mixing and produc
 | 21 | 2026-02-06 | Performance optimization - Canvas visualizer fixes (cached gradients, reused TypedArrays, conditional shadows), React.memo on all visualizers |
 | 22 | 2026-02-06 | UX polish - loading states for audio initialization, error handling with user-friendly messages, canvas overflow fix (maxWidth + overflow:hidden) |
 | 23 | 2026-02-06 | Modulation envelopes - separate LFO/Filter Env modules, add Pitch/Mod/PWM envelopes with full ADSR + Amount controls, fix WaveformSelector overflow |
+| 24 | 2026-02-07 | Subtractive synth quick wins - Noise generator (white/pink/brown + level), Portamento/Glide (toggle + time), LFO Sync (tempo divisions), Oscilloscope display |

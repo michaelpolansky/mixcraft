@@ -46,6 +46,16 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         rate: 0.1,
         depth: 0,
         waveform: 'sine',
+        sync: false,
+        syncDivision: '4n',
+      },
+      noise: {
+        type: 'white',
+        level: 0,
+      },
+      glide: {
+        enabled: false,
+        time: 0.1,
       },
       pitchEnvelope: {
         attack: 0.001,
@@ -102,6 +112,16 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         rate: 5,
         depth: 0.1,
         waveform: 'triangle',
+        sync: false,
+        syncDivision: '4n',
+      },
+      noise: {
+        type: 'white',
+        level: 0,
+      },
+      glide: {
+        enabled: false,
+        time: 0.1,
       },
       pitchEnvelope: {
         attack: 0.001,
@@ -161,6 +181,16 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         rate: 0.5,
         depth: 0.05,
         waveform: 'sine',
+        sync: false,
+        syncDivision: '4n',
+      },
+      noise: {
+        type: 'white',
+        level: 0,
+      },
+      glide: {
+        enabled: false,
+        time: 0.1,
       },
       pitchEnvelope: {
         attack: 0.001,
@@ -221,6 +251,16 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         rate: 1,
         depth: 0,
         waveform: 'sine',
+        sync: false,
+        syncDivision: '4n',
+      },
+      noise: {
+        type: 'white',
+        level: 0,
+      },
+      glide: {
+        enabled: false,
+        time: 0.1,
       },
       pitchEnvelope: {
         attack: 0.001,
@@ -280,6 +320,16 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         rate: 5,
         depth: 0.02,
         waveform: 'triangle',
+        sync: false,
+        syncDivision: '4n',
+      },
+      noise: {
+        type: 'white',
+        level: 0,
+      },
+      glide: {
+        enabled: false,
+        time: 0.1,
       },
       pitchEnvelope: {
         attack: 0.001,
@@ -336,6 +386,16 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         rate: 6,
         depth: 0.03,
         waveform: 'sine',
+        sync: false,
+        syncDivision: '4n',
+      },
+      noise: {
+        type: 'white',
+        level: 0,
+      },
+      glide: {
+        enabled: false,
+        time: 0.1,
       },
       pitchEnvelope: {
         attack: 0.001,
@@ -396,6 +456,16 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         rate: 3,
         depth: 0.8,
         waveform: 'sine',
+        sync: false,
+        syncDivision: '4n',
+      },
+      noise: {
+        type: 'white',
+        level: 0,
+      },
+      glide: {
+        enabled: false,
+        time: 0.1,
       },
       pitchEnvelope: {
         attack: 0.001,
@@ -452,6 +522,16 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         rate: 1,
         depth: 0,
         waveform: 'sine',
+        sync: false,
+        syncDivision: '4n',
+      },
+      noise: {
+        type: 'white',
+        level: 0,
+      },
+      glide: {
+        enabled: false,
+        time: 0.1,
       },
       pitchEnvelope: {
         attack: 0.001,
@@ -511,6 +591,16 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         rate: 1,
         depth: 0,
         waveform: 'sine',
+        sync: false,
+        syncDivision: '4n',
+      },
+      noise: {
+        type: 'white',
+        level: 0,
+      },
+      glide: {
+        enabled: false,
+        time: 0.1,
       },
       pitchEnvelope: {
         attack: 0.001,

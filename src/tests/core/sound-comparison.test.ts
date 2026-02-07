@@ -60,7 +60,9 @@ function createParams(overrides: Partial<SynthParams> = {}): SynthParams {
       release: 0.3,
       amount: 0,
     },
-    lfo: overrides.lfo ?? { rate: 1, depth: 0, waveform: 'sine' },
+    lfo: overrides.lfo ?? { rate: 1, depth: 0, waveform: 'sine', sync: false, syncDivision: '4n' },
+    noise: overrides.noise ?? { type: 'white', level: 0 },
+    glide: overrides.glide ?? { enabled: false, time: 0.1 },
     effects: overrides.effects ?? {
       distortion: { amount: 0, mix: 0 },
       delay: { time: 0.25, feedback: 0.3, mix: 0 },

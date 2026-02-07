@@ -15,6 +15,10 @@ import type {
   PWMEnvelopeParams,
   LFOParams,
   LFOWaveform,
+  LFOSyncDivision,
+  NoiseParams,
+  NoiseType,
+  GlideParams,
   AnalyserConfig,
   DistortionParams,
   DelayParams,
@@ -71,6 +75,14 @@ export class SynthEngine {
   private modEnvelope: Tone.Envelope;
   private modEnvelopeScale: Tone.Multiply;
   private baseLfoDepth: number;
+
+  // Noise generator
+  private noise: Tone.Noise;
+  private noiseGain: Tone.Gain;
+  private noiseFilter: Tone.Filter;
+
+  // For tracking current frequency (used with glide)
+  private currentFrequency: number = 440;
 
   constructor(initialParams: Partial<SynthParams> = {}) {
     this.params = { ...DEFAULT_SYNTH_PARAMS, ...initialParams };
@@ -154,6 +166,25 @@ export class SynthEngine {
     this.modEnvelope.connect(this.modEnvelopeScale);
     this.modEnvelopeScale.connect(this.lfoGain.gain);
 
+    // Create noise generator
+    this.noise = new Tone.Noise(this.params.noise.type);
+    this.noiseGain = new Tone.Gain(this.params.noise.level);
+    // Noise goes through filter too
+    this.noiseFilter = new Tone.Filter({
+      type: toToneFilterType(this.params.filter.type),
+      frequency: this.params.filter.cutoff,
+      Q: this.params.filter.resonance,
+    });
+    this.noise.connect(this.noiseFilter);
+    this.noiseFilter.connect(this.noiseGain);
+    // Noise starts immediately (level controls if it's heard)
+    this.noise.start();
+
+    // Set up portamento/glide if enabled
+    if (this.params.glide.enabled) {
+      this.synth.portamento = this.params.glide.time;
+    }
+
     // Create effects chain
     this.effectsChain = new EffectsChain(this.params.effects);
 
@@ -162,7 +193,9 @@ export class SynthEngine {
     this.configureAnalyser(DEFAULT_ANALYSER_CONFIG);
 
     // Wire: synth → effectsChain → analyser → destination
+    // Also wire noise: noiseGain → effectsChain
     this.synth.connect(this.effectsChain.input);
+    this.noiseGain.connect(this.effectsChain.input);
     this.effectsChain.connect(this.analyser);
     Tone.connect(this.analyser, Tone.getDestination());
   }
@@ -255,17 +288,65 @@ export class SynthEngine {
   }
 
   // ============================================
+  // Noise Controls
+  // ============================================
+
+  setNoise(noiseParams: Partial<NoiseParams>): void {
+    this.params.noise = { ...this.params.noise, ...noiseParams };
+
+    if (noiseParams.type !== undefined) {
+      this.noise.type = noiseParams.type;
+    }
+    if (noiseParams.level !== undefined) {
+      this.noiseGain.gain.value = noiseParams.level;
+    }
+  }
+
+  setNoiseType(type: NoiseType): void {
+    this.setNoise({ type });
+  }
+
+  setNoiseLevel(level: number): void {
+    this.setNoise({ level });
+  }
+
+  // ============================================
+  // Glide/Portamento Controls
+  // ============================================
+
+  setGlide(glideParams: Partial<GlideParams>): void {
+    this.params.glide = { ...this.params.glide, ...glideParams };
+
+    if (glideParams.enabled !== undefined) {
+      this.synth.portamento = glideParams.enabled ? this.params.glide.time : 0;
+    }
+    if (glideParams.time !== undefined && this.params.glide.enabled) {
+      this.synth.portamento = glideParams.time;
+    }
+  }
+
+  setGlideEnabled(enabled: boolean): void {
+    this.setGlide({ enabled });
+  }
+
+  setGlideTime(time: number): void {
+    this.setGlide({ time });
+  }
+
+  // ============================================
   // Filter Controls
   // ============================================
 
   setFilterType(type: FilterType): void {
     this.params.filter.type = type;
     this.synth.filter.type = toToneFilterType(type);
+    this.noiseFilter.type = toToneFilterType(type);
   }
 
   setFilterCutoff(frequency: number): void {
     this.params.filter.cutoff = frequency;
     this.synth.filter.frequency.value = frequency;
+    this.noiseFilter.frequency.value = frequency;
     // Also update the filter envelope's base frequency
     this.synth.filterEnvelope.baseFrequency = frequency;
     // Update LFO gain (depth is relative to cutoff)
@@ -275,6 +356,7 @@ export class SynthEngine {
   setFilterResonance(q: number): void {
     this.params.filter.resonance = q;
     this.synth.filter.Q.value = q;
+    this.noiseFilter.Q.value = q;
   }
 
   // ============================================
@@ -365,7 +447,7 @@ export class SynthEngine {
   setLFO(lfoParams: Partial<LFOParams>): void {
     this.params.lfo = { ...this.params.lfo, ...lfoParams };
 
-    if (lfoParams.rate !== undefined) {
+    if (lfoParams.rate !== undefined && !this.params.lfo.sync) {
       this.lfo.frequency.value = lfoParams.rate;
     }
     if (lfoParams.waveform !== undefined) {
@@ -374,6 +456,18 @@ export class SynthEngine {
     if (lfoParams.depth !== undefined) {
       // Scale depth by cutoff frequency for audible modulation
       this.lfoGain.gain.value = lfoParams.depth * this.params.filter.cutoff;
+    }
+    if (lfoParams.sync !== undefined) {
+      if (lfoParams.sync) {
+        // Sync to tempo - use syncDivision
+        this.lfo.frequency.value = this.params.lfo.syncDivision;
+      } else {
+        // Use free rate
+        this.lfo.frequency.value = this.params.lfo.rate;
+      }
+    }
+    if (lfoParams.syncDivision !== undefined && this.params.lfo.sync) {
+      this.lfo.frequency.value = lfoParams.syncDivision;
     }
   }
 
@@ -387,6 +481,14 @@ export class SynthEngine {
 
   setLFOWaveform(waveform: LFOWaveform): void {
     this.setLFO({ waveform });
+  }
+
+  setLFOSync(sync: boolean): void {
+    this.setLFO({ sync });
+  }
+
+  setLFOSyncDivision(syncDivision: LFOSyncDivision): void {
+    this.setLFO({ syncDivision });
   }
 
   // ============================================
@@ -658,6 +760,14 @@ export class SynthEngine {
       }
     }
 
+    if (params.noise) {
+      this.setNoise(params.noise);
+    }
+
+    if (params.glide) {
+      this.setGlide(params.glide);
+    }
+
     if (params.filter) {
       if (params.filter.type !== undefined) {
         this.setFilterType(params.filter.type);
@@ -729,6 +839,10 @@ export class SynthEngine {
     this.pitchEnvelopeScale.dispose();
     this.modEnvelope.dispose();
     this.modEnvelopeScale.dispose();
+    this.noise.stop();
+    this.noise.dispose();
+    this.noiseGain.dispose();
+    this.noiseFilter.dispose();
     this.effectsChain.dispose();
     this.synth.dispose();
   }

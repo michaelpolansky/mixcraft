@@ -47,6 +47,16 @@ export const challenge: Challenge = {
       rate: 1,
       depth: 0,
       waveform: 'sine',
+      sync: false,
+      syncDivision: '4n',
+    },
+    noise: {
+      type: 'white',
+      level: 0,
+    },
+    glide: {
+      enabled: false,
+      time: 0.1,
     },
     pitchEnvelope: {
       attack: 0.001,

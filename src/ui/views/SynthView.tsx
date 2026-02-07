@@ -22,7 +22,9 @@ import {
   EnvelopeVisualizer,
   LFOVisualizer,
   XYPad,
+  Oscilloscope,
 } from '../components/index.ts';
+import type { LFOSyncDivision, NoiseType } from '../../core/types.ts';
 import { SUBTRACTIVE_PRESETS } from '../../data/presets/subtractive-presets.ts';
 import { InfoPanelProvider } from '../context/InfoPanelContext.tsx';
 import { PARAM_RANGES } from '../../core/types.ts';
@@ -30,6 +32,7 @@ import { PARAM_RANGES } from '../../core/types.ts';
 // Stage colors following signal flow
 const COLORS = {
   oscillator: '#3b82f6',
+  noise: '#64748b',    // Slate gray for noise
   filter: '#06b6d4',
   amp: '#22c55e',
   filterEnv: '#eab308',
@@ -40,6 +43,23 @@ const COLORS = {
   effects: '#8b5cf6',
   output: '#f97316',
 };
+
+// LFO sync division options
+const LFO_SYNC_DIVISIONS = [
+  { value: '1n' as const, label: '1' },
+  { value: '2n' as const, label: '1/2' },
+  { value: '4n' as const, label: '1/4' },
+  { value: '8n' as const, label: '1/8' },
+  { value: '16n' as const, label: '1/16' },
+  { value: '32n' as const, label: '1/32' },
+];
+
+// Noise type options
+const NOISE_TYPES = [
+  { value: 'white' as const, label: 'White' },
+  { value: 'pink' as const, label: 'Pink' },
+  { value: 'brown' as const, label: 'Brown' },
+];
 
 export function SynthView() {
   const {
@@ -99,6 +119,12 @@ export function SynthView() {
     resetToDefaults,
     currentPreset,
     loadPreset,
+    setNoiseType,
+    setNoiseLevel,
+    setGlideEnabled,
+    setGlideTime,
+    setLFOSync,
+    setLFOSyncDivision,
   } = useSynthStore();
 
   // Bottom strip state: 'keys' or 'xy'
@@ -272,6 +298,81 @@ export function SynthView() {
               <Knob label="Oct" value={params.oscillator.octave} min={-2} max={2} step={1} onChange={setOctave} formatValue={(v) => v >= 0 ? `+${v}` : `${v}`} size={40} paramId="oscillator.octave" />
               <Knob label="Detune" value={params.oscillator.detune} min={-100} max={100} step={1} onChange={setDetune} formatValue={(v) => `${v}`} size={40} paramId="oscillator.detune" />
             </div>
+            {/* Glide controls */}
+            <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #222' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                <button
+                  onClick={() => setGlideEnabled(!params.glide.enabled)}
+                  style={{
+                    padding: '4px 8px',
+                    background: params.glide.enabled ? COLORS.oscillator : '#222',
+                    border: `1px solid ${params.glide.enabled ? COLORS.oscillator : '#444'}`,
+                    borderRadius: '4px',
+                    color: params.glide.enabled ? '#fff' : '#888',
+                    fontSize: '10px',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                  }}
+                >
+                  GLIDE
+                </button>
+                {params.glide.enabled && (
+                  <Knob
+                    label="Time"
+                    value={params.glide.time}
+                    min={0.01}
+                    max={1}
+                    step={0.01}
+                    onChange={setGlideTime}
+                    formatValue={(v) => `${Math.round(v * 1000)}ms`}
+                    size={32}
+                    paramId="glide.time"
+                  />
+                )}
+              </div>
+            </div>
+          </StageCard>
+
+          {/* NOISE Stage */}
+          <StageCard title="NOISE" color={COLORS.noise}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+              {/* Noise Type Selector */}
+              <div style={{ display: 'flex', gap: '4px' }}>
+                {NOISE_TYPES.map((nt) => (
+                  <button
+                    key={nt.value}
+                    onClick={() => setNoiseType(nt.value)}
+                    style={{
+                      padding: '6px 10px',
+                      background: params.noise.type === nt.value ? COLORS.noise : '#1a1a1a',
+                      border: `1px solid ${params.noise.type === nt.value ? COLORS.noise : '#333'}`,
+                      borderRadius: '4px',
+                      color: params.noise.type === nt.value ? '#fff' : '#888',
+                      fontSize: '10px',
+                      cursor: 'pointer',
+                      fontWeight: 500,
+                    }}
+                  >
+                    {nt.label}
+                  </button>
+                ))}
+              </div>
+              {/* Level Knob */}
+              <Knob
+                label="Level"
+                value={params.noise.level}
+                min={0}
+                max={1}
+                step={0.01}
+                onChange={setNoiseLevel}
+                formatValue={(v) => `${Math.round(v * 100)}%`}
+                size={48}
+                paramId="noise.level"
+              />
+              <div style={{ fontSize: '9px', color: '#666', textAlign: 'center' }}>
+                Adds texture and transients
+              </div>
+            </div>
           </StageCard>
 
           {/* FILTER Stage */}
@@ -362,8 +463,50 @@ export function SynthView() {
               <LFOWaveformSelector value={params.lfo.waveform} onChange={setLFOWaveform} />
             </div>
             <div style={{ display: 'flex', gap: '12px', marginTop: '12px', justifyContent: 'center' }}>
-              <Knob label="Rate" value={params.lfo.rate} min={0.1} max={20} step={0.1} onChange={setLFORate} formatValue={(v) => `${v.toFixed(1)}`} size={40} paramId="lfo.rate" />
+              {/* Show Rate knob when not synced, Division selector when synced */}
+              {!params.lfo.sync ? (
+                <Knob label="Rate" value={params.lfo.rate} min={0.1} max={20} step={0.1} onChange={setLFORate} formatValue={(v) => `${v.toFixed(1)}`} size={40} paramId="lfo.rate" />
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                  <span style={{ fontSize: '9px', color: '#888' }}>Division</span>
+                  <select
+                    value={params.lfo.syncDivision}
+                    onChange={(e) => setLFOSyncDivision(e.target.value as LFOSyncDivision)}
+                    style={{
+                      padding: '4px 8px',
+                      background: '#1a1a1a',
+                      border: `1px solid ${COLORS.lfo}`,
+                      borderRadius: '4px',
+                      color: '#fff',
+                      fontSize: '11px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {LFO_SYNC_DIVISIONS.map((d) => (
+                      <option key={d.value} value={d.value}>{d.label}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <Knob label="Depth" value={params.lfo.depth} min={0} max={1} step={0.01} onChange={setLFODepth} formatValue={formatPercent} size={40} paramId="lfo.depth" />
+            </div>
+            {/* Sync toggle */}
+            <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'center' }}>
+              <button
+                onClick={() => setLFOSync(!params.lfo.sync)}
+                style={{
+                  padding: '4px 12px',
+                  background: params.lfo.sync ? COLORS.lfo : '#222',
+                  border: `1px solid ${params.lfo.sync ? COLORS.lfo : '#444'}`,
+                  borderRadius: '4px',
+                  color: params.lfo.sync ? '#fff' : '#888',
+                  fontSize: '10px',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                }}
+              >
+                {params.lfo.sync ? 'SYNC ON' : 'SYNC OFF'}
+              </button>
             </div>
           </StageCard>
 
@@ -494,6 +637,13 @@ export function SynthView() {
           {/* OUTPUT Stage */}
           <StageCard title="OUTPUT" color={COLORS.output}>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+              {/* Oscilloscope */}
+              <Oscilloscope
+                getAnalyser={() => engine?.getAnalyser() ?? null}
+                width={180}
+                height={80}
+                accentColor={COLORS.output}
+              />
               <Knob
                 label="Volume"
                 value={params.volume}

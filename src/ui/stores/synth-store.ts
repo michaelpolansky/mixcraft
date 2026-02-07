@@ -15,6 +15,8 @@ import type {
   ModEnvelopeParams,
   PWMEnvelopeParams,
   LFOWaveform,
+  LFOSyncDivision,
+  NoiseType,
 } from '../../core/types.ts';
 import { DEFAULT_SYNTH_PARAMS } from '../../core/types.ts';
 import { SUBTRACTIVE_PRESETS } from '../../data/presets/subtractive-presets.ts';
@@ -44,6 +46,14 @@ interface SynthStore {
   setOctave: (octave: number) => void;
   setDetune: (cents: number) => void;
 
+  // Noise actions
+  setNoiseType: (type: NoiseType) => void;
+  setNoiseLevel: (level: number) => void;
+
+  // Glide actions
+  setGlideEnabled: (enabled: boolean) => void;
+  setGlideTime: (time: number) => void;
+
   // Filter actions
   setFilterType: (type: FilterType) => void;
   setFilterCutoff: (frequency: number) => void;
@@ -66,6 +76,8 @@ interface SynthStore {
   setLFORate: (rate: number) => void;
   setLFODepth: (depth: number) => void;
   setLFOWaveform: (waveform: LFOWaveform) => void;
+  setLFOSync: (sync: boolean) => void;
+  setLFOSyncDivision: (division: LFOSyncDivision) => void;
 
   // Pitch envelope actions
   setPitchEnvelopeAttack: (time: number) => void;
@@ -209,6 +221,52 @@ export const useSynthStore = create<SynthStore>((set, get) => ({
       params: {
         ...params,
         oscillator: { ...params.oscillator, detune: cents },
+      },
+    });
+  },
+
+  // Noise actions
+  setNoiseType: (type: NoiseType) => {
+    const { engine, params } = get();
+    engine?.setNoiseType(type);
+    set({
+      params: {
+        ...params,
+        noise: { ...params.noise, type },
+      },
+    });
+  },
+
+  setNoiseLevel: (level: number) => {
+    const { engine, params } = get();
+    engine?.setNoiseLevel(level);
+    set({
+      params: {
+        ...params,
+        noise: { ...params.noise, level },
+      },
+    });
+  },
+
+  // Glide actions
+  setGlideEnabled: (enabled: boolean) => {
+    const { engine, params } = get();
+    engine?.setGlideEnabled(enabled);
+    set({
+      params: {
+        ...params,
+        glide: { ...params.glide, enabled },
+      },
+    });
+  },
+
+  setGlideTime: (time: number) => {
+    const { engine, params } = get();
+    engine?.setGlideTime(time);
+    set({
+      params: {
+        ...params,
+        glide: { ...params.glide, time },
       },
     });
   },
@@ -378,6 +436,28 @@ export const useSynthStore = create<SynthStore>((set, get) => ({
       params: {
         ...params,
         lfo: { ...params.lfo, waveform },
+      },
+    });
+  },
+
+  setLFOSync: (sync: boolean) => {
+    const { engine, params } = get();
+    engine?.setLFOSync(sync);
+    set({
+      params: {
+        ...params,
+        lfo: { ...params.lfo, sync },
+      },
+    });
+  },
+
+  setLFOSyncDivision: (syncDivision: LFOSyncDivision) => {
+    const { engine, params } = get();
+    engine?.setLFOSyncDivision(syncDivision);
+    set({
+      params: {
+        ...params,
+        lfo: { ...params.lfo, syncDivision },
       },
     });
   },

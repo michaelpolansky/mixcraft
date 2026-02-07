@@ -72,13 +72,44 @@ export interface PWMEnvelopeParams extends ADSREnvelope {
 
 export type LFOWaveform = 'sine' | 'square' | 'triangle' | 'sawtooth';
 
+/** LFO sync divisions for tempo-synced modulation */
+export type LFOSyncDivision = '1n' | '2n' | '4n' | '8n' | '16n' | '32n';
+
 export interface LFOParams {
-  /** LFO rate in Hz (0.1 to 20) */
+  /** LFO rate in Hz (0.1 to 20) - used when sync is off */
   rate: number;
   /** LFO depth/amount (0 to 1) */
   depth: number;
   /** LFO waveform shape */
   waveform: LFOWaveform;
+  /** Whether LFO is synced to tempo */
+  sync: boolean;
+  /** Sync division when sync is enabled */
+  syncDivision: LFOSyncDivision;
+}
+
+// ============================================
+// Noise Types
+// ============================================
+
+export type NoiseType = 'white' | 'pink' | 'brown';
+
+export interface NoiseParams {
+  /** Type of noise */
+  type: NoiseType;
+  /** Noise level/mix (0 to 1) */
+  level: number;
+}
+
+// ============================================
+// Glide/Portamento Types
+// ============================================
+
+export interface GlideParams {
+  /** Whether glide is enabled */
+  enabled: boolean;
+  /** Glide time in seconds (0.01 to 2) */
+  time: number;
 }
 
 // ============================================
@@ -130,6 +161,10 @@ export interface EffectsParams {
 
 export interface SynthParams {
   oscillator: OscillatorParams;
+  /** Noise generator mixed with oscillator */
+  noise: NoiseParams;
+  /** Portamento/glide between notes */
+  glide: GlideParams;
   filter: FilterParams;
   filterEnvelope: FilterEnvelopeParams;
   amplitudeEnvelope: ADSREnvelope;
@@ -206,6 +241,18 @@ export const DEFAULT_LFO: LFOParams = {
   rate: 1,
   depth: 0,
   waveform: 'sine',
+  sync: false,
+  syncDivision: '4n',
+};
+
+export const DEFAULT_NOISE: NoiseParams = {
+  type: 'white',
+  level: 0,
+};
+
+export const DEFAULT_GLIDE: GlideParams = {
+  enabled: false,
+  time: 0.1,
 };
 
 export const DEFAULT_DISTORTION: DistortionParams = {
@@ -239,6 +286,8 @@ export const DEFAULT_EFFECTS: EffectsParams = {
 
 export const DEFAULT_SYNTH_PARAMS: SynthParams = {
   oscillator: DEFAULT_OSCILLATOR,
+  noise: DEFAULT_NOISE,
+  glide: DEFAULT_GLIDE,
   filter: DEFAULT_FILTER,
   filterEnvelope: DEFAULT_FILTER_ENVELOPE,
   amplitudeEnvelope: DEFAULT_AMPLITUDE_ENVELOPE,
