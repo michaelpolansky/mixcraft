@@ -21,6 +21,7 @@ import {
   ModuleCard,
   MODULE_COLORS,
   WaveformIcon,
+  RecordingControl,
 } from '../components/index.ts';
 import { SUBTRACTIVE_PRESETS } from '../../data/presets/subtractive-presets.ts';
 import { InfoPanelProvider } from '../context/InfoPanelContext.tsx';
@@ -645,17 +646,23 @@ export function SynthView() {
             color={MODULE_COLORS.output}
             icon={<WaveformIcon type="speaker" size={20} color={MODULE_COLORS.output} animated={false} />}
           >
-            <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
-              <Knob
-                label="Volume"
-                value={params.volume}
-                min={PARAM_RANGES.volume.min}
-                max={PARAM_RANGES.volume.max}
-                step={PARAM_RANGES.volume.step}
-                onChange={setVolume}
-                formatValue={formatDb}
-                size={56}
-                paramId="volume"
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
+                <Knob
+                  label="Volume"
+                  value={params.volume}
+                  min={PARAM_RANGES.volume.min}
+                  max={PARAM_RANGES.volume.max}
+                  step={PARAM_RANGES.volume.step}
+                  onChange={setVolume}
+                  formatValue={formatDb}
+                  size={56}
+                  paramId="volume"
+                />
+              </div>
+              <RecordingControl
+                sourceNode={engine?.getOutputNode() ?? null}
+                accentColor="#ef4444"
               />
             </div>
           </ModuleCard>

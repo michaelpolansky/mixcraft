@@ -16,6 +16,7 @@ import {
   ModuleCard,
   MODULE_COLORS,
   WaveformIcon,
+  RecordingControl,
 } from '../components/index.ts';
 import { FM_PRESETS } from '../../data/presets/fm-presets.ts';
 import { InfoPanelProvider } from '../context/InfoPanelContext.tsx';
@@ -311,6 +312,18 @@ export function FMSynthView() {
           onReleaseChange={setAmplitudeRelease}
           onVolumeChange={setVolume}
         />
+
+        {/* Recording */}
+        <ModuleCard
+          title="Recording"
+          color="#ef4444"
+          icon={<WaveformIcon type="speaker" size={20} color="#ef4444" animated={false} />}
+        >
+          <RecordingControl
+            sourceNode={engine?.getOutputNode() ?? null}
+            accentColor="#ef4444"
+          />
+        </ModuleCard>
 
         {/* Sequencer */}
         <ModuleCard

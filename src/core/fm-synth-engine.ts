@@ -184,6 +184,14 @@ export class FMSynthEngine {
   }
 
   /**
+   * Gets the output node for recording
+   * Returns the analyser node which sits at the end of the signal chain
+   */
+  getOutputNode(): AudioNode {
+    return this.analyser;
+  }
+
+  /**
    * Gets frequency data from the analyser for spectrum visualization
    */
   getFrequencyData(): Uint8Array {

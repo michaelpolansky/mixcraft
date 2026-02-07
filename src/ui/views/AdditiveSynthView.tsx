@@ -17,6 +17,7 @@ import {
   ModuleCard,
   MODULE_COLORS,
   WaveformIcon,
+  RecordingControl,
 } from '../components/index.ts';
 import { ADDITIVE_PRESETS } from '../../data/presets/additive-presets.ts';
 import { InfoPanelProvider } from '../context/InfoPanelContext.tsx';
@@ -356,6 +357,18 @@ export function AdditiveSynthView() {
               </div>
             </div>
           </div>
+        </ModuleCard>
+
+        {/* Recording */}
+        <ModuleCard
+          title="Recording"
+          color="#ef4444"
+          icon={<WaveformIcon type="speaker" size={20} color="#ef4444" animated={false} />}
+        >
+          <RecordingControl
+            sourceNode={engine?.getOutputNode() ?? null}
+            accentColor="#ef4444"
+          />
         </ModuleCard>
 
         {/* Sequencer */}

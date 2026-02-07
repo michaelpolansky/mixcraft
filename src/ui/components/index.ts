@@ -36,3 +36,4 @@ export { Sequencer } from './Sequencer.tsx';
 export { ModuleCard, Section, MODULE_COLORS } from './ModuleCard.tsx';
 export { WaveformIcon } from './WaveformIcon.tsx';
 export type { WaveformIconType } from './WaveformIcon.tsx';
+export { RecordingControl } from './RecordingControl.tsx';
