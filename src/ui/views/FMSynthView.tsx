@@ -1,26 +1,33 @@
 /**
  * FM Synthesizer View
- * Complete FM synthesis interface with real-time spectrum analysis
+ * Ableton Learning Synths-style centered layout with large interactive visualizations
  */
 
 import { useEffect, useCallback } from 'react';
 import { useFMSynthStore } from '../stores/fm-synth-store.ts';
 import {
+  Knob,
+  Slider,
   SpectrumAnalyzer,
-  FMSynthPanel,
   PianoKeyboard,
   InfoPanel,
-  XYPad,
   PresetDropdown,
   Sequencer,
-  ModuleCard,
-  MODULE_COLORS,
-  WaveformIcon,
   RecordingControl,
+  FMVisualizer,
+  EnvelopeVisualizer,
+  WaveformSelector,
 } from '../components/index.ts';
 import { FM_PRESETS } from '../../data/presets/fm-presets.ts';
 import { InfoPanelProvider } from '../context/InfoPanelContext.tsx';
+import { FM_PARAM_RANGES, HARMONICITY_PRESETS } from '../../core/types.ts';
 
+// Module colors
+const COLORS = {
+  fm: '#f97316',
+  envelope: '#22c55e',
+  output: '#ef4444',
+};
 
 export function FMSynthView() {
   const {
@@ -32,7 +39,6 @@ export function FMSynthView() {
     playNote,
     stopNote,
     setHarmonicity,
-    setHarmonicityPreset,
     setModulationIndex,
     setCarrierType,
     setModulatorType,
@@ -82,40 +88,13 @@ export function FMSynthView() {
     return engine?.getAnalyser() ?? null;
   }, [engine]);
 
-  // XY Pad value conversions for FM synthesis
-  const harmonicityRange: [number, number] = [0.5, 12];
-  const modulationIndexRange: [number, number] = [0, 10];
-
-  // Convert actual harmonicity to normalized
-  const harmonicityToNormalized = (h: number): number => {
-    return (h - harmonicityRange[0]) / (harmonicityRange[1] - harmonicityRange[0]);
+  // Format helpers
+  const formatMs = (value: number) => {
+    if (value >= 1) return `${value.toFixed(2)}s`;
+    return `${Math.round(value * 1000)}ms`;
   };
-
-  // Convert normalized to actual harmonicity
-  const normalizedToHarmonicity = (normalized: number): number => {
-    return harmonicityRange[0] + normalized * (harmonicityRange[1] - harmonicityRange[0]);
-  };
-
-  // Convert actual modulation index to normalized
-  const modIndexToNormalized = (mi: number): number => {
-    return (mi - modulationIndexRange[0]) / (modulationIndexRange[1] - modulationIndexRange[0]);
-  };
-
-  // Convert normalized to actual modulation index
-  const normalizedToModIndex = (normalized: number): number => {
-    return modulationIndexRange[0] + normalized * (modulationIndexRange[1] - modulationIndexRange[0]);
-  };
-
-  // XY Pad change handlers
-  const handleXYPadXChange = useCallback((normalized: number) => {
-    const harmonicity = normalizedToHarmonicity(normalized);
-    setHarmonicity(Math.round(harmonicity * 10) / 10);
-  }, [setHarmonicity]);
-
-  const handleXYPadYChange = useCallback((normalized: number) => {
-    const modIndex = normalizedToModIndex(normalized);
-    setModulationIndex(Math.round(modIndex * 10) / 10);
-  }, [setModulationIndex]);
+  const formatDb = (value: number) => `${value.toFixed(1)}dB`;
+  const formatPercent = (value: number) => `${Math.round(value * 100)}%`;
 
   // Not initialized - show start button
   if (!isInitialized) {
@@ -127,27 +106,15 @@ export function FMSynthView() {
           alignItems: 'center',
           justifyContent: 'center',
           minHeight: '100vh',
-          background: '#0a0a0a',
+          background: '#0a0a0f',
           color: '#fff',
           fontFamily: 'system-ui, -apple-system, sans-serif',
         }}
       >
-        <h1
-          style={{
-            fontSize: '32px',
-            fontWeight: 300,
-            marginBottom: '8px',
-            color: '#f97316',
-          }}
-        >
+        <h1 style={{ fontSize: '32px', fontWeight: 300, marginBottom: '8px', color: '#f97316' }}>
           MIXCRAFT
         </h1>
-        <p
-          style={{
-            color: '#666',
-            marginBottom: '32px',
-          }}
-        >
+        <p style={{ color: '#666', marginBottom: '32px' }}>
           FM Synthesizer
         </p>
         <button
@@ -169,13 +136,7 @@ export function FMSynthView() {
         >
           Start Audio Engine
         </button>
-        <p
-          style={{
-            color: '#444',
-            fontSize: '12px',
-            marginTop: '16px',
-          }}
-        >
+        <p style={{ color: '#444', fontSize: '12px', marginTop: '16px' }}>
           Click to enable audio (browser requirement)
         </p>
       </div>
@@ -184,174 +145,295 @@ export function FMSynthView() {
 
   return (
     <InfoPanelProvider>
-    <div
-      style={{
-        minHeight: '100vh',
-        background: '#0a0a0a',
-        color: '#fff',
-        fontFamily: 'system-ui, -apple-system, sans-serif',
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    >
-    <div style={{ padding: '24px', flex: 1 }}>
-      {/* Header */}
       <div
         style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '24px',
+          minHeight: '100vh',
+          background: '#0a0a0f',
+          color: '#fff',
+          fontFamily: 'system-ui, -apple-system, sans-serif',
         }}
       >
-        <div>
-          <h1
-            style={{
-              fontSize: '24px',
-              fontWeight: 300,
-              margin: 0,
-              color: '#f97316',
-            }}
-          >
-            MIXCRAFT
-          </h1>
-          <span
-            style={{
-              fontSize: '12px',
-              color: '#666',
-            }}
-          >
-            FM Synthesizer
-          </span>
-        </div>
-
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-          <PresetDropdown
-            presets={FM_PRESETS}
-            currentPreset={currentPreset}
-            onSelect={loadPreset}
-            accentColor="#f97316"
-          />
-          <button
-            onClick={resetToDefaults}
-            style={{
-              padding: '8px 16px',
-              background: '#1a1a1a',
-              border: '1px solid #333',
-              borderRadius: '4px',
-              color: '#888',
-              cursor: 'pointer',
-              fontSize: '12px',
-            }}
-          >
-            Reset
-          </button>
-        </div>
-      </div>
-
-      {/* Main Layout */}
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '20px',
-          maxWidth: '800px',
-          margin: '0 auto',
-        }}
-      >
-        {/* Spectrum Analyzer */}
-        <ModuleCard
-          title="Spectrum Analyzer"
-          color={MODULE_COLORS.spectrum}
-          icon={<WaveformIcon type="harmonics" size={20} color={MODULE_COLORS.spectrum} />}
+        {/* Centered content column */}
+        <div
+          style={{
+            maxWidth: '640px',
+            margin: '0 auto',
+            padding: '24px 20px',
+          }}
         >
-          <SpectrumAnalyzer
-            getAnalyser={getAnalyser}
-            width={720}
-            height={150}
-            barCount={80}
-          />
-        </ModuleCard>
+          {/* Header */}
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '32px',
+            }}
+          >
+            <div>
+              <h1 style={{ fontSize: '24px', fontWeight: 300, margin: 0, color: '#f97316' }}>
+                MIXCRAFT
+              </h1>
+              <span style={{ fontSize: '12px', color: '#666' }}>
+                FM Synthesizer
+              </span>
+            </div>
 
-        {/* XY Pad - FM Control */}
-        <ModuleCard
-          title="FM XY Pad"
-          color={MODULE_COLORS.modulation}
-          icon={<WaveformIcon type="sine" size={20} color={MODULE_COLORS.modulation} />}
-        >
-          <div style={{ display: 'flex', justifyContent: 'center' }}>
-            <XYPad
-              xValue={harmonicityToNormalized(params.harmonicity)}
-              yValue={modIndexToNormalized(params.modulationIndex)}
-              xLabel="Harmonicity"
-              yLabel="Mod Index"
-              xRange={harmonicityRange}
-              yRange={modulationIndexRange}
-              onXChange={handleXYPadXChange}
-              onYChange={handleXYPadYChange}
-              size={200}
-              accentColor="#f97316"
-              formatXValue={(v) => v.toFixed(1)}
-              formatYValue={(v) => v.toFixed(1)}
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+              <PresetDropdown
+                presets={FM_PRESETS}
+                currentPreset={currentPreset}
+                onSelect={loadPreset}
+                accentColor="#f97316"
+              />
+              <button
+                onClick={resetToDefaults}
+                style={{
+                  padding: '8px 16px',
+                  background: '#1a1a1a',
+                  border: '1px solid #333',
+                  borderRadius: '4px',
+                  color: '#888',
+                  cursor: 'pointer',
+                  fontSize: '12px',
+                }}
+              >
+                Reset
+              </button>
+            </div>
+          </div>
+
+          {/* Spectrum Analyzer */}
+          <div style={{ marginBottom: '32px' }}>
+            <SpectrumAnalyzer
+              getAnalyser={getAnalyser}
+              width={600}
+              height={120}
+              barCount={80}
             />
           </div>
-        </ModuleCard>
 
-        {/* FM Controls */}
-        <FMSynthPanel
-          params={params}
-          onHarmonicityChange={setHarmonicity}
-          onHarmonicityPreset={setHarmonicityPreset}
-          onModulationIndexChange={setModulationIndex}
-          onCarrierTypeChange={setCarrierType}
-          onModulatorTypeChange={setModulatorType}
-          onModEnvAmountChange={setModulationEnvelopeAmount}
-          onAttackChange={setAmplitudeAttack}
-          onDecayChange={setAmplitudeDecay}
-          onSustainChange={setAmplitudeSustain}
-          onReleaseChange={setAmplitudeRelease}
-          onVolumeChange={setVolume}
-        />
+          {/* FM Synthesis Module */}
+          <ModuleSection title="FM SYNTHESIS" color={COLORS.fm}>
+            <FMVisualizer
+              carrierType={params.carrierType}
+              modulatorType={params.modulatorType}
+              harmonicity={params.harmonicity}
+              modulationIndex={params.modulationIndex}
+              width={600}
+              height={200}
+              accentColor={COLORS.fm}
+            />
 
-        {/* Recording */}
-        <ModuleCard
-          title="Recording"
-          color="#ef4444"
-          icon={<WaveformIcon type="speaker" size={20} color="#ef4444" animated={false} />}
-        >
-          <RecordingControl
-            sourceNode={engine?.getOutputNode() ?? null}
-            accentColor="#ef4444"
-          />
-        </ModuleCard>
+            {/* Carrier & Modulator Waveforms */}
+            <div style={{ marginTop: '24px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '16px' }}>
+                <div>
+                  <div style={{ fontSize: '11px', color: '#f97316', marginBottom: '8px', fontWeight: 600 }}>CARRIER</div>
+                  <WaveformSelector value={params.carrierType} onChange={setCarrierType} />
+                </div>
+                <div>
+                  <div style={{ fontSize: '11px', color: '#888', marginBottom: '8px', fontWeight: 600 }}>MODULATOR</div>
+                  <WaveformSelector value={params.modulatorType} onChange={setModulatorType} />
+                </div>
+              </div>
+            </div>
 
-        {/* Sequencer */}
-        <ModuleCard
-          title="Sequencer"
-          color={MODULE_COLORS.sequencer}
-        >
-          <Sequencer
-            engine={engine}
-            accentColor="#f97316"
-          />
-        </ModuleCard>
+            {/* FM Parameters */}
+            <div style={{ display: 'flex', gap: '24px', marginTop: '24px', justifyContent: 'center', alignItems: 'flex-start' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                <Knob
+                  label="Harmonicity"
+                  value={params.harmonicity}
+                  min={FM_PARAM_RANGES.harmonicity.min}
+                  max={FM_PARAM_RANGES.harmonicity.max}
+                  step={FM_PARAM_RANGES.harmonicity.step}
+                  onChange={setHarmonicity}
+                  formatValue={(v) => v.toFixed(2)}
+                  size={64}
+                  paramId="fm.harmonicity"
+                />
+                {/* Harmonicity presets */}
+                <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', justifyContent: 'center', maxWidth: '120px' }}>
+                  {HARMONICITY_PRESETS.map((value) => (
+                    <button
+                      key={value}
+                      onClick={() => setHarmonicity(value)}
+                      style={{
+                        padding: '4px 8px',
+                        background: Math.abs(params.harmonicity - value) < 0.01 ? '#f97316' : '#1a1a1a',
+                        border: '1px solid #333',
+                        borderRadius: '4px',
+                        color: Math.abs(params.harmonicity - value) < 0.01 ? '#fff' : '#888',
+                        cursor: 'pointer',
+                        fontSize: '10px',
+                      }}
+                    >
+                      {value}:1
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-        {/* Piano Keyboard */}
-        <ModuleCard
-          title="Keyboard"
-          color={MODULE_COLORS.keyboard}
-        >
-          <PianoKeyboard
-            onNoteOn={handleNoteOn}
-            onNoteOff={handleNoteOff}
-            octave={3}
-            octaves={3}
-          />
-        </ModuleCard>
+              <Knob
+                label="Mod Index"
+                value={params.modulationIndex}
+                min={FM_PARAM_RANGES.modulationIndex.min}
+                max={FM_PARAM_RANGES.modulationIndex.max}
+                step={FM_PARAM_RANGES.modulationIndex.step}
+                onChange={setModulationIndex}
+                formatValue={(v) => v.toFixed(1)}
+                size={64}
+                paramId="fm.modulationIndex"
+              />
+
+              <Knob
+                label="Mod Env"
+                value={params.modulationEnvelopeAmount}
+                min={FM_PARAM_RANGES.modulationEnvelopeAmount.min}
+                max={FM_PARAM_RANGES.modulationEnvelopeAmount.max}
+                step={FM_PARAM_RANGES.modulationEnvelopeAmount.step}
+                onChange={setModulationEnvelopeAmount}
+                formatValue={(v) => v.toFixed(1)}
+                size={64}
+                paramId="fm.modEnvAmount"
+              />
+            </div>
+          </ModuleSection>
+
+          {/* Amplitude Envelope Module */}
+          <ModuleSection title="AMPLITUDE ENVELOPE" color={COLORS.envelope}>
+            <EnvelopeVisualizer
+              attack={params.amplitudeEnvelope.attack}
+              decay={params.amplitudeEnvelope.decay}
+              sustain={params.amplitudeEnvelope.sustain}
+              release={params.amplitudeEnvelope.release}
+              onAttackChange={setAmplitudeAttack}
+              onDecayChange={setAmplitudeDecay}
+              onSustainChange={setAmplitudeSustain}
+              onReleaseChange={setAmplitudeRelease}
+              width={600}
+              height={200}
+              accentColor={COLORS.envelope}
+            />
+            <div style={{ display: 'flex', gap: '16px', marginTop: '16px', justifyContent: 'center' }}>
+              <Slider
+                label="Attack"
+                value={params.amplitudeEnvelope.attack}
+                min={0.001}
+                max={2}
+                step={0.001}
+                onChange={setAmplitudeAttack}
+                formatValue={formatMs}
+                logarithmic
+                paramId="amplitude.attack"
+              />
+              <Slider
+                label="Decay"
+                value={params.amplitudeEnvelope.decay}
+                min={0.001}
+                max={2}
+                step={0.001}
+                onChange={setAmplitudeDecay}
+                formatValue={formatMs}
+                logarithmic
+                paramId="amplitude.decay"
+              />
+              <Slider
+                label="Sustain"
+                value={params.amplitudeEnvelope.sustain}
+                min={0}
+                max={1}
+                step={0.01}
+                onChange={setAmplitudeSustain}
+                formatValue={formatPercent}
+                paramId="amplitude.sustain"
+              />
+              <Slider
+                label="Release"
+                value={params.amplitudeEnvelope.release}
+                min={0.001}
+                max={4}
+                step={0.001}
+                onChange={setAmplitudeRelease}
+                formatValue={formatMs}
+                logarithmic
+                paramId="amplitude.release"
+              />
+            </div>
+          </ModuleSection>
+
+          {/* Output & Recording */}
+          <ModuleSection title="OUTPUT" color={COLORS.output}>
+            <div style={{ display: 'flex', gap: '32px', alignItems: 'center', justifyContent: 'center' }}>
+              <Knob
+                label="Volume"
+                value={params.volume}
+                min={-40}
+                max={0}
+                step={0.5}
+                onChange={setVolume}
+                formatValue={formatDb}
+                size={64}
+                paramId="volume"
+              />
+              <RecordingControl
+                sourceNode={engine?.getOutputNode() ?? null}
+                accentColor="#ef4444"
+              />
+            </div>
+          </ModuleSection>
+
+          {/* Sequencer */}
+          <ModuleSection title="SEQUENCER" color="#f97316">
+            <Sequencer
+              engine={engine}
+              accentColor="#f97316"
+            />
+          </ModuleSection>
+
+          {/* Keyboard - sticky at bottom */}
+          <div
+            style={{
+              position: 'sticky',
+              bottom: 0,
+              background: '#0a0a0f',
+              paddingTop: '16px',
+              paddingBottom: '24px',
+              marginTop: '32px',
+            }}
+          >
+            <PianoKeyboard
+              onNoteOn={handleNoteOn}
+              onNoteOff={handleNoteOff}
+              octave={3}
+              octaves={3}
+            />
+          </div>
+        </div>
+
+        <InfoPanel accentColor="#f97316" />
       </div>
-    </div>
-    <InfoPanel accentColor="#f97316" />
-    </div>
     </InfoPanelProvider>
+  );
+}
+
+// Simple module section wrapper
+function ModuleSection({ title, color, children }: { title: string; color: string; children: React.ReactNode }) {
+  return (
+    <div style={{ marginBottom: '48px' }}>
+      <div
+        style={{
+          fontSize: '12px',
+          fontWeight: 600,
+          color: color,
+          letterSpacing: '0.5px',
+          marginBottom: '16px',
+        }}
+      >
+        {title}
+      </div>
+      {children}
+    </div>
   );
 }

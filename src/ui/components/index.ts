@@ -30,6 +30,8 @@ export { EffectsVisualizer } from './EffectsVisualizer.tsx';
 export { OscillatorVisualizer } from './OscillatorVisualizer.tsx';
 export { FilterVisualizer } from './FilterVisualizer.tsx';
 export { EffectCard } from './EffectCard.tsx';
+export { FMVisualizer } from './FMVisualizer.tsx';
+export { HarmonicBarsVisualizer } from './HarmonicBarsVisualizer.tsx';
 export { WaveformEditor } from './WaveformEditor.tsx';
 export { StepGrid } from './StepGrid.tsx';
 export { VelocityLane } from './VelocityLane.tsx';
