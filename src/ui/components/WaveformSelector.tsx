@@ -37,7 +37,9 @@ export function WaveformSelector({ value, onChange }: WaveformSelectorProps) {
     <div
       style={{
         display: 'flex',
-        gap: '8px',
+        flexWrap: 'wrap',
+        gap: '6px',
+        justifyContent: 'center',
       }}
     >
       {WAVEFORMS.map(({ type, label, path }) => (
@@ -46,8 +48,8 @@ export function WaveformSelector({ value, onChange }: WaveformSelectorProps) {
           onClick={() => onChange(type)}
           title={label}
           style={{
-            width: '48px',
-            height: '48px',
+            width: '44px',
+            height: '44px',
             background: value === type ? '#2a3a2a' : '#1a1a1a',
             border: value === type ? '2px solid #4ade80' : '2px solid #333',
             borderRadius: '8px',
@@ -58,7 +60,7 @@ export function WaveformSelector({ value, onChange }: WaveformSelectorProps) {
             transition: 'all 0.15s ease',
           }}
         >
-          <svg width="40" height="40" viewBox="0 0 40 40">
+          <svg width="36" height="36" viewBox="0 0 40 40">
             <path
               d={path}
               fill="none"

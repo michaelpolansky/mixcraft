@@ -318,6 +318,12 @@ export function SynthView() {
               accentColor={COLORS.filterEnv}
               compact
             />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '12px' }}>
+              <MiniSlider label="A" value={params.filterEnvelope.attack} min={0.001} max={2} onChange={setFilterEnvelopeAttack} color={COLORS.filterEnv} />
+              <MiniSlider label="D" value={params.filterEnvelope.decay} min={0.001} max={2} onChange={setFilterEnvelopeDecay} color={COLORS.filterEnv} />
+              <MiniSlider label="S" value={params.filterEnvelope.sustain} min={0} max={1} onChange={setFilterEnvelopeSustain} color={COLORS.filterEnv} />
+              <MiniSlider label="R" value={params.filterEnvelope.release} min={0.001} max={4} onChange={setFilterEnvelopeRelease} color={COLORS.filterEnv} />
+            </div>
             <div style={{ display: 'flex', gap: '12px', marginTop: '12px', justifyContent: 'center' }}>
               <Knob label="Amt" value={params.filterEnvelope.amount} min={-4} max={4} step={0.1} onChange={setFilterEnvelopeAmount} formatValue={(v) => `${v > 0 ? '+' : ''}${v.toFixed(1)}`} size={40} paramId="filterEnv.amount" />
             </div>
@@ -554,12 +560,14 @@ function MiniSlider({
   min,
   max,
   onChange,
+  color = COLORS.amp,
 }: {
   label: string;
   value: number;
   min: number;
   max: number;
   onChange: (v: number) => void;
+  color?: string;
 }) {
   const percent = ((value - min) / (max - min)) * 100;
   return (
@@ -586,7 +594,7 @@ function MiniSlider({
           top: 0,
           height: '100%',
           width: `${percent}%`,
-          background: COLORS.amp,
+          background: color,
           borderRadius: '2px',
         }} />
       </div>
