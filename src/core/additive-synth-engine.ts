@@ -251,7 +251,10 @@ export class AdditiveSynthEngine {
     }
     const clamped = clamp(amplitude, 0, 1);
     this.params.harmonics[index] = clamped;
-    this.harmonicGains[index].gain.value = clamped;
+    const gain = this.harmonicGains[index];
+    if (gain) {
+      gain.gain.value = clamped;
+    }
   }
 
   /**
@@ -382,7 +385,10 @@ export class AdditiveSynthEngine {
 
     // Set each oscillator to its harmonic frequency
     for (let i = 0; i < NUM_HARMONICS; i++) {
-      this.oscillators[i].frequency.value = baseFreq * (i + 1);
+      const osc = this.oscillators[i];
+      if (osc) {
+        osc.frequency.value = baseFreq * (i + 1);
+      }
     }
 
     // Trigger the amplitude envelope
@@ -411,7 +417,10 @@ export class AdditiveSynthEngine {
 
     // Set each oscillator to its harmonic frequency
     for (let i = 0; i < NUM_HARMONICS; i++) {
-      this.oscillators[i].frequency.value = baseFreq * (i + 1);
+      const osc = this.oscillators[i];
+      if (osc) {
+        osc.frequency.value = baseFreq * (i + 1);
+      }
     }
 
     // Trigger the amplitude envelope with release after duration

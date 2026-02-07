@@ -88,8 +88,12 @@ export function scoreSlices(
 
     let spacingVariance = 0;
     for (let i = 1; i < sortedSlices.length; i++) {
-      const spacing = sortedSlices[i].start - sortedSlices[i - 1].start;
-      spacingVariance += Math.abs(spacing - idealSpacing);
+      const current = sortedSlices[i];
+      const prev = sortedSlices[i - 1];
+      if (current && prev) {
+        const spacing = current.start - prev.start;
+        spacingVariance += Math.abs(spacing - idealSpacing);
+      }
     }
 
     const avgVariance = spacingVariance / (sortedSlices.length - 1);

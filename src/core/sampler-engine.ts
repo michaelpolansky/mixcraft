@@ -58,9 +58,12 @@ function generateWaveformData(buffer: AudioBuffer, targetPoints: number = 1000):
     // Find the max absolute value in this block for peak visualization
     let max = 0;
     for (let j = start; j < end; j++) {
-      const abs = Math.abs(channelData[j]);
-      if (abs > max) {
-        max = abs;
+      const sample = channelData[j];
+      if (sample !== undefined) {
+        const abs = Math.abs(sample);
+        if (abs > max) {
+          max = abs;
+        }
       }
     }
     waveformData[i] = max;
@@ -208,6 +211,8 @@ export class SamplerEngine {
     if (index < 0 || index >= this.params.slices.length) return;
 
     const slice = this.params.slices[index];
+    if (!slice) return;
+
     const duration = slice.end - slice.start;
 
     if (duration <= 0) return;

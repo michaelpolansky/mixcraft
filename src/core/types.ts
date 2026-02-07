@@ -575,7 +575,7 @@ export type MultiTrackCondition =
   | { type: 'volume_range'; track: string; minDb: number; maxDb: number }
   | { type: 'volume_balanced'; track1: string; track2: string; tolerance: number }
   // Bus-level conditions
-  | { type: 'bus_compression'; minAmount: number }
+  | { type: 'bus_compression'; minAmount: number; maxAmount?: number }
   | { type: 'bus_eq_boost'; band: 'low' | 'mid' | 'high'; minBoost: number }
   | { type: 'bus_eq_cut'; band: 'low' | 'mid' | 'high'; minCut: number };
 

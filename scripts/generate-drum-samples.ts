@@ -50,7 +50,8 @@ function float32ToWav(samples: Float32Array, sampleRate: number): Buffer {
 
   // Convert float samples to 16-bit integers
   for (let i = 0; i < samples.length; i++) {
-    const sample = Math.max(-1, Math.min(1, samples[i]));
+    const rawSample = samples[i] ?? 0;
+    const sample = Math.max(-1, Math.min(1, rawSample));
     const intSample = Math.round(sample * 32767);
     buffer.writeInt16LE(intSample, offset);
     offset += 2;
@@ -82,7 +83,7 @@ async function generateKick(): Promise<Float32Array> {
 
     // Add a bit of click at the start
     if (t < 0.005) {
-      samples[i] += Math.sin(2 * Math.PI * 1000 * t) * (1 - t / 0.005) * 0.3;
+      samples[i] = (samples[i] ?? 0) + Math.sin(2 * Math.PI * 1000 * t) * (1 - t / 0.005) * 0.3;
     }
   }
 
@@ -364,7 +365,7 @@ async function generate808Kick(): Promise<Float32Array> {
 
     // Sharp click at the start
     if (t < 0.01) {
-      samples[i] += Math.sin(2 * Math.PI * 2000 * t) * (1 - t / 0.01) * 0.4;
+      samples[i] = (samples[i] ?? 0) + Math.sin(2 * Math.PI * 2000 * t) * (1 - t / 0.01) * 0.4;
     }
   }
 

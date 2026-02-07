@@ -5,6 +5,7 @@ import {
   createStepsWithVelocities,
   createStepsWithHits,
   createOffbeatHihat,
+  createEmptySteps,
 } from '../pattern-helpers.ts';
 
 export const challenge: DrumSequencingChallenge = {
