@@ -161,4 +161,4 @@ Sound design is the entry point. It teaches concepts that make mixing and produc
 | 19 | 2026-02-06 | Ableton-style synth UI - XY Pad, preset system (30 presets), sequencer (9 patterns + drums), ModuleCard visual redesign, WAV recording |
 | 20 | 2026-02-06 | Layout polish - horizontal signal-flow layout, fixed header/menu overlap, compact visualizers, RecordingControl compact mode |
 | 21 | 2026-02-06 | Performance optimization - Canvas visualizer fixes (cached gradients, reused TypedArrays, conditional shadows), React.memo on all visualizers |
-| 22 | 2026-02-06 | UX polish - loading states for audio initialization (isInitializing, button feedback), error handling with user-friendly messages |
+| 22 | 2026-02-06 | UX polish - loading states for audio initialization, error handling with user-friendly messages, canvas overflow fix (maxWidth + overflow:hidden) |
