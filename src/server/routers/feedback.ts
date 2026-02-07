@@ -628,6 +628,99 @@ Give brief, encouraging feedback (2-3 sentences max). Focus on:
 Be warm and encouraging. Explain FM concepts in accessible terms - how changing harmonicity or modulation index affects the sound. If they passed, congratulate them and explain what made the FM sound work.`;
 }
 
+// ============================================
+// Additive Synthesis Feedback Schemas
+// ============================================
+
+const AdditiveScoreResultSchema = z.object({
+  overall: z.number(),
+  stars: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+  passed: z.boolean(),
+  breakdown: z.object({
+    harmonics: z.number(),
+    envelope: z.number(),
+  }),
+});
+
+const AdditiveSynthParamsSchema = z.object({
+  harmonics: z.array(z.number()),
+  amplitudeEnvelope: z.object({
+    attack: z.number(),
+    decay: z.number(),
+    sustain: z.number(),
+    release: z.number(),
+  }),
+  effects: EffectsParamsSchema,
+  volume: z.number(),
+});
+
+const AdditiveChallengeInfoSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  description: z.string(),
+  module: z.string(),
+});
+
+const AdditiveFeedbackInputSchema = z.object({
+  result: AdditiveScoreResultSchema,
+  playerParams: AdditiveSynthParamsSchema,
+  targetParams: AdditiveSynthParamsSchema,
+  challenge: AdditiveChallengeInfoSchema,
+  attemptNumber: z.number(),
+});
+
+/**
+ * Format harmonics array for display
+ */
+function formatHarmonics(harmonics: number[]): string {
+  const active = harmonics
+    .map((amp, i) => ({ harmonic: i + 1, amp }))
+    .filter(h => h.amp > 0.05)
+    .map(h => `H${h.harmonic}: ${(h.amp * 100).toFixed(0)}%`)
+    .slice(0, 8); // Show at most 8 active harmonics
+
+  return active.length > 0 ? active.join(', ') : 'None active';
+}
+
+/**
+ * Build prompt for additive synthesis feedback
+ */
+function buildAdditiveSynthesisFeedbackPrompt(input: z.infer<typeof AdditiveFeedbackInputSchema>): string {
+  const { result, playerParams, targetParams, challenge, attemptNumber } = input;
+
+  const paramComparison = `
+Player's additive settings:
+- Active harmonics: ${formatHarmonics(playerParams.harmonics)}
+- Amp Envelope: A=${playerParams.amplitudeEnvelope.attack}s D=${playerParams.amplitudeEnvelope.decay}s S=${playerParams.amplitudeEnvelope.sustain} R=${playerParams.amplitudeEnvelope.release}s
+
+Target additive settings:
+- Active harmonics: ${formatHarmonics(targetParams.harmonics)}
+- Amp Envelope: A=${targetParams.amplitudeEnvelope.attack}s D=${targetParams.amplitudeEnvelope.decay}s S=${targetParams.amplitudeEnvelope.sustain} R=${targetParams.amplitudeEnvelope.release}s`;
+
+  return `You are a friendly additive synthesis mentor helping someone learn Fourier synthesis. A student just attempted an additive sound design challenge.
+
+Challenge: "${challenge.title}"
+Description: ${challenge.description}
+Module: ${challenge.module}
+Attempt #${attemptNumber}
+
+Score: ${result.overall}% (${result.stars} star${result.stars > 1 ? 's' : ''})
+${result.passed ? 'PASSED' : 'NOT YET PASSED'}
+
+Score breakdown:
+- Harmonic balance: ${result.breakdown.harmonics.toFixed(0)}%
+- Envelope shape: ${result.breakdown.envelope.toFixed(0)}%
+
+${paramComparison}
+
+Give brief, encouraging feedback (2-3 sentences max). Focus on:
+1. What they did well (any aspect scoring above 70%)
+2. The ONE most important harmonic adjustment to make
+3. A specific, actionable tip that explains the additive concept (e.g., "the fundamental (H1) is too quiet - it provides the pitch foundation" or "odd harmonics (H1, H3, H5) create a hollow square-wave character")
+
+Be warm and encouraging. Explain how harmonics build timbre - the fundamental provides pitch, upper harmonics add brightness/character. If they passed, congratulate them and explain what made the additive sound work.`;
+}
+
 /**
  * Build prompt for drum sequencing feedback
  */
@@ -823,6 +916,32 @@ export const feedbackRouter = router({
     .mutation(async ({ input }) => {
       const client = getAnthropicClient();
       const prompt = buildFMSynthesisFeedbackPrompt(input);
+
+      const response = await client.messages.create({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 300,
+        messages: [
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+      });
+
+      const textBlock = response.content.find((block) => block.type === 'text');
+      const feedback = textBlock?.type === 'text' ? textBlock.text : 'Unable to generate feedback.';
+
+      return { feedback };
+    }),
+
+  /**
+   * Generate AI feedback for an additive synthesis challenge attempt
+   */
+  generateAdditiveSynthesis: publicProcedure
+    .input(AdditiveFeedbackInputSchema)
+    .mutation(async ({ input }) => {
+      const client = getAnthropicClient();
+      const prompt = buildAdditiveSynthesisFeedbackPrompt(input);
 
       const response = await client.messages.create({
         model: 'claude-sonnet-4-20250514',
