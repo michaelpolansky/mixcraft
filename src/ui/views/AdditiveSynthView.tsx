@@ -14,46 +14,14 @@ import {
   XYPad,
   PresetDropdown,
   Sequencer,
+  ModuleCard,
+  MODULE_COLORS,
+  WaveformIcon,
 } from '../components/index.ts';
 import { ADDITIVE_PRESETS } from '../../data/presets/additive-presets.ts';
 import { InfoPanelProvider } from '../context/InfoPanelContext.tsx';
 import { PARAM_RANGES } from '../../core/types.ts';
 
-/**
- * Section wrapper component for consistent styling
- */
-function Section({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div
-      style={{
-        background: '#141414',
-        borderRadius: '12px',
-        padding: '16px',
-        border: '1px solid #2a2a2a',
-      }}
-    >
-      <h3
-        style={{
-          margin: '0 0 12px 0',
-          fontSize: '11px',
-          fontWeight: 600,
-          color: '#666',
-          textTransform: 'uppercase',
-          letterSpacing: '1px',
-        }}
-      >
-        {title}
-      </h3>
-      {children}
-    </div>
-  );
-}
 
 export function AdditiveSynthView() {
   const {
@@ -297,17 +265,25 @@ export function AdditiveSynthView() {
         }}
       >
         {/* Spectrum Analyzer */}
-        <Section title="Spectrum Analyzer">
+        <ModuleCard
+          title="Spectrum Analyzer"
+          color={MODULE_COLORS.spectrum}
+          icon={<WaveformIcon type="harmonics" size={20} color={MODULE_COLORS.spectrum} />}
+        >
           <SpectrumAnalyzer
             getAnalyser={getAnalyser}
             width={720}
             height={150}
             barCount={80}
           />
-        </Section>
+        </ModuleCard>
 
         {/* XY Pad - Harmonic Control */}
-        <Section title="Harmonic XY Pad">
+        <ModuleCard
+          title="Harmonic XY Pad"
+          color={MODULE_COLORS.harmonics}
+          icon={<WaveformIcon type="harmonics" size={20} color={MODULE_COLORS.harmonics} />}
+        >
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             <XYPad
               xValue={getFundamental()}
@@ -324,7 +300,7 @@ export function AdditiveSynthView() {
               formatYValue={formatPercent}
             />
           </div>
-        </Section>
+        </ModuleCard>
 
         {/* Additive Controls */}
         <AdditiveSynthPanel
@@ -339,7 +315,11 @@ export function AdditiveSynthView() {
         />
 
         {/* Effects Section */}
-        <Section title="Effects">
+        <ModuleCard
+          title="Effects"
+          color={MODULE_COLORS.effects}
+          icon={<WaveformIcon type="noise" size={20} color={MODULE_COLORS.effects} animated={false} />}
+        >
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
             {/* Distortion */}
             <div>
@@ -376,25 +356,31 @@ export function AdditiveSynthView() {
               </div>
             </div>
           </div>
-        </Section>
+        </ModuleCard>
 
         {/* Sequencer */}
-        <Section title="Sequencer">
+        <ModuleCard
+          title="Sequencer"
+          color={MODULE_COLORS.sequencer}
+        >
           <Sequencer
             engine={engine}
             accentColor="#06b6d4"
           />
-        </Section>
+        </ModuleCard>
 
         {/* Piano Keyboard */}
-        <Section title="Keyboard">
+        <ModuleCard
+          title="Keyboard"
+          color={MODULE_COLORS.keyboard}
+        >
           <PianoKeyboard
             onNoteOn={handleNoteOn}
             onNoteOff={handleNoteOff}
             octave={3}
             octaves={3}
           />
-        </Section>
+        </ModuleCard>
       </div>
     </div>
     <InfoPanel accentColor="#06b6d4" />

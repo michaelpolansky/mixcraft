@@ -13,45 +13,13 @@ import {
   XYPad,
   PresetDropdown,
   Sequencer,
+  ModuleCard,
+  MODULE_COLORS,
+  WaveformIcon,
 } from '../components/index.ts';
 import { FM_PRESETS } from '../../data/presets/fm-presets.ts';
 import { InfoPanelProvider } from '../context/InfoPanelContext.tsx';
 
-/**
- * Section wrapper component for consistent styling
- */
-function Section({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div
-      style={{
-        background: '#141414',
-        borderRadius: '12px',
-        padding: '16px',
-        border: '1px solid #2a2a2a',
-      }}
-    >
-      <h3
-        style={{
-          margin: '0 0 12px 0',
-          fontSize: '11px',
-          fontWeight: 600,
-          color: '#666',
-          textTransform: 'uppercase',
-          letterSpacing: '1px',
-        }}
-      >
-        {title}
-      </h3>
-      {children}
-    </div>
-  );
-}
 
 export function FMSynthView() {
   const {
@@ -291,17 +259,25 @@ export function FMSynthView() {
         }}
       >
         {/* Spectrum Analyzer */}
-        <Section title="Spectrum Analyzer">
+        <ModuleCard
+          title="Spectrum Analyzer"
+          color={MODULE_COLORS.spectrum}
+          icon={<WaveformIcon type="harmonics" size={20} color={MODULE_COLORS.spectrum} />}
+        >
           <SpectrumAnalyzer
             getAnalyser={getAnalyser}
             width={720}
             height={150}
             barCount={80}
           />
-        </Section>
+        </ModuleCard>
 
         {/* XY Pad - FM Control */}
-        <Section title="FM XY Pad">
+        <ModuleCard
+          title="FM XY Pad"
+          color={MODULE_COLORS.modulation}
+          icon={<WaveformIcon type="sine" size={20} color={MODULE_COLORS.modulation} />}
+        >
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             <XYPad
               xValue={harmonicityToNormalized(params.harmonicity)}
@@ -318,7 +294,7 @@ export function FMSynthView() {
               formatYValue={(v) => v.toFixed(1)}
             />
           </div>
-        </Section>
+        </ModuleCard>
 
         {/* FM Controls */}
         <FMSynthPanel
@@ -337,22 +313,28 @@ export function FMSynthView() {
         />
 
         {/* Sequencer */}
-        <Section title="Sequencer">
+        <ModuleCard
+          title="Sequencer"
+          color={MODULE_COLORS.sequencer}
+        >
           <Sequencer
             engine={engine}
             accentColor="#f97316"
           />
-        </Section>
+        </ModuleCard>
 
         {/* Piano Keyboard */}
-        <Section title="Keyboard">
+        <ModuleCard
+          title="Keyboard"
+          color={MODULE_COLORS.keyboard}
+        >
           <PianoKeyboard
             onNoteOn={handleNoteOn}
             onNoteOff={handleNoteOff}
             octave={3}
             octaves={3}
           />
-        </Section>
+        </ModuleCard>
       </div>
     </div>
     <InfoPanel accentColor="#f97316" />

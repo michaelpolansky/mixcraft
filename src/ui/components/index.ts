@@ -33,3 +33,6 @@ export { VelocityLane } from './VelocityLane.tsx';
 export { XYPad } from './XYPad.tsx';
 export { PresetDropdown } from './PresetDropdown.tsx';
 export { Sequencer } from './Sequencer.tsx';
+export { ModuleCard, Section, MODULE_COLORS } from './ModuleCard.tsx';
+export { WaveformIcon } from './WaveformIcon.tsx';
+export type { WaveformIconType } from './WaveformIcon.tsx';

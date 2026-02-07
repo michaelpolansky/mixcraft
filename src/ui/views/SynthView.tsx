@@ -18,46 +18,14 @@ import {
   XYPad,
   PresetDropdown,
   Sequencer,
+  ModuleCard,
+  MODULE_COLORS,
+  WaveformIcon,
 } from '../components/index.ts';
 import { SUBTRACTIVE_PRESETS } from '../../data/presets/subtractive-presets.ts';
 import { InfoPanelProvider } from '../context/InfoPanelContext.tsx';
 import { PARAM_RANGES } from '../../core/types.ts';
 
-/**
- * Section wrapper component for consistent styling
- */
-function Section({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div
-      style={{
-        background: '#141414',
-        borderRadius: '12px',
-        padding: '16px',
-        border: '1px solid #2a2a2a',
-      }}
-    >
-      <h3
-        style={{
-          margin: '0 0 12px 0',
-          fontSize: '11px',
-          fontWeight: 600,
-          color: '#666',
-          textTransform: 'uppercase',
-          letterSpacing: '1px',
-        }}
-      >
-        {title}
-      </h3>
-      {children}
-    </div>
-  );
-}
 
 export function SynthView() {
   const {
@@ -320,7 +288,11 @@ export function SynthView() {
           }}
         >
           {/* XY Pad - Filter Control */}
-          <Section title="Filter XY Pad">
+          <ModuleCard
+            title="Filter XY Pad"
+            color={MODULE_COLORS.xypad}
+            icon={<WaveformIcon type="filter" size={20} color={MODULE_COLORS.xypad} animated={false} />}
+          >
             <div style={{ display: 'flex', justifyContent: 'center' }}>
               <XYPad
                 xValue={cutoffToNormalized(params.filter.cutoff)}
@@ -337,10 +309,14 @@ export function SynthView() {
                 formatYValue={(v) => v.toFixed(1)}
               />
             </div>
-          </Section>
+          </ModuleCard>
 
           {/* Oscillator Section */}
-          <Section title="Oscillator">
+          <ModuleCard
+            title="Oscillator"
+            color={MODULE_COLORS.oscillator}
+            icon={<WaveformIcon type={params.oscillator.type} size={20} color={MODULE_COLORS.oscillator} />}
+          >
             <div
               style={{
                 display: 'flex',
@@ -376,10 +352,14 @@ export function SynthView() {
                 />
               </div>
             </div>
-          </Section>
+          </ModuleCard>
 
           {/* Filter Section */}
-          <Section title="Filter">
+          <ModuleCard
+            title="Filter"
+            color={MODULE_COLORS.filter}
+            icon={<WaveformIcon type="filter" size={20} color={MODULE_COLORS.filter} animated={false} />}
+          >
             <div
               style={{
                 display: 'flex',
@@ -416,10 +396,14 @@ export function SynthView() {
                 />
               </div>
             </div>
-          </Section>
+          </ModuleCard>
 
           {/* Amplitude Envelope */}
-          <Section title="Amplitude Envelope">
+          <ModuleCard
+            title="Amplitude Envelope"
+            color={MODULE_COLORS.ampEnvelope}
+            icon={<WaveformIcon type="envelope" size={20} color={MODULE_COLORS.ampEnvelope} animated={false} />}
+          >
             <div
               style={{
                 display: 'flex',
@@ -479,10 +463,14 @@ export function SynthView() {
                 />
               </div>
             </div>
-          </Section>
+          </ModuleCard>
 
           {/* Filter Envelope */}
-          <Section title="Filter Envelope">
+          <ModuleCard
+            title="Filter Envelope"
+            color={MODULE_COLORS.filterEnvelope}
+            icon={<WaveformIcon type="envelope" size={20} color={MODULE_COLORS.filterEnvelope} animated={false} />}
+          >
             <div
               style={{
                 display: 'flex',
@@ -562,10 +550,14 @@ export function SynthView() {
                 />
               </div>
             </div>
-          </Section>
+          </ModuleCard>
 
           {/* LFO */}
-          <Section title="LFO (Filter Modulation)">
+          <ModuleCard
+            title="LFO (Filter Modulation)"
+            color={MODULE_COLORS.lfo}
+            icon={<WaveformIcon type="sine" size={20} color={MODULE_COLORS.lfo} />}
+          >
             <div
               style={{
                 display: 'flex',
@@ -601,10 +593,14 @@ export function SynthView() {
                 />
               </div>
             </div>
-          </Section>
+          </ModuleCard>
 
           {/* Effects */}
-          <Section title="Effects">
+          <ModuleCard
+            title="Effects"
+            color={MODULE_COLORS.effects}
+            icon={<WaveformIcon type="noise" size={20} color={MODULE_COLORS.effects} animated={false} />}
+          >
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
               {/* Distortion */}
               <div>
@@ -641,10 +637,14 @@ export function SynthView() {
                 </div>
               </div>
             </div>
-          </Section>
+          </ModuleCard>
 
           {/* Volume */}
-          <Section title="Output">
+          <ModuleCard
+            title="Output"
+            color={MODULE_COLORS.output}
+            icon={<WaveformIcon type="speaker" size={20} color={MODULE_COLORS.output} animated={false} />}
+          >
             <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
               <Knob
                 label="Volume"
@@ -658,7 +658,7 @@ export function SynthView() {
                 paramId="volume"
               />
             </div>
-          </Section>
+          </ModuleCard>
         </div>
 
         {/* Right Column - Visualization & Keyboard */}
@@ -670,27 +670,37 @@ export function SynthView() {
           }}
         >
           {/* Spectrum Analyzer */}
-          <Section title="Spectrum Analyzer">
+          <ModuleCard
+            title="Spectrum Analyzer"
+            color={MODULE_COLORS.spectrum}
+            icon={<WaveformIcon type="harmonics" size={20} color={MODULE_COLORS.spectrum} />}
+          >
             <SpectrumAnalyzer width={500} height={250} barCount={80} />
-          </Section>
+          </ModuleCard>
 
           {/* Sequencer */}
-          <Section title="Sequencer">
+          <ModuleCard
+            title="Sequencer"
+            color={MODULE_COLORS.sequencer}
+          >
             <Sequencer
               engine={engine}
               accentColor="#4ade80"
             />
-          </Section>
+          </ModuleCard>
 
           {/* Keyboard */}
-          <Section title="Keyboard">
+          <ModuleCard
+            title="Keyboard"
+            color={MODULE_COLORS.keyboard}
+          >
             <PianoKeyboard
               onNoteOn={playNote}
               onNoteOff={stopNote}
               octave={4}
               octaves={2}
             />
-          </Section>
+          </ModuleCard>
         </div>
       </div>
     </div>

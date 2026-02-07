@@ -6,7 +6,7 @@
 
 import type { FMSynthParams, OscillatorType } from '../../core/types.ts';
 import { PARAM_RANGES, FM_PARAM_RANGES, HARMONICITY_PRESETS } from '../../core/types.ts';
-import { Knob, WaveformSelector } from './index.ts';
+import { Knob, WaveformSelector, ModuleCard, MODULE_COLORS, WaveformIcon } from './index.ts';
 import { CarrierModulatorViz } from './CarrierModulatorViz.tsx';
 
 interface FMSynthPanelProps {
@@ -24,35 +24,6 @@ interface FMSynthPanelProps {
   onVolumeChange: (value: number) => void;
 }
 
-/**
- * Section container with title
- */
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div
-      style={{
-        background: '#141414',
-        borderRadius: '12px',
-        padding: '16px',
-        border: '1px solid #2a2a2a',
-      }}
-    >
-      <h3
-        style={{
-          margin: '0 0 12px 0',
-          fontSize: '11px',
-          fontWeight: 600,
-          color: '#666',
-          textTransform: 'uppercase',
-          letterSpacing: '1px',
-        }}
-      >
-        {title}
-      </h3>
-      {children}
-    </div>
-  );
-}
 
 export function FMSynthPanel({
   params,
@@ -80,7 +51,11 @@ export function FMSynthPanel({
       }}
     >
       {/* Section 1: Oscillators */}
-      <Section title="Oscillators">
+      <ModuleCard
+        title="Oscillators"
+        color={MODULE_COLORS.oscillator}
+        icon={<WaveformIcon type="sine" size={20} color={MODULE_COLORS.oscillator} />}
+      >
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {/* Waveform visualization */}
           <CarrierModulatorViz
@@ -133,10 +108,14 @@ export function FMSynthPanel({
             </div>
           </div>
         </div>
-      </Section>
+      </ModuleCard>
 
       {/* Section 2: Modulation */}
-      <Section title="Modulation">
+      <ModuleCard
+        title="Modulation"
+        color={MODULE_COLORS.modulation}
+        icon={<WaveformIcon type="sine" size={20} color={MODULE_COLORS.modulation} />}
+      >
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {/* Harmonicity with preset buttons */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -221,10 +200,14 @@ export function FMSynthPanel({
             />
           </div>
         </div>
-      </Section>
+      </ModuleCard>
 
       {/* Section 3: Envelope */}
-      <Section title="Envelope">
+      <ModuleCard
+        title="Envelope"
+        color={MODULE_COLORS.ampEnvelope}
+        icon={<WaveformIcon type="envelope" size={20} color={MODULE_COLORS.ampEnvelope} animated={false} />}
+      >
         <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
           <Knob
             value={params.amplitudeEnvelope.attack}
@@ -270,10 +253,14 @@ export function FMSynthPanel({
             paramId="amplitude.release"
           />
         </div>
-      </Section>
+      </ModuleCard>
 
       {/* Section 4: Output */}
-      <Section title="Output">
+      <ModuleCard
+        title="Output"
+        color={MODULE_COLORS.output}
+        icon={<WaveformIcon type="speaker" size={20} color={MODULE_COLORS.output} animated={false} />}
+      >
         <div style={{ display: 'flex', justifyContent: 'center' }}>
           <Knob
             value={params.volume}
@@ -286,7 +273,7 @@ export function FMSynthPanel({
             paramId="volume"
           />
         </div>
-      </Section>
+      </ModuleCard>
     </div>
   );
 }

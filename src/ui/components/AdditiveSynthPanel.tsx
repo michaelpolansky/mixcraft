@@ -6,7 +6,7 @@
 
 import type { AdditiveSynthParams, AdditivePreset } from '../../core/types.ts';
 import { PARAM_RANGES } from '../../core/types.ts';
-import { Knob, HarmonicDrawbars } from './index.ts';
+import { Knob, HarmonicDrawbars, ModuleCard, MODULE_COLORS, WaveformIcon } from './index.ts';
 
 interface AdditiveSynthPanelProps {
   params: AdditiveSynthParams;
@@ -19,35 +19,6 @@ interface AdditiveSynthPanelProps {
   onVolumeChange: (value: number) => void;
 }
 
-/**
- * Section container with title
- */
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div
-      style={{
-        background: '#141414',
-        borderRadius: '12px',
-        padding: '16px',
-        border: '1px solid #2a2a2a',
-      }}
-    >
-      <h3
-        style={{
-          margin: '0 0 12px 0',
-          fontSize: '11px',
-          fontWeight: 600,
-          color: '#666',
-          textTransform: 'uppercase',
-          letterSpacing: '1px',
-        }}
-      >
-        {title}
-      </h3>
-      {children}
-    </div>
-  );
-}
 
 export function AdditiveSynthPanel({
   params,
@@ -78,7 +49,11 @@ export function AdditiveSynthPanel({
       />
 
       {/* Section 2: Envelope */}
-      <Section title="Envelope">
+      <ModuleCard
+        title="Envelope"
+        color={MODULE_COLORS.ampEnvelope}
+        icon={<WaveformIcon type="envelope" size={20} color={MODULE_COLORS.ampEnvelope} animated={false} />}
+      >
         <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
           <Knob
             value={params.amplitudeEnvelope.attack}
@@ -124,10 +99,14 @@ export function AdditiveSynthPanel({
             paramId="amplitude.release"
           />
         </div>
-      </Section>
+      </ModuleCard>
 
       {/* Section 3: Output */}
-      <Section title="Output">
+      <ModuleCard
+        title="Output"
+        color={MODULE_COLORS.output}
+        icon={<WaveformIcon type="speaker" size={20} color={MODULE_COLORS.output} animated={false} />}
+      >
         <div style={{ display: 'flex', justifyContent: 'center' }}>
           <Knob
             value={params.volume}
@@ -140,7 +119,7 @@ export function AdditiveSynthPanel({
             paramId="volume"
           />
         </div>
-      </Section>
+      </ModuleCard>
     </div>
   );
 }
