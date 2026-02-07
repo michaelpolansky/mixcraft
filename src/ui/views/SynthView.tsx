@@ -15,6 +15,7 @@ import {
   EnvelopeDisplay,
   PianoKeyboard,
   InfoPanel,
+  XYPad,
 } from '../components/index.ts';
 import { InfoPanelProvider } from '../context/InfoPanelContext.tsx';
 import { PARAM_RANGES } from '../../core/types.ts';
@@ -124,6 +125,44 @@ export function SynthView() {
   const formatPercent = (value: number) => `${Math.round(value * 100)}%`;
   const formatOctave = (value: number) => (value >= 0 ? `+${value}` : `${value}`);
   const formatCents = (value: number) => (value >= 0 ? `+${value}` : `${value}`);
+
+  // XY Pad value conversions (using logarithmic scale for cutoff)
+  const cutoffRange: [number, number] = [200, 8000];
+  const resonanceRange: [number, number] = [0, 20];
+
+  // Convert actual cutoff to normalized (logarithmic)
+  const cutoffToNormalized = (cutoff: number): number => {
+    const minLog = Math.log(cutoffRange[0]);
+    const maxLog = Math.log(cutoffRange[1]);
+    return (Math.log(cutoff) - minLog) / (maxLog - minLog);
+  };
+
+  // Convert normalized to actual cutoff (logarithmic)
+  const normalizedToCutoff = (normalized: number): number => {
+    const minLog = Math.log(cutoffRange[0]);
+    const maxLog = Math.log(cutoffRange[1]);
+    return Math.exp(minLog + normalized * (maxLog - minLog));
+  };
+
+  // Resonance is linear
+  const resonanceToNormalized = (resonance: number): number => {
+    return (resonance - resonanceRange[0]) / (resonanceRange[1] - resonanceRange[0]);
+  };
+
+  const normalizedToResonance = (normalized: number): number => {
+    return resonanceRange[0] + normalized * (resonanceRange[1] - resonanceRange[0]);
+  };
+
+  // XY Pad change handlers
+  const handleXYPadXChange = useCallback((normalized: number) => {
+    const cutoff = normalizedToCutoff(normalized);
+    setFilterCutoff(Math.round(cutoff));
+  }, [setFilterCutoff]);
+
+  const handleXYPadYChange = useCallback((normalized: number) => {
+    const resonance = normalizedToResonance(normalized);
+    setFilterResonance(Math.round(resonance * 10) / 10);
+  }, [setFilterResonance]);
 
   // Not initialized - show start button
   if (!isInitialized) {
@@ -266,6 +305,26 @@ export function SynthView() {
             gap: '16px',
           }}
         >
+          {/* XY Pad - Filter Control */}
+          <Section title="Filter XY Pad">
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <XYPad
+                xValue={cutoffToNormalized(params.filter.cutoff)}
+                yValue={resonanceToNormalized(params.filter.resonance)}
+                xLabel="Cutoff"
+                yLabel="Resonance"
+                xRange={cutoffRange}
+                yRange={resonanceRange}
+                onXChange={handleXYPadXChange}
+                onYChange={handleXYPadYChange}
+                size={200}
+                accentColor="#4ade80"
+                formatXValue={formatHz}
+                formatYValue={(v) => v.toFixed(1)}
+              />
+            </div>
+          </Section>
+
           {/* Oscillator Section */}
           <Section title="Oscillator">
             <div

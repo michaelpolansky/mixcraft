@@ -30,3 +30,4 @@ export { EffectsVisualizer } from './EffectsVisualizer.tsx';
 export { WaveformEditor } from './WaveformEditor.tsx';
 export { StepGrid } from './StepGrid.tsx';
 export { VelocityLane } from './VelocityLane.tsx';
+export { XYPad } from './XYPad.tsx';

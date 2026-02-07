@@ -10,6 +10,7 @@ import {
   FMSynthPanel,
   PianoKeyboard,
   InfoPanel,
+  XYPad,
 } from '../components/index.ts';
 import { InfoPanelProvider } from '../context/InfoPanelContext.tsx';
 
@@ -106,6 +107,41 @@ export function FMSynthView() {
   const getAnalyser = useCallback(() => {
     return engine?.getAnalyser() ?? null;
   }, [engine]);
+
+  // XY Pad value conversions for FM synthesis
+  const harmonicityRange: [number, number] = [0.5, 12];
+  const modulationIndexRange: [number, number] = [0, 10];
+
+  // Convert actual harmonicity to normalized
+  const harmonicityToNormalized = (h: number): number => {
+    return (h - harmonicityRange[0]) / (harmonicityRange[1] - harmonicityRange[0]);
+  };
+
+  // Convert normalized to actual harmonicity
+  const normalizedToHarmonicity = (normalized: number): number => {
+    return harmonicityRange[0] + normalized * (harmonicityRange[1] - harmonicityRange[0]);
+  };
+
+  // Convert actual modulation index to normalized
+  const modIndexToNormalized = (mi: number): number => {
+    return (mi - modulationIndexRange[0]) / (modulationIndexRange[1] - modulationIndexRange[0]);
+  };
+
+  // Convert normalized to actual modulation index
+  const normalizedToModIndex = (normalized: number): number => {
+    return modulationIndexRange[0] + normalized * (modulationIndexRange[1] - modulationIndexRange[0]);
+  };
+
+  // XY Pad change handlers
+  const handleXYPadXChange = useCallback((normalized: number) => {
+    const harmonicity = normalizedToHarmonicity(normalized);
+    setHarmonicity(Math.round(harmonicity * 10) / 10);
+  }, [setHarmonicity]);
+
+  const handleXYPadYChange = useCallback((normalized: number) => {
+    const modIndex = normalizedToModIndex(normalized);
+    setModulationIndex(Math.round(modIndex * 10) / 10);
+  }, [setModulationIndex]);
 
   // Not initialized - show start button
   if (!isInitialized) {
@@ -249,6 +285,26 @@ export function FMSynthView() {
             height={150}
             barCount={80}
           />
+        </Section>
+
+        {/* XY Pad - FM Control */}
+        <Section title="FM XY Pad">
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <XYPad
+              xValue={harmonicityToNormalized(params.harmonicity)}
+              yValue={modIndexToNormalized(params.modulationIndex)}
+              xLabel="Harmonicity"
+              yLabel="Mod Index"
+              xRange={harmonicityRange}
+              yRange={modulationIndexRange}
+              onXChange={handleXYPadXChange}
+              onYChange={handleXYPadYChange}
+              size={200}
+              accentColor="#f97316"
+              formatXValue={(v) => v.toFixed(1)}
+              formatYValue={(v) => v.toFixed(1)}
+            />
+          </div>
         </Section>
 
         {/* FM Controls */}

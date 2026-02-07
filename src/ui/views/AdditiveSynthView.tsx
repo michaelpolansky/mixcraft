@@ -11,6 +11,7 @@ import {
   PianoKeyboard,
   Knob,
   InfoPanel,
+  XYPad,
 } from '../components/index.ts';
 import { InfoPanelProvider } from '../context/InfoPanelContext.tsx';
 import { PARAM_RANGES } from '../../core/types.ts';
@@ -114,6 +115,36 @@ export function AdditiveSynthView() {
   const getAnalyser = useCallback(() => {
     return engine?.getAnalyser() ?? null;
   }, [engine]);
+
+  // XY Pad for additive synthesis
+  // X = Fundamental volume (harmonic 1), Y = High harmonic mix (average of harmonics 9-16)
+  const fundamentalRange: [number, number] = [0, 1];
+  const highHarmonicRange: [number, number] = [0, 1];
+
+  // Get fundamental (first harmonic) amplitude
+  const getFundamental = (): number => {
+    return params.harmonics[0] ?? 0;
+  };
+
+  // Get average of high harmonics (9-16)
+  const getHighHarmonicMix = (): number => {
+    const highHarmonics = params.harmonics.slice(8, 16);
+    if (highHarmonics.length === 0) return 0;
+    const sum = highHarmonics.reduce((acc, val) => acc + val, 0);
+    return sum / highHarmonics.length;
+  };
+
+  // XY Pad change handlers
+  const handleXYPadXChange = useCallback((normalized: number) => {
+    setHarmonic(0, Math.round(normalized * 100) / 100);
+  }, [setHarmonic]);
+
+  const handleXYPadYChange = useCallback((normalized: number) => {
+    // Set all high harmonics (9-16) to the same value
+    for (let i = 8; i < 16; i++) {
+      setHarmonic(i, Math.round(normalized * 100) / 100);
+    }
+  }, [setHarmonic]);
 
   // Format helpers
   const formatPercent = (value: number) => `${Math.round(value * 100)}%`;
@@ -260,6 +291,26 @@ export function AdditiveSynthView() {
             height={150}
             barCount={80}
           />
+        </Section>
+
+        {/* XY Pad - Harmonic Control */}
+        <Section title="Harmonic XY Pad">
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <XYPad
+              xValue={getFundamental()}
+              yValue={getHighHarmonicMix()}
+              xLabel="Fundamental"
+              yLabel="High Harmonics"
+              xRange={fundamentalRange}
+              yRange={highHarmonicRange}
+              onXChange={handleXYPadXChange}
+              onYChange={handleXYPadYChange}
+              size={200}
+              accentColor="#06b6d4"
+              formatXValue={formatPercent}
+              formatYValue={formatPercent}
+            />
+          </div>
         </Section>
 
         {/* Additive Controls */}
