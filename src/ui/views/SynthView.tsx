@@ -32,7 +32,8 @@ const COLORS = {
   oscillator: '#3b82f6',
   filter: '#06b6d4',
   amp: '#22c55e',
-  mod: '#eab308',
+  filterEnv: '#eab308',
+  lfo: '#ef4444',
   effects: '#8b5cf6',
   output: '#f97316',
 };
@@ -301,46 +302,44 @@ export function SynthView() {
             </div>
           </StageCard>
 
-          {/* MOD Stage (Filter Env + LFO) */}
-          <StageCard title="MOD" color={COLORS.mod}>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '9px', color: '#666', marginBottom: '4px' }}>FILTER ENV</div>
-                <EnvelopeVisualizer
-                  attack={params.filterEnvelope.attack}
-                  decay={params.filterEnvelope.decay}
-                  sustain={params.filterEnvelope.sustain}
-                  release={params.filterEnvelope.release}
-                  onAttackChange={setFilterEnvelopeAttack}
-                  onDecayChange={setFilterEnvelopeDecay}
-                  onSustainChange={setFilterEnvelopeSustain}
-                  onReleaseChange={setFilterEnvelopeRelease}
-                  width={95}
-                  height={60}
-                  accentColor={COLORS.mod}
-                  compact
-                />
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '9px', color: '#666', marginBottom: '4px' }}>LFO</div>
-                <LFOVisualizer
-                  waveform={params.lfo.waveform}
-                  rate={params.lfo.rate}
-                  depth={params.lfo.depth}
-                  width={95}
-                  height={60}
-                  accentColor={COLORS.mod}
-                  compact
-                />
-              </div>
+          {/* FILTER ENV Stage */}
+          <StageCard title="FILTER ENV" color={COLORS.filterEnv}>
+            <EnvelopeVisualizer
+              attack={params.filterEnvelope.attack}
+              decay={params.filterEnvelope.decay}
+              sustain={params.filterEnvelope.sustain}
+              release={params.filterEnvelope.release}
+              onAttackChange={setFilterEnvelopeAttack}
+              onDecayChange={setFilterEnvelopeDecay}
+              onSustainChange={setFilterEnvelopeSustain}
+              onReleaseChange={setFilterEnvelopeRelease}
+              width={200}
+              height={100}
+              accentColor={COLORS.filterEnv}
+              compact
+            />
+            <div style={{ display: 'flex', gap: '12px', marginTop: '12px', justifyContent: 'center' }}>
+              <Knob label="Amt" value={params.filterEnvelope.amount} min={-4} max={4} step={0.1} onChange={setFilterEnvelopeAmount} formatValue={(v) => `${v > 0 ? '+' : ''}${v.toFixed(1)}`} size={40} paramId="filterEnv.amount" />
             </div>
-            <div style={{ marginTop: '8px' }}>
+          </StageCard>
+
+          {/* LFO Stage */}
+          <StageCard title="LFO" color={COLORS.lfo}>
+            <LFOVisualizer
+              waveform={params.lfo.waveform}
+              rate={params.lfo.rate}
+              depth={params.lfo.depth}
+              width={200}
+              height={100}
+              accentColor={COLORS.lfo}
+              compact
+            />
+            <div style={{ marginTop: '12px' }}>
               <LFOWaveformSelector value={params.lfo.waveform} onChange={setLFOWaveform} />
             </div>
-            <div style={{ display: 'flex', gap: '8px', marginTop: '8px', justifyContent: 'center' }}>
-              <Knob label="Amt" value={params.filterEnvelope.amount} min={-4} max={4} step={0.1} onChange={setFilterEnvelopeAmount} formatValue={(v) => `${v > 0 ? '+' : ''}${v.toFixed(1)}`} size={36} paramId="filterEnv.amount" />
-              <Knob label="Rate" value={params.lfo.rate} min={0.1} max={20} step={0.1} onChange={setLFORate} formatValue={(v) => `${v.toFixed(1)}`} size={36} paramId="lfo.rate" />
-              <Knob label="Depth" value={params.lfo.depth} min={0} max={1} step={0.01} onChange={setLFODepth} formatValue={formatPercent} size={36} paramId="lfo.depth" />
+            <div style={{ display: 'flex', gap: '12px', marginTop: '12px', justifyContent: 'center' }}>
+              <Knob label="Rate" value={params.lfo.rate} min={0.1} max={20} step={0.1} onChange={setLFORate} formatValue={(v) => `${v.toFixed(1)}`} size={40} paramId="lfo.rate" />
+              <Knob label="Depth" value={params.lfo.depth} min={0} max={1} step={0.01} onChange={setLFODepth} formatValue={formatPercent} size={40} paramId="lfo.depth" />
             </div>
           </StageCard>
 
