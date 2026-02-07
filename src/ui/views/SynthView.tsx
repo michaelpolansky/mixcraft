@@ -25,7 +25,7 @@ import {
   Oscilloscope,
   Tooltip,
 } from '../components/index.ts';
-import type { LFOSyncDivision, LFOWaveform, NoiseType, OscillatorType } from '../../core/types.ts';
+import type { LFOSyncDivision, LFOWaveform, NoiseType, OscillatorType, ModSource, ModDestination } from '../../core/types.ts';
 import { SUBTRACTIVE_PRESETS } from '../../data/presets/subtractive-presets.ts';
 import { InfoPanelProvider, useInfoPanel } from '../context/InfoPanelContext.tsx';
 import { PARAM_RANGES } from '../../core/types.ts';
@@ -47,6 +47,7 @@ const COLORS = {
   pwmEnv: '#14b8a6',   // Teal for PWM envelope
   effects: '#8b5cf6',
   output: '#f97316',
+  modMatrix: '#a855f7', // Purple for mod matrix
 };
 
 // LFO sync division options
@@ -148,6 +149,11 @@ export function SynthView() {
     setLfo2Depth,
     setLfo2Type,
     setLfo2Enabled,
+    setPan,
+    setModRouteSource,
+    setModRouteDestination,
+    setModRouteAmount,
+    setModRouteEnabled,
   } = useSynthStore();
 
   // Bottom strip state: 'keys' or 'xy'
@@ -937,6 +943,101 @@ export function SynthView() {
             </div>
           </StageCard>
 
+          {/* MOD MATRIX Stage */}
+          <StageCard title="MOD MATRIX" color={COLORS.modMatrix}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {params.modMatrix.routes.map((route, i) => (
+                <div
+                  key={i}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '6px 8px',
+                    background: route.enabled ? 'rgba(168, 85, 247, 0.1)' : '#0d0d12',
+                    borderRadius: '4px',
+                    border: `1px solid ${route.enabled ? COLORS.modMatrix + '40' : '#222'}`,
+                  }}
+                >
+                  {/* Enable checkbox */}
+                  <input
+                    type="checkbox"
+                    checked={route.enabled}
+                    onChange={() => setModRouteEnabled(i, !route.enabled)}
+                    style={{
+                      width: '14px',
+                      height: '14px',
+                      cursor: 'pointer',
+                      accentColor: COLORS.modMatrix,
+                    }}
+                  />
+                  {/* Source dropdown */}
+                  <select
+                    value={route.source}
+                    onChange={(e) => setModRouteSource(i, e.target.value as ModSource)}
+                    disabled={!route.enabled}
+                    style={{
+                      padding: '3px 4px',
+                      background: '#1a1a1a',
+                      border: '1px solid #333',
+                      borderRadius: '3px',
+                      color: route.enabled ? '#fff' : '#666',
+                      fontSize: '10px',
+                      cursor: 'pointer',
+                      minWidth: '60px',
+                    }}
+                  >
+                    <option value="lfo1">LFO 1</option>
+                    <option value="lfo2">LFO 2</option>
+                    <option value="ampEnv">Amp Env</option>
+                    <option value="filterEnv">Filter Env</option>
+                  </select>
+                  {/* Arrow */}
+                  <span style={{ color: route.enabled ? COLORS.modMatrix : '#444', fontSize: '12px' }}>→</span>
+                  {/* Destination dropdown */}
+                  <select
+                    value={route.destination}
+                    onChange={(e) => setModRouteDestination(i, e.target.value as ModDestination)}
+                    disabled={!route.enabled}
+                    style={{
+                      padding: '3px 4px',
+                      background: '#1a1a1a',
+                      border: '1px solid #333',
+                      borderRadius: '3px',
+                      color: route.enabled ? '#fff' : '#666',
+                      fontSize: '10px',
+                      cursor: 'pointer',
+                      minWidth: '70px',
+                    }}
+                  >
+                    <option value="pitch">Pitch</option>
+                    <option value="pan">Pan</option>
+                    <option value="amplitude">Amplitude</option>
+                    <option value="filterCutoff">Filter Cutoff</option>
+                    <option value="osc2Mix">OSC2 Mix</option>
+                    <option value="lfo1Rate">LFO1 Rate</option>
+                    <option value="lfo2Rate">LFO2 Rate</option>
+                  </select>
+                  {/* Amount knob */}
+                  <Knob
+                    label=""
+                    value={route.amount}
+                    min={-1}
+                    max={1}
+                    step={0.01}
+                    onChange={(v) => setModRouteAmount(i, v)}
+                    formatValue={(v) => `${v >= 0 ? '+' : ''}${(v * 100).toFixed(0)}%`}
+                    size={28}
+                    paramId={`modMatrix.route${i}.amount`}
+                  />
+                </div>
+              ))}
+              <div style={{ fontSize: '9px', color: '#666', textAlign: 'center', marginTop: '4px' }}>
+                Route modulation sources to destinations
+              </div>
+            </div>
+          </StageCard>
+
           {/* OUTPUT Stage */}
           <StageCard title="OUTPUT" color={COLORS.output}>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
@@ -947,17 +1048,42 @@ export function SynthView() {
                 height={80}
                 accentColor={COLORS.output}
               />
-              <Knob
-                label="Volume"
-                value={params.volume}
-                min={-40}
-                max={0}
-                step={0.5}
-                onChange={setVolume}
-                formatValue={formatDb}
-                size={56}
-                paramId="volume"
-              />
+              {/* Volume and Pan knobs */}
+              <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                <Knob
+                  label="Volume"
+                  value={params.volume}
+                  min={-40}
+                  max={0}
+                  step={0.5}
+                  onChange={setVolume}
+                  formatValue={formatDb}
+                  size={48}
+                  paramId="volume"
+                />
+                {/* Pan with L/R labels */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span style={{ fontSize: '9px', color: params.pan < 0 ? COLORS.output : '#666', fontWeight: params.pan < 0 ? 600 : 400 }}>L</span>
+                    <Knob
+                      label="Pan"
+                      value={params.pan}
+                      min={-1}
+                      max={1}
+                      step={0.01}
+                      onChange={setPan}
+                      formatValue={(v) => {
+                        if (Math.abs(v) < 0.05) return 'C';
+                        if (v < 0) return `${Math.round(Math.abs(v) * 100)}L`;
+                        return `${Math.round(v * 100)}R`;
+                      }}
+                      size={40}
+                      paramId="pan"
+                    />
+                    <span style={{ fontSize: '9px', color: params.pan > 0 ? COLORS.output : '#666', fontWeight: params.pan > 0 ? 600 : 400 }}>R</span>
+                  </div>
+                </div>
+              </div>
               <RecordingControl
                 sourceNode={engine?.getOutputNode() ?? null}
                 accentColor={COLORS.output}
