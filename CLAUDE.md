@@ -60,7 +60,7 @@ docs/
 
 ## Five-Track Curriculum
 
-1. **Sound Design** (32 challenges) — synthesis, filters, envelopes, modulation.
+1. **Sound Design** (50 challenges) — subtractive synthesis, FM synthesis, additive synthesis.
 2. **Production** (20 challenges) — layering, arrangement, frequency stacking.
 3. **Mixing** (136 challenges) — EQ, compression, reverb, stereo, levels.
 4. **Sampling** (24 challenges) — sample manipulation, chopping, pitch/time, flipping.
@@ -70,13 +70,15 @@ Sound design is the entry point. It teaches concepts that make mixing and produc
 
 ## Current State
 
-**All 236 challenges complete across five tracks.** Deployed to production with AI feedback on all tracks.
+**All 254 challenges complete across five tracks.** Deployed to production with AI feedback on all tracks.
 
-### Sound Design Track (32 challenges, SD1-SD7)
-- Subtractive synth with oscillator, filter, dual ADSR envelopes, LFO (filter modulation)
+### Sound Design Track (50 challenges, SD1-SD9)
+- **Subtractive synthesis (SD1-SD7):** oscillator, filter, dual ADSR envelopes, LFO, effects chain
+- **FM synthesis (SD8, 12 challenges):** harmonicity, modulation index, carrier/modulator waveforms
+- **Additive synthesis (SD9, 6 challenges):** harmonic drawbars, Fourier synthesis
 - Effects chain: distortion, delay, reverb, chorus (all with dry/wet mix)
 - Challenge system with scoring (70% audio features, 30% parameter proximity)
-- AI feedback via Claude API
+- AI feedback via Claude API (separate endpoints for subtractive, FM, additive)
 
 ### Production Track (20 challenges, P1-P5)
 - Layer-based audio system with mute, volume, pan, and EQ per layer
@@ -140,3 +142,4 @@ Sound design is the entry point. It teaches concepts that make mixing and produc
 | 13 | 2026-02-06 | Sampling Track Phase 2 - evaluation logic (40 tests), SamplerChallengeView, SM1-SM6 challenges (24 total) |
 | 14 | 2026-02-06 | Drum Sequencing Track - DrumSequencerEngine (60 tests), StepGrid, VelocityLane, store, views, DS1-DS6 (24 challenges) |
 | 15 | 2026-02-06 | Drum samples (16 synthesized sounds), AI feedback for Sampling and Drum Sequencing tracks |
+| 16 | 2026-02-06 | FM Synthesis Track expansion - 6 new SD8 challenges (12 total), generateFMSynthesis AI feedback endpoint |
