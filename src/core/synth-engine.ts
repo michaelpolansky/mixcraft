@@ -28,6 +28,10 @@ import type {
   ChorusParams,
   SubOscillatorParams,
   Oscillator2Params,
+  ModMatrixParams,
+  ModRoute,
+  ModSource,
+  ModDestination,
 } from './types.ts';
 import {
   DEFAULT_SYNTH_PARAMS,
@@ -105,6 +109,15 @@ export class SynthEngine {
 
   // Panner for stereo positioning
   private panner: Tone.Panner;
+
+  // Output gain for amplitude modulation destination
+  private outputGain: Tone.Gain;
+
+  // Mod Matrix route nodes - tracks active modulation connections
+  private modRouteNodes: Map<number, {
+    multiply: Tone.Multiply;
+    gain: Tone.Gain;
+  }> = new Map();
 
   constructor(initialParams: Partial<SynthParams> = {}) {
     this.params = { ...DEFAULT_SYNTH_PARAMS, ...initialParams };
@@ -265,6 +278,9 @@ export class SynthEngine {
     // Create panner for stereo positioning
     this.panner = new Tone.Panner(this.params.pan);
 
+    // Create output gain for amplitude modulation destination
+    this.outputGain = new Tone.Gain(1);
+
     // Create effects chain
     this.effectsChain = new EffectsChain(this.params.effects);
 
@@ -272,15 +288,30 @@ export class SynthEngine {
     this.analyser = Tone.getContext().createAnalyser();
     this.configureAnalyser(DEFAULT_ANALYSER_CONFIG);
 
-    // Wire: synth → effectsChain → panner → analyser → destination
+    // Wire: synth → effectsChain → panner → outputGain → analyser → destination
     // Also wire noise, sub osc, and osc2
     this.synth.connect(this.effectsChain.input);
     this.noiseGain.connect(this.effectsChain.input);
     this.subOscGain.connect(this.effectsChain.input);
     this.osc2Gain.connect(this.effectsChain.input);
     this.effectsChain.connect(this.panner);
-    this.panner.connect(this.analyser);
+    this.panner.connect(this.outputGain);
+    this.outputGain.connect(this.analyser);
     Tone.connect(this.analyser, Tone.getDestination());
+
+    // Initialize mod matrix routes
+    this.initModMatrix();
+  }
+
+  /**
+   * Initializes mod matrix routes from params
+   */
+  private initModMatrix(): void {
+    this.params.modMatrix.routes.forEach((route, index) => {
+      if (route.enabled && route.amount !== 0) {
+        this.updateModRoute(index, route);
+      }
+    });
   }
 
   /**
@@ -737,6 +768,155 @@ export class SynthEngine {
   }
 
   // ============================================
+  // Mod Matrix Controls
+  // ============================================
+
+  /**
+   * Updates the entire mod matrix
+   */
+  setModMatrix(modMatrix: Partial<ModMatrixParams>): void {
+    if (modMatrix.routes) {
+      modMatrix.routes.forEach((route, index) => {
+        this.setModRoute(index, route);
+      });
+    }
+  }
+
+  /**
+   * Updates a single mod route by index
+   */
+  setModRoute(index: number, route: ModRoute): void {
+    // Validate index
+    if (index < 0 || index >= 4) return;
+
+    // Update params
+    this.params.modMatrix.routes[index] = { ...route };
+
+    // Update the actual routing
+    this.updateModRoute(index, route);
+  }
+
+  /**
+   * Updates or creates a modulation route connection
+   * Route: Source → Multiply(amount) → ScaledGain → Destination.parameter
+   */
+  private updateModRoute(index: number, route: ModRoute): void {
+    // Disconnect existing route if any
+    this.disconnectModRoute(index);
+
+    // Don't create route if disabled or amount is 0
+    if (!route.enabled || route.amount === 0) return;
+
+    // Get source signal
+    const source = this.getModSource(route.source);
+    if (!source) return;
+
+    // Get destination parameter
+    const destParam = this.getDestinationParam(route.destination);
+    if (!destParam) return;
+
+    // Create multiply node for bipolar amount (-1 to +1)
+    const multiply = new Tone.Multiply(route.amount);
+
+    // Create scaled gain for destination range
+    const scale = this.getDestinationScale(route.destination);
+    const gain = new Tone.Gain(scale);
+
+    // Connect: source → multiply → gain → destination
+    source.connect(multiply);
+    multiply.connect(gain);
+    gain.connect(destParam);
+
+    // Store nodes for cleanup
+    this.modRouteNodes.set(index, { multiply, gain });
+  }
+
+  /**
+   * Disconnects and disposes a mod route
+   */
+  private disconnectModRoute(index: number): void {
+    const nodes = this.modRouteNodes.get(index);
+    if (nodes) {
+      nodes.multiply.dispose();
+      nodes.gain.dispose();
+      this.modRouteNodes.delete(index);
+    }
+  }
+
+  /**
+   * Gets the modulation source signal
+   */
+  private getModSource(source: ModSource): Tone.LFO | Tone.Envelope | null {
+    switch (source) {
+      case 'lfo1':
+        return this.lfo;
+      case 'lfo2':
+        return this.lfo2;
+      case 'ampEnv':
+        // Use our modEnvelope as a proxy for amplitude envelope shape
+        // The actual synth.envelope is internal to MonoSynth
+        return this.modEnvelope;
+      case 'filterEnv':
+        // Use pitchEnvelope as a proxy for filter envelope shape
+        // The actual synth.filterEnvelope is a FrequencyEnvelope
+        return this.pitchEnvelope;
+      default:
+        return null;
+    }
+  }
+
+  /**
+   * Gets the destination parameter to modulate
+   * Returns a Tone.js parameter that can receive modulation signals
+   * Using Tone.InputNode as the base type since different params have different type parameters
+   */
+  private getDestinationParam(dest: ModDestination): Tone.InputNode | null {
+    switch (dest) {
+      case 'pitch':
+        return this.synth.detune;
+      case 'pan':
+        return this.panner.pan;
+      case 'amplitude':
+        return this.outputGain.gain;
+      case 'filterCutoff':
+        return this.synth.filter.frequency;
+      case 'osc2Mix':
+        return this.osc2Gain.gain;
+      case 'lfo1Rate':
+        return this.lfo.frequency;
+      case 'lfo2Rate':
+        return this.lfo2.frequency;
+      default:
+        return null;
+    }
+  }
+
+  /**
+   * Gets the scaling factor for a destination
+   * This determines how much the modulation affects the destination
+   */
+  private getDestinationScale(dest: ModDestination): number {
+    switch (dest) {
+      case 'pitch':
+        return 1200;      // ±1 octave in cents (1200 cents = 1 octave)
+      case 'pan':
+        return 1;         // Full range (-1 to +1)
+      case 'amplitude':
+        return 0.5;       // ±50% of amplitude
+      case 'filterCutoff':
+        return 4000;      // ±4kHz
+      case 'osc2Mix':
+        return 0.5;       // ±50% of mix
+      case 'lfo1Rate':
+        return 10;        // ±10 Hz
+      case 'lfo2Rate':
+        return 10;        // ±10 Hz
+      default:
+        return 1;
+    }
+  }
+
+  // ============================================
   // Pitch Envelope Controls
   // ============================================
 
@@ -1176,6 +1356,10 @@ export class SynthEngine {
     if (params.pan !== undefined) {
       this.setPan(params.pan);
     }
+
+    if (params.modMatrix) {
+      this.setModMatrix(params.modMatrix);
+    }
   }
 
   // ============================================
@@ -1212,8 +1396,13 @@ export class SynthEngine {
     this.osc2Envelope.dispose();
     this.osc2Filter.dispose();
     this.osc2Gain.dispose();
-    // Clean up panner
+    // Clean up panner and output gain
     this.panner.dispose();
+    this.outputGain.dispose();
+    // Clean up mod matrix routes
+    this.modRouteNodes.forEach((nodes, index) => {
+      this.disconnectModRoute(index);
+    });
     this.effectsChain.dispose();
     this.synth.dispose();
   }
