@@ -5,7 +5,17 @@
 
 import { create } from 'zustand';
 import { FMSynthEngine, createFMSynthEngine } from '../../core/fm-synth-engine.ts';
-import type { FMSynthParams, OscillatorType, ADSREnvelope } from '../../core/types.ts';
+import type {
+  FMSynthParams,
+  OscillatorType,
+  ADSREnvelope,
+  LFOWaveform,
+  FMLFODestination,
+  NoiseType,
+  ArpPattern,
+  ArpDivision,
+  FMModRoute,
+} from '../../core/types.ts';
 import { DEFAULT_FM_SYNTH_PARAMS, HARMONICITY_PRESETS } from '../../core/types.ts';
 import { FM_PRESETS } from '../../data/presets/fm-presets.ts';
 
@@ -26,7 +36,7 @@ interface FMSynthStore {
 
   // Note control
   playNote: (note?: string) => void;
-  stopNote: () => void;
+  stopNote: (note?: string) => void;
   setCurrentNote: (note: string) => void;
 
   // FM-specific actions
@@ -63,6 +73,37 @@ interface FMSynthStore {
 
   // Presets
   loadPreset: (name: string) => void;
+
+  // LFO actions
+  setLFORate: (rate: number) => void;
+  setLFODepth: (depth: number) => void;
+  setLFOWaveform: (waveform: LFOWaveform) => void;
+  setLFODestination: (destination: FMLFODestination) => void;
+
+  // Noise actions
+  setNoiseType: (type: NoiseType) => void;
+  setNoiseLevel: (level: number) => void;
+
+  // Glide actions
+  setGlideEnabled: (enabled: boolean) => void;
+  setGlideTime: (time: number) => void;
+
+  // Pan action
+  setPan: (pan: number) => void;
+
+  // Velocity actions
+  setVelocityAmpAmount: (amount: number) => void;
+  setVelocityModIndexAmount: (amount: number) => void;
+
+  // Arpeggiator actions
+  setArpEnabled: (enabled: boolean) => void;
+  setArpPattern: (pattern: ArpPattern) => void;
+  setArpDivision: (division: ArpDivision) => void;
+  setArpOctaves: (octaves: 1 | 2 | 3 | 4) => void;
+  setArpGate: (gate: number) => void;
+
+  // Mod Matrix action
+  setModRoute: (index: number, route: Partial<FMModRoute>) => void;
 
   // Cleanup
   dispose: () => void;
@@ -115,20 +156,29 @@ export const useFMSynthStore = create<FMSynthStore>((set, get) => ({
 
   // Play a note
   playNote: (note?: string) => {
-    const { engine, currentNote, isInitialized } = get();
+    const { engine, currentNote, isInitialized, params } = get();
     if (!engine || !isInitialized) return;
 
     const noteToPlay = note ?? currentNote;
-    engine.triggerAttack(noteToPlay);
-    set({ isPlaying: true });
+    if (params.arpeggiator.enabled) {
+      engine.arpAddNote(noteToPlay);
+    } else {
+      engine.triggerAttack(noteToPlay);
+    }
+    set({ isPlaying: true, currentNote: noteToPlay });
   },
 
   // Stop the current note
-  stopNote: () => {
-    const { engine } = get();
+  stopNote: (note?: string) => {
+    const { engine, params, currentNote } = get();
     if (!engine) return;
 
-    engine.triggerRelease();
+    if (params.arpeggiator.enabled) {
+      const noteToStop = note ?? currentNote;
+      engine.arpRemoveNote(noteToStop);
+    } else {
+      engine.triggerRelease();
+    }
     set({ isPlaying: false });
   },
 
@@ -333,6 +383,118 @@ export const useFMSynthStore = create<FMSynthStore>((set, get) => ({
       engine.setParams(preset.params);
       set({ params: engine.getParams(), currentPreset: name });
     }
+  },
+
+  // LFO actions
+  setLFORate: (rate: number) => {
+    const { engine, params } = get();
+    engine?.setLFORate(rate);
+    set({ params: { ...params, lfo: { ...params.lfo, rate } } });
+  },
+
+  setLFODepth: (depth: number) => {
+    const { engine, params } = get();
+    engine?.setLFODepth(depth);
+    set({ params: { ...params, lfo: { ...params.lfo, depth } } });
+  },
+
+  setLFOWaveform: (waveform: LFOWaveform) => {
+    const { engine, params } = get();
+    engine?.setLFOWaveform(waveform);
+    set({ params: { ...params, lfo: { ...params.lfo, waveform } } });
+  },
+
+  setLFODestination: (destination: FMLFODestination) => {
+    const { engine, params } = get();
+    engine?.setLFODestination(destination);
+    set({ params: { ...params, lfo: { ...params.lfo, destination } } });
+  },
+
+  // Noise actions
+  setNoiseType: (type: NoiseType) => {
+    const { engine, params } = get();
+    engine?.setNoiseType(type);
+    set({ params: { ...params, noise: { ...params.noise, type } } });
+  },
+
+  setNoiseLevel: (level: number) => {
+    const { engine, params } = get();
+    engine?.setNoiseLevel(level);
+    set({ params: { ...params, noise: { ...params.noise, level } } });
+  },
+
+  // Glide actions
+  setGlideEnabled: (enabled: boolean) => {
+    const { engine, params } = get();
+    engine?.setGlideEnabled(enabled);
+    set({ params: { ...params, glide: { ...params.glide, enabled } } });
+  },
+
+  setGlideTime: (time: number) => {
+    const { engine, params } = get();
+    engine?.setGlideTime(time);
+    set({ params: { ...params, glide: { ...params.glide, time } } });
+  },
+
+  // Pan action
+  setPan: (pan: number) => {
+    const { engine, params } = get();
+    engine?.setPan(pan);
+    set({ params: { ...params, pan } });
+  },
+
+  // Velocity actions
+  setVelocityAmpAmount: (amount: number) => {
+    const { engine, params } = get();
+    engine?.setVelocityAmpAmount(amount);
+    set({ params: { ...params, velocity: { ...params.velocity, ampAmount: amount } } });
+  },
+
+  setVelocityModIndexAmount: (amount: number) => {
+    const { engine, params } = get();
+    engine?.setVelocityModIndexAmount(amount);
+    set({ params: { ...params, velocity: { ...params.velocity, modIndexAmount: amount } } });
+  },
+
+  // Arpeggiator actions
+  setArpEnabled: (enabled: boolean) => {
+    const { engine, params } = get();
+    engine?.setArpEnabled(enabled);
+    set({ params: { ...params, arpeggiator: { ...params.arpeggiator, enabled } } });
+  },
+
+  setArpPattern: (pattern: ArpPattern) => {
+    const { engine, params } = get();
+    engine?.setArpPattern(pattern);
+    set({ params: { ...params, arpeggiator: { ...params.arpeggiator, pattern } } });
+  },
+
+  setArpDivision: (division: ArpDivision) => {
+    const { engine, params } = get();
+    engine?.setArpDivision(division);
+    set({ params: { ...params, arpeggiator: { ...params.arpeggiator, division } } });
+  },
+
+  setArpOctaves: (octaves: 1 | 2 | 3 | 4) => {
+    const { engine, params } = get();
+    engine?.setArpOctaves(octaves);
+    set({ params: { ...params, arpeggiator: { ...params.arpeggiator, octaves } } });
+  },
+
+  setArpGate: (gate: number) => {
+    const { engine, params } = get();
+    engine?.setArpGate(gate);
+    set({ params: { ...params, arpeggiator: { ...params.arpeggiator, gate } } });
+  },
+
+  // Mod Matrix action
+  setModRoute: (index: number, route: Partial<FMModRoute>) => {
+    const { engine, params } = get();
+    engine?.setModRoute(index, route);
+    // Update local state - spread partial onto existing complete route
+    const newRoutes = [...params.modMatrix.routes] as [FMModRoute, FMModRoute, FMModRoute, FMModRoute];
+    newRoutes[index] = { ...newRoutes[index], ...route } as FMModRoute;
+    set({ params: { ...params, modMatrix: { routes: newRoutes } } });
   },
 
   // Cleanup
