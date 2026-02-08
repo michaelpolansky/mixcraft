@@ -1,6 +1,6 @@
 /**
  * FM Synthesizer View
- * Horizontal signal-flow layout: FM → AMP → OUTPUT
+ * Horizontal signal-flow layout: FM → LFO → NOISE → VELOCITY → ARP → AMP → OUTPUT
  */
 
 import { useEffect, useCallback, useState } from 'react';
@@ -16,18 +16,78 @@ import {
   FMVisualizer,
   EnvelopeVisualizer,
   WaveformSelector,
+  LFOVisualizer,
+  NoiseVisualizer,
+  Oscilloscope,
   XYPad,
 } from '../components/index.ts';
 import { FM_PRESETS } from '../../data/presets/fm-presets.ts';
 import { InfoPanelProvider } from '../context/InfoPanelContext.tsx';
-import { FM_PARAM_RANGES, HARMONICITY_PRESETS } from '../../core/types.ts';
+import {
+  FM_PARAM_RANGES,
+  HARMONICITY_PRESETS,
+  FM_MOD_SOURCES,
+  FM_MOD_DESTINATIONS,
+  FM_MOD_SOURCE_LABELS,
+  FM_MOD_DEST_LABELS,
+  type FMLFODestination,
+  type NoiseType,
+  type LFOWaveform,
+  type ArpPattern,
+  type ArpDivision,
+  type FMModSource,
+  type FMModDestination,
+} from '../../core/types.ts';
 
 // Stage colors following signal flow
 const COLORS = {
   fm: '#f97316',
+  lfo: '#ef4444',
+  noise: '#64748b',
+  velocity: '#fb923c',
+  arp: '#f59e0b',
   amp: '#22c55e',
+  modMatrix: '#a855f7',
   output: '#ef4444',
 };
+
+// Standardized sizes for consistent UI
+const SIZES = {
+  visualizer: {
+    width: 200,
+    height: 100,
+    compactHeight: 60,
+  },
+  gap: {
+    xs: 4,
+    sm: 8,
+    md: 12,
+    lg: 16,
+  },
+  margin: {
+    section: 12,
+  },
+};
+
+// Standard module widths
+const MODULE_WIDTH = {
+  standard: 224,
+  wide: 320,
+};
+
+// Noise type options
+const NOISE_TYPES = [
+  { value: 'white' as const, label: 'White' },
+  { value: 'pink' as const, label: 'Pink' },
+  { value: 'brown' as const, label: 'Brown' },
+];
+
+// LFO destination options for FM synth
+const FM_LFO_DESTINATIONS = [
+  { value: 'modulationIndex' as const, label: 'Mod Index' },
+  { value: 'harmonicity' as const, label: 'Harmonic' },
+  { value: 'pitch' as const, label: 'Pitch' },
+];
 
 export function FMSynthView() {
   const {
@@ -53,11 +113,44 @@ export function FMSynthView() {
     resetToDefaults,
     currentPreset,
     loadPreset,
+    // LFO actions
+    setLFORate,
+    setLFODepth,
+    setLFOWaveform,
+    setLFODestination,
+    // Noise actions
+    setNoiseType,
+    setNoiseLevel,
+    // Glide actions
+    setGlideEnabled,
+    setGlideTime,
+    // Pan action
+    setPan,
+    // Velocity actions
+    setVelocityAmpAmount,
+    setVelocityModIndexAmount,
+    // Arpeggiator actions
+    setArpEnabled,
+    setArpPattern,
+    setArpDivision,
+    setArpOctaves,
+    setArpGate,
+    // Mod Matrix
+    setModRoute,
   } = useFMSynthStore();
 
   // Bottom strip state
   const [bottomMode, setBottomMode] = useState<'keys' | 'xy'>('keys');
   const [bottomExpanded, setBottomExpanded] = useState(false);
+
+  // Arp-aware note handlers for keyboard
+  const handleNoteOn = useCallback((note: string) => {
+    playNote(note);
+  }, [playNote]);
+
+  const handleNoteOff = useCallback((note: string) => {
+    stopNote(note);
+  }, [stopNote]);
 
   // Initialize engine on mount
   useEffect(() => {
@@ -294,6 +387,314 @@ export function FMSynthView() {
                 paramId="fm.modEnvAmount"
               />
             </div>
+
+            {/* Glide controls */}
+            <div style={{ marginTop: SIZES.gap.md, paddingTop: SIZES.gap.md, borderTop: '1px solid #222' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: SIZES.gap.sm }}>
+                <button
+                  onClick={() => setGlideEnabled(!params.glide.enabled)}
+                  style={{
+                    padding: '4px 8px',
+                    background: params.glide.enabled ? COLORS.fm : '#222',
+                    border: `1px solid ${params.glide.enabled ? COLORS.fm : '#444'}`,
+                    borderRadius: '4px',
+                    color: params.glide.enabled ? '#fff' : '#888',
+                    fontSize: '10px',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                  }}
+                >
+                  GLIDE
+                </button>
+                {params.glide.enabled && (
+                  <Knob
+                    label="Time"
+                    value={params.glide.time}
+                    min={0.01}
+                    max={1}
+                    step={0.01}
+                    onChange={setGlideTime}
+                    formatValue={(v) => `${Math.round(v * 1000)}ms`}
+                    size={32}
+                    paramId="fm.glide.time"
+                  />
+                )}
+              </div>
+            </div>
+          </StageCard>
+
+          {/* LFO Stage */}
+          <StageCard title="LFO" color={COLORS.lfo}>
+            <LFOVisualizer
+              waveform={params.lfo.waveform}
+              rate={params.lfo.rate}
+              depth={params.lfo.depth}
+              width={SIZES.visualizer.width}
+              height={SIZES.visualizer.height}
+              accentColor={COLORS.lfo}
+              compact
+            />
+            <div style={{ marginTop: SIZES.margin.section }}>
+              <WaveformSelector
+                value={params.lfo.waveform}
+                onChange={(waveform: LFOWaveform) => setLFOWaveform(waveform)}
+                accentColor={COLORS.lfo}
+              />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm, marginTop: SIZES.margin.section }}>
+              <Knob
+                label="Rate"
+                value={params.lfo.rate}
+                min={0.1}
+                max={20}
+                step={0.1}
+                onChange={setLFORate}
+                formatValue={(v) => `${v.toFixed(1)} Hz`}
+                paramId="fm.lfo.rate"
+              />
+              <Knob
+                label="Depth"
+                value={params.lfo.depth}
+                min={0}
+                max={1}
+                step={0.01}
+                onChange={setLFODepth}
+                formatValue={formatPercent}
+                paramId="fm.lfo.depth"
+              />
+            </div>
+            {/* Destination selector */}
+            <div style={{ marginTop: SIZES.margin.section }}>
+              <div style={{ fontSize: '9px', color: '#888', marginBottom: 4, textTransform: 'uppercase' }}>
+                Destination
+              </div>
+              <div style={{ display: 'flex', gap: 2 }}>
+                {FM_LFO_DESTINATIONS.map((dest) => (
+                  <button
+                    key={dest.value}
+                    onClick={() => setLFODestination(dest.value)}
+                    style={{
+                      padding: '4px 6px',
+                      background: params.lfo.destination === dest.value ? COLORS.lfo : '#1a1a1a',
+                      border: `1px solid ${params.lfo.destination === dest.value ? COLORS.lfo : '#333'}`,
+                      borderRadius: '4px',
+                      color: params.lfo.destination === dest.value ? '#fff' : '#888',
+                      fontSize: '9px',
+                      cursor: 'pointer',
+                      fontWeight: 500,
+                    }}
+                  >
+                    {dest.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </StageCard>
+
+          {/* NOISE Stage */}
+          <StageCard title="NOISE" color={COLORS.noise}>
+            <NoiseVisualizer
+              noiseType={params.noise.type}
+              level={params.noise.level}
+              width={SIZES.visualizer.width}
+              height={SIZES.visualizer.height}
+              accentColor={COLORS.noise}
+              compact
+            />
+            <div style={{ display: 'flex', gap: SIZES.gap.xs, marginTop: SIZES.margin.section }}>
+              {NOISE_TYPES.map((nt) => (
+                <button
+                  key={nt.value}
+                  onClick={() => setNoiseType(nt.value)}
+                  style={{
+                    padding: '6px 10px',
+                    background: params.noise.type === nt.value ? COLORS.noise : '#1a1a1a',
+                    border: `1px solid ${params.noise.type === nt.value ? COLORS.noise : '#333'}`,
+                    borderRadius: '4px',
+                    color: params.noise.type === nt.value ? '#fff' : '#888',
+                    fontSize: '10px',
+                    cursor: 'pointer',
+                    fontWeight: 500,
+                  }}
+                >
+                  {nt.label}
+                </button>
+              ))}
+            </div>
+            <div style={{ marginTop: SIZES.margin.section }}>
+              <Knob
+                label="Level"
+                value={params.noise.level}
+                min={0}
+                max={1}
+                step={0.01}
+                onChange={setNoiseLevel}
+                formatValue={formatPercent}
+                paramId="fm.noise.level"
+              />
+            </div>
+          </StageCard>
+
+          {/* VELOCITY Stage */}
+          <StageCard title="VELOCITY" color={COLORS.velocity}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm }}>
+              <Knob
+                label="Amp Amount"
+                value={params.velocity.ampAmount}
+                min={0}
+                max={1}
+                step={0.01}
+                onChange={setVelocityAmpAmount}
+                formatValue={formatPercent}
+                paramId="fm.velocity.ampAmount"
+              />
+              <Knob
+                label="Mod Idx Amt"
+                value={params.velocity.modIndexAmount}
+                min={0}
+                max={1}
+                step={0.01}
+                onChange={setVelocityModIndexAmount}
+                formatValue={formatPercent}
+                paramId="fm.velocity.modIndexAmount"
+              />
+            </div>
+          </StageCard>
+
+          {/* ARP Stage */}
+          <StageCard title="ARP" color={COLORS.arp}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm }}>
+              {/* Enable toggle */}
+              <button
+                onClick={() => setArpEnabled(!params.arpeggiator.enabled)}
+                style={{
+                  padding: '6px 12px',
+                  background: params.arpeggiator.enabled ? COLORS.arp : '#222',
+                  border: `1px solid ${params.arpeggiator.enabled ? COLORS.arp : '#444'}`,
+                  borderRadius: '4px',
+                  color: params.arpeggiator.enabled ? '#000' : '#888',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  alignSelf: 'flex-start',
+                }}
+              >
+                {params.arpeggiator.enabled ? 'ON' : 'OFF'}
+              </button>
+
+              {params.arpeggiator.enabled && (
+                <>
+                  {/* Pattern selector */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <span style={{ fontSize: '9px', color: '#888', textTransform: 'uppercase' }}>
+                      Pattern
+                    </span>
+                    <div style={{ display: 'flex', gap: 2 }}>
+                      {([
+                        { value: 'up' as const, label: '↑' },
+                        { value: 'down' as const, label: '↓' },
+                        { value: 'upDown' as const, label: '↕' },
+                        { value: 'random' as const, label: '?' },
+                      ]).map(({ value, label }) => (
+                        <button
+                          key={value}
+                          onClick={() => setArpPattern(value)}
+                          style={{
+                            width: 28,
+                            height: 28,
+                            fontSize: '14px',
+                            fontWeight: 600,
+                            background: params.arpeggiator.pattern === value ? COLORS.arp : '#333',
+                            border: 'none',
+                            borderRadius: '4px',
+                            color: params.arpeggiator.pattern === value ? '#000' : '#fff',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Division selector */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <span style={{ fontSize: '9px', color: '#888', textTransform: 'uppercase' }}>
+                      Rate
+                    </span>
+                    <select
+                      value={params.arpeggiator.division}
+                      onChange={(e) => setArpDivision(e.target.value as ArpDivision)}
+                      style={{
+                        padding: '4px 8px',
+                        background: '#222',
+                        border: '1px solid #444',
+                        borderRadius: '4px',
+                        color: '#fff',
+                        fontSize: '11px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <option value="1n">1</option>
+                      <option value="2n">1/2</option>
+                      <option value="4n">1/4</option>
+                      <option value="8n">1/8</option>
+                      <option value="16n">1/16</option>
+                      <option value="32n">1/32</option>
+                    </select>
+                  </div>
+
+                  {/* Octaves selector */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <span style={{ fontSize: '9px', color: '#888', textTransform: 'uppercase' }}>
+                      Octaves
+                    </span>
+                    <div style={{ display: 'flex', gap: 2 }}>
+                      {([1, 2, 3, 4] as const).map((oct) => (
+                        <button
+                          key={oct}
+                          onClick={() => setArpOctaves(oct)}
+                          style={{
+                            width: 24,
+                            height: 24,
+                            fontSize: '10px',
+                            fontWeight: 600,
+                            background: params.arpeggiator.octaves === oct ? COLORS.arp : '#333',
+                            border: 'none',
+                            borderRadius: '4px',
+                            color: params.arpeggiator.octaves === oct ? '#000' : '#fff',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {oct}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Gate knob */}
+                  <Knob
+                    label="Gate"
+                    value={params.arpeggiator.gate}
+                    min={0.25}
+                    max={1}
+                    step={0.05}
+                    onChange={setArpGate}
+                    formatValue={(v) => `${Math.round(v * 100)}%`}
+                    paramId="fm.arp.gate"
+                  />
+                </>
+              )}
+            </div>
+          </StageCard>
+
+          {/* MOD MATRIX Stage */}
+          <StageCard title="MOD MATRIX" color={COLORS.modMatrix} wide>
+            <FMModMatrixUI
+              routes={params.modMatrix.routes}
+              onChange={setModRoute}
+              accentColor={COLORS.modMatrix}
+            />
           </StageCard>
 
           {/* AMP Stage */}
@@ -323,6 +724,13 @@ export function FMSynthView() {
           {/* OUTPUT Stage */}
           <StageCard title="OUTPUT" color={COLORS.output}>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+              {/* Oscilloscope */}
+              <Oscilloscope
+                getAnalyser={getAnalyser}
+                width={SIZES.visualizer.width}
+                height={SIZES.visualizer.compactHeight}
+                accentColor={COLORS.output}
+              />
               <Knob
                 label="Volume"
                 value={params.volume}
@@ -333,6 +741,20 @@ export function FMSynthView() {
                 formatValue={formatDb}
                 size={56}
                 paramId="volume"
+              />
+              <Knob
+                label="Pan"
+                value={params.pan}
+                min={-1}
+                max={1}
+                step={0.01}
+                onChange={setPan}
+                formatValue={(v) => {
+                  if (Math.abs(v) < 0.05) return 'Center';
+                  if (v < 0) return `${Math.round(Math.abs(v) * 100)}% L`;
+                  return `${Math.round(v * 100)}% R`;
+                }}
+                paramId="fm.pan"
               />
               <RecordingControl
                 sourceNode={engine?.getOutputNode() ?? null}
@@ -416,8 +838,8 @@ export function FMSynthView() {
           >
             {bottomMode === 'keys' ? (
               <PianoKeyboard
-                onNoteOn={playNote}
-                onNoteOff={stopNote}
+                onNoteOn={handleNoteOn}
+                onNoteOff={handleNoteOff}
                 octave={3}
                 octaves={bottomExpanded ? 3 : 1}
               />
@@ -446,6 +868,178 @@ export function FMSynthView() {
   );
 }
 
+// FM Mod Matrix UI - route-based with 4 slots
+interface FMModMatrixUIProps {
+  routes: readonly [
+    { source: FMModSource; destination: FMModDestination; amount: number; enabled: boolean },
+    { source: FMModSource; destination: FMModDestination; amount: number; enabled: boolean },
+    { source: FMModSource; destination: FMModDestination; amount: number; enabled: boolean },
+    { source: FMModSource; destination: FMModDestination; amount: number; enabled: boolean },
+  ];
+  onChange: (index: number, route: Partial<{ source: FMModSource; destination: FMModDestination; amount: number; enabled: boolean }>) => void;
+  accentColor: string;
+}
+
+function FMModMatrixUI({ routes, onChange, accentColor }: FMModMatrixUIProps) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm }}>
+      {routes.map((route, index) => (
+        <FMModRouteRow
+          key={index}
+          index={index}
+          route={route}
+          onChange={onChange}
+          accentColor={accentColor}
+        />
+      ))}
+    </div>
+  );
+}
+
+interface FMModRouteRowProps {
+  index: number;
+  route: { source: FMModSource; destination: FMModDestination; amount: number; enabled: boolean };
+  onChange: (index: number, route: Partial<{ source: FMModSource; destination: FMModDestination; amount: number; enabled: boolean }>) => void;
+  accentColor: string;
+}
+
+function FMModRouteRow({ index, route, onChange, accentColor }: FMModRouteRowProps) {
+  const isActive = route.enabled && Math.abs(route.amount) > 0.01;
+
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: SIZES.gap.xs,
+      padding: '4px 6px',
+      background: isActive ? `${accentColor}15` : '#1a1a1a',
+      borderRadius: '4px',
+      border: `1px solid ${isActive ? accentColor : '#333'}`,
+    }}>
+      {/* Enable toggle */}
+      <button
+        onClick={() => onChange(index, { enabled: !route.enabled })}
+        style={{
+          width: 20,
+          height: 20,
+          fontSize: '10px',
+          fontWeight: 700,
+          background: route.enabled ? accentColor : '#333',
+          border: 'none',
+          borderRadius: '3px',
+          color: route.enabled ? '#000' : '#888',
+          cursor: 'pointer',
+        }}
+      >
+        {index + 1}
+      </button>
+
+      {/* Source selector */}
+      <select
+        value={route.source}
+        onChange={(e) => onChange(index, { source: e.target.value as FMModSource })}
+        disabled={!route.enabled}
+        style={{
+          padding: '2px 4px',
+          background: '#222',
+          border: '1px solid #444',
+          borderRadius: '3px',
+          color: route.enabled ? '#fff' : '#666',
+          fontSize: '9px',
+          cursor: route.enabled ? 'pointer' : 'not-allowed',
+          flex: 1,
+          minWidth: 0,
+        }}
+      >
+        {FM_MOD_SOURCES.map((src) => (
+          <option key={src} value={src}>{FM_MOD_SOURCE_LABELS[src]}</option>
+        ))}
+      </select>
+
+      {/* Arrow */}
+      <span style={{ fontSize: '10px', color: route.enabled ? accentColor : '#666' }}>→</span>
+
+      {/* Destination selector */}
+      <select
+        value={route.destination}
+        onChange={(e) => onChange(index, { destination: e.target.value as FMModDestination })}
+        disabled={!route.enabled}
+        style={{
+          padding: '2px 4px',
+          background: '#222',
+          border: '1px solid #444',
+          borderRadius: '3px',
+          color: route.enabled ? '#fff' : '#666',
+          fontSize: '9px',
+          cursor: route.enabled ? 'pointer' : 'not-allowed',
+          flex: 1,
+          minWidth: 0,
+        }}
+      >
+        {FM_MOD_DESTINATIONS.map((dest) => (
+          <option key={dest} value={dest}>{FM_MOD_DEST_LABELS[dest]}</option>
+        ))}
+      </select>
+
+      {/* Amount slider */}
+      <div
+        style={{
+          width: 60,
+          height: 16,
+          background: '#222',
+          borderRadius: '3px',
+          cursor: route.enabled ? 'pointer' : 'not-allowed',
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+        onClick={(e) => {
+          if (!route.enabled) return;
+          const rect = e.currentTarget.getBoundingClientRect();
+          const x = (e.clientX - rect.left) / rect.width;
+          // Map 0-1 to -1 to +1
+          const amount = (x * 2 - 1);
+          onChange(index, { amount: Math.round(amount * 100) / 100 });
+        }}
+      >
+        {/* Center line */}
+        <div style={{
+          position: 'absolute',
+          left: '50%',
+          top: 0,
+          bottom: 0,
+          width: 1,
+          background: '#444',
+        }} />
+        {/* Fill */}
+        {route.enabled && (
+          <div style={{
+            position: 'absolute',
+            top: 2,
+            bottom: 2,
+            left: route.amount >= 0 ? '50%' : `${(0.5 + route.amount / 2) * 100}%`,
+            width: `${Math.abs(route.amount) / 2 * 100}%`,
+            background: accentColor,
+            borderRadius: '2px',
+          }} />
+        )}
+        {/* Value label */}
+        <span style={{
+          position: 'absolute',
+          left: '50%',
+          top: '50%',
+          transform: 'translate(-50%, -50%)',
+          fontSize: '8px',
+          fontWeight: 600,
+          color: route.enabled ? '#fff' : '#666',
+          fontFamily: 'monospace',
+        }}>
+          {route.enabled ? `${route.amount >= 0 ? '+' : ''}${Math.round(route.amount * 100)}` : '---'}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 // Stage card component
 function StageCard({
   title,
@@ -458,15 +1052,16 @@ function StageCard({
   wide?: boolean;
   children: React.ReactNode;
 }) {
+  const width = wide ? MODULE_WIDTH.wide : MODULE_WIDTH.standard;
+
   return (
     <div style={{
       background: '#111',
       border: `1px solid ${color}40`,
       borderRadius: '8px',
       padding: '12px',
-      minWidth: wide ? '280px' : '180px',
-      flex: wide ? '2 1 280px' : '1 1 180px',
-      maxWidth: wide ? '400px' : '240px',
+      width: `${width}px`,
+      boxSizing: 'border-box',
       alignSelf: 'flex-start',
       overflow: 'hidden',
     }}>
