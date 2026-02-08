@@ -66,6 +66,13 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         enabled: false,
         time: 0.1,
       },
+      arpeggiator: {
+        enabled: false,
+        pattern: 'up',
+        division: '8n',
+        octaves: 1,
+        gate: 0.5,
+      },
       pitchEnvelope: {
         attack: 0.001,
         decay: 0.1,
@@ -157,6 +164,13 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
       glide: {
         enabled: false,
         time: 0.1,
+      },
+      arpeggiator: {
+        enabled: false,
+        pattern: 'up',
+        division: '8n',
+        octaves: 1,
+        gate: 0.5,
       },
       pitchEnvelope: {
         attack: 0.001,
@@ -252,6 +266,13 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
       glide: {
         enabled: false,
         time: 0.1,
+      },
+      arpeggiator: {
+        enabled: false,
+        pattern: 'up',
+        division: '8n',
+        octaves: 1,
+        gate: 0.5,
       },
       pitchEnvelope: {
         attack: 0.001,
@@ -349,6 +370,13 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         enabled: false,
         time: 0.1,
       },
+      arpeggiator: {
+        enabled: false,
+        pattern: 'up',
+        division: '8n',
+        octaves: 1,
+        gate: 0.5,
+      },
       pitchEnvelope: {
         attack: 0.001,
         decay: 0.1,
@@ -444,6 +472,13 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         enabled: false,
         time: 0.1,
       },
+      arpeggiator: {
+        enabled: false,
+        pattern: 'up',
+        division: '8n',
+        octaves: 1,
+        gate: 0.5,
+      },
       pitchEnvelope: {
         attack: 0.001,
         decay: 0.1,
@@ -535,6 +570,13 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
       glide: {
         enabled: false,
         time: 0.1,
+      },
+      arpeggiator: {
+        enabled: false,
+        pattern: 'up',
+        division: '8n',
+        octaves: 1,
+        gate: 0.5,
       },
       pitchEnvelope: {
         attack: 0.001,
@@ -632,6 +674,13 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         enabled: false,
         time: 0.1,
       },
+      arpeggiator: {
+        enabled: false,
+        pattern: 'up',
+        division: '8n',
+        octaves: 1,
+        gate: 0.5,
+      },
       pitchEnvelope: {
         attack: 0.001,
         decay: 0.1,
@@ -723,6 +772,13 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
       glide: {
         enabled: false,
         time: 0.1,
+      },
+      arpeggiator: {
+        enabled: false,
+        pattern: 'up',
+        division: '8n',
+        octaves: 1,
+        gate: 0.5,
       },
       pitchEnvelope: {
         attack: 0.001,
@@ -819,6 +875,13 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         enabled: false,
         time: 0.1,
       },
+      arpeggiator: {
+        enabled: false,
+        pattern: 'up',
+        division: '8n',
+        octaves: 1,
+        gate: 0.5,
+      },
       pitchEnvelope: {
         attack: 0.001,
         decay: 0.1,
@@ -910,6 +973,13 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         enabled: false,
         time: 0.1,
       },
+      arpeggiator: {
+        enabled: false,
+        pattern: 'up',
+        division: '8n',
+        octaves: 1,
+        gate: 0.5,
+      },
       pitchEnvelope: {
         attack: 0.001,
         decay: 0.1,
@@ -1000,6 +1070,13 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
       glide: {
         enabled: false,
         time: 0.1,
+      },
+      arpeggiator: {
+        enabled: false,
+        pattern: 'up',
+        division: '8n',
+        octaves: 1,
+        gate: 0.5,
       },
       pitchEnvelope: {
         attack: 0.001,

@@ -32,6 +32,8 @@ import type {
   ModRoute,
   ModSource,
   ModDestination,
+  ArpPattern,
+  ArpDivision,
 } from './types.ts';
 import {
   DEFAULT_SYNTH_PARAMS,
@@ -131,6 +133,11 @@ export class SynthEngine {
   private unisonGains: Tone.Gain[] = [];
   private unisonEnvelope: Tone.AmplitudeEnvelope | null = null;
   private unisonMixer: Tone.Gain | null = null;
+
+  // Arpeggiator state
+  private heldNotes: Set<string> = new Set();
+  private arpSequence: Tone.Sequence | null = null;
+  private arpNotes: string[] = [];
 
   constructor(initialParams: Partial<SynthParams> = {}) {
     this.params = { ...DEFAULT_SYNTH_PARAMS, ...initialParams };
@@ -1691,6 +1698,173 @@ export class SynthEngine {
   }
 
   // ============================================
+  // Arpeggiator
+  // ============================================
+
+  /**
+   * Builds the note pattern array based on held notes and arp settings
+   */
+  private buildArpPattern(): string[] {
+    if (this.heldNotes.size === 0) return [];
+
+    // Sort notes by frequency (low to high)
+    const notes = Array.from(this.heldNotes).sort((a, b) => {
+      return Tone.Frequency(a).toFrequency() - Tone.Frequency(b).toFrequency();
+    });
+
+    // Expand across octaves
+    const expanded: string[] = [];
+    for (let oct = 0; oct < this.params.arpeggiator.octaves; oct++) {
+      for (const note of notes) {
+        const freq = Tone.Frequency(note).toFrequency();
+        const octaveFreq = freq * Math.pow(2, oct);
+        expanded.push(Tone.Frequency(octaveFreq).toNote());
+      }
+    }
+
+    // Apply pattern
+    switch (this.params.arpeggiator.pattern) {
+      case 'up':
+        return expanded;
+      case 'down':
+        return expanded.reverse();
+      case 'upDown':
+        if (expanded.length <= 1) return expanded;
+        const down = expanded.slice(1, -1).reverse();
+        return [...expanded, ...down];
+      case 'random':
+        return expanded; // Shuffle happens in sequence callback
+      default:
+        return expanded;
+    }
+  }
+
+  /**
+   * Starts the arpeggiator sequence
+   */
+  private startArp(): void {
+    this.stopArp();
+
+    this.arpNotes = this.buildArpPattern();
+    if (this.arpNotes.length === 0) return;
+
+    const division = this.params.arpeggiator.division;
+    const gate = this.params.arpeggiator.gate;
+    const isRandom = this.params.arpeggiator.pattern === 'random';
+
+    let index = 0;
+    this.arpSequence = new Tone.Sequence(
+      (time, _) => {
+        let note: string;
+        if (isRandom) {
+          note = this.arpNotes[Math.floor(Math.random() * this.arpNotes.length)]!;
+        } else {
+          note = this.arpNotes[index % this.arpNotes.length]!;
+          index++;
+        }
+
+        // Calculate gate duration
+        const stepDuration = Tone.Time(division).toSeconds();
+        const noteDuration = stepDuration * gate;
+
+        this.triggerAttack(note, 0.8);
+        Tone.getTransport().scheduleOnce(() => {
+          this.triggerRelease();
+        }, time + noteDuration);
+      },
+      this.arpNotes,
+      division
+    );
+
+    this.arpSequence.start(0);
+    if (Tone.getTransport().state !== 'started') {
+      Tone.getTransport().start();
+    }
+  }
+
+  /**
+   * Stops the arpeggiator sequence
+   */
+  private stopArp(): void {
+    if (this.arpSequence) {
+      this.arpSequence.stop();
+      this.arpSequence.dispose();
+      this.arpSequence = null;
+    }
+    this.triggerRelease();
+  }
+
+  /**
+   * Adds a note to the arpeggiator (called on note on)
+   */
+  arpAddNote(note: string): void {
+    if (!this.params.arpeggiator.enabled) {
+      this.triggerAttack(note);
+      return;
+    }
+    this.heldNotes.add(note);
+    this.startArp();
+  }
+
+  /**
+   * Removes a note from the arpeggiator (called on note off)
+   */
+  arpRemoveNote(note: string): void {
+    if (!this.params.arpeggiator.enabled) {
+      this.triggerRelease();
+      return;
+    }
+    this.heldNotes.delete(note);
+    if (this.heldNotes.size === 0) {
+      this.stopArp();
+    } else {
+      this.startArp(); // Rebuild with remaining notes
+    }
+  }
+
+  /**
+   * Sets the arpeggiator enabled state
+   */
+  setArpEnabled(enabled: boolean): void {
+    this.params.arpeggiator.enabled = enabled;
+    if (!enabled) {
+      this.stopArp();
+      this.heldNotes.clear();
+    }
+  }
+
+  /**
+   * Sets the arpeggiator pattern
+   */
+  setArpPattern(pattern: ArpPattern): void {
+    this.params.arpeggiator.pattern = pattern;
+    if (this.heldNotes.size > 0) this.startArp();
+  }
+
+  /**
+   * Sets the arpeggiator division (tempo sync)
+   */
+  setArpDivision(division: ArpDivision): void {
+    this.params.arpeggiator.division = division;
+    if (this.heldNotes.size > 0) this.startArp();
+  }
+
+  /**
+   * Sets the arpeggiator octave range
+   */
+  setArpOctaves(octaves: 1 | 2 | 3 | 4): void {
+    this.params.arpeggiator.octaves = octaves;
+    if (this.heldNotes.size > 0) this.startArp();
+  }
+
+  /**
+   * Sets the arpeggiator gate (note length percentage)
+   */
+  setArpGate(gate: number): void {
+    this.params.arpeggiator.gate = Math.max(0.25, Math.min(1, gate));
+  }
+
+  // ============================================
   // Cleanup
   // ============================================
 
@@ -1698,6 +1872,10 @@ export class SynthEngine {
    * Disposes of the synth and releases resources
    */
   dispose(): void {
+    // Stop arpeggiator first
+    this.stopArp();
+    this.heldNotes.clear();
+
     this.lfo.stop();
     this.lfo.dispose();
     this.lfoGain.dispose();

@@ -25,6 +25,8 @@ import type {
   ModDestination,
   ModRoute,
   ModMatrixParams,
+  ArpPattern,
+  ArpDivision,
 } from '../../core/types.ts';
 import { DEFAULT_SYNTH_PARAMS, DEFAULT_LFO2, DEFAULT_MOD_MATRIX } from '../../core/types.ts';
 import { SUBTRACTIVE_PRESETS } from '../../data/presets/subtractive-presets.ts';
@@ -82,6 +84,15 @@ interface SynthStore {
   setUnisonVoices: (voices: 2 | 4 | 8) => void;
   setUnisonDetune: (detune: number) => void;
   setUnisonSpread: (spread: number) => void;
+
+  // Arpeggiator actions
+  setArpEnabled: (enabled: boolean) => void;
+  setArpPattern: (pattern: ArpPattern) => void;
+  setArpDivision: (division: ArpDivision) => void;
+  setArpOctaves: (octaves: 1 | 2 | 3 | 4) => void;
+  setArpGate: (gate: number) => void;
+  arpNoteOn: (note: string) => void;
+  arpNoteOff: (note: string) => void;
 
   // Oscillator pulse width
   setPulseWidth: (width: number) => void;
@@ -504,6 +515,70 @@ export const useSynthStore = create<SynthStore>((set, get) => ({
         unison: { ...params.unison, spread },
       },
     });
+  },
+
+  // Arpeggiator actions
+  setArpEnabled: (enabled: boolean) => {
+    const { engine, params } = get();
+    engine?.setArpEnabled(enabled);
+    set({
+      params: {
+        ...params,
+        arpeggiator: { ...params.arpeggiator, enabled },
+      },
+    });
+  },
+
+  setArpPattern: (pattern: ArpPattern) => {
+    const { engine, params } = get();
+    engine?.setArpPattern(pattern);
+    set({
+      params: {
+        ...params,
+        arpeggiator: { ...params.arpeggiator, pattern },
+      },
+    });
+  },
+
+  setArpDivision: (division: ArpDivision) => {
+    const { engine, params } = get();
+    engine?.setArpDivision(division);
+    set({
+      params: {
+        ...params,
+        arpeggiator: { ...params.arpeggiator, division },
+      },
+    });
+  },
+
+  setArpOctaves: (octaves: 1 | 2 | 3 | 4) => {
+    const { engine, params } = get();
+    engine?.setArpOctaves(octaves);
+    set({
+      params: {
+        ...params,
+        arpeggiator: { ...params.arpeggiator, octaves },
+      },
+    });
+  },
+
+  setArpGate: (gate: number) => {
+    const { engine, params } = get();
+    engine?.setArpGate(gate);
+    set({
+      params: {
+        ...params,
+        arpeggiator: { ...params.arpeggiator, gate },
+      },
+    });
+  },
+
+  arpNoteOn: (note: string) => {
+    get().engine?.arpAddNote(note);
+  },
+
+  arpNoteOff: (note: string) => {
+    get().engine?.arpRemoveNote(note);
   },
 
   // Filter actions
@@ -1215,6 +1290,13 @@ export const useSynthStore = create<SynthStore>((set, get) => ({
       glide: {
         enabled: Math.random() < 0.2, // 20% chance
         time: rand(0.01, 0.3),
+      },
+      arpeggiator: {
+        enabled: false, // Don't randomize arpeggiator - it's a performance feature
+        pattern: 'up' as const,
+        division: '8n' as const,
+        octaves: 1 as const,
+        gate: 0.5,
       },
       subOsc: {
         enabled: Math.random() < 0.3, // 30% chance for bass boost

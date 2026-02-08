@@ -63,6 +63,7 @@ function createParams(overrides: Partial<SynthParams> = {}): SynthParams {
     lfo: overrides.lfo ?? { rate: 1, depth: 0, waveform: 'sine', sync: false, syncDivision: '4n' },
     noise: overrides.noise ?? { type: 'white', level: 0 },
     glide: overrides.glide ?? { enabled: false, time: 0.1 },
+    arpeggiator: overrides.arpeggiator ?? { enabled: false, pattern: 'up', division: '8n', octaves: 1, gate: 0.5 },
     velocity: overrides.velocity ?? { ampAmount: 0, filterAmount: 0 },
     subOsc: overrides.subOsc ?? { enabled: false, type: 'sine', octave: -1, level: 0.5 },
     oscillator2: overrides.oscillator2 ?? { enabled: false, type: 'sawtooth', octave: 0, detune: 7, pulseWidth: 0.5, level: 0.5 },

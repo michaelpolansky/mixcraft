@@ -230,6 +230,29 @@ export interface GlideParams {
 }
 
 // ============================================
+// Arpeggiator Types
+// ============================================
+
+/** Arpeggiator pattern types */
+export type ArpPattern = 'up' | 'down' | 'upDown' | 'random';
+
+/** Arpeggiator tempo divisions for sync */
+export type ArpDivision = '1n' | '2n' | '4n' | '8n' | '16n' | '32n';
+
+export interface ArpeggiatorParams {
+  /** Whether arpeggiator is enabled */
+  enabled: boolean;
+  /** Note order pattern */
+  pattern: ArpPattern;
+  /** Tempo sync division */
+  division: ArpDivision;
+  /** Number of octaves to span */
+  octaves: 1 | 2 | 3 | 4;
+  /** Note length as percentage of step (0.25 to 1) */
+  gate: number;
+}
+
+// ============================================
 // Velocity Sensitivity
 // ============================================
 
@@ -299,6 +322,8 @@ export interface SynthParams {
   noise: NoiseParams;
   /** Portamento/glide between notes */
   glide: GlideParams;
+  /** Arpeggiator for automatic note patterns */
+  arpeggiator: ArpeggiatorParams;
   filter: FilterParams;
   filterEnvelope: FilterEnvelopeParams;
   amplitudeEnvelope: ADSREnvelope;
@@ -459,6 +484,14 @@ export const DEFAULT_GLIDE: GlideParams = {
   time: 0.1,
 };
 
+export const DEFAULT_ARPEGGIATOR: ArpeggiatorParams = {
+  enabled: false,
+  pattern: 'up',
+  division: '8n',
+  octaves: 1,
+  gate: 0.5,
+};
+
 export const DEFAULT_VELOCITY: VelocityParams = {
   ampAmount: 0,
   filterAmount: 0,
@@ -500,6 +533,7 @@ export const DEFAULT_SYNTH_PARAMS: SynthParams = {
   unison: DEFAULT_UNISON,
   noise: DEFAULT_NOISE,
   glide: DEFAULT_GLIDE,
+  arpeggiator: DEFAULT_ARPEGGIATOR,
   filter: DEFAULT_FILTER,
   filterEnvelope: DEFAULT_FILTER_ENVELOPE,
   amplitudeEnvelope: DEFAULT_AMPLITUDE_ENVELOPE,

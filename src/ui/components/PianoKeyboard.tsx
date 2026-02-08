@@ -6,7 +6,7 @@ import { useCallback, useEffect, useState, type ReactElement } from 'react';
 
 interface PianoKeyboardProps {
   onNoteOn: (note: string) => void;
-  onNoteOff: () => void;
+  onNoteOff: (note: string) => void;
   /** Starting octave */
   octave?: number;
   /** Number of octaves to display */
@@ -39,21 +39,26 @@ export function PianoKeyboard({
   octave = 4,
   octaves = 2,
 }: PianoKeyboardProps) {
-  const [activeNote, setActiveNote] = useState<string | null>(null);
+  // Track multiple held notes for arpeggiator support
+  const [heldNotes, setHeldNotes] = useState<Set<string>>(new Set());
 
   const handleKeyDown = useCallback(
     (note: string) => {
-      if (activeNote !== note) {
-        setActiveNote(note);
+      if (!heldNotes.has(note)) {
+        setHeldNotes(prev => new Set([...prev, note]));
         onNoteOn(note);
       }
     },
-    [activeNote, onNoteOn]
+    [heldNotes, onNoteOn]
   );
 
-  const handleKeyUp = useCallback(() => {
-    setActiveNote(null);
-    onNoteOff();
+  const handleKeyUp = useCallback((note: string) => {
+    setHeldNotes(prev => {
+      const next = new Set(prev);
+      next.delete(note);
+      return next;
+    });
+    onNoteOff(note);
   }, [onNoteOff]);
 
   // Computer keyboard support
@@ -71,8 +76,11 @@ export function PianoKeyboard({
 
     const handleKeyboardUp = (e: KeyboardEvent) => {
       const key = e.key.toLowerCase();
-      if (KEY_MAP[key]) {
-        handleKeyUp();
+      const noteBase = KEY_MAP[key];
+      if (noteBase) {
+        const noteOctave = noteBase.includes('+') ? octave + 1 : octave;
+        const noteName = noteBase.replace('+', '');
+        handleKeyUp(`${noteName}${noteOctave}`);
       }
     };
 
@@ -99,7 +107,7 @@ export function PianoKeyboard({
 
     WHITE_KEYS.forEach((note, i) => {
       const fullNote = `${note}${currentOctave}`;
-      const isActive = activeNote === fullNote;
+      const isActive = heldNotes.has(fullNote);
       const x = (o * 7 + i) * whiteKeyWidth;
 
       keys.push(
@@ -115,9 +123,9 @@ export function PianoKeyboard({
           rx="4"
           style={{ cursor: 'pointer' }}
           onMouseDown={() => handleKeyDown(fullNote)}
-          onMouseUp={handleKeyUp}
+          onMouseUp={() => handleKeyUp(fullNote)}
           onMouseLeave={() => {
-            if (activeNote === fullNote) handleKeyUp();
+            if (heldNotes.has(fullNote)) handleKeyUp(fullNote);
           }}
         />
       );
@@ -126,7 +134,7 @@ export function PianoKeyboard({
     BLACK_KEYS.forEach((note, i) => {
       if (note === null) return;
       const fullNote = `${note}${currentOctave}`;
-      const isActive = activeNote === fullNote;
+      const isActive = heldNotes.has(fullNote);
       // Position black keys between white keys
       const x = (o * 7 + i) * whiteKeyWidth + whiteKeyWidth * 0.7;
 
@@ -143,9 +151,9 @@ export function PianoKeyboard({
           rx="2"
           style={{ cursor: 'pointer' }}
           onMouseDown={() => handleKeyDown(fullNote)}
-          onMouseUp={handleKeyUp}
+          onMouseUp={() => handleKeyUp(fullNote)}
           onMouseLeave={() => {
-            if (activeNote === fullNote) handleKeyUp();
+            if (heldNotes.has(fullNote)) handleKeyUp(fullNote);
           }}
         />
       );
