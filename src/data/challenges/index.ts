@@ -163,6 +163,30 @@ import { challenge as sd14_04 } from './sd14/sd14-04-breathy-pad.ts';
 import { challenge as sd14_05 } from './sd14/sd14-05-snare-layer.ts';
 import { challenge as sd14_06 } from './sd14/sd14-06-wind-texture.ts';
 
+// SD15 - Glide/Portamento
+import { challenge as sd15_01 } from './sd15/sd15-01-glide-intro.ts';
+import { challenge as sd15_02 } from './sd15/sd15-02-fast-glide.ts';
+import { challenge as sd15_03 } from './sd15/sd15-03-slow-glide.ts';
+import { challenge as sd15_04 } from './sd15/sd15-04-mono-lead.ts';
+import { challenge as sd15_05 } from './sd15/sd15-05-glide-bass.ts';
+import { challenge as sd15_06 } from './sd15/sd15-06-expressive-glide.ts';
+
+// SD16 - Velocity Sensitivity
+import { challenge as sd16_01 } from './sd16/sd16-01-velocity-amp.ts';
+import { challenge as sd16_02 } from './sd16/sd16-02-velocity-filter.ts';
+import { challenge as sd16_03 } from './sd16/sd16-03-subtle-dynamics.ts';
+import { challenge as sd16_04 } from './sd16/sd16-04-dramatic-dynamics.ts';
+import { challenge as sd16_05 } from './sd16/sd16-05-piano-style.ts';
+import { challenge as sd16_06 } from './sd16/sd16-06-expressive-keys.ts';
+
+// SD17 - Combined Techniques
+import { challenge as sd17_01 } from './sd17/sd17-01-complete-lead.ts';
+import { challenge as sd17_02 } from './sd17/sd17-02-massive-bass.ts';
+import { challenge as sd17_03 } from './sd17/sd17-03-evolving-pad.ts';
+import { challenge as sd17_04 } from './sd17/sd17-04-punchy-pluck.ts';
+import { challenge as sd17_05 } from './sd17/sd17-05-arp-sequence.ts';
+import { challenge as sd17_06 } from './sd17/sd17-06-master-sound.ts';
+
 /**
  * All challenges indexed by ID
  */
@@ -253,6 +277,24 @@ export const challengesById: Record<string, Challenge> = {
   'sd14-04-breathy-pad': sd14_04,
   'sd14-05-snare-layer': sd14_05,
   'sd14-06-wind-texture': sd14_06,
+  'sd15-01-glide-intro': sd15_01,
+  'sd15-02-fast-glide': sd15_02,
+  'sd15-03-slow-glide': sd15_03,
+  'sd15-04-mono-lead': sd15_04,
+  'sd15-05-glide-bass': sd15_05,
+  'sd15-06-expressive-glide': sd15_06,
+  'sd16-01-velocity-amp': sd16_01,
+  'sd16-02-velocity-filter': sd16_02,
+  'sd16-03-subtle-dynamics': sd16_03,
+  'sd16-04-dramatic-dynamics': sd16_04,
+  'sd16-05-piano-style': sd16_05,
+  'sd16-06-expressive-keys': sd16_06,
+  'sd17-01-complete-lead': sd17_01,
+  'sd17-02-massive-bass': sd17_02,
+  'sd17-03-evolving-pad': sd17_03,
+  'sd17-04-punchy-pluck': sd17_04,
+  'sd17-05-arp-sequence': sd17_05,
+  'sd17-06-master-sound': sd17_06,
 };
 
 /**
@@ -273,6 +315,9 @@ export const challengesByModule: Record<string, Challenge[]> = {
   SD12: [sd12_01, sd12_02, sd12_03, sd12_04, sd12_05, sd12_06],
   SD13: [sd13_01, sd13_02, sd13_03, sd13_04, sd13_05, sd13_06],
   SD14: [sd14_01, sd14_02, sd14_03, sd14_04, sd14_05, sd14_06],
+  SD15: [sd15_01, sd15_02, sd15_03, sd15_04, sd15_05, sd15_06],
+  SD16: [sd16_01, sd16_02, sd16_03, sd16_04, sd16_05, sd16_06],
+  SD17: [sd17_01, sd17_02, sd17_03, sd17_04, sd17_05, sd17_06],
 };
 
 /**
@@ -379,6 +424,27 @@ export const allChallenges: Challenge[] = [
   sd14_04,
   sd14_05,
   sd14_06,
+  // SD15 - Glide/Portamento
+  sd15_01,
+  sd15_02,
+  sd15_03,
+  sd15_04,
+  sd15_05,
+  sd15_06,
+  // SD16 - Velocity Sensitivity
+  sd16_01,
+  sd16_02,
+  sd16_03,
+  sd16_04,
+  sd16_05,
+  sd16_06,
+  // SD17 - Combined Techniques
+  sd17_01,
+  sd17_02,
+  sd17_03,
+  sd17_04,
+  sd17_05,
+  sd17_06,
 ];
 
 /**
@@ -467,6 +533,24 @@ export const modules = {
     id: 'SD14',
     title: 'Noise Shaping',
     description: 'Use noise for texture, transients, and atmosphere. White, pink, and brown noise techniques.',
+    challengeCount: 6,
+  },
+  SD15: {
+    id: 'SD15',
+    title: 'Glide & Portamento',
+    description: 'Add expression with pitch glide between notes. From subtle slides to dramatic sweeps.',
+    challengeCount: 6,
+  },
+  SD16: {
+    id: 'SD16',
+    title: 'Velocity Sensitivity',
+    description: 'Make your synth respond to how hard you play. Dynamic, expressive sound control.',
+    challengeCount: 6,
+  },
+  SD17: {
+    id: 'SD17',
+    title: 'Combined Techniques',
+    description: 'Master-level challenges combining everything. Lead, bass, pad, pluck, and the ultimate test.',
     challengeCount: 6,
   },
 } as const;
