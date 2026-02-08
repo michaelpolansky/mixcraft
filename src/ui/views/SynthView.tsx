@@ -53,6 +53,27 @@ const COLORS = {
   modMatrix: '#a855f7', // Purple for mod matrix
 };
 
+// Standardized sizes for consistent UI
+const SIZES = {
+  // Visualizer dimensions
+  visualizer: {
+    width: 200,
+    height: 100,        // Standard height for all visualizers
+    compactHeight: 60,  // Height for stacked/secondary visualizers
+  },
+  // Gaps between elements
+  gap: {
+    xs: 4,   // Minimal spacing
+    sm: 8,   // Between sliders in a group
+    md: 12,  // Between sections within a module
+    lg: 16,  // Between modules
+  },
+  // Standard margins
+  margin: {
+    section: 12,  // Top margin for new sections
+  },
+};
+
 // LFO sync division options
 const LFO_SYNC_DIVISIONS = [
   { value: '1n' as const, label: '1' },
@@ -287,7 +308,7 @@ export function SynthView() {
             </h1>
             <span style={{ fontSize: '11px', color: '#666' }}>Subtractive Synthesizer</span>
           </div>
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: SIZES.gap.md, alignItems: 'center' }}>
             <PresetDropdown
               presets={SUBTRACTIVE_PRESETS}
               currentPreset={currentPreset}
@@ -341,7 +362,7 @@ export function SynthView() {
           padding: '16px',
           display: 'flex',
           flexWrap: 'wrap',
-          gap: '16px',
+          gap: SIZES.gap.lg,
           alignContent: 'flex-start',
           overflow: 'auto',
         }}>
@@ -352,15 +373,15 @@ export function SynthView() {
               waveform={params.oscillator.type}
               octave={params.oscillator.octave}
               detune={params.oscillator.detune}
-              width={200}
-              height={120}
+              width={SIZES.visualizer.width}
+              height={SIZES.visualizer.height}
               accentColor={COLORS.oscillator}
               compact
             />
-            <div style={{ marginTop: '12px' }}>
+            <div style={{ marginTop: SIZES.margin.section }}>
               <WaveformSelector value={params.oscillator.type} onChange={setOscillatorType} />
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm, marginTop: SIZES.margin.section }}>
               <Knob label="Octave" value={params.oscillator.octave} min={-2} max={2} step={1} onChange={setOctave} formatValue={(v) => v >= 0 ? `+${v}` : `${v}`} paramId="oscillator.octave" />
               <Knob label="Detune" value={params.oscillator.detune} min={-100} max={100} step={1} onChange={setDetune} formatValue={(v) => `${v} ct`} paramId="oscillator.detune" modulatedValue={modulatedValues?.pitch} />
               {params.oscillator.type === 'square' && (
@@ -368,8 +389,8 @@ export function SynthView() {
               )}
             </div>
             {/* Glide controls */}
-            <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #222' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+            <div style={{ marginTop: SIZES.gap.md, paddingTop: SIZES.gap.md, borderTop: '1px solid #222' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: SIZES.gap.sm, marginBottom: SIZES.gap.sm }}>
                 <button
                   onClick={() => setGlideEnabled(!params.glide.enabled)}
                   style={{
@@ -413,13 +434,13 @@ export function SynthView() {
               onDecayChange={setPitchEnvelopeDecay}
               onSustainChange={setPitchEnvelopeSustain}
               onReleaseChange={setPitchEnvelopeRelease}
-              width={200}
-              height={60}
+              width={SIZES.visualizer.width}
+              height={SIZES.visualizer.compactHeight}
               accentColor={COLORS.pitchEnv}
               compact
               isTriggered={isPlaying}
             />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '8px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm, marginTop: SIZES.gap.sm }}>
               <Knob label="Attack" value={params.pitchEnvelope.attack} min={0.001} max={2} step={0.001} onChange={setPitchEnvelopeAttack} formatValue={formatMs} paramId="pitchEnv.attack" />
               <Knob label="Decay" value={params.pitchEnvelope.decay} min={0.001} max={2} step={0.001} onChange={setPitchEnvelopeDecay} formatValue={formatMs} paramId="pitchEnv.decay" />
               <Knob label="Sustain" value={params.pitchEnvelope.sustain} min={0} max={1} step={0.01} onChange={setPitchEnvelopeSustain} formatValue={formatPercent} paramId="pitchEnv.sustain" />
@@ -439,13 +460,13 @@ export function SynthView() {
               onDecayChange={setPWMEnvelopeDecay}
               onSustainChange={setPWMEnvelopeSustain}
               onReleaseChange={setPWMEnvelopeRelease}
-              width={200}
-              height={60}
+              width={SIZES.visualizer.width}
+              height={SIZES.visualizer.compactHeight}
               accentColor={COLORS.pwmEnv}
               compact
               isTriggered={isPlaying}
             />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '8px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm, marginTop: SIZES.gap.sm }}>
               <Knob label="Attack" value={params.pwmEnvelope.attack} min={0.001} max={2} step={0.001} onChange={setPWMEnvelopeAttack} formatValue={formatMs} paramId="pwmEnv.attack" />
               <Knob label="Decay" value={params.pwmEnvelope.decay} min={0.001} max={2} step={0.001} onChange={setPWMEnvelopeDecay} formatValue={formatMs} paramId="pwmEnv.decay" />
               <Knob label="Sustain" value={params.pwmEnvelope.sustain} min={0} max={1} step={0.01} onChange={setPWMEnvelopeSustain} formatValue={formatPercent} paramId="pwmEnv.sustain" />
@@ -457,224 +478,139 @@ export function SynthView() {
 
           {/* OSC 2 Stage */}
           <StageCard title="OSC 2" color={COLORS.osc2}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
-              {/* Waveform visualizer */}
-              <OscillatorVisualizer
-                waveform={params.oscillator2.type}
-                octave={params.oscillator2.octave}
-                detune={params.oscillator2.detune}
-                width={200}
-                height={100}
-                accentColor={COLORS.osc2}
-                compact
-              />
-
-              {/* Waveform selector */}
+            <OscillatorVisualizer
+              waveform={params.oscillator2.type}
+              octave={params.oscillator2.octave}
+              detune={params.oscillator2.detune}
+              width={SIZES.visualizer.width}
+              height={SIZES.visualizer.height}
+              accentColor={COLORS.osc2}
+              compact
+            />
+            <div style={{ marginTop: SIZES.margin.section }}>
               <WaveformSelector
                 value={params.oscillator2.type}
                 onChange={(t: OscillatorType) => setOsc2Type(t)}
               />
-
-              {/* Control sliders */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
-                <Knob
-                  label="Octave"
-                  value={params.oscillator2.octave}
-                  min={-2}
-                  max={2}
-                  step={1}
-                  onChange={setOsc2Octave}
-                  formatValue={(v) => v >= 0 ? `+${v}` : `${v}`}
-                  paramId="osc2.octave"
-                />
-                <Knob
-                  label="Detune"
-                  value={params.oscillator2.detune}
-                  min={-100}
-                  max={100}
-                  step={1}
-                  onChange={setOsc2Detune}
-                  formatValue={(v) => `${v} ct`}
-                  paramId="osc2.detune"
-                />
-              </div>
-
-              <div style={{ fontSize: '9px', color: '#666', textAlign: 'center' }}>
-                Layered oscillator
-              </div>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm, marginTop: SIZES.margin.section }}>
+              <Knob
+                label="Octave"
+                value={params.oscillator2.octave}
+                min={-2}
+                max={2}
+                step={1}
+                onChange={setOsc2Octave}
+                formatValue={(v) => v >= 0 ? `+${v}` : `${v}`}
+                paramId="osc2.octave"
+              />
+              <Knob
+                label="Detune"
+                value={params.oscillator2.detune}
+                min={-100}
+                max={100}
+                step={1}
+                onChange={setOsc2Detune}
+                formatValue={(v) => `${v} ct`}
+                paramId="osc2.detune"
+              />
             </div>
           </StageCard>
 
           {/* SUB OSC Stage */}
           <StageCard title="SUB OSC" color={COLORS.subOsc}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
-              {/* Waveform visualizer */}
-              <OscillatorVisualizer
-                waveform={params.subOsc.type}
-                octave={params.subOsc.octave}
-                detune={0}
-                width={200}
-                height={100}
-                accentColor={COLORS.subOsc}
-                compact
-              />
-
-              {/* Type selector */}
-              <div style={{ display: 'flex', gap: '4px' }}>
-                {(['sine', 'square'] as const).map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => setSubOscType(t)}
-                    style={{
-                      padding: '6px 12px',
-                      background: params.subOsc.type === t ? COLORS.subOsc : '#1a1a1a',
-                      border: `1px solid ${params.subOsc.type === t ? COLORS.subOsc : '#333'}`,
-                      borderRadius: '4px',
-                      color: params.subOsc.type === t ? '#fff' : '#888',
-                      fontSize: '10px',
-                      cursor: 'pointer',
-                      fontWeight: 500,
-                      textTransform: 'capitalize',
-                    }}
-                  >
-                    {t}
-                  </button>
-                ))}
-              </div>
-
-              {/* Octave selector */}
-              <div style={{ display: 'flex', gap: '4px' }}>
-                {([-1, -2] as const).map((oct) => (
-                  <button
-                    key={oct}
-                    onClick={() => setSubOscOctave(oct)}
-                    style={{
-                      padding: '6px 12px',
-                      background: params.subOsc.octave === oct ? COLORS.subOsc : '#1a1a1a',
-                      border: `1px solid ${params.subOsc.octave === oct ? COLORS.subOsc : '#333'}`,
-                      borderRadius: '4px',
-                      color: params.subOsc.octave === oct ? '#fff' : '#888',
-                      fontSize: '10px',
-                      cursor: 'pointer',
-                      fontWeight: 500,
-                    }}
-                  >
-                    {oct} Oct
-                  </button>
-                ))}
-              </div>
-
-              <div style={{ fontSize: '9px', color: '#666', textAlign: 'center' }}>
-                Adds low-end weight
-              </div>
+            <OscillatorVisualizer
+              waveform={params.subOsc.type}
+              octave={params.subOsc.octave}
+              detune={0}
+              width={SIZES.visualizer.width}
+              height={SIZES.visualizer.height}
+              accentColor={COLORS.subOsc}
+              compact
+            />
+            <div style={{ display: 'flex', gap: SIZES.gap.xs, marginTop: SIZES.margin.section }}>
+              {(['sine', 'square'] as const).map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setSubOscType(t)}
+                  style={{
+                    padding: '6px 12px',
+                    background: params.subOsc.type === t ? COLORS.subOsc : '#1a1a1a',
+                    border: `1px solid ${params.subOsc.type === t ? COLORS.subOsc : '#333'}`,
+                    borderRadius: '4px',
+                    color: params.subOsc.type === t ? '#fff' : '#888',
+                    fontSize: '10px',
+                    cursor: 'pointer',
+                    fontWeight: 500,
+                    textTransform: 'capitalize',
+                  }}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+            <div style={{ display: 'flex', gap: SIZES.gap.xs, marginTop: SIZES.gap.sm }}>
+              {([-1, -2] as const).map((oct) => (
+                <button
+                  key={oct}
+                  onClick={() => setSubOscOctave(oct)}
+                  style={{
+                    padding: '6px 12px',
+                    background: params.subOsc.octave === oct ? COLORS.subOsc : '#1a1a1a',
+                    border: `1px solid ${params.subOsc.octave === oct ? COLORS.subOsc : '#333'}`,
+                    borderRadius: '4px',
+                    color: params.subOsc.octave === oct ? '#fff' : '#888',
+                    fontSize: '10px',
+                    cursor: 'pointer',
+                    fontWeight: 500,
+                  }}
+                >
+                  {oct} Oct
+                </button>
+              ))}
             </div>
           </StageCard>
 
           {/* NOISE Stage */}
           <StageCard title="NOISE" color={COLORS.noise}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
-              {/* Noise visualizer */}
-              <NoiseVisualizer
-                noiseType={params.noise.type}
-                level={params.noise.level}
-                width={200}
-                height={100}
-                accentColor={COLORS.noise}
-                compact
-              />
+            <NoiseVisualizer
+              noiseType={params.noise.type}
+              level={params.noise.level}
+              width={SIZES.visualizer.width}
+              height={SIZES.visualizer.height}
+              accentColor={COLORS.noise}
+              compact
+            />
 
-              {/* Noise Type Selector */}
-              <div style={{ display: 'flex', gap: '4px' }}>
-                {NOISE_TYPES.map((nt) => (
-                  <button
-                    key={nt.value}
-                    onClick={() => setNoiseType(nt.value)}
-                    style={{
-                      padding: '6px 10px',
-                      background: params.noise.type === nt.value ? COLORS.noise : '#1a1a1a',
-                      border: `1px solid ${params.noise.type === nt.value ? COLORS.noise : '#333'}`,
-                      borderRadius: '4px',
-                      color: params.noise.type === nt.value ? '#fff' : '#888',
-                      fontSize: '10px',
-                      cursor: 'pointer',
-                      fontWeight: 500,
-                    }}
-                  >
-                    {nt.label}
-                  </button>
-                ))}
-              </div>
-              <div style={{ fontSize: '9px', color: '#666', textAlign: 'center' }}>
-                Adds texture and transients
-              </div>
+            <div style={{ display: 'flex', gap: SIZES.gap.xs, marginTop: SIZES.margin.section }}>
+              {NOISE_TYPES.map((nt) => (
+                <button
+                  key={nt.value}
+                  onClick={() => setNoiseType(nt.value)}
+                  style={{
+                    padding: '6px 10px',
+                    background: params.noise.type === nt.value ? COLORS.noise : '#1a1a1a',
+                    border: `1px solid ${params.noise.type === nt.value ? COLORS.noise : '#333'}`,
+                    borderRadius: '4px',
+                    color: params.noise.type === nt.value ? '#fff' : '#888',
+                    fontSize: '10px',
+                    cursor: 'pointer',
+                    fontWeight: 500,
+                  }}
+                >
+                  {nt.label}
+                </button>
+              ))}
             </div>
           </StageCard>
 
           {/* MIXER Stage */}
           <StageCard title="MIXER" color="#10b981">
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  <Knob
-                    label="OSC 1"
-                    value={params.oscillator.level}
-                    min={0}
-                    max={1}
-                    step={0.01}
-                    onChange={setOsc1Level}
-                    formatValue={(v) => `${Math.round(v * 100)}%`}
-                    size={40}
-                    paramId="oscillator.level"
-                  />
-                  <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: COLORS.oscillator, marginTop: '4px' }} />
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  <Knob
-                    label="OSC 2"
-                    value={params.oscillator2.level}
-                    min={0}
-                    max={1}
-                    step={0.01}
-                    onChange={setOsc2Level}
-                    formatValue={(v) => `${Math.round(v * 100)}%`}
-                    size={40}
-                    paramId="osc2.level"
-                    modulatedValue={modulatedValues?.osc2Mix}
-                  />
-                  <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: COLORS.osc2, marginTop: '4px' }} />
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  <Knob
-                    label="SUB"
-                    value={params.subOsc.level}
-                    min={0}
-                    max={1}
-                    step={0.01}
-                    onChange={setSubOscLevel}
-                    formatValue={(v) => `${Math.round(v * 100)}%`}
-                    size={40}
-                    paramId="subOsc.level"
-                  />
-                  <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: COLORS.subOsc, marginTop: '4px' }} />
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  <Knob
-                    label="NOISE"
-                    value={params.noise.level}
-                    min={0}
-                    max={1}
-                    step={0.01}
-                    onChange={setNoiseLevel}
-                    formatValue={(v) => `${Math.round(v * 100)}%`}
-                    size={40}
-                    paramId="noise.level"
-                  />
-                  <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: COLORS.noise, marginTop: '4px' }} />
-                </div>
-              </div>
-              <div style={{ fontSize: '9px', color: '#666', textAlign: 'center' }}>
-                Source levels
-              </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm }}>
+              <Knob label="OSC 1" value={params.oscillator.level} min={0} max={1} step={0.01} onChange={setOsc1Level} formatValue={(v) => `${Math.round(v * 100)}%`} paramId="oscillator.level" />
+              <Knob label="OSC 2" value={params.oscillator2.level} min={0} max={1} step={0.01} onChange={setOsc2Level} formatValue={(v) => `${Math.round(v * 100)}%`} paramId="osc2.level" modulatedValue={modulatedValues?.osc2Mix} />
+              <Knob label="Sub Osc" value={params.subOsc.level} min={0} max={1} step={0.01} onChange={setSubOscLevel} formatValue={(v) => `${Math.round(v * 100)}%`} paramId="subOsc.level" />
+              <Knob label="Noise" value={params.noise.level} min={0} max={1} step={0.01} onChange={setNoiseLevel} formatValue={(v) => `${Math.round(v * 100)}%`} paramId="noise.level" />
             </div>
           </StageCard>
 
@@ -687,16 +623,16 @@ export function SynthView() {
               resonance={params.filter.resonance}
               onCutoffChange={setFilterCutoff}
               onResonanceChange={setFilterResonance}
-              width={200}
-              height={120}
+              width={SIZES.visualizer.width}
+              height={SIZES.visualizer.height}
               accentColor={COLORS.filter}
               compact
               modulatedCutoff={modulatedValues?.filterCutoff}
             />
-            <div style={{ marginTop: '12px' }}>
+            <div style={{ marginTop: SIZES.margin.section }}>
               <FilterTypeSelector value={params.filter.type} onChange={setFilterType} />
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm, marginTop: SIZES.margin.section }}>
               <Knob label="Cutoff" value={params.filter.cutoff} min={PARAM_RANGES.cutoff.min} max={PARAM_RANGES.cutoff.max} step={1} onChange={setFilterCutoff} formatValue={formatHz} logarithmic paramId="filter.cutoff" modulatedValue={modulatedValues?.filterCutoff} />
               <Knob label="Resonance" value={params.filter.resonance} min={0} max={20} step={0.1} onChange={setFilterResonance} formatValue={(v) => v.toFixed(1)} paramId="filter.resonance" />
               <Knob label="Key Tracking" value={params.filter.keyTracking} min={0} max={1} step={0.01} onChange={setFilterKeyTracking} formatValue={formatPercent} paramId="filter.keyTracking" />
@@ -714,13 +650,13 @@ export function SynthView() {
               onDecayChange={setFilterEnvelopeDecay}
               onSustainChange={setFilterEnvelopeSustain}
               onReleaseChange={setFilterEnvelopeRelease}
-              width={200}
-              height={60}
+              width={SIZES.visualizer.width}
+              height={SIZES.visualizer.compactHeight}
               accentColor={COLORS.filterEnv}
               compact
               isTriggered={isPlaying}
             />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '8px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm, marginTop: SIZES.gap.sm }}>
               <Knob label="Attack" value={params.filterEnvelope.attack} min={0.001} max={2} step={0.001} onChange={setFilterEnvelopeAttack} formatValue={formatMs} paramId="filterEnv.attack" />
               <Knob label="Decay" value={params.filterEnvelope.decay} min={0.001} max={2} step={0.001} onChange={setFilterEnvelopeDecay} formatValue={formatMs} paramId="filterEnv.decay" />
               <Knob label="Sustain" value={params.filterEnvelope.sustain} min={0} max={1} step={0.01} onChange={setFilterEnvelopeSustain} formatValue={formatPercent} paramId="filterEnv.sustain" />
@@ -741,13 +677,13 @@ export function SynthView() {
               onDecayChange={setAmplitudeDecay}
               onSustainChange={setAmplitudeSustain}
               onReleaseChange={setAmplitudeRelease}
-              width={200}
-              height={120}
+              width={SIZES.visualizer.width}
+              height={SIZES.visualizer.height}
               accentColor={COLORS.amp}
               compact
               isTriggered={isPlaying}
             />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '12px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm, marginTop: SIZES.margin.section }}>
               <Knob label="Attack" value={params.amplitudeEnvelope.attack} min={0.001} max={2} step={0.001} onChange={setAmplitudeAttack} formatValue={formatMs} paramId="amp.attack" />
               <Knob label="Decay" value={params.amplitudeEnvelope.decay} min={0.001} max={2} step={0.001} onChange={setAmplitudeDecay} formatValue={formatMs} paramId="amp.decay" />
               <Knob label="Sustain" value={params.amplitudeEnvelope.sustain} min={0} max={1} step={0.01} onChange={setAmplitudeSustain} formatValue={formatPercent} paramId="amp.sustain" />
@@ -761,15 +697,15 @@ export function SynthView() {
               waveform={params.lfo.waveform}
               rate={params.lfo.rate}
               depth={params.lfo.depth}
-              width={200}
-              height={100}
+              width={SIZES.visualizer.width}
+              height={SIZES.visualizer.height}
               accentColor={COLORS.lfo}
               compact
             />
-            <div style={{ marginTop: '12px' }}>
+            <div style={{ marginTop: SIZES.margin.section }}>
               <LFOWaveformSelector value={params.lfo.waveform} onChange={setLFOWaveform} />
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm, marginTop: SIZES.margin.section }}>
               {/* Show Rate knob when not synced, Division selector when synced */}
               {!params.lfo.sync ? (
                 <Knob label="Rate" value={params.lfo.rate} min={0.1} max={20} step={0.1} onChange={setLFORate} formatValue={(v) => `${v.toFixed(1)} Hz`} paramId="lfo.rate" modulatedValue={modulatedValues?.lfo1Rate} />
@@ -798,7 +734,7 @@ export function SynthView() {
               <Knob label="Depth" value={params.lfo.depth} min={0} max={1} step={0.01} onChange={setLFODepth} formatValue={formatPercent} paramId="lfo.depth" />
             </div>
             {/* Sync toggle */}
-            <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'center' }}>
+            <div style={{ marginTop: SIZES.margin.section, display: 'flex', justifyContent: 'center' }}>
               <button
                 onClick={() => setLFOSync(!params.lfo.sync)}
                 style={{
@@ -819,102 +755,51 @@ export function SynthView() {
 
           {/* LFO 2 Stage */}
           <StageCard title="LFO 2" color={COLORS.lfo2}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
-              {/* Enable toggle */}
-              <button
-                onClick={() => setLfo2Enabled(!params.lfo2.enabled)}
-                style={{
-                  padding: '6px 16px',
-                  background: params.lfo2.enabled ? COLORS.lfo2 : '#222',
-                  border: `1px solid ${params.lfo2.enabled ? COLORS.lfo2 : '#444'}`,
-                  borderRadius: '4px',
-                  color: params.lfo2.enabled ? '#fff' : '#888',
-                  fontSize: '11px',
-                  cursor: 'pointer',
-                  fontWeight: 600,
-                }}
-              >
-                {params.lfo2.enabled ? 'ON' : 'OFF'}
-              </button>
+            {/* Enable toggle */}
+            <button
+              onClick={() => setLfo2Enabled(!params.lfo2.enabled)}
+              style={{
+                padding: '6px 16px',
+                width: '100%',
+                background: params.lfo2.enabled ? COLORS.lfo2 : '#222',
+                border: `1px solid ${params.lfo2.enabled ? COLORS.lfo2 : '#444'}`,
+                borderRadius: '4px',
+                color: params.lfo2.enabled ? '#fff' : '#888',
+                fontSize: '11px',
+                cursor: 'pointer',
+                fontWeight: 600,
+              }}
+            >
+              {params.lfo2.enabled ? 'ON' : 'OFF'}
+            </button>
 
-              {params.lfo2.enabled && (
-                <>
-                  {/* LFO Waveform Selector */}
+            {params.lfo2.enabled && (
+              <>
+                <div style={{ marginTop: SIZES.margin.section }}>
                   <LFOWaveformSelector
                     value={params.lfo2.type}
                     onChange={(waveform: LFOWaveform) => setLfo2Type(waveform)}
                   />
-
-                  {/* Rate and Depth sliders */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
-                    <Knob
-                      label="Rate"
-                      value={params.lfo2.rate}
-                      min={0.1}
-                      max={20}
-                      step={0.1}
-                      onChange={setLfo2Rate}
-                      formatValue={(v) => `${v.toFixed(1)} Hz`}
-                      paramId="lfo2.rate"
-                      modulatedValue={modulatedValues?.lfo2Rate}
-                    />
-                    <Knob
-                      label="Depth"
-                      value={params.lfo2.depth}
-                      min={0}
-                      max={1}
-                      step={0.01}
-                      onChange={setLfo2Depth}
-                      formatValue={formatPercent}
-                      paramId="lfo2.depth"
-                    />
-                  </div>
-                </>
-              )}
-
-              <div style={{ fontSize: '9px', color: '#666', textAlign: 'center' }}>
-                Secondary modulation source
-              </div>
-            </div>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm, marginTop: SIZES.margin.section }}>
+                  <Knob label="Rate" value={params.lfo2.rate} min={0.1} max={20} step={0.1} onChange={setLfo2Rate} formatValue={(v) => `${v.toFixed(1)} Hz`} paramId="lfo2.rate" modulatedValue={modulatedValues?.lfo2Rate} />
+                  <Knob label="Depth" value={params.lfo2.depth} min={0} max={1} step={0.01} onChange={setLfo2Depth} formatValue={formatPercent} paramId="lfo2.depth" />
+                </div>
+              </>
+            )}
           </StageCard>
 
           {/* VELOCITY Stage */}
           <StageCard title="VELOCITY" color={COLORS.velocity}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
-              <div style={{ fontSize: '10px', color: '#888', textAlign: 'center', marginBottom: '4px' }}>
-                How note velocity affects sound
-              </div>
-              <Knob
-                label="Amp"
-                value={params.velocity.ampAmount}
-                min={0}
-                max={1}
-                step={0.01}
-                onChange={setVelocityAmpAmount}
-                formatValue={formatPercent}
-                size={48}
-                paramId="velocity.ampAmount"
-              />
-              <Knob
-                label="Filter"
-                value={params.velocity.filterAmount}
-                min={0}
-                max={1}
-                step={0.01}
-                onChange={setVelocityFilterAmount}
-                formatValue={formatPercent}
-                size={48}
-                paramId="velocity.filterAmount"
-              />
-              <div style={{ fontSize: '9px', color: '#666', textAlign: 'center' }}>
-                0% = no velocity effect
-              </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm }}>
+              <Knob label="Amp Amount" value={params.velocity.ampAmount} min={0} max={1} step={0.01} onChange={setVelocityAmpAmount} formatValue={formatPercent} paramId="velocity.ampAmount" />
+              <Knob label="Filter Amount" value={params.velocity.filterAmount} min={0} max={1} step={0.01} onChange={setVelocityFilterAmount} formatValue={formatPercent} paramId="velocity.filterAmount" />
             </div>
           </StageCard>
 
           {/* FX Stage */}
           <StageCard title="FX" color={COLORS.effects} wide>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: SIZES.gap.md }}>
               <EffectMini
                 name="DIST"
                 color="#ef4444"
@@ -955,15 +840,15 @@ export function SynthView() {
           {/* MOD MATRIX Stack: MOD MATRIX + MOD ENV */}
           <StackedModule>
           <StageCard title="MOD MATRIX" color={COLORS.modMatrix} noBorderRadius="bottom">
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm }}>
               {params.modMatrix.routes.map((route, i) => (
                 <div
                   key={i}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '6px',
-                    padding: '6px 8px',
+                    gap: SIZES.gap.xs + 2,
+                    padding: `${SIZES.gap.xs + 2}px ${SIZES.gap.sm}px`,
                     background: route.enabled ? 'rgba(168, 85, 247, 0.1)' : '#0d0d12',
                     borderRadius: '4px',
                     border: `1px solid ${route.enabled ? COLORS.modMatrix + '40' : '#222'}`,
@@ -1059,13 +944,13 @@ export function SynthView() {
               onDecayChange={setModEnvelopeDecay}
               onSustainChange={setModEnvelopeSustain}
               onReleaseChange={setModEnvelopeRelease}
-              width={200}
-              height={60}
+              width={SIZES.visualizer.width}
+              height={SIZES.visualizer.compactHeight}
               accentColor={COLORS.modEnv}
               compact
               isTriggered={isPlaying}
             />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '8px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm, marginTop: SIZES.gap.sm }}>
               <Knob label="Attack" value={params.modEnvelope.attack} min={0.001} max={2} step={0.001} onChange={setModEnvelopeAttack} formatValue={formatMs} paramId="modEnv.attack" />
               <Knob label="Decay" value={params.modEnvelope.decay} min={0.001} max={2} step={0.001} onChange={setModEnvelopeDecay} formatValue={formatMs} paramId="modEnv.decay" />
               <Knob label="Sustain" value={params.modEnvelope.sustain} min={0} max={1} step={0.01} onChange={setModEnvelopeSustain} formatValue={formatPercent} paramId="modEnv.sustain" />
@@ -1077,16 +962,16 @@ export function SynthView() {
 
           {/* OUTPUT Stage */}
           <StageCard title="OUTPUT" color={COLORS.output}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.md }}>
               {/* Oscilloscope */}
               <Oscilloscope
                 getAnalyser={() => engine?.getAnalyser() ?? null}
-                width={200}
-                height={80}
+                width={SIZES.visualizer.width}
+                height={SIZES.visualizer.compactHeight}
                 accentColor={COLORS.output}
               />
               {/* Volume and Pan sliders */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm }}>
                 <Knob
                   label="Volume"
                   value={params.volume}
@@ -1245,7 +1130,7 @@ function HelpModeButton() {
         fontWeight: 600,
         display: 'flex',
         alignItems: 'center',
-        gap: '4px',
+        gap: SIZES.gap.xs,
       }}
       title={helpMode ? 'Disable help tooltips' : 'Enable help tooltips'}
     >
@@ -1289,7 +1174,7 @@ function StageCard({
       background: '#111',
       border: `1px solid ${color}40`,
       borderRadius,
-      padding: compact ? '8px' : '12px',
+      padding: compact ? SIZES.gap.sm : SIZES.gap.md,
       width: `${width}px`,
       boxSizing: 'border-box',
       alignSelf: 'flex-start',
@@ -1344,7 +1229,7 @@ function MiniSlider({
 }) {
   const percent = ((value - min) / (max - min)) * 100;
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: SIZES.gap.xs + 2 }}>
       <span style={{ fontSize: '10px', color: '#666', width: '12px' }}>{label}</span>
       <div
         style={{
@@ -1387,8 +1272,8 @@ function EffectMini({
 }) {
   return (
     <div>
-      <div style={{ fontSize: '9px', color, marginBottom: '6px', fontWeight: 600 }}>{name}</div>
-      <div style={{ display: 'flex', gap: '6px' }}>
+      <div style={{ fontSize: '9px', color, marginBottom: SIZES.gap.xs + 2, fontWeight: 600 }}>{name}</div>
+      <div style={{ display: 'flex', gap: SIZES.gap.xs + 2 }}>
         {knobs.map((k) => (
           <Knob
             key={k.label}
