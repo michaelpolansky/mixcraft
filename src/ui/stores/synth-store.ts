@@ -124,6 +124,7 @@ interface SynthStore {
   setModRouteDestination: (index: number, destination: ModDestination) => void;
   setModRouteAmount: (index: number, amount: number) => void;
   setModRouteEnabled: (index: number, enabled: boolean) => void;
+  setMatrixAmount: (source: ModSource, destination: ModDestination, amount: number) => void;
 
   // Pitch envelope actions
   setPitchEnvelopeAttack: (time: number) => void;
@@ -716,7 +717,7 @@ export const useSynthStore = create<SynthStore>((set, get) => ({
     get().engine?.setPan(pan);
   },
 
-  // Mod Matrix actions
+  // Mod Matrix actions (legacy route-based)
   setModRouteSource: (index: number, source: ModSource) => {
     set((state) => {
       const routes = [...state.params.modMatrix.routes] as [ModRoute, ModRoute, ModRoute, ModRoute];
@@ -728,7 +729,7 @@ export const useSynthStore = create<SynthStore>((set, get) => ({
         enabled: oldRoute.enabled,
       };
       return {
-        params: { ...state.params, modMatrix: { routes } },
+        params: { ...state.params, modMatrix: { grid: state.params.modMatrix.grid, routes } },
       };
     });
     get().engine?.setModMatrix(get().params.modMatrix);
@@ -745,7 +746,7 @@ export const useSynthStore = create<SynthStore>((set, get) => ({
         enabled: oldRoute.enabled,
       };
       return {
-        params: { ...state.params, modMatrix: { routes } },
+        params: { ...state.params, modMatrix: { grid: state.params.modMatrix.grid, routes } },
       };
     });
     get().engine?.setModMatrix(get().params.modMatrix);
@@ -762,7 +763,7 @@ export const useSynthStore = create<SynthStore>((set, get) => ({
         enabled: oldRoute.enabled,
       };
       return {
-        params: { ...state.params, modMatrix: { routes } },
+        params: { ...state.params, modMatrix: { grid: state.params.modMatrix.grid, routes } },
       };
     });
     get().engine?.setModMatrix(get().params.modMatrix);
@@ -779,7 +780,21 @@ export const useSynthStore = create<SynthStore>((set, get) => ({
         enabled,
       };
       return {
-        params: { ...state.params, modMatrix: { routes } },
+        params: { ...state.params, modMatrix: { ...state.params.modMatrix, routes } },
+      };
+    });
+    get().engine?.setModMatrix(get().params.modMatrix);
+  },
+
+  setMatrixAmount: (source: ModSource, destination: ModDestination, amount: number) => {
+    set((state) => {
+      const newGrid = { ...state.params.modMatrix.grid };
+      newGrid[source] = { ...newGrid[source], [destination]: amount };
+      return {
+        params: {
+          ...state.params,
+          modMatrix: { ...state.params.modMatrix, grid: newGrid },
+        },
       };
     });
     get().engine?.setModMatrix(get().params.modMatrix);

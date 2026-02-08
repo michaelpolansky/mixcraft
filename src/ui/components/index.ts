@@ -43,3 +43,4 @@ export { WaveformIcon } from './WaveformIcon.tsx';
 export type { WaveformIconType } from './WaveformIcon.tsx';
 export { RecordingControl } from './RecordingControl.tsx';
 export { Tooltip } from './Tooltip.tsx';
+export { ModMatrixGrid } from './ModMatrixGrid.tsx';

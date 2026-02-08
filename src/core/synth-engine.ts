@@ -36,6 +36,8 @@ import type {
 import {
   DEFAULT_SYNTH_PARAMS,
   DEFAULT_ANALYSER_CONFIG,
+  MOD_SOURCES,
+  MOD_DESTINATIONS,
 } from './types.ts';
 import { EffectsChain } from './effects-chain.ts';
 
@@ -117,7 +119,8 @@ export class SynthEngine {
   private outputGain: Tone.Gain;
 
   // Mod Matrix route nodes - tracks active modulation connections
-  private modRouteNodes: Map<number, {
+  // Keys can be numbers (legacy index-based) or strings (grid-based like "grid-lfo1-pitch")
+  private modRouteNodes: Map<number | string, {
     multiply: Tone.Multiply;
     gain: Tone.Gain;
   }> = new Map();
@@ -897,11 +900,62 @@ export class SynthEngine {
    * Updates the entire mod matrix
    */
   setModMatrix(modMatrix: Partial<ModMatrixParams>): void {
+    // Handle grid-based routing (new system)
+    if (modMatrix.grid) {
+      for (const source of MOD_SOURCES) {
+        for (const dest of MOD_DESTINATIONS) {
+          const amount = modMatrix.grid[source]?.[dest] ?? 0;
+          this.setGridRoute(source, dest, amount);
+        }
+      }
+    }
+    // Handle legacy routes (for backwards compatibility)
     if (modMatrix.routes) {
       modMatrix.routes.forEach((route, index) => {
         this.setModRoute(index, route);
       });
     }
+  }
+
+  /**
+   * Sets a single grid route by source and destination
+   */
+  setGridRoute(source: ModSource, dest: ModDestination, amount: number): void {
+    const key = `grid-${source}-${dest}`;
+
+    // Disconnect existing route
+    const existing = this.modRouteNodes.get(key);
+    if (existing) {
+      existing.multiply.dispose();
+      existing.gain.dispose();
+      this.modRouteNodes.delete(key);
+    }
+
+    // Don't create route if amount is 0
+    if (amount === 0) return;
+
+    // Get source signal
+    const sourceSignal = this.getModSource(source);
+    if (!sourceSignal) return;
+
+    // Get destination parameter
+    const destParam = this.getDestinationParam(dest);
+    if (!destParam) return;
+
+    // Create multiply node for bipolar amount (-1 to +1)
+    const multiply = new Tone.Multiply(amount);
+
+    // Create scaled gain for destination range
+    const scale = this.getDestinationScale(dest);
+    const gain = new Tone.Gain(scale);
+
+    // Connect: source → multiply → gain → destination
+    sourceSignal.connect(multiply);
+    multiply.connect(gain);
+    gain.connect(destParam);
+
+    // Store nodes for cleanup
+    this.modRouteNodes.set(key, { multiply, gain });
   }
 
   /**
@@ -956,12 +1010,12 @@ export class SynthEngine {
   /**
    * Disconnects and disposes a mod route
    */
-  private disconnectModRoute(index: number): void {
-    const nodes = this.modRouteNodes.get(index);
+  private disconnectModRoute(key: number | string): void {
+    const nodes = this.modRouteNodes.get(key);
     if (nodes) {
       nodes.multiply.dispose();
       nodes.gain.dispose();
-      this.modRouteNodes.delete(index);
+      this.modRouteNodes.delete(key);
     }
   }
 
@@ -982,6 +1036,8 @@ export class SynthEngine {
         // Use pitchEnvelope as a proxy for filter envelope shape
         // The actual synth.filterEnvelope is a FrequencyEnvelope
         return this.pitchEnvelope;
+      case 'modEnv':
+        return this.modEnvelope;
       default:
         return null;
     }

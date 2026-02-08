@@ -139,12 +139,38 @@ export interface LFO2Params {
 // ============================================
 
 /** Available modulation sources */
-export type ModSource = 'lfo1' | 'lfo2' | 'ampEnv' | 'filterEnv';
+export type ModSource = 'lfo1' | 'lfo2' | 'ampEnv' | 'filterEnv' | 'modEnv';
 
 /** Available modulation destinations */
 export type ModDestination = 'pitch' | 'pan' | 'amplitude' | 'filterCutoff' | 'osc2Mix' | 'lfo1Rate' | 'lfo2Rate';
 
-/** A single modulation routing */
+/** All mod sources for iteration */
+export const MOD_SOURCES: ModSource[] = ['lfo1', 'lfo2', 'ampEnv', 'filterEnv', 'modEnv'];
+
+/** All mod destinations for iteration */
+export const MOD_DESTINATIONS: ModDestination[] = ['pitch', 'pan', 'amplitude', 'filterCutoff', 'osc2Mix', 'lfo1Rate', 'lfo2Rate'];
+
+/** Display labels for sources */
+export const MOD_SOURCE_LABELS: Record<ModSource, string> = {
+  lfo1: 'LFO 1',
+  lfo2: 'LFO 2',
+  ampEnv: 'Amp',
+  filterEnv: 'Filt',
+  modEnv: 'Mod',
+};
+
+/** Display labels for destinations */
+export const MOD_DEST_LABELS: Record<ModDestination, string> = {
+  pitch: 'Pitch',
+  pan: 'Pan',
+  amplitude: 'Amp',
+  filterCutoff: 'Cutoff',
+  osc2Mix: 'OSC2',
+  lfo1Rate: 'LFO1',
+  lfo2Rate: 'LFO2',
+};
+
+/** A single modulation routing (legacy, kept for compatibility) */
 export interface ModRoute {
   /** Source of modulation */
   source: ModSource;
@@ -156,9 +182,14 @@ export interface ModRoute {
   enabled: boolean;
 }
 
-/** Modulation matrix with fixed 4 slots */
+/** 2D modulation matrix - each source can modulate each destination */
+export type ModMatrixGrid = Record<ModSource, Record<ModDestination, number>>;
+
+/** Modulation matrix parameters */
 export interface ModMatrixParams {
-  /** Fixed 4 modulation routes */
+  /** 2D matrix of modulation amounts */
+  grid: ModMatrixGrid;
+  /** Legacy routes (kept for compatibility) */
   routes: [ModRoute, ModRoute, ModRoute, ModRoute];
 }
 
@@ -375,7 +406,20 @@ export const DEFAULT_MOD_ROUTE: ModRoute = {
   enabled: false,
 };
 
+/** Create empty mod matrix grid (all zeros) */
+export function createEmptyModGrid(): ModMatrixGrid {
+  const grid = {} as ModMatrixGrid;
+  for (const source of MOD_SOURCES) {
+    grid[source] = {} as Record<ModDestination, number>;
+    for (const dest of MOD_DESTINATIONS) {
+      grid[source][dest] = 0;
+    }
+  }
+  return grid;
+}
+
 export const DEFAULT_MOD_MATRIX: ModMatrixParams = {
+  grid: createEmptyModGrid(),
   routes: [
     { ...DEFAULT_MOD_ROUTE },
     { ...DEFAULT_MOD_ROUTE },
