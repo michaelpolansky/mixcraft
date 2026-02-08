@@ -10,7 +10,6 @@ import {
   SpectrumAnalyzer,
   PianoKeyboard,
   InfoPanel,
-  PresetDropdown,
   Sequencer,
   RecordingControl,
   HarmonicBarsVisualizer,
@@ -21,6 +20,11 @@ import {
   Oscilloscope,
   XYPad,
   ArpeggiatorControls,
+  StageCard,
+  MiniSlider,
+  EffectMini,
+  AudioInitScreen,
+  SynthHeader,
 } from '../components/index.ts';
 import { ADDITIVE_PRESETS } from '../../data/presets/additive-presets.ts';
 import { InfoPanelProvider } from '../context/InfoPanelContext.tsx';
@@ -59,12 +63,6 @@ const SIZES = {
   },
 };
 
-// Standard module widths
-const MODULE_WIDTH = {
-  standard: 224,
-  wide: 320,
-  extraWide: 440,
-};
 
 // Noise type options
 const NOISE_TYPES = [
@@ -186,62 +184,14 @@ export function AdditiveSynthView() {
   // Not initialized - show start button
   if (!isInitialized) {
     return (
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '100vh',
-        background: '#0a0a0f',
-        color: '#fff',
-        fontFamily: 'system-ui, -apple-system, sans-serif',
-      }}>
-        <h1 style={{ fontSize: '32px', fontWeight: 300, marginBottom: '8px', color: '#06b6d4' }}>
-          MIXCRAFT
-        </h1>
-        <p style={{ color: '#666', marginBottom: '32px' }}>Additive Synthesizer</p>
-        <button
-          onClick={handleStartAudio}
-          disabled={isInitializing}
-          style={{
-            padding: '16px 48px',
-            fontSize: '16px',
-            background: isInitializing
-              ? 'linear-gradient(145deg, #0e7490, #155e75)'
-              : 'linear-gradient(145deg, #06b6d4, #0891b2)',
-            border: 'none',
-            borderRadius: '8px',
-            color: '#fff',
-            cursor: isInitializing ? 'wait' : 'pointer',
-            fontWeight: 600,
-            boxShadow: isInitializing
-              ? '0 4px 12px rgba(6, 182, 212, 0.15)'
-              : '0 4px 12px rgba(6, 182, 212, 0.3)',
-            opacity: isInitializing ? 0.8 : 1,
-            transition: 'all 0.2s ease',
-          }}
-        >
-          {isInitializing ? 'Starting Audio...' : 'Start Audio Engine'}
-        </button>
-        <p style={{ color: '#444', fontSize: '12px', marginTop: '16px' }}>
-          Click to enable audio (browser requirement)
-        </p>
-        {initError && (
-          <div style={{
-            marginTop: '24px',
-            padding: '12px 20px',
-            background: 'rgba(239, 68, 68, 0.1)',
-            border: '1px solid rgba(239, 68, 68, 0.3)',
-            borderRadius: '8px',
-            color: '#f87171',
-            fontSize: '13px',
-            maxWidth: '400px',
-            textAlign: 'center',
-          }}>
-            {initError}
-          </div>
-        )}
-      </div>
+      <AudioInitScreen
+        title="MIXCRAFT"
+        subtitle="Additive Synthesizer"
+        accentColor="#22d3ee"
+        isInitializing={isInitializing}
+        initError={initError}
+        onStart={handleStartAudio}
+      />
     );
   }
 
@@ -256,43 +206,15 @@ export function AdditiveSynthView() {
         flexDirection: 'column',
       }}>
         {/* Header */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          padding: '16px 24px',
-          paddingLeft: '120px', // Room for fixed menu button
-          borderBottom: '1px solid #1a1a1a',
-        }}>
-          <div>
-            <h1 style={{ fontSize: '20px', fontWeight: 300, margin: 0, color: '#06b6d4' }}>
-              MIXCRAFT
-            </h1>
-            <span style={{ fontSize: '11px', color: '#666' }}>Additive Synthesizer</span>
-          </div>
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-            <PresetDropdown
-              presets={ADDITIVE_PRESETS}
-              currentPreset={currentPreset}
-              onSelect={loadPreset}
-              accentColor="#06b6d4"
-            />
-            <button
-              onClick={resetToDefaults}
-              style={{
-                padding: '6px 12px',
-                background: '#1a1a1a',
-                border: '1px solid #333',
-                borderRadius: '4px',
-                color: '#888',
-                cursor: 'pointer',
-                fontSize: '11px',
-              }}
-            >
-              Reset
-            </button>
-          </div>
-        </div>
+        <SynthHeader
+          title="MIXCRAFT"
+          subtitle="Additive Synthesizer"
+          accentColor="#22d3ee"
+          presets={ADDITIVE_PRESETS}
+          currentPreset={currentPreset}
+          onPresetSelect={loadPreset}
+          onReset={resetToDefaults}
+        />
 
         {/* Spectrum Analyzer */}
         <div style={{ padding: '12px 24px', background: '#050508' }}>
@@ -755,125 +677,3 @@ export function AdditiveSynthView() {
   );
 }
 
-// Stage card component
-function StageCard({
-  title,
-  color,
-  wide = false,
-  extraWide = false,
-  children
-}: {
-  title: string;
-  color: string;
-  wide?: boolean;
-  extraWide?: boolean;
-  children: React.ReactNode;
-}) {
-  const width = extraWide ? MODULE_WIDTH.extraWide : wide ? MODULE_WIDTH.wide : MODULE_WIDTH.standard;
-
-  return (
-    <div style={{
-      background: '#111',
-      border: `1px solid ${color}40`,
-      borderRadius: '8px',
-      padding: '12px',
-      width: `${width}px`,
-      boxSizing: 'border-box',
-      alignSelf: 'flex-start',
-      overflow: 'hidden',
-    }}>
-      <div style={{
-        fontSize: '11px',
-        fontWeight: 600,
-        color: color,
-        letterSpacing: '0.5px',
-        marginBottom: '12px',
-      }}>
-        {title}
-      </div>
-      {children}
-    </div>
-  );
-}
-
-// Mini slider for ADSR
-function MiniSlider({
-  label,
-  value,
-  min,
-  max,
-  onChange,
-  color,
-}: {
-  label: string;
-  value: number;
-  min: number;
-  max: number;
-  onChange: (v: number) => void;
-  color: string;
-}) {
-  const percent = ((value - min) / (max - min)) * 100;
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-      <span style={{ fontSize: '10px', color: '#666', width: '12px' }}>{label}</span>
-      <div
-        style={{
-          flex: 1,
-          height: '4px',
-          background: '#222',
-          borderRadius: '2px',
-          cursor: 'pointer',
-          position: 'relative',
-        }}
-        onClick={(e) => {
-          const rect = e.currentTarget.getBoundingClientRect();
-          const x = (e.clientX - rect.left) / rect.width;
-          onChange(min + x * (max - min));
-        }}
-      >
-        <div style={{
-          position: 'absolute',
-          left: 0,
-          top: 0,
-          height: '100%',
-          width: `${percent}%`,
-          background: color,
-          borderRadius: '2px',
-        }} />
-      </div>
-    </div>
-  );
-}
-
-// Mini effect control
-function EffectMini({
-  name,
-  color,
-  knobs,
-}: {
-  name: string;
-  color: string;
-  knobs: Array<{ label: string; value: number; onChange: (v: number) => void; max: number }>;
-}) {
-  return (
-    <div>
-      <div style={{ fontSize: '9px', color, marginBottom: '6px', fontWeight: 600 }}>{name}</div>
-      <div style={{ display: 'flex', gap: '6px' }}>
-        {knobs.map((k) => (
-          <Knob
-            key={k.label}
-            label={k.label}
-            value={k.value}
-            min={0}
-            max={k.max}
-            step={0.01}
-            onChange={k.onChange}
-            formatValue={(v) => `${Math.round((v / k.max) * 100)}%`}
-            size={32}
-            paramId={`effect.${name.toLowerCase()}.${k.label.toLowerCase()}`}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
