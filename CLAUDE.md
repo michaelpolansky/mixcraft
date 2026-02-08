@@ -39,7 +39,7 @@ src/
     views/        # Full-screen views (SynthView, FMSynthView, AdditiveSynthView, ChallengeView, etc.)
     stores/       # Zustand stores (synth-store.ts, fm-synth-store.ts, additive-synth-store.ts, etc.)
   data/           # Static data files
-    challenges/   # Challenge definitions by track (sd1-sd9/, sm1-sm6/, ds1-ds6/, etc.)
+    challenges/   # Challenge definitions by track (sd1-sd17/, sm1-sm6/, ds1-ds6/, etc.)
     presets/      # Synth presets (subtractive, FM, additive)
     sequences/    # Note sequences for synth sequencer
   server/         # tRPC backend
@@ -66,7 +66,7 @@ docs/
 
 ## Five-Track Curriculum
 
-1. **Sound Design** (56 challenges) — subtractive synthesis, FM synthesis, additive synthesis.
+1. **Sound Design** (110 challenges) — subtractive synthesis (86), FM synthesis (12), additive synthesis (12).
 2. **Production** (20 challenges) — layering, arrangement, frequency stacking.
 3. **Mixing** (136 challenges) — EQ, compression, reverb, stereo, levels.
 4. **Sampling** (24 challenges) — sample manipulation, chopping, pitch/time, flipping.
@@ -76,10 +76,10 @@ Sound design is the entry point. It teaches concepts that make mixing and produc
 
 ## Current State
 
-**All 260 challenges complete across five tracks.** Deployed to production with AI feedback on all tracks.
+**All 314 challenges complete across five tracks.** Deployed to production with AI feedback on all tracks.
 
-### Sound Design Track (50 challenges, SD1-SD9)
-- **Subtractive synthesis (SD1-SD7):** oscillator, filter, 5 envelopes (Amp, Filter, Pitch, Mod, PWM), LFO, effects chain
+### Sound Design Track (110 challenges, SD1-SD17)
+- **Subtractive synthesis (SD1-SD17, 86 challenges):** oscillator, filter, envelopes, LFO, effects, arpeggiator, unison/supersaw, oscillator 2, sub oscillator, noise shaping, glide/portamento, velocity sensitivity, combined techniques
 - **FM synthesis (SD8, 12 challenges):** harmonicity, modulation index, carrier/modulator waveforms
 - **Additive synthesis (SD9, 12 challenges):** harmonic drawbars, Fourier synthesis, timbres
 - Effects chain: distortion, delay, reverb, chorus (all with dry/wet mix)
@@ -125,6 +125,11 @@ Sound design is the entry point. It teaches concepts that make mixing and produc
 - **Portamento/Glide:** Smooth pitch sliding between notes with adjustable time
 - **LFO Sync:** Tempo-synced LFO with note division selector (1, 1/2, 1/4, 1/8, 1/16, 1/32)
 - **Oscilloscope:** Real-time waveform display in OUTPUT stage
+- **Arpeggiator:** Pattern-based note sequencing with up/down/updown/random modes, tempo sync
+- **LFO2:** Second LFO with independent rate, depth, waveform, and sync settings
+- **Mod Matrix:** 4-slot modulation routing (sources: LFO1, LFO2, Env1, Env2, Velocity; destinations: pitch, pan, amplitude, filterCutoff, osc2Mix, lfo1Rate, lfo2Rate)
+- **Pan Control:** Stereo positioning with real-time modulation support
+- **Real-Time Modulation Display:** Knobs show modulated values oscillating in real-time via requestAnimationFrame polling
 
 ### Polish
 - Progress persistence (localStorage via Zustand)
@@ -168,3 +173,4 @@ Sound design is the entry point. It teaches concepts that make mixing and produc
 | 22 | 2026-02-06 | UX polish - loading states for audio initialization, error handling with user-friendly messages, canvas overflow fix (maxWidth + overflow:hidden) |
 | 23 | 2026-02-06 | Modulation envelopes - separate LFO/Filter Env modules, add Pitch/Mod/PWM envelopes with full ADSR + Amount controls, fix WaveformSelector overflow |
 | 24 | 2026-02-07 | Subtractive synth quick wins - Noise generator (white/pink/brown + level), Portamento/Glide (toggle + time), LFO Sync (tempo divisions), Oscilloscope display |
+| 25 | 2026-02-08 | Advanced subtractive synthesis - SD10-SD17 (48 challenges): Arpeggiator, Unison/Supersaw, Oscillator 2, Sub Oscillator, Noise Shaping, Glide, Velocity, Combined Techniques. LFO2, Mod Matrix, Pan control, real-time modulation display |
