@@ -5,6 +5,7 @@
  */
 
 import { useState, type ReactNode } from 'react';
+import { COLORS, TYPOGRAPHY, SPACING, RADIUS, TRANSITIONS } from '../theme/index.ts';
 
 interface ModuleCardProps {
   title: string;
@@ -15,21 +16,22 @@ interface ModuleCardProps {
   onToggle?: () => void;
 }
 
-// Module color presets
+// Module color presets (references theme where applicable)
 export const MODULE_COLORS = {
-  oscillator: '#3b82f6', // Blue
-  filter: '#06b6d4', // Cyan
-  ampEnvelope: '#22c55e', // Green
-  filterEnvelope: '#eab308', // Yellow
-  lfo: '#ef4444', // Red
-  effects: '#8b5cf6', // Purple
-  output: '#f97316', // Orange
-  modulation: '#f97316', // Orange (for FM)
-  harmonics: '#06b6d4', // Cyan (for Additive)
-  spectrum: '#10b981', // Emerald
-  keyboard: '#6366f1', // Indigo
-  sequencer: '#ec4899', // Pink
-  xypad: '#14b8a6', // Teal
+  oscillator: COLORS.synth.oscillator,    // Blue
+  filter: COLORS.synth.filter,            // Cyan
+  ampEnvelope: COLORS.synth.amp,          // Green
+  filterEnvelope: COLORS.warning,         // Yellow
+  lfo: COLORS.synth.lfo,                  // Amber
+  effects: COLORS.synth.effects,          // Purple
+  output: COLORS.synth.output,            // Emerald
+  modulation: COLORS.synth.lfo,           // Amber (for FM)
+  harmonics: COLORS.synth.filter,         // Cyan (for Additive)
+  spectrum: COLORS.synth.output,          // Emerald
+  keyboard: '#6366f1',                    // Indigo
+  sequencer: '#ec4899',                   // Pink
+  xypad: '#14b8a6',                       // Teal
+  mixer: COLORS.synth.mixer,              // Emerald
 } as const;
 
 export function ModuleCard({
@@ -59,11 +61,11 @@ export function ModuleCard({
   return (
     <div
       style={{
-        background: '#141414',
-        borderRadius: '12px',
+        background: COLORS.bg.secondary,
+        borderRadius: RADIUS.lg,
         border: `1px solid ${borderColor}40`, // 40% opacity border
         overflow: 'hidden',
-        transition: 'border-color 0.2s ease',
+        transition: `border-color ${TRANSITIONS.normal}`,
       }}
     >
       {/* Header with color accent */}
@@ -72,8 +74,8 @@ export function ModuleCard({
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '8px',
-          padding: '12px 16px',
+          gap: SPACING.sm,
+          padding: `${SPACING.md}px ${SPACING.lg}px`,
           background: headerBg,
           borderBottom: isCollapsed ? 'none' : `1px solid ${borderColor}20`,
           cursor: onToggle ? 'pointer' : 'default',
@@ -83,10 +85,10 @@ export function ModuleCard({
         {/* Color accent bar */}
         <div
           style={{
-            width: '3px',
-            height: '16px',
+            width: 3,
+            height: SPACING.lg,
             background: color,
-            borderRadius: '2px',
+            borderRadius: RADIUS.sm,
             flexShrink: 0,
           }}
         />
@@ -109,11 +111,11 @@ export function ModuleCard({
         <h3
           style={{
             margin: 0,
-            fontSize: '11px',
-            fontWeight: 600,
+            fontSize: TYPOGRAPHY.size.base,
+            fontWeight: TYPOGRAPHY.weight.semibold,
             color: color,
             textTransform: 'uppercase',
-            letterSpacing: '1px',
+            letterSpacing: TYPOGRAPHY.letterSpacing.wider,
             flex: 1,
           }}
         >
@@ -124,10 +126,10 @@ export function ModuleCard({
         {onToggle && (
           <div
             style={{
-              color: '#666',
-              fontSize: '10px',
+              color: COLORS.text.muted,
+              fontSize: TYPOGRAPHY.size.sm,
               transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)',
-              transition: 'transform 0.2s ease',
+              transition: `transform ${TRANSITIONS.normal}`,
             }}
           >
             ▼
@@ -137,7 +139,7 @@ export function ModuleCard({
 
       {/* Content */}
       {!isCollapsed && (
-        <div style={{ padding: '16px' }}>
+        <div style={{ padding: SPACING.lg }}>
           {children}
         </div>
       )}
@@ -159,20 +161,20 @@ export function Section({
   return (
     <div
       style={{
-        background: '#141414',
-        borderRadius: '12px',
-        padding: '16px',
-        border: '1px solid #2a2a2a',
+        background: COLORS.bg.secondary,
+        borderRadius: RADIUS.lg,
+        padding: SPACING.lg,
+        border: `1px solid ${COLORS.border.default}`,
       }}
     >
       <h3
         style={{
-          margin: '0 0 12px 0',
-          fontSize: '11px',
-          fontWeight: 600,
-          color: '#666',
+          margin: `0 0 ${SPACING.md}px 0`,
+          fontSize: TYPOGRAPHY.size.base,
+          fontWeight: TYPOGRAPHY.weight.semibold,
+          color: COLORS.text.muted,
           textTransform: 'uppercase',
-          letterSpacing: '1px',
+          letterSpacing: TYPOGRAPHY.letterSpacing.wider,
         }}
       >
         {title}

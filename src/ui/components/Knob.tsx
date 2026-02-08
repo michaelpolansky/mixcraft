@@ -5,6 +5,7 @@
 
 import { useRef, useCallback } from 'react';
 import { useInfoPanel } from '../context/InfoPanelContext.tsx';
+import { COLORS, TYPOGRAPHY, SPACING, RADIUS, TRANSITIONS, SHADOWS } from '../theme/index.ts';
 
 interface KnobProps {
   value: number;
@@ -94,6 +95,41 @@ export function Knob({
     document.addEventListener('mouseup', handleMouseUp);
   }, [min, max, step, onChange, positionToValue]);
 
+  // Keyboard navigation for accessibility
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    let newValue = value;
+    const largeStep = (max - min) / 10; // 10% jumps for Page keys
+
+    switch (e.key) {
+      case 'ArrowRight':
+      case 'ArrowUp':
+        newValue = Math.min(max, value + step);
+        break;
+      case 'ArrowLeft':
+      case 'ArrowDown':
+        newValue = Math.max(min, value - step);
+        break;
+      case 'PageUp':
+        newValue = Math.min(max, value + largeStep);
+        break;
+      case 'PageDown':
+        newValue = Math.max(min, value - largeStep);
+        break;
+      case 'Home':
+        newValue = min;
+        break;
+      case 'End':
+        newValue = max;
+        break;
+      default:
+        return; // Don't prevent default for other keys
+    }
+
+    e.preventDefault();
+    const quantized = Math.round(newValue / step) * step;
+    onChange(Math.max(min, Math.min(max, quantized)));
+  }, [value, min, max, step, onChange]);
+
   // Double-click to reset to center
   const handleDoubleClick = useCallback(() => {
     if (logarithmic) {
@@ -138,7 +174,7 @@ export function Knob({
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: '4px',
+        gap: SPACING.xs,
         userSelect: 'none',
         minWidth: sliderWidth,
       }}
@@ -146,28 +182,43 @@ export function Knob({
       {/* Label */}
       <span
         style={{
-          fontSize: '10px',
-          color: '#888',
+          fontSize: TYPOGRAPHY.size.sm,
+          color: COLORS.text.tertiary,
           textTransform: 'uppercase',
-          letterSpacing: '0.5px',
+          letterSpacing: TYPOGRAPHY.letterSpacing.wide,
         }}
       >
         {label}
       </span>
 
-      {/* Slider track */}
+      {/* Slider track - accessible */}
       <div
         ref={trackRef}
+        role="slider"
+        aria-label={label}
+        aria-valuenow={value}
+        aria-valuemin={min}
+        aria-valuemax={max}
+        aria-valuetext={displayValue}
+        tabIndex={0}
         onMouseDown={handleMouseDown}
         onDoubleClick={handleDoubleClick}
+        onKeyDown={handleKeyDown}
         style={{
           width: sliderWidth,
           height: sliderHeight,
-          background: '#1a1a1a',
-          borderRadius: sliderHeight / 2,
+          background: COLORS.bg.tertiary,
+          borderRadius: RADIUS.full,
           position: 'relative',
           cursor: 'pointer',
           overflow: 'visible',
+          outline: 'none',
+        }}
+        onFocus={(e) => {
+          e.currentTarget.style.boxShadow = `0 0 0 2px ${COLORS.interactive.focus}`;
+        }}
+        onBlur={(e) => {
+          e.currentTarget.style.boxShadow = 'none';
         }}
       >
         {/* Background track */}
@@ -178,8 +229,8 @@ export function Knob({
             left: 0,
             right: 0,
             bottom: 0,
-            background: '#333',
-            borderRadius: sliderHeight / 2,
+            background: COLORS.border.medium,
+            borderRadius: RADIUS.full,
           }}
         />
 
@@ -191,8 +242,9 @@ export function Knob({
             left: 0,
             bottom: 0,
             width: `${fillWidth}%`,
-            background: 'linear-gradient(to right, #22c55e, #4ade80)',
-            borderRadius: sliderHeight / 2,
+            background: COLORS.gradients.success,
+            borderRadius: RADIUS.full,
+            transition: `width ${TRANSITIONS.fast}`,
           }}
         />
 
@@ -205,10 +257,10 @@ export function Knob({
               bottom: -2,
               left: `${modulatedPosition}%`,
               width: 3,
-              background: '#22d3ee',
-              borderRadius: 1,
+              background: COLORS.accent.secondary,
+              borderRadius: RADIUS.sm,
               transform: 'translateX(-50%)',
-              boxShadow: '0 0 6px #22d3ee',
+              boxShadow: SHADOWS.glow(COLORS.accent.secondary),
             }}
           />
         )}
@@ -221,11 +273,12 @@ export function Knob({
             left: `${fillWidth}%`,
             width: 14,
             height: 14,
-            background: '#fff',
-            borderRadius: '50%',
+            background: COLORS.text.primary,
+            borderRadius: RADIUS.full,
             transform: 'translate(-50%, -50%)',
-            boxShadow: '0 1px 4px rgba(0,0,0,0.4)',
-            border: '2px solid #4ade80',
+            boxShadow: SHADOWS.md,
+            border: `2px solid ${COLORS.accent.primary}`,
+            transition: `left ${TRANSITIONS.fast}`,
           }}
         />
       </div>
@@ -234,14 +287,14 @@ export function Knob({
       <div style={{
         display: 'flex',
         alignItems: 'center',
-        gap: '8px',
-        minHeight: '16px',
+        gap: SPACING.sm,
+        minHeight: SPACING.lg,
       }}>
         <span
           style={{
-            fontSize: '11px',
-            color: isModulated ? '#666' : '#4ade80',
-            fontFamily: 'monospace',
+            fontSize: TYPOGRAPHY.size.base,
+            fontFamily: TYPOGRAPHY.family.mono,
+            color: isModulated ? COLORS.text.muted : COLORS.accent.primary,
           }}
         >
           {displayValue}
@@ -250,10 +303,10 @@ export function Knob({
         {isModulated && modulatedDisplayValue && (
           <span
             style={{
-              fontSize: '11px',
-              color: '#22d3ee',
-              fontFamily: 'monospace',
-              fontWeight: 500,
+              fontSize: TYPOGRAPHY.size.base,
+              fontFamily: TYPOGRAPHY.family.mono,
+              color: COLORS.accent.secondary,
+              fontWeight: TYPOGRAPHY.weight.medium,
             }}
           >
             → {modulatedDisplayValue}

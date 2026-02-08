@@ -4,6 +4,7 @@
 
 import { useRef, useCallback } from 'react';
 import { useInfoPanel } from '../context/InfoPanelContext.tsx';
+import { COLORS, TYPOGRAPHY, SPACING, RADIUS, TRANSITIONS } from '../theme/index.ts';
 
 interface SliderProps {
   value: number;
@@ -86,6 +87,41 @@ export function Slider({
     document.addEventListener('mouseup', handleMouseUp);
   }, [min, max, step, onChange, positionToValue]);
 
+  // Keyboard navigation for accessibility
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    let newValue = value;
+    const largeStep = (max - min) / 10;
+
+    switch (e.key) {
+      case 'ArrowUp':
+      case 'ArrowRight':
+        newValue = Math.min(max, value + step);
+        break;
+      case 'ArrowDown':
+      case 'ArrowLeft':
+        newValue = Math.max(min, value - step);
+        break;
+      case 'PageUp':
+        newValue = Math.min(max, value + largeStep);
+        break;
+      case 'PageDown':
+        newValue = Math.max(min, value - largeStep);
+        break;
+      case 'Home':
+        newValue = min;
+        break;
+      case 'End':
+        newValue = max;
+        break;
+      default:
+        return;
+    }
+
+    e.preventDefault();
+    const quantized = Math.round(newValue / step) * step;
+    onChange(Math.max(min, Math.min(max, quantized)));
+  }, [value, min, max, step, onChange]);
+
   const fillHeight = valueToPosition(value) * 100;
   const displayValue = formatValue ? formatValue(value) : value.toFixed(2);
 
@@ -97,16 +133,16 @@ export function Slider({
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: '4px',
+        gap: SPACING.xs,
         userSelect: 'none',
       }}
     >
       <span
         style={{
-          fontSize: '10px',
-          color: '#888',
+          fontSize: TYPOGRAPHY.size.sm,
+          color: COLORS.text.tertiary,
           textTransform: 'uppercase',
-          letterSpacing: '0.5px',
+          letterSpacing: TYPOGRAPHY.letterSpacing.wide,
         }}
       >
         {label}
@@ -114,15 +150,31 @@ export function Slider({
 
       <div
         ref={trackRef}
+        role="slider"
+        aria-label={label}
+        aria-valuenow={value}
+        aria-valuemin={min}
+        aria-valuemax={max}
+        aria-valuetext={displayValue}
+        aria-orientation="vertical"
+        tabIndex={0}
         onMouseDown={handleMouseDown}
+        onKeyDown={handleKeyDown}
         style={{
-          width: '24px',
+          width: 24,
           height: height,
-          background: '#1a1a1a',
-          borderRadius: '4px',
+          background: COLORS.bg.tertiary,
+          borderRadius: RADIUS.sm,
           position: 'relative',
           cursor: 'pointer',
           overflow: 'hidden',
+          outline: 'none',
+        }}
+        onFocus={(e) => {
+          e.currentTarget.style.boxShadow = `0 0 0 2px ${COLORS.interactive.focus}`;
+        }}
+        onBlur={(e) => {
+          e.currentTarget.style.boxShadow = 'none';
         }}
       >
         {/* Fill */}
@@ -133,8 +185,9 @@ export function Slider({
             left: 0,
             right: 0,
             height: `${fillHeight}%`,
-            background: 'linear-gradient(to top, #4ade80, #22c55e)',
-            borderRadius: '4px',
+            background: COLORS.gradients.successVertical,
+            borderRadius: RADIUS.sm,
+            transition: `height ${TRANSITIONS.fast}`,
           }}
         />
 
@@ -144,21 +197,22 @@ export function Slider({
             position: 'absolute',
             bottom: `calc(${fillHeight}% - 4px)`,
             left: '50%',
-            width: '20px',
-            height: '8px',
-            background: '#fff',
-            borderRadius: '2px',
+            width: 20,
+            height: 8,
+            background: COLORS.text.primary,
+            borderRadius: 2,
             transform: 'translateX(-50%)',
             boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+            transition: `bottom ${TRANSITIONS.fast}`,
           }}
         />
       </div>
 
       <span
         style={{
-          fontSize: '10px',
-          color: '#4ade80',
-          fontFamily: 'monospace',
+          fontSize: TYPOGRAPHY.size.sm,
+          fontFamily: TYPOGRAPHY.family.mono,
+          color: COLORS.accent.primary,
         }}
       >
         {displayValue}
