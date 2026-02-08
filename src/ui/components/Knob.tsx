@@ -175,6 +175,7 @@ export function Knob({
         gap: SPACING.xs,
         userSelect: 'none',
         width: '100%',
+        padding: `${SPACING.xs}px ${SPACING.sm}px`,
       }}
     >
       {/* Header row: Label left, Value right */}
