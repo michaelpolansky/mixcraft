@@ -20,6 +20,8 @@ interface WaveformSelectorProps<T extends WaveformType> {
   size?: 'compact' | 'normal' | 'large';
   /** Layout direction */
   direction?: 'row' | 'column';
+  /** Filter to show only specific waveforms (defaults to all) */
+  waveforms?: T[];
 }
 
 // Shared waveform definitions
@@ -59,11 +61,17 @@ export function WaveformSelector<T extends WaveformType>({
   accentColor = COLORS.accent.primary,
   size = 'normal',
   direction = 'row',
+  waveforms,
 }: WaveformSelectorProps<T>) {
   const sizeConfig = SIZES[size];
 
   // Calculate selected background with color tint
   const selectedBg = `${accentColor}20`;
+
+  // Filter waveforms if specified
+  const displayWaveforms = waveforms
+    ? WAVEFORMS.filter(w => waveforms.includes(w.type as T))
+    : WAVEFORMS;
 
   return (
     <div
@@ -73,7 +81,7 @@ export function WaveformSelector<T extends WaveformType>({
         gap: sizeConfig.gap,
       }}
     >
-      {WAVEFORMS.map(({ type, label, path }) => {
+      {displayWaveforms.map(({ type, label, path }) => {
         const isSelected = value === type;
 
         return (

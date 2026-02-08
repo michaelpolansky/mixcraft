@@ -529,26 +529,14 @@ export function SynthView() {
               accentColor={COLORS.subOsc}
               compact
             />
-            <div style={{ display: 'flex', gap: SIZES.gap.xs, marginTop: SIZES.margin.section }}>
-              {(['sine', 'square'] as const).map((t) => (
-                <button
-                  key={t}
-                  onClick={() => setSubOscType(t)}
-                  style={{
-                    padding: '6px 12px',
-                    background: params.subOsc.type === t ? COLORS.subOsc : '#1a1a1a',
-                    border: `1px solid ${params.subOsc.type === t ? COLORS.subOsc : '#333'}`,
-                    borderRadius: '4px',
-                    color: params.subOsc.type === t ? '#fff' : '#888',
-                    fontSize: '10px',
-                    cursor: 'pointer',
-                    fontWeight: 500,
-                    textTransform: 'capitalize',
-                  }}
-                >
-                  {t}
-                </button>
-              ))}
+            <div style={{ marginTop: SIZES.margin.section }}>
+              <WaveformSelector
+                value={params.subOsc.type}
+                onChange={setSubOscType}
+                accentColor={COLORS.subOsc}
+                size="compact"
+                waveforms={['sine', 'square']}
+              />
             </div>
             <div style={{ display: 'flex', gap: SIZES.gap.xs, marginTop: SIZES.gap.sm }}>
               {([-1, -2] as const).map((oct) => (
