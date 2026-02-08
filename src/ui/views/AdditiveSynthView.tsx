@@ -1,6 +1,6 @@
 /**
  * Additive Synthesizer View
- * Horizontal signal-flow layout: HARMONICS → AMP → FX → OUTPUT
+ * Horizontal signal-flow layout: HARMONICS -> LFO -> NOISE -> VELOCITY -> ARP -> AMP -> OUTPUT
  */
 
 import { useEffect, useCallback, useState } from 'react';
@@ -15,19 +15,70 @@ import {
   RecordingControl,
   HarmonicBarsVisualizer,
   EnvelopeVisualizer,
+  WaveformSelector,
+  LFOVisualizer,
+  NoiseVisualizer,
+  Oscilloscope,
   XYPad,
 } from '../components/index.ts';
 import { ADDITIVE_PRESETS } from '../../data/presets/additive-presets.ts';
 import { InfoPanelProvider } from '../context/InfoPanelContext.tsx';
-import { PARAM_RANGES } from '../../core/types.ts';
+import type {
+  LFOWaveform,
+  AdditiveLFODestination,
+  NoiseType,
+  ArpPattern,
+  ArpDivision,
+} from '../../core/types.ts';
 
-// Stage colors following signal flow
+// Stage colors following signal flow (cyan/teal theme for additive)
 const COLORS = {
   harmonics: '#06b6d4',
+  lfo: '#14b8a6',
+  noise: '#64748b',
+  velocity: '#22d3ee',
+  arp: '#0ea5e9',
   amp: '#22c55e',
-  effects: '#8b5cf6',
   output: '#f97316',
 };
+
+// Standardized sizes for consistent UI
+const SIZES = {
+  visualizer: {
+    width: 200,
+    height: 100,
+    compactHeight: 60,
+  },
+  gap: {
+    xs: 4,
+    sm: 8,
+    md: 12,
+    lg: 16,
+  },
+  margin: {
+    section: 12,
+  },
+};
+
+// Standard module widths
+const MODULE_WIDTH = {
+  standard: 224,
+  wide: 320,
+  extraWide: 440,
+};
+
+// Noise type options
+const NOISE_TYPES = [
+  { value: 'white' as const, label: 'White' },
+  { value: 'pink' as const, label: 'Pink' },
+  { value: 'brown' as const, label: 'Brown' },
+];
+
+// LFO destination options for Additive synth
+const ADDITIVE_LFO_DESTINATIONS = [
+  { value: 'brightness' as const, label: 'Brightness' },
+  { value: 'pitch' as const, label: 'Pitch' },
+];
 
 export function AdditiveSynthView() {
   const {
@@ -60,11 +111,42 @@ export function AdditiveSynthView() {
     resetToDefaults,
     currentPreset,
     loadPreset,
+    // LFO actions
+    setLFORate,
+    setLFODepth,
+    setLFOWaveform,
+    setLFODestination,
+    // Noise actions
+    setNoiseType,
+    setNoiseLevel,
+    // Glide actions
+    setGlideEnabled,
+    setGlideTime,
+    // Pan action
+    setPan,
+    // Velocity actions
+    setVelocityAmpAmount,
+    setVelocityBrightnessAmount,
+    // Arpeggiator actions
+    setArpEnabled,
+    setArpPattern,
+    setArpDivision,
+    setArpOctaves,
+    setArpGate,
   } = useAdditiveSynthStore();
 
   // Bottom strip state
   const [bottomMode, setBottomMode] = useState<'keys' | 'xy'>('keys');
   const [bottomExpanded, setBottomExpanded] = useState(false);
+
+  // Arp-aware note handlers for keyboard
+  const handleNoteOn = useCallback((note: string) => {
+    playNote(note);
+  }, [playNote]);
+
+  const handleNoteOff = useCallback((note: string) => {
+    stopNote(note);
+  }, [stopNote]);
 
   // Initialize engine on mount
   useEffect(() => {
@@ -97,9 +179,6 @@ export function AdditiveSynthView() {
   // X = fundamental volume, Y = high harmonic mix
   const xRange: [number, number] = [0, 1];
   const yRange: [number, number] = [0, 1];
-
-  const normalizeValue = (value: number, min: number, max: number) => (value - min) / (max - min);
-  const denormalizeValue = (normalized: number, min: number, max: number) => min + normalized * (max - min);
 
   // Calculate current XY values from harmonics
   const fundamentalLevel = params.harmonics[0] ?? 1;
@@ -270,6 +349,305 @@ export function AdditiveSynthView() {
                 ))}
               </div>
             </div>
+
+            {/* Glide controls */}
+            <div style={{ marginTop: SIZES.gap.md, paddingTop: SIZES.gap.md, borderTop: '1px solid #222' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: SIZES.gap.sm }}>
+                <button
+                  onClick={() => setGlideEnabled(!params.glide.enabled)}
+                  style={{
+                    padding: '4px 8px',
+                    background: params.glide.enabled ? COLORS.harmonics : '#222',
+                    border: `1px solid ${params.glide.enabled ? COLORS.harmonics : '#444'}`,
+                    borderRadius: '4px',
+                    color: params.glide.enabled ? '#fff' : '#888',
+                    fontSize: '10px',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                  }}
+                >
+                  GLIDE
+                </button>
+                {params.glide.enabled && (
+                  <Knob
+                    label="Time"
+                    value={params.glide.time}
+                    min={0.01}
+                    max={1}
+                    step={0.01}
+                    onChange={setGlideTime}
+                    formatValue={(v) => `${Math.round(v * 1000)}ms`}
+                    size={32}
+                    paramId="additive.glide.time"
+                  />
+                )}
+              </div>
+            </div>
+          </StageCard>
+
+          {/* LFO Stage */}
+          <StageCard title="LFO" color={COLORS.lfo}>
+            <LFOVisualizer
+              waveform={params.lfo.waveform}
+              rate={params.lfo.rate}
+              depth={params.lfo.depth}
+              width={SIZES.visualizer.width}
+              height={SIZES.visualizer.height}
+              accentColor={COLORS.lfo}
+              compact
+            />
+            <div style={{ marginTop: SIZES.margin.section }}>
+              <WaveformSelector
+                value={params.lfo.waveform}
+                onChange={(waveform: LFOWaveform) => setLFOWaveform(waveform)}
+                accentColor={COLORS.lfo}
+              />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm, marginTop: SIZES.margin.section }}>
+              <Knob
+                label="Rate"
+                value={params.lfo.rate}
+                min={0.1}
+                max={20}
+                step={0.1}
+                onChange={setLFORate}
+                formatValue={(v) => `${v.toFixed(1)} Hz`}
+                paramId="additive.lfo.rate"
+              />
+              <Knob
+                label="Depth"
+                value={params.lfo.depth}
+                min={0}
+                max={1}
+                step={0.01}
+                onChange={setLFODepth}
+                formatValue={formatPercent}
+                paramId="additive.lfo.depth"
+              />
+            </div>
+            {/* Destination selector */}
+            <div style={{ marginTop: SIZES.margin.section }}>
+              <div style={{ fontSize: '9px', color: '#888', marginBottom: 4, textTransform: 'uppercase' }}>
+                Destination
+              </div>
+              <div style={{ display: 'flex', gap: 2 }}>
+                {ADDITIVE_LFO_DESTINATIONS.map((dest) => (
+                  <button
+                    key={dest.value}
+                    onClick={() => setLFODestination(dest.value)}
+                    style={{
+                      padding: '4px 8px',
+                      background: params.lfo.destination === dest.value ? COLORS.lfo : '#1a1a1a',
+                      border: `1px solid ${params.lfo.destination === dest.value ? COLORS.lfo : '#333'}`,
+                      borderRadius: '4px',
+                      color: params.lfo.destination === dest.value ? '#fff' : '#888',
+                      fontSize: '9px',
+                      cursor: 'pointer',
+                      fontWeight: 500,
+                    }}
+                  >
+                    {dest.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </StageCard>
+
+          {/* NOISE Stage */}
+          <StageCard title="NOISE" color={COLORS.noise}>
+            <NoiseVisualizer
+              noiseType={params.noise.type}
+              level={params.noise.level}
+              width={SIZES.visualizer.width}
+              height={SIZES.visualizer.height}
+              accentColor={COLORS.noise}
+              compact
+            />
+            <div style={{ display: 'flex', gap: SIZES.gap.xs, marginTop: SIZES.margin.section }}>
+              {NOISE_TYPES.map((nt) => (
+                <button
+                  key={nt.value}
+                  onClick={() => setNoiseType(nt.value)}
+                  style={{
+                    padding: '6px 10px',
+                    background: params.noise.type === nt.value ? COLORS.noise : '#1a1a1a',
+                    border: `1px solid ${params.noise.type === nt.value ? COLORS.noise : '#333'}`,
+                    borderRadius: '4px',
+                    color: params.noise.type === nt.value ? '#fff' : '#888',
+                    fontSize: '10px',
+                    cursor: 'pointer',
+                    fontWeight: 500,
+                  }}
+                >
+                  {nt.label}
+                </button>
+              ))}
+            </div>
+            <div style={{ marginTop: SIZES.margin.section }}>
+              <Knob
+                label="Level"
+                value={params.noise.level}
+                min={0}
+                max={1}
+                step={0.01}
+                onChange={setNoiseLevel}
+                formatValue={formatPercent}
+                paramId="additive.noise.level"
+              />
+            </div>
+          </StageCard>
+
+          {/* VELOCITY Stage */}
+          <StageCard title="VELOCITY" color={COLORS.velocity}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm }}>
+              <Knob
+                label="Amp Amount"
+                value={params.velocity.ampAmount}
+                min={0}
+                max={1}
+                step={0.01}
+                onChange={setVelocityAmpAmount}
+                formatValue={formatPercent}
+                paramId="additive.velocity.ampAmount"
+              />
+              <Knob
+                label="Brightness"
+                value={params.velocity.brightnessAmount}
+                min={0}
+                max={1}
+                step={0.01}
+                onChange={setVelocityBrightnessAmount}
+                formatValue={formatPercent}
+                paramId="additive.velocity.brightnessAmount"
+              />
+            </div>
+          </StageCard>
+
+          {/* ARP Stage */}
+          <StageCard title="ARP" color={COLORS.arp}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm }}>
+              {/* Enable toggle */}
+              <button
+                onClick={() => setArpEnabled(!params.arpeggiator.enabled)}
+                style={{
+                  padding: '6px 12px',
+                  background: params.arpeggiator.enabled ? COLORS.arp : '#222',
+                  border: `1px solid ${params.arpeggiator.enabled ? COLORS.arp : '#444'}`,
+                  borderRadius: '4px',
+                  color: params.arpeggiator.enabled ? '#fff' : '#888',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  alignSelf: 'flex-start',
+                }}
+              >
+                {params.arpeggiator.enabled ? 'ON' : 'OFF'}
+              </button>
+
+              {params.arpeggiator.enabled && (
+                <>
+                  {/* Pattern selector */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <span style={{ fontSize: '9px', color: '#888', textTransform: 'uppercase' }}>
+                      Pattern
+                    </span>
+                    <div style={{ display: 'flex', gap: 2 }}>
+                      {([
+                        { value: 'up' as const, label: '\u2191' },
+                        { value: 'down' as const, label: '\u2193' },
+                        { value: 'upDown' as const, label: '\u2195' },
+                        { value: 'random' as const, label: '?' },
+                      ]).map(({ value, label }) => (
+                        <button
+                          key={value}
+                          onClick={() => setArpPattern(value)}
+                          style={{
+                            width: 28,
+                            height: 28,
+                            fontSize: '14px',
+                            fontWeight: 600,
+                            background: params.arpeggiator.pattern === value ? COLORS.arp : '#333',
+                            border: 'none',
+                            borderRadius: '4px',
+                            color: params.arpeggiator.pattern === value ? '#fff' : '#fff',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Division selector */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <span style={{ fontSize: '9px', color: '#888', textTransform: 'uppercase' }}>
+                      Rate
+                    </span>
+                    <select
+                      value={params.arpeggiator.division}
+                      onChange={(e) => setArpDivision(e.target.value as ArpDivision)}
+                      style={{
+                        padding: '4px 8px',
+                        background: '#222',
+                        border: '1px solid #444',
+                        borderRadius: '4px',
+                        color: '#fff',
+                        fontSize: '11px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <option value="1n">1</option>
+                      <option value="2n">1/2</option>
+                      <option value="4n">1/4</option>
+                      <option value="8n">1/8</option>
+                      <option value="16n">1/16</option>
+                      <option value="32n">1/32</option>
+                    </select>
+                  </div>
+
+                  {/* Octaves selector */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <span style={{ fontSize: '9px', color: '#888', textTransform: 'uppercase' }}>
+                      Octaves
+                    </span>
+                    <div style={{ display: 'flex', gap: 2 }}>
+                      {([1, 2, 3, 4] as const).map((oct) => (
+                        <button
+                          key={oct}
+                          onClick={() => setArpOctaves(oct)}
+                          style={{
+                            width: 24,
+                            height: 24,
+                            fontSize: '10px',
+                            fontWeight: 600,
+                            background: params.arpeggiator.octaves === oct ? COLORS.arp : '#333',
+                            border: 'none',
+                            borderRadius: '4px',
+                            color: params.arpeggiator.octaves === oct ? '#fff' : '#fff',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {oct}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Gate knob */}
+                  <Knob
+                    label="Gate"
+                    value={params.arpeggiator.gate}
+                    min={0.25}
+                    max={1}
+                    step={0.05}
+                    onChange={setArpGate}
+                    formatValue={(v) => `${Math.round(v * 100)}%`}
+                    paramId="additive.arp.gate"
+                  />
+                </>
+              )}
+            </div>
           </StageCard>
 
           {/* AMP Stage */}
@@ -297,7 +675,7 @@ export function AdditiveSynthView() {
           </StageCard>
 
           {/* FX Stage */}
-          <StageCard title="FX" color={COLORS.effects} wide>
+          <StageCard title="FX" color="#8b5cf6" wide>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <EffectMini
                 name="DIST"
@@ -339,6 +717,13 @@ export function AdditiveSynthView() {
           {/* OUTPUT Stage */}
           <StageCard title="OUTPUT" color={COLORS.output}>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+              {/* Oscilloscope */}
+              <Oscilloscope
+                getAnalyser={getAnalyser}
+                width={SIZES.visualizer.width}
+                height={SIZES.visualizer.compactHeight}
+                accentColor={COLORS.output}
+              />
               <Knob
                 label="Volume"
                 value={params.volume}
@@ -349,6 +734,20 @@ export function AdditiveSynthView() {
                 formatValue={formatDb}
                 size={56}
                 paramId="volume"
+              />
+              <Knob
+                label="Pan"
+                value={params.pan}
+                min={-1}
+                max={1}
+                step={0.01}
+                onChange={setPan}
+                formatValue={(v) => {
+                  if (Math.abs(v) < 0.05) return 'Center';
+                  if (v < 0) return `${Math.round(Math.abs(v) * 100)}% L`;
+                  return `${Math.round(v * 100)}% R`;
+                }}
+                paramId="additive.pan"
               />
               <RecordingControl
                 sourceNode={engine?.getOutputNode() ?? null}
@@ -413,7 +812,7 @@ export function AdditiveSynthView() {
                 fontSize: '11px',
               }}
             >
-              {bottomExpanded ? '▼' : '▲'}
+              {bottomExpanded ? '\u25BC' : '\u25B2'}
             </button>
           </div>
 
@@ -432,8 +831,8 @@ export function AdditiveSynthView() {
           >
             {bottomMode === 'keys' ? (
               <PianoKeyboard
-                onNoteOn={playNote}
-                onNoteOff={stopNote}
+                onNoteOn={handleNoteOn}
+                onNoteOff={handleNoteOff}
                 octave={3}
                 octaves={bottomExpanded ? 3 : 1}
               />
@@ -481,15 +880,16 @@ function StageCard({
   extraWide?: boolean;
   children: React.ReactNode;
 }) {
+  const width = extraWide ? MODULE_WIDTH.extraWide : wide ? MODULE_WIDTH.wide : MODULE_WIDTH.standard;
+
   return (
     <div style={{
       background: '#111',
       border: `1px solid ${color}40`,
       borderRadius: '8px',
       padding: '12px',
-      minWidth: extraWide ? '400px' : wide ? '280px' : '180px',
-      flex: extraWide ? '3 1 400px' : wide ? '2 1 280px' : '1 1 180px',
-      maxWidth: extraWide ? '500px' : wide ? '400px' : '240px',
+      width: `${width}px`,
+      boxSizing: 'border-box',
       alignSelf: 'flex-start',
       overflow: 'hidden',
     }}>
