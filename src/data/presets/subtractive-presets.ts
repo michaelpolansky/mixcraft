@@ -57,7 +57,8 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         ampAmount: 0,
         filterAmount: 0,
       },
-      noise: {
+      unison: { enabled: false, voices: 4, detune: 20, spread: 0.5 },
+    noise: {
         type: 'white',
         level: 0,
       },
@@ -148,7 +149,8 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         ampAmount: 0,
         filterAmount: 0,
       },
-      noise: {
+      unison: { enabled: false, voices: 4, detune: 20, spread: 0.5 },
+    noise: {
         type: 'white',
         level: 0,
       },
@@ -242,7 +244,8 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         ampAmount: 0,
         filterAmount: 0,
       },
-      noise: {
+      unison: { enabled: false, voices: 4, detune: 20, spread: 0.5 },
+    noise: {
         type: 'white',
         level: 0,
       },
@@ -337,7 +340,8 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         ampAmount: 0,
         filterAmount: 0,
       },
-      noise: {
+      unison: { enabled: false, voices: 4, detune: 20, spread: 0.5 },
+    noise: {
         type: 'white',
         level: 0,
       },
@@ -431,7 +435,8 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         ampAmount: 0,
         filterAmount: 0,
       },
-      noise: {
+      unison: { enabled: false, voices: 4, detune: 20, spread: 0.5 },
+    noise: {
         type: 'white',
         level: 0,
       },
@@ -522,7 +527,8 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         ampAmount: 0,
         filterAmount: 0,
       },
-      noise: {
+      unison: { enabled: false, voices: 4, detune: 20, spread: 0.5 },
+    noise: {
         type: 'white',
         level: 0,
       },
@@ -617,7 +623,8 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         ampAmount: 0,
         filterAmount: 0,
       },
-      noise: {
+      unison: { enabled: false, voices: 4, detune: 20, spread: 0.5 },
+    noise: {
         type: 'white',
         level: 0,
       },
@@ -708,7 +715,8 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         ampAmount: 0,
         filterAmount: 0,
       },
-      noise: {
+      unison: { enabled: false, voices: 4, detune: 20, spread: 0.5 },
+    noise: {
         type: 'white',
         level: 0,
       },
@@ -802,7 +810,8 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         ampAmount: 0,
         filterAmount: 0,
       },
-      noise: {
+      unison: { enabled: false, voices: 4, detune: 20, spread: 0.5 },
+    noise: {
         type: 'white',
         level: 0,
       },
@@ -847,6 +856,193 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
       },
       effects: { ...DEFAULT_EFFECTS },
       volume: -18,
+      lfo2: DEFAULT_LFO2,
+      modMatrix: DEFAULT_MOD_MATRIX,
+      pan: 0,
+    },
+  },
+  {
+    name: 'Super Saw',
+    params: {
+      oscillator: {
+        type: 'sawtooth',
+        octave: 0,
+        detune: 0,
+        pulseWidth: 0.5,
+        level: 1,
+      },
+      filter: {
+        type: 'lowpass',
+        cutoff: 6000,
+        resonance: 1.5,
+        keyTracking: 0.3,
+      },
+      filterEnvelope: {
+        attack: 0.01,
+        decay: 0.5,
+        sustain: 0.4,
+        release: 0.5,
+        amount: 2,
+      },
+      amplitudeEnvelope: {
+        attack: 0.01,
+        decay: 0.3,
+        sustain: 0.7,
+        release: 0.4,
+      },
+      lfo: {
+        rate: 0.2,
+        depth: 0,
+        waveform: 'sine',
+        sync: false,
+        syncDivision: '4n',
+      },
+      velocity: {
+        ampAmount: 0.2,
+        filterAmount: 0.3,
+      },
+      unison: { enabled: true, voices: 8, detune: 25, spread: 0.8 },
+      noise: {
+        type: 'white',
+        level: 0,
+      },
+      glide: {
+        enabled: false,
+        time: 0.1,
+      },
+      pitchEnvelope: {
+        attack: 0.001,
+        decay: 0.1,
+        sustain: 0,
+        release: 0.1,
+        amount: 0,
+      },
+      modEnvelope: {
+        attack: 0.5,
+        decay: 0.5,
+        sustain: 0.5,
+        release: 0.5,
+        amount: 0,
+      },
+      pwmEnvelope: {
+        attack: 0.01,
+        decay: 0.3,
+        sustain: 0.5,
+        release: 0.3,
+        amount: 0,
+      },
+      subOsc: {
+        enabled: false,
+        type: 'sine',
+        octave: -1,
+        level: 0.5,
+      },
+      oscillator2: {
+        enabled: false,
+        type: 'sawtooth',
+        octave: 0,
+        detune: 7,
+        pulseWidth: 0.5,
+        level: 0.5,
+      },
+      effects: { ...DEFAULT_EFFECTS },
+      volume: -12,
+      lfo2: DEFAULT_LFO2,
+      modMatrix: DEFAULT_MOD_MATRIX,
+      pan: 0,
+    },
+  },
+  {
+    name: 'Wide Pad',
+    params: {
+      oscillator: {
+        type: 'triangle',
+        octave: 0,
+        detune: 0,
+        pulseWidth: 0.5,
+        level: 1,
+      },
+      filter: {
+        type: 'lowpass',
+        cutoff: 3000,
+        resonance: 1,
+        keyTracking: 0.2,
+      },
+      filterEnvelope: {
+        attack: 0.8,
+        decay: 0.5,
+        sustain: 0.6,
+        release: 1.5,
+        amount: 1.5,
+      },
+      amplitudeEnvelope: {
+        attack: 0.8,
+        decay: 0.5,
+        sustain: 0.8,
+        release: 2,
+      },
+      lfo: {
+        rate: 0.3,
+        depth: 0.1,
+        waveform: 'sine',
+        sync: false,
+        syncDivision: '4n',
+      },
+      velocity: {
+        ampAmount: 0.1,
+        filterAmount: 0.2,
+      },
+      unison: { enabled: true, voices: 4, detune: 15, spread: 0.6 },
+      noise: {
+        type: 'white',
+        level: 0,
+      },
+      glide: {
+        enabled: false,
+        time: 0.1,
+      },
+      pitchEnvelope: {
+        attack: 0.001,
+        decay: 0.1,
+        sustain: 0,
+        release: 0.1,
+        amount: 0,
+      },
+      modEnvelope: {
+        attack: 0.5,
+        decay: 0.5,
+        sustain: 0.5,
+        release: 0.5,
+        amount: 0,
+      },
+      pwmEnvelope: {
+        attack: 0.01,
+        decay: 0.3,
+        sustain: 0.5,
+        release: 0.3,
+        amount: 0,
+      },
+      subOsc: {
+        enabled: false,
+        type: 'sine',
+        octave: -1,
+        level: 0.5,
+      },
+      oscillator2: {
+        enabled: false,
+        type: 'sawtooth',
+        octave: 0,
+        detune: 7,
+        pulseWidth: 0.5,
+        level: 0.5,
+      },
+      effects: {
+        distortion: { amount: 0, mix: 0 },
+        delay: { time: 0.4, feedback: 0.3, mix: 0.2 },
+        reverb: { decay: 3, mix: 0.4 },
+        chorus: { rate: 0.8, depth: 0.5, mix: 0.3 },
+      },
+      volume: -12,
       lfo2: DEFAULT_LFO2,
       modMatrix: DEFAULT_MOD_MATRIX,
       pan: 0,

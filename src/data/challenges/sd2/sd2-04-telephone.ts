@@ -59,6 +59,7 @@ export const challenge: Challenge = {
       ampAmount: 0,
       filterAmount: 0,
     },
+    unison: { enabled: false, voices: 4, detune: 20, spread: 0.5 },
     noise: {
       type: 'white',
       level: 0,

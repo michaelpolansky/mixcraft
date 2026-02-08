@@ -171,6 +171,10 @@ export function SynthView() {
     setOsc2Octave,
     setOsc2Detune,
     setOsc2Level,
+    setUnisonEnabled,
+    setUnisonVoices,
+    setUnisonDetune,
+    setUnisonSpread,
     setOsc1Level,
     setLfo2Rate,
     setLfo2Depth,
@@ -421,6 +425,78 @@ export function SynthView() {
                   />
                 )}
               </div>
+            </div>
+
+            {/* Unison controls */}
+            <div style={{ marginTop: SIZES.gap.md, paddingTop: SIZES.gap.md, borderTop: '1px solid #222' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: SIZES.gap.sm, marginBottom: params.unison.enabled ? SIZES.gap.sm : 0 }}>
+                <button
+                  onClick={() => setUnisonEnabled(!params.unison.enabled)}
+                  style={{
+                    padding: '4px 8px',
+                    background: params.unison.enabled ? COLORS.oscillator : '#222',
+                    border: `1px solid ${params.unison.enabled ? COLORS.oscillator : '#444'}`,
+                    borderRadius: '4px',
+                    color: params.unison.enabled ? '#fff' : '#888',
+                    fontSize: '10px',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                  }}
+                >
+                  UNISON
+                </button>
+              </div>
+              {params.unison.enabled && (
+                <div style={{ display: 'flex', gap: SIZES.gap.sm, alignItems: 'flex-start' }}>
+                  {/* Voice count selector */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <span style={{ fontSize: '9px', color: '#888', textTransform: 'uppercase' }}>
+                      Voices
+                    </span>
+                    <div style={{ display: 'flex', gap: 2 }}>
+                      {([2, 4, 8] as const).map((v) => (
+                        <button
+                          key={v}
+                          onClick={() => setUnisonVoices(v)}
+                          style={{
+                            width: 24,
+                            height: 24,
+                            fontSize: '10px',
+                            fontWeight: 600,
+                            background: params.unison.voices === v ? COLORS.oscillator : '#333',
+                            border: 'none',
+                            borderRadius: '4px',
+                            color: '#fff',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {v}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <Knob
+                    label="Detune"
+                    value={params.unison.detune}
+                    min={0}
+                    max={100}
+                    step={1}
+                    onChange={setUnisonDetune}
+                    formatValue={(v) => `${v} ct`}
+                    paramId="unison.detune"
+                  />
+                  <Knob
+                    label="Spread"
+                    value={params.unison.spread}
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    onChange={setUnisonSpread}
+                    formatValue={(v) => `${Math.round(v * 100)}%`}
+                    paramId="unison.spread"
+                  />
+                </div>
+              )}
             </div>
           </StageCard>
 

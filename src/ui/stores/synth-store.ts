@@ -77,6 +77,12 @@ interface SynthStore {
   setOsc2PulseWidth: (width: number) => void;
   setOsc2Level: (level: number) => void;
 
+  // Unison actions
+  setUnisonEnabled: (enabled: boolean) => void;
+  setUnisonVoices: (voices: 2 | 4 | 8) => void;
+  setUnisonDetune: (detune: number) => void;
+  setUnisonSpread: (spread: number) => void;
+
   // Oscillator pulse width
   setPulseWidth: (width: number) => void;
 
@@ -451,6 +457,51 @@ export const useSynthStore = create<SynthStore>((set, get) => ({
       params: {
         ...params,
         oscillator2: { ...params.oscillator2, level },
+      },
+    });
+  },
+
+  // Unison actions
+  setUnisonEnabled: (enabled: boolean) => {
+    const { engine, params } = get();
+    engine?.setUnisonEnabled(enabled);
+    set({
+      params: {
+        ...params,
+        unison: { ...params.unison, enabled },
+      },
+    });
+  },
+
+  setUnisonVoices: (voices: 2 | 4 | 8) => {
+    const { engine, params } = get();
+    engine?.setUnisonVoices(voices);
+    set({
+      params: {
+        ...params,
+        unison: { ...params.unison, voices },
+      },
+    });
+  },
+
+  setUnisonDetune: (detune: number) => {
+    const { engine, params } = get();
+    engine?.setUnisonDetune(detune);
+    set({
+      params: {
+        ...params,
+        unison: { ...params.unison, detune },
+      },
+    });
+  },
+
+  setUnisonSpread: (spread: number) => {
+    const { engine, params } = get();
+    engine?.setUnisonSpread(spread);
+    set({
+      params: {
+        ...params,
+        unison: { ...params.unison, spread },
       },
     });
   },
@@ -1178,6 +1229,12 @@ export const useSynthStore = create<SynthStore>((set, get) => ({
         detune: randInt(-15, 15),
         pulseWidth: rand(0.1, 0.9),
         level: rand(0.3, 0.7),
+      },
+      unison: {
+        enabled: Math.random() < 0.25, // 25% chance for thick sound
+        voices: pick([2, 4, 8] as const),
+        detune: randInt(10, 40),
+        spread: rand(0.3, 0.8),
       },
       filter: {
         type: pick(filterTypes),

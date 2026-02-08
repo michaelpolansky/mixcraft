@@ -66,6 +66,7 @@ function createParams(overrides: Partial<SynthParams> = {}): SynthParams {
     velocity: overrides.velocity ?? { ampAmount: 0, filterAmount: 0 },
     subOsc: overrides.subOsc ?? { enabled: false, type: 'sine', octave: -1, level: 0.5 },
     oscillator2: overrides.oscillator2 ?? { enabled: false, type: 'sawtooth', octave: 0, detune: 7, pulseWidth: 0.5, level: 0.5 },
+    unison: overrides.unison ?? { enabled: false, voices: 4, detune: 20, spread: 0.5 },
     effects: overrides.effects ?? {
       distortion: { amount: 0, mix: 0 },
       delay: { time: 0.25, feedback: 0.3, mix: 0 },

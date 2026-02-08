@@ -125,6 +125,13 @@ export class SynthEngine {
     gain: Tone.Gain;
   }> = new Map();
 
+  // Unison oscillator bank
+  private unisonOscs: Tone.Oscillator[] = [];
+  private unisonPanners: Tone.Panner[] = [];
+  private unisonGains: Tone.Gain[] = [];
+  private unisonEnvelope: Tone.AmplitudeEnvelope | null = null;
+  private unisonMixer: Tone.Gain | null = null;
+
   constructor(initialParams: Partial<SynthParams> = {}) {
     this.params = { ...DEFAULT_SYNTH_PARAMS, ...initialParams };
 
@@ -509,6 +516,10 @@ export class SynthEngine {
   setOscillatorType(type: OscillatorType): void {
     this.params.oscillator.type = type;
     this.synth.oscillator.type = type as Tone.ToneOscillatorType;
+    // Update unison oscillators if active
+    this.unisonOscs.forEach(osc => {
+      osc.type = toToneOscillatorType(type);
+    });
   }
 
   setOctave(octave: number): void {
@@ -658,6 +669,131 @@ export class SynthEngine {
 
   setOsc2Level(level: number): void {
     this.setOsc2({ level });
+  }
+
+  // ============================================
+  // Unison Controls
+  // ============================================
+
+  /**
+   * Calculate symmetric voice positions from -1 to 1
+   */
+  private getUnisonPositions(voiceCount: number): number[] {
+    const positions: number[] = [];
+    for (let i = 0; i < voiceCount; i++) {
+      positions.push((2 * i / (voiceCount - 1)) - 1);
+    }
+    return positions;
+  }
+
+  /**
+   * Create the unison oscillator bank
+   */
+  private createUnisonBank(): void {
+    this.disposeUnisonBank();
+
+    const voiceCount = this.params.unison.voices;
+    const positions = this.getUnisonPositions(voiceCount);
+
+    // Create shared envelope and mixer
+    this.unisonEnvelope = new Tone.AmplitudeEnvelope({
+      attack: this.params.amplitudeEnvelope.attack,
+      decay: this.params.amplitudeEnvelope.decay,
+      sustain: this.params.amplitudeEnvelope.sustain,
+      release: this.params.amplitudeEnvelope.release,
+    });
+
+    // Normalize volume by voice count
+    this.unisonMixer = new Tone.Gain(1 / Math.sqrt(voiceCount));
+    this.unisonEnvelope.connect(this.unisonMixer);
+    // Route to existing filter chain
+    this.unisonMixer.connect(this.synth.filter);
+
+    // Create oscillators with panners
+    for (let i = 0; i < voiceCount; i++) {
+      const osc = new Tone.Oscillator(this.currentFrequency);
+      osc.type = this.params.oscillator.type as Tone.ToneOscillatorType;
+
+      const panner = new Tone.Panner(positions[i]! * this.params.unison.spread);
+      const gain = new Tone.Gain(1);
+
+      osc.connect(gain);
+      gain.connect(panner);
+      panner.connect(this.unisonEnvelope!);
+
+      this.unisonOscs.push(osc);
+      this.unisonPanners.push(panner);
+      this.unisonGains.push(gain);
+    }
+  }
+
+  /**
+   * Dispose the unison oscillator bank
+   */
+  private disposeUnisonBank(): void {
+    this.unisonOscs.forEach(osc => {
+      osc.stop();
+      osc.dispose();
+    });
+    this.unisonPanners.forEach(pan => pan.dispose());
+    this.unisonGains.forEach(gain => gain.dispose());
+    this.unisonEnvelope?.dispose();
+    this.unisonMixer?.dispose();
+
+    this.unisonOscs = [];
+    this.unisonPanners = [];
+    this.unisonGains = [];
+    this.unisonEnvelope = null;
+    this.unisonMixer = null;
+  }
+
+  /**
+   * Update unison oscillator frequencies based on current note and detune
+   */
+  private updateUnisonFrequencies(): void {
+    if (!this.params.unison.enabled || this.unisonOscs.length === 0) return;
+
+    const positions = this.getUnisonPositions(this.params.unison.voices);
+    const baseFreq = this.currentFrequency;
+    const detuneAmount = this.params.unison.detune;
+
+    this.unisonOscs.forEach((osc, i) => {
+      const cents = positions[i]! * detuneAmount;
+      osc.frequency.value = baseFreq * Math.pow(2, cents / 1200);
+    });
+  }
+
+  setUnisonEnabled(enabled: boolean): void {
+    this.params.unison.enabled = enabled;
+    if (enabled) {
+      this.createUnisonBank();
+      this.unisonOscs.forEach(osc => osc.start());
+    } else {
+      this.disposeUnisonBank();
+    }
+  }
+
+  setUnisonVoices(voices: 2 | 4 | 8): void {
+    this.params.unison.voices = voices;
+    if (this.params.unison.enabled) {
+      this.createUnisonBank();
+      this.unisonOscs.forEach(osc => osc.start());
+    }
+  }
+
+  setUnisonDetune(detune: number): void {
+    this.params.unison.detune = detune;
+    this.updateUnisonFrequencies();
+  }
+
+  setUnisonSpread(spread: number): void {
+    this.params.unison.spread = spread;
+    if (this.unisonPanners.length === 0) return;
+
+    const positions = this.getUnisonPositions(this.params.unison.voices);
+    this.unisonPanners.forEach((panner, i) => {
+      panner.pan.value = positions[i]! * spread;
+    });
   }
 
   // ============================================
@@ -1344,6 +1480,9 @@ export class SynthEngine {
 
     const adjustedFreq = applyOctaveOffset(frequency, this.params.oscillator.octave);
 
+    // Store current frequency for unison and other uses
+    this.currentFrequency = adjustedFreq;
+
     // Apply key tracking before triggering
     this.applyKeyTracking(adjustedFreq);
 
@@ -1366,6 +1505,12 @@ export class SynthEngine {
       this.osc2Envelope.triggerAttack();
     }
 
+    // Trigger unison if enabled
+    if (this.params.unison.enabled && this.unisonEnvelope) {
+      this.updateUnisonFrequencies();
+      this.unisonEnvelope.triggerAttack();
+    }
+
     // Trigger additional envelopes
     this.pitchEnvelope.triggerAttack();
     this.modEnvelope.triggerAttack();
@@ -1380,6 +1525,11 @@ export class SynthEngine {
     // Release sub oscillator and oscillator 2 envelopes
     this.subOscEnvelope.triggerRelease();
     this.osc2Envelope.triggerRelease();
+
+    // Release unison envelope
+    if (this.params.unison.enabled && this.unisonEnvelope) {
+      this.unisonEnvelope.triggerRelease();
+    }
 
     // Release additional envelopes
     this.pitchEnvelope.triggerRelease();
@@ -1574,6 +1724,8 @@ export class SynthEngine {
     this.osc2Envelope.dispose();
     this.osc2Filter.dispose();
     this.osc2Gain.dispose();
+    // Clean up unison bank
+    this.disposeUnisonBank();
     // Clean up panner and output gain
     this.panner.dispose();
     this.outputGain.dispose();

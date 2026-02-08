@@ -49,6 +49,18 @@ export interface Oscillator2Params {
   level: number;
 }
 
+/** Unison - stack multiple detuned oscillator voices */
+export interface UnisonParams {
+  /** Whether unison is enabled */
+  enabled: boolean;
+  /** Number of stacked voices */
+  voices: 2 | 4 | 8;
+  /** Detune spread in cents (0-100) */
+  detune: number;
+  /** Stereo spread (0-1) */
+  spread: number;
+}
+
 // ============================================
 // Filter Types
 // ============================================
@@ -281,6 +293,8 @@ export interface SynthParams {
   subOsc: SubOscillatorParams;
   /** Second oscillator for richer sounds */
   oscillator2: Oscillator2Params;
+  /** Unison for thick stacked sounds */
+  unison: UnisonParams;
   /** Noise generator mixed with oscillator */
   noise: NoiseParams;
   /** Portamento/glide between notes */
@@ -336,6 +350,13 @@ export const DEFAULT_OSCILLATOR_2: Oscillator2Params = {
   detune: 7,
   pulseWidth: 0.5,
   level: 0,
+};
+
+export const DEFAULT_UNISON: UnisonParams = {
+  enabled: false,
+  voices: 4,
+  detune: 20,
+  spread: 0.5,
 };
 
 export const DEFAULT_FILTER: FilterParams = {
@@ -476,6 +497,7 @@ export const DEFAULT_SYNTH_PARAMS: SynthParams = {
   oscillator: DEFAULT_OSCILLATOR,
   subOsc: DEFAULT_SUB_OSCILLATOR,
   oscillator2: DEFAULT_OSCILLATOR_2,
+  unison: DEFAULT_UNISON,
   noise: DEFAULT_NOISE,
   glide: DEFAULT_GLIDE,
   filter: DEFAULT_FILTER,
