@@ -23,7 +23,8 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         type: 'sawtooth',
         octave: -1,
         detune: 0,
-        pulseWidth: 0.5
+        pulseWidth: 0.5,
+        level: 1,
       },
       filter: {
         type: 'lowpass',
@@ -97,7 +98,7 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         octave: 0,
         detune: 7,
         pulseWidth: 0.5,
-        mix: 0.5,
+        level: 0.5,
       },
       effects: { ...DEFAULT_EFFECTS },
       volume: -10,
@@ -113,7 +114,8 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         type: 'sawtooth',
         octave: 0,
         detune: 7,
-        pulseWidth: 0.5
+        pulseWidth: 0.5,
+        level: 1,
       },
       filter: {
         type: 'lowpass',
@@ -187,7 +189,7 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         octave: 0,
         detune: 7,
         pulseWidth: 0.5,
-        mix: 0.5,
+        level: 0.5,
       },
       effects: {
         ...DEFAULT_EFFECTS,
@@ -206,7 +208,8 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         type: 'sawtooth',
         octave: 0,
         detune: 15,
-        pulseWidth: 0.5
+        pulseWidth: 0.5,
+        level: 1,
       },
       filter: {
         type: 'lowpass',
@@ -280,7 +283,7 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         octave: 0,
         detune: 7,
         pulseWidth: 0.5,
-        mix: 0.5,
+        level: 0.5,
       },
       effects: {
         ...DEFAULT_EFFECTS,
@@ -300,7 +303,8 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         type: 'triangle',
         octave: 0,
         detune: 0,
-        pulseWidth: 0.5
+        pulseWidth: 0.5,
+        level: 1,
       },
       filter: {
         type: 'lowpass',
@@ -374,7 +378,7 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         octave: 0,
         detune: 7,
         pulseWidth: 0.5,
-        mix: 0.5,
+        level: 0.5,
       },
       effects: {
         ...DEFAULT_EFFECTS,
@@ -393,7 +397,8 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         type: 'sawtooth',
         octave: 0,
         detune: 5,
-        pulseWidth: 0.5
+        pulseWidth: 0.5,
+        level: 1,
       },
       filter: {
         type: 'lowpass',
@@ -467,7 +472,7 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         octave: 0,
         detune: 7,
         pulseWidth: 0.5,
-        mix: 0.5,
+        level: 0.5,
       },
       effects: { ...DEFAULT_EFFECTS },
       volume: -12,
@@ -483,7 +488,8 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         type: 'square',
         octave: 0,
         detune: 0,
-        pulseWidth: 0.5
+        pulseWidth: 0.5,
+        level: 1,
       },
       filter: {
         type: 'lowpass',
@@ -557,7 +563,7 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         octave: 0,
         detune: 7,
         pulseWidth: 0.5,
-        mix: 0.5,
+        level: 0.5,
       },
       effects: {
         ...DEFAULT_EFFECTS,
@@ -577,7 +583,8 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         type: 'sine',
         octave: 1,
         detune: 0,
-        pulseWidth: 0.5
+        pulseWidth: 0.5,
+        level: 1,
       },
       filter: {
         type: 'lowpass',
@@ -651,7 +658,7 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         octave: 0,
         detune: 7,
         pulseWidth: 0.5,
-        mix: 0.5,
+        level: 0.5,
       },
       effects: { ...DEFAULT_EFFECTS },
       volume: -15,
@@ -667,7 +674,8 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         type: 'sine',
         octave: -2,
         detune: 0,
-        pulseWidth: 0.5
+        pulseWidth: 0.5,
+        level: 1,
       },
       filter: {
         type: 'lowpass',
@@ -741,7 +749,7 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         octave: 0,
         detune: 7,
         pulseWidth: 0.5,
-        mix: 0.5,
+        level: 0.5,
       },
       effects: {
         ...DEFAULT_EFFECTS,
@@ -760,7 +768,8 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         type: 'square',
         octave: 2,
         detune: 50,
-        pulseWidth: 0.5
+        pulseWidth: 0.5,
+        level: 1,
       },
       filter: {
         type: 'highpass',
@@ -834,7 +843,7 @@ export const SUBTRACTIVE_PRESETS: SubtractivePreset[] = [
         octave: 0,
         detune: 7,
         pulseWidth: 0.5,
-        mix: 0.5,
+        level: 0.5,
       },
       effects: { ...DEFAULT_EFFECTS },
       volume: -18,

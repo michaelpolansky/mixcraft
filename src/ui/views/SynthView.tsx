@@ -147,7 +147,8 @@ export function SynthView() {
     setOsc2Type,
     setOsc2Octave,
     setOsc2Detune,
-    setOsc2Mix,
+    setOsc2Level,
+    setOsc1Level,
     setLfo2Rate,
     setLfo2Depth,
     setLfo2Type,
@@ -349,9 +350,10 @@ export function SynthView() {
             <div style={{ marginTop: '12px' }}>
               <WaveformSelector value={params.oscillator.type} onChange={setOscillatorType} />
             </div>
-            <div style={{ display: 'flex', gap: '12px', marginTop: '12px', justifyContent: 'center' }}>
+            <div style={{ display: 'flex', gap: '12px', marginTop: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
               <Knob label="Oct" value={params.oscillator.octave} min={-2} max={2} step={1} onChange={setOctave} formatValue={(v) => v >= 0 ? `+${v}` : `${v}`} size={40} paramId="oscillator.octave" />
               <Knob label="Detune" value={params.oscillator.detune} min={-100} max={100} step={1} onChange={setDetune} formatValue={(v) => `${v}`} size={40} paramId="oscillator.detune" />
+              <Knob label="Level" value={params.oscillator.level} min={0} max={1} step={0.01} onChange={setOsc1Level} formatValue={(v) => `${Math.round(v * 100)}%`} size={40} paramId="oscillator.level" />
               {params.oscillator.type === 'square' && (
                 <Knob label="PW" value={params.oscillator.pulseWidth} min={0.1} max={0.9} step={0.01} onChange={setPulseWidth} formatValue={(v) => `${Math.round(v * 100)}%`} size={40} paramId="oscillator.pulseWidth" />
               )}
@@ -606,15 +608,15 @@ export function SynthView() {
                       paramId="osc2.detune"
                     />
                     <Knob
-                      label="Mix"
-                      value={params.oscillator2.mix}
+                      label="Level"
+                      value={params.oscillator2.level}
                       min={0}
                       max={1}
                       step={0.01}
-                      onChange={setOsc2Mix}
+                      onChange={setOsc2Level}
                       formatValue={(v) => `${Math.round(v * 100)}%`}
                       size={36}
-                      paramId="osc2.mix"
+                      paramId="osc2.level"
                       modulatedValue={modulatedValues?.osc2Mix}
                     />
                   </div>

@@ -53,6 +53,7 @@ interface SynthStore {
   setOscillatorType: (type: OscillatorType) => void;
   setOctave: (octave: number) => void;
   setDetune: (cents: number) => void;
+  setOsc1Level: (level: number) => void;
 
   // Noise actions
   setNoiseType: (type: NoiseType) => void;
@@ -74,7 +75,7 @@ interface SynthStore {
   setOsc2Octave: (octave: number) => void;
   setOsc2Detune: (cents: number) => void;
   setOsc2PulseWidth: (width: number) => void;
-  setOsc2Mix: (mix: number) => void;
+  setOsc2Level: (level: number) => void;
 
   // Oscillator pulse width
   setPulseWidth: (width: number) => void;
@@ -273,6 +274,17 @@ export const useSynthStore = create<SynthStore>((set, get) => ({
     });
   },
 
+  setOsc1Level: (level: number) => {
+    const { engine, params } = get();
+    engine?.setOsc1Level(level);
+    set({
+      params: {
+        ...params,
+        oscillator: { ...params.oscillator, level },
+      },
+    });
+  },
+
   setPulseWidth: (width: number) => {
     const { engine, params } = get();
     engine?.setPulseWidth(width);
@@ -431,13 +443,13 @@ export const useSynthStore = create<SynthStore>((set, get) => ({
     });
   },
 
-  setOsc2Mix: (mix: number) => {
+  setOsc2Level: (level: number) => {
     const { engine, params } = get();
-    engine?.setOsc2Mix(mix);
+    engine?.setOsc2Level(level);
     set({
       params: {
         ...params,
-        oscillator2: { ...params.oscillator2, mix },
+        oscillator2: { ...params.oscillator2, level },
       },
     });
   },
@@ -1128,6 +1140,7 @@ export const useSynthStore = create<SynthStore>((set, get) => ({
         octave: randInt(-2, 2),
         detune: randInt(-50, 50),
         pulseWidth: rand(0.1, 0.9),
+        level: 1,
       },
       noise: {
         type: pick(['white', 'pink', 'brown'] as const),
@@ -1149,7 +1162,7 @@ export const useSynthStore = create<SynthStore>((set, get) => ({
         octave: randInt(-1, 1),
         detune: randInt(-15, 15),
         pulseWidth: rand(0.1, 0.9),
-        mix: rand(0.3, 0.7),
+        level: rand(0.3, 0.7),
       },
       filter: {
         type: pick(filterTypes),

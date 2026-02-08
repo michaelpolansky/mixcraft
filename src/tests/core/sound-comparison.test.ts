@@ -24,7 +24,7 @@ function createFeatures(overrides: Partial<SoundFeatures> = {}): SoundFeatures {
 // Helper to create default synth params
 function createParams(overrides: Partial<SynthParams> = {}): SynthParams {
   return {
-    oscillator: overrides.oscillator ?? { type: 'sawtooth', octave: 0, detune: 0, pulseWidth: 0.5 },
+    oscillator: overrides.oscillator ?? { type: 'sawtooth', octave: 0, detune: 0, pulseWidth: 0.5, level: 1 },
     filter: overrides.filter ?? { type: 'lowpass', cutoff: 2000, resonance: 1, keyTracking: 0 },
     filterEnvelope: overrides.filterEnvelope ?? {
       attack: 0.01,
@@ -65,7 +65,7 @@ function createParams(overrides: Partial<SynthParams> = {}): SynthParams {
     glide: overrides.glide ?? { enabled: false, time: 0.1 },
     velocity: overrides.velocity ?? { ampAmount: 0, filterAmount: 0 },
     subOsc: overrides.subOsc ?? { enabled: false, type: 'sine', octave: -1, level: 0.5 },
-    oscillator2: overrides.oscillator2 ?? { enabled: false, type: 'sawtooth', octave: 0, detune: 7, pulseWidth: 0.5, mix: 0.5 },
+    oscillator2: overrides.oscillator2 ?? { enabled: false, type: 'sawtooth', octave: 0, detune: 7, pulseWidth: 0.5, level: 0.5 },
     effects: overrides.effects ?? {
       distortion: { amount: 0, mix: 0 },
       delay: { time: 0.25, feedback: 0.3, mix: 0 },
@@ -254,10 +254,10 @@ describe('compareSounds', () => {
     it('penalizes wrong waveform type', () => {
       const features = createFeatures();
       const playerParams = createParams({
-        oscillator: { type: 'sine', octave: 0, detune: 0, pulseWidth: 0.5 },
+        oscillator: { type: 'sine', octave: 0, detune: 0, pulseWidth: 0.5, level: 1 },
       });
       const targetParams = createParams({
-        oscillator: { type: 'sawtooth', octave: 0, detune: 0, pulseWidth: 0.5 },
+        oscillator: { type: 'sawtooth', octave: 0, detune: 0, pulseWidth: 0.5, level: 1 },
       });
 
       const result = compareSounds(features, features, playerParams, targetParams);
@@ -271,10 +271,10 @@ describe('compareSounds', () => {
     it('penalizes octave mismatch', () => {
       const features = createFeatures();
       const playerParams = createParams({
-        oscillator: { type: 'sawtooth', octave: 2, detune: 0, pulseWidth: 0.5 },
+        oscillator: { type: 'sawtooth', octave: 2, detune: 0, pulseWidth: 0.5, level: 1 },
       });
       const targetParams = createParams({
-        oscillator: { type: 'sawtooth', octave: 0, detune: 0, pulseWidth: 0.5 },
+        oscillator: { type: 'sawtooth', octave: 0, detune: 0, pulseWidth: 0.5, level: 1 },
       });
 
       const result = compareSounds(features, features, playerParams, targetParams);
@@ -351,11 +351,11 @@ describe('compareSounds', () => {
       });
 
       const playerParams = createParams({
-        oscillator: { type: 'sine', octave: 2, detune: 50, pulseWidth: 0.5 },
+        oscillator: { type: 'sine', octave: 2, detune: 50, pulseWidth: 0.5, level: 1 },
         filter: { type: 'highpass', cutoff: 5000, resonance: 10, keyTracking: 0 },
       });
       const targetParams = createParams({
-        oscillator: { type: 'sawtooth', octave: -1, detune: 0, pulseWidth: 0.5 },
+        oscillator: { type: 'sawtooth', octave: -1, detune: 0, pulseWidth: 0.5, level: 1 },
         filter: { type: 'lowpass', cutoff: 500, resonance: 1, keyTracking: 0 },
       });
 
@@ -370,10 +370,10 @@ describe('compareSounds', () => {
       // With perfect audio features but imperfect params
       const features = createFeatures();
       const playerParams = createParams({
-        oscillator: { type: 'sine', octave: 0, detune: 0, pulseWidth: 0.5 }, // Wrong type
+        oscillator: { type: 'sine', octave: 0, detune: 0, pulseWidth: 0.5, level: 1 }, // Wrong type
       });
       const targetParams = createParams({
-        oscillator: { type: 'sawtooth', octave: 0, detune: 0, pulseWidth: 0.5 },
+        oscillator: { type: 'sawtooth', octave: 0, detune: 0, pulseWidth: 0.5, level: 1 },
       });
 
       const result = compareSounds(features, features, playerParams, targetParams);

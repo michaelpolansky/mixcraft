@@ -26,7 +26,8 @@ export const challenge: Challenge = {
       type: 'sawtooth',
       octave: -1,
       detune: 0,
-      pulseWidth: 0.5
+      pulseWidth: 0.5,
+      level: 1,
     },
     filter: {
       type: 'lowpass',
@@ -100,7 +101,7 @@ export const challenge: Challenge = {
       octave: 0,
       detune: 7,
       pulseWidth: 0.5,
-      mix: 0.5,
+      level: 0.5,
     },
     effects: {
       distortion: { amount: 0.2, mix: 0.3 },

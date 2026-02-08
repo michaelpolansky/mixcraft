@@ -94,6 +94,9 @@ export class SynthEngine {
   private subOscGain: Tone.Gain;
   private subOscEnvelope: Tone.AmplitudeEnvelope;
 
+  // Oscillator 1 gain (amplitude control)
+  private osc1Gain: Tone.Gain;
+
   // Oscillator 2 (full second oscillator)
   private osc2: Tone.Oscillator;
   private osc2Gain: Tone.Gain;
@@ -244,7 +247,7 @@ export class SynthEngine {
       frequency: this.params.filter.cutoff,
       Q: this.params.filter.resonance,
     });
-    this.osc2Gain = new Tone.Gain(this.params.oscillator2.enabled ? this.params.oscillator2.mix : 0);
+    this.osc2Gain = new Tone.Gain(this.params.oscillator2.enabled ? this.params.oscillator2.level : 0);
     this.osc2Envelope = new Tone.AmplitudeEnvelope({
       attack: this.params.amplitudeEnvelope.attack,
       decay: this.params.amplitudeEnvelope.decay,
@@ -281,6 +284,9 @@ export class SynthEngine {
     // Create output gain for amplitude modulation destination
     this.outputGain = new Tone.Gain(1);
 
+    // Create OSC1 gain for amplitude control
+    this.osc1Gain = new Tone.Gain(this.params.oscillator.level);
+
     // Create effects chain
     this.effectsChain = new EffectsChain(this.params.effects);
 
@@ -288,9 +294,10 @@ export class SynthEngine {
     this.analyser = Tone.getContext().createAnalyser();
     this.configureAnalyser(DEFAULT_ANALYSER_CONFIG);
 
-    // Wire: synth → effectsChain → panner → outputGain → analyser → destination
+    // Wire: synth → osc1Gain → effectsChain → panner → outputGain → analyser → destination
     // Also wire noise, sub osc, and osc2
-    this.synth.connect(this.effectsChain.input);
+    this.synth.connect(this.osc1Gain);
+    this.osc1Gain.connect(this.effectsChain.input);
     this.noiseGain.connect(this.effectsChain.input);
     this.subOscGain.connect(this.effectsChain.input);
     this.osc2Gain.connect(this.effectsChain.input);
@@ -424,7 +431,7 @@ export class SynthEngine {
       pan: this.params.pan,
       amplitude: 1, // Normalized amplitude
       filterCutoff: this.params.filter.cutoff,
-      osc2Mix: this.params.oscillator2.enabled ? this.params.oscillator2.mix : 0,
+      osc2Mix: this.params.oscillator2.enabled ? this.params.oscillator2.level : 0,
       lfo1Rate: this.params.lfo.rate,
       lfo2Rate: this.params.lfo2.rate,
     };
@@ -518,6 +525,11 @@ export class SynthEngine {
     // This stores the value for UI display; PWM envelope modulation is handled separately
   }
 
+  setOsc1Level(level: number): void {
+    this.params.oscillator.level = level;
+    this.osc1Gain.gain.value = level;
+  }
+
   // ============================================
   // Noise Controls
   // ============================================
@@ -607,7 +619,7 @@ export class SynthEngine {
     this.params.oscillator2 = { ...this.params.oscillator2, ...osc2Params };
 
     if (osc2Params.enabled !== undefined) {
-      this.osc2Gain.gain.value = osc2Params.enabled ? this.params.oscillator2.mix : 0;
+      this.osc2Gain.gain.value = osc2Params.enabled ? this.params.oscillator2.level : 0;
     }
     if (osc2Params.type !== undefined) {
       this.osc2.type = osc2Params.type;
@@ -615,8 +627,8 @@ export class SynthEngine {
     if (osc2Params.detune !== undefined) {
       this.osc2.detune.value = osc2Params.detune;
     }
-    if (osc2Params.mix !== undefined && this.params.oscillator2.enabled) {
-      this.osc2Gain.gain.value = osc2Params.mix;
+    if (osc2Params.level !== undefined && this.params.oscillator2.enabled) {
+      this.osc2Gain.gain.value = osc2Params.level;
     }
     // Octave and pulseWidth are applied when triggering notes
   }
@@ -641,8 +653,8 @@ export class SynthEngine {
     this.setOsc2({ pulseWidth: Math.max(0.1, Math.min(0.9, width)) });
   }
 
-  setOsc2Mix(mix: number): void {
-    this.setOsc2({ mix });
+  setOsc2Level(level: number): void {
+    this.setOsc2({ level });
   }
 
   // ============================================
@@ -1509,6 +1521,7 @@ export class SynthEngine {
     // Clean up panner and output gain
     this.panner.dispose();
     this.outputGain.dispose();
+    this.osc1Gain.dispose();
     // Clean up mod matrix routes
     this.modRouteNodes.forEach((nodes, index) => {
       this.disconnectModRoute(index);

@@ -17,6 +17,8 @@ export interface OscillatorParams {
   detune: number;
   /** Pulse width for square wave (0.1 to 0.9, 0.5 = 50% duty cycle) */
   pulseWidth: number;
+  /** Amplitude level (0 to 1) */
+  level: number;
 }
 
 /** Sub oscillator - simple sine/square one octave below */
@@ -43,8 +45,8 @@ export interface Oscillator2Params {
   detune: number;
   /** Pulse width for square wave */
   pulseWidth: number;
-  /** Mix level of OSC2 relative to OSC1 (0 to 1, 0.5 = equal) */
-  mix: number;
+  /** Amplitude level (0 to 1) */
+  level: number;
 }
 
 // ============================================
@@ -286,6 +288,7 @@ export const DEFAULT_OSCILLATOR: OscillatorParams = {
   octave: 0,
   detune: 0,
   pulseWidth: 0.5,
+  level: 1,
 };
 
 export const DEFAULT_SUB_OSCILLATOR: SubOscillatorParams = {
@@ -301,7 +304,7 @@ export const DEFAULT_OSCILLATOR_2: Oscillator2Params = {
   octave: 0,
   detune: 7,
   pulseWidth: 0.5,
-  mix: 0.5,
+  level: 0.5,
 };
 
 export const DEFAULT_FILTER: FilterParams = {
