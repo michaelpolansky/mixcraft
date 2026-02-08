@@ -20,6 +20,7 @@ import {
   NoiseVisualizer,
   Oscilloscope,
   XYPad,
+  ArpeggiatorControls,
 } from '../components/index.ts';
 import { FM_PRESETS } from '../../data/presets/fm-presets.ts';
 import { InfoPanelProvider } from '../context/InfoPanelContext.tsx';
@@ -33,8 +34,6 @@ import {
   type FMLFODestination,
   type NoiseType,
   type LFOWaveform,
-  type ArpPattern,
-  type ArpDivision,
   type FMModSource,
   type FMModDestination,
 } from '../../core/types.ts';
@@ -563,129 +562,19 @@ export function FMSynthView() {
 
           {/* ARP Stage */}
           <StageCard title="ARP" color={COLORS.arp}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm }}>
-              {/* Enable toggle */}
-              <button
-                onClick={() => setArpEnabled(!params.arpeggiator.enabled)}
-                style={{
-                  padding: '6px 12px',
-                  background: params.arpeggiator.enabled ? COLORS.arp : '#222',
-                  border: `1px solid ${params.arpeggiator.enabled ? COLORS.arp : '#444'}`,
-                  borderRadius: '4px',
-                  color: params.arpeggiator.enabled ? '#000' : '#888',
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  alignSelf: 'flex-start',
-                }}
-              >
-                {params.arpeggiator.enabled ? 'ON' : 'OFF'}
-              </button>
-
-              {params.arpeggiator.enabled && (
-                <>
-                  {/* Pattern selector */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    <span style={{ fontSize: '9px', color: '#888', textTransform: 'uppercase' }}>
-                      Pattern
-                    </span>
-                    <div style={{ display: 'flex', gap: 2 }}>
-                      {([
-                        { value: 'up' as const, label: '↑' },
-                        { value: 'down' as const, label: '↓' },
-                        { value: 'upDown' as const, label: '↕' },
-                        { value: 'random' as const, label: '?' },
-                      ]).map(({ value, label }) => (
-                        <button
-                          key={value}
-                          onClick={() => setArpPattern(value)}
-                          style={{
-                            width: 28,
-                            height: 28,
-                            fontSize: '14px',
-                            fontWeight: 600,
-                            background: params.arpeggiator.pattern === value ? COLORS.arp : '#333',
-                            border: 'none',
-                            borderRadius: '4px',
-                            color: params.arpeggiator.pattern === value ? '#000' : '#fff',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          {label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Division selector */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    <span style={{ fontSize: '9px', color: '#888', textTransform: 'uppercase' }}>
-                      Rate
-                    </span>
-                    <select
-                      value={params.arpeggiator.division}
-                      onChange={(e) => setArpDivision(e.target.value as ArpDivision)}
-                      style={{
-                        padding: '4px 8px',
-                        background: '#222',
-                        border: '1px solid #444',
-                        borderRadius: '4px',
-                        color: '#fff',
-                        fontSize: '11px',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      <option value="1n">1</option>
-                      <option value="2n">1/2</option>
-                      <option value="4n">1/4</option>
-                      <option value="8n">1/8</option>
-                      <option value="16n">1/16</option>
-                      <option value="32n">1/32</option>
-                    </select>
-                  </div>
-
-                  {/* Octaves selector */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    <span style={{ fontSize: '9px', color: '#888', textTransform: 'uppercase' }}>
-                      Octaves
-                    </span>
-                    <div style={{ display: 'flex', gap: 2 }}>
-                      {([1, 2, 3, 4] as const).map((oct) => (
-                        <button
-                          key={oct}
-                          onClick={() => setArpOctaves(oct)}
-                          style={{
-                            width: 24,
-                            height: 24,
-                            fontSize: '10px',
-                            fontWeight: 600,
-                            background: params.arpeggiator.octaves === oct ? COLORS.arp : '#333',
-                            border: 'none',
-                            borderRadius: '4px',
-                            color: params.arpeggiator.octaves === oct ? '#000' : '#fff',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          {oct}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Gate knob */}
-                  <Knob
-                    label="Gate"
-                    value={params.arpeggiator.gate}
-                    min={0.25}
-                    max={1}
-                    step={0.05}
-                    onChange={setArpGate}
-                    formatValue={(v) => `${Math.round(v * 100)}%`}
-                    paramId="fm.arp.gate"
-                  />
-                </>
-              )}
-            </div>
+            <ArpeggiatorControls
+              enabled={params.arpeggiator.enabled}
+              pattern={params.arpeggiator.pattern}
+              division={params.arpeggiator.division}
+              octaves={params.arpeggiator.octaves}
+              gate={params.arpeggiator.gate}
+              onEnabledChange={setArpEnabled}
+              onPatternChange={setArpPattern}
+              onDivisionChange={setArpDivision}
+              onOctavesChange={setArpOctaves}
+              onGateChange={setArpGate}
+              accentColor={COLORS.arp}
+            />
           </StageCard>
 
           {/* MOD MATRIX Stage */}

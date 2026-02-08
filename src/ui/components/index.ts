@@ -44,3 +44,5 @@ export type { WaveformIconType } from './WaveformIcon.tsx';
 export { RecordingControl } from './RecordingControl.tsx';
 export { Tooltip } from './Tooltip.tsx';
 export { ModMatrixGrid } from './ModMatrixGrid.tsx';
+export { ArpeggiatorControls } from './ArpeggiatorControls.tsx';
+export type { ArpeggiatorControlsProps } from './ArpeggiatorControls.tsx';
