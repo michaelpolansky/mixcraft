@@ -1,0 +1,210 @@
+/**
+ * MIXCRAFT - Tailwind CSS v4.1
+ *
+ * Custom theme extending Tailwind with MIXCRAFT design tokens.
+ */
+
+@import "tailwindcss";
+
+/* ============================================
+   Custom Theme - MIXCRAFT Design Tokens
+   ============================================ */
+
+@theme {
+  /* Background levels (darkest to lightest) */
+  --color-bg-primary: #0a0a0a;
+  --color-bg-secondary: #111111;
+  --color-bg-tertiary: #1a1a1a;
+  --color-bg-quaternary: #222222;
+  --color-bg-elevated: #2a2a2a;
+
+  /* Border colors */
+  --color-border-subtle: #1a1a1a;
+  --color-border-default: #2a2a2a;
+  --color-border-medium: #333333;
+  --color-border-bright: #444444;
+
+  /* Text colors */
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #b0b0b0;
+  --color-text-tertiary: #888888;
+  --color-text-muted: #666666;
+  --color-text-disabled: #555555;
+
+  /* Synth module stage colors (signal flow) */
+  --color-stage-oscillator: #3b82f6;
+  --color-stage-sub-osc: #1e40af;
+  --color-stage-osc2: #60a5fa;
+  --color-stage-noise: #64748b;
+  --color-stage-filter: #06b6d4;
+  --color-stage-amp: #22c55e;
+  --color-stage-filter-env: #eab308;
+  --color-stage-lfo: #ef4444;
+  --color-stage-lfo2: #dc2626;
+  --color-stage-velocity: #fb923c;
+  --color-stage-pitch-env: #f472b6;
+  --color-stage-mod-env: #a855f7;
+  --color-stage-pwm-env: #14b8a6;
+  --color-stage-effects: #8b5cf6;
+  --color-stage-output: #f97316;
+  --color-stage-mod-matrix: #a855f7;
+  --color-stage-arp: #f59e0b;
+
+  /* Synth accent colors (per synth type) */
+  --color-synth-subtractive: #4ade80;
+  --color-synth-fm: #fb923c;
+  --color-synth-additive: #22d3ee;
+
+  /* Track/module type colors (for menu/navigation) */
+  --color-track-sound-design: #3b82f6;
+  --color-track-production: #22c55e;
+  --color-track-mixing: #f59e0b;
+  --color-track-sampling: #a855f7;
+  --color-track-drums: #ef4444;
+
+  /* Semantic colors */
+  --color-success: #22c55e;
+  --color-success-light: #4ade80;
+  --color-warning: #eab308;
+  --color-danger: #ef4444;
+  --color-info: #3b82f6;
+
+  /* Modulation indicator */
+  --color-modulated: #22d3ee;
+
+  /* Standard module widths */
+  --width-module-standard: 224px;
+  --width-module-wide: 320px;
+  --width-module-extra-wide: 440px;
+  --width-module-compact: 200px;
+
+  /* Visualizer dimensions */
+  --height-visualizer: 100px;
+  --height-visualizer-compact: 60px;
+
+  /* Spacing scale (synth-specific) */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 24px;
+
+  /* Animation timing */
+  --ease-snappy: cubic-bezier(0.2, 0, 0, 1);
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================================
+   Base Styles
+   ============================================ */
+
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Remove default button styles */
+button {
+  font-family: inherit;
+}
+
+/* Prevent text selection during drag interactions */
+.no-select {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ============================================
+   Component Utilities
+   ============================================ */
+
+/* Stage card base */
+.stage-card {
+  background: var(--color-bg-secondary);
+  border-radius: 8px;
+  padding: var(--spacing-md);
+  width: var(--width-module-standard);
+}
+
+.stage-card-wide {
+  width: var(--width-module-wide);
+}
+
+.stage-card-extra-wide {
+  width: var(--width-module-extra-wide);
+}
+
+/* Knob/control label */
+.control-label {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-text-tertiary);
+}
+
+/* Section title within module */
+.section-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--spacing-md);
+}
+
+/* Toggle button base */
+.toggle-btn {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s var(--ease-snappy);
+  border: 1px solid;
+}
+
+.toggle-btn-inactive {
+  background: var(--color-bg-quaternary);
+  border-color: var(--color-border-bright);
+  color: var(--color-text-tertiary);
+}
+
+/* Mini slider track */
+.mini-slider-track {
+  height: 4px;
+  background: var(--color-bg-quaternary);
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-medium);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-border-bright);
+}
