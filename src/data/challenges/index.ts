@@ -139,6 +139,30 @@ import { challenge as sd11_04 } from './sd11/sd11-04-supersaw-basics.ts';
 import { challenge as sd11_05 } from './sd11/sd11-05-classic-supersaw.ts';
 import { challenge as sd11_06 } from './sd11/sd11-06-trance-lead.ts';
 
+// SD12 - Oscillator 2
+import { challenge as sd12_01 } from './sd12/sd12-01-dual-osc-intro.ts';
+import { challenge as sd12_02 } from './sd12/sd12-02-octave-layer.ts';
+import { challenge as sd12_03 } from './sd12/sd12-03-detuned-dual.ts';
+import { challenge as sd12_04 } from './sd12/sd12-04-mixed-waveforms.ts';
+import { challenge as sd12_05 } from './sd12/sd12-05-fifth-interval.ts';
+import { challenge as sd12_06 } from './sd12/sd12-06-dual-osc-lead.ts';
+
+// SD13 - Sub Oscillator
+import { challenge as sd13_01 } from './sd13/sd13-01-sub-intro.ts';
+import { challenge as sd13_02 } from './sd13/sd13-02-sub-foundation.ts';
+import { challenge as sd13_03 } from './sd13/sd13-03-two-octave-sub.ts';
+import { challenge as sd13_04 } from './sd13/sd13-04-square-sub.ts';
+import { challenge as sd13_05 } from './sd13/sd13-05-808-style.ts';
+import { challenge as sd13_06 } from './sd13/sd13-06-layered-bass.ts';
+
+// SD14 - Noise Shaping
+import { challenge as sd14_01 } from './sd14/sd14-01-noise-intro.ts';
+import { challenge as sd14_02 } from './sd14/sd14-02-pink-texture.ts';
+import { challenge as sd14_03 } from './sd14/sd14-03-attack-transient.ts';
+import { challenge as sd14_04 } from './sd14/sd14-04-breathy-pad.ts';
+import { challenge as sd14_05 } from './sd14/sd14-05-snare-layer.ts';
+import { challenge as sd14_06 } from './sd14/sd14-06-wind-texture.ts';
+
 /**
  * All challenges indexed by ID
  */
@@ -211,6 +235,24 @@ export const challengesById: Record<string, Challenge> = {
   'sd11-04-supersaw-basics': sd11_04,
   'sd11-05-classic-supersaw': sd11_05,
   'sd11-06-trance-lead': sd11_06,
+  'sd12-01-dual-osc-intro': sd12_01,
+  'sd12-02-octave-layer': sd12_02,
+  'sd12-03-detuned-dual': sd12_03,
+  'sd12-04-mixed-waveforms': sd12_04,
+  'sd12-05-fifth-interval': sd12_05,
+  'sd12-06-dual-osc-lead': sd12_06,
+  'sd13-01-sub-intro': sd13_01,
+  'sd13-02-sub-foundation': sd13_02,
+  'sd13-03-two-octave-sub': sd13_03,
+  'sd13-04-square-sub': sd13_04,
+  'sd13-05-808-style': sd13_05,
+  'sd13-06-layered-bass': sd13_06,
+  'sd14-01-noise-intro': sd14_01,
+  'sd14-02-pink-texture': sd14_02,
+  'sd14-03-attack-transient': sd14_03,
+  'sd14-04-breathy-pad': sd14_04,
+  'sd14-05-snare-layer': sd14_05,
+  'sd14-06-wind-texture': sd14_06,
 };
 
 /**
@@ -228,6 +270,9 @@ export const challengesByModule: Record<string, Challenge[]> = {
   SD9: [sd9_01, sd9_02, sd9_03, sd9_04, sd9_05, sd9_06, sd9_07, sd9_08, sd9_09, sd9_10, sd9_11, sd9_12],
   SD10: [sd10_01, sd10_02, sd10_03, sd10_04, sd10_05, sd10_06],
   SD11: [sd11_01, sd11_02, sd11_03, sd11_04, sd11_05, sd11_06],
+  SD12: [sd12_01, sd12_02, sd12_03, sd12_04, sd12_05, sd12_06],
+  SD13: [sd13_01, sd13_02, sd13_03, sd13_04, sd13_05, sd13_06],
+  SD14: [sd14_01, sd14_02, sd14_03, sd14_04, sd14_05, sd14_06],
 };
 
 /**
@@ -313,6 +358,27 @@ export const allChallenges: Challenge[] = [
   sd11_04,
   sd11_05,
   sd11_06,
+  // SD12 - Oscillator 2
+  sd12_01,
+  sd12_02,
+  sd12_03,
+  sd12_04,
+  sd12_05,
+  sd12_06,
+  // SD13 - Sub Oscillator
+  sd13_01,
+  sd13_02,
+  sd13_03,
+  sd13_04,
+  sd13_05,
+  sd13_06,
+  // SD14 - Noise Shaping
+  sd14_01,
+  sd14_02,
+  sd14_03,
+  sd14_04,
+  sd14_05,
+  sd14_06,
 ];
 
 /**
@@ -383,6 +449,24 @@ export const modules = {
     id: 'SD11',
     title: 'Unison & Supersaw',
     description: 'Stack multiple voices for massive sounds. Master the classic supersaw.',
+    challengeCount: 6,
+  },
+  SD12: {
+    id: 'SD12',
+    title: 'Oscillator 2',
+    description: 'Layer two oscillators for complex timbres. Explore octaves, detuning, and intervals.',
+    challengeCount: 6,
+  },
+  SD13: {
+    id: 'SD13',
+    title: 'Sub Oscillator',
+    description: 'Add low-end weight with the sub oscillator. From subtle foundation to 808-style bass.',
+    challengeCount: 6,
+  },
+  SD14: {
+    id: 'SD14',
+    title: 'Noise Shaping',
+    description: 'Use noise for texture, transients, and atmosphere. White, pink, and brown noise techniques.',
     challengeCount: 6,
   },
 } as const;
