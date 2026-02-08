@@ -366,9 +366,8 @@ export function SynthView() {
           alignContent: 'flex-start',
           overflow: 'auto',
         }}>
-          {/* OSC Stack: OSC + PITCH ENV + PWM ENV */}
-          <StackedModule>
-          <StageCard title="OSC" color={COLORS.oscillator} noBorderRadius="bottom">
+          {/* OSC */}
+          <StageCard title="OSC" color={COLORS.oscillator}>
             <OscillatorVisualizer
               waveform={params.oscillator.type}
               octave={params.oscillator.octave}
@@ -423,8 +422,8 @@ export function SynthView() {
             </div>
           </StageCard>
 
-          {/* PITCH ENV - stacked below OSC */}
-          <StageCard title="PITCH ENV" color={COLORS.pitchEnv} compact noBorderRadius="both">
+          {/* PITCH ENV */}
+          <StageCard title="PITCH ENV" color={COLORS.pitchEnv}>
             <EnvelopeVisualizer
               attack={params.pitchEnvelope.attack}
               decay={params.pitchEnvelope.decay}
@@ -449,8 +448,8 @@ export function SynthView() {
             </div>
           </StageCard>
 
-          {/* PWM ENV - stacked below PITCH ENV */}
-          <StageCard title="PWM ENV" color={COLORS.pwmEnv} compact noBorderRadius="top">
+          {/* PWM ENV */}
+          <StageCard title="PWM ENV" color={COLORS.pwmEnv}>
             <EnvelopeVisualizer
               attack={params.pwmEnvelope.attack}
               decay={params.pwmEnvelope.decay}
@@ -474,7 +473,6 @@ export function SynthView() {
               <Knob label="Amount" value={params.pwmEnvelope.amount} min={0} max={1} step={0.01} onChange={setPWMEnvelopeAmount} formatValue={formatPercent} paramId="pwmEnv.amount" />
             </div>
           </StageCard>
-          </StackedModule>
 
           {/* OSC 2 Stage */}
           <StageCard title="OSC 2" color={COLORS.osc2}>
@@ -603,9 +601,8 @@ export function SynthView() {
             </div>
           </StageCard>
 
-          {/* FILTER Stack: FILTER + FILTER ENV */}
-          <StackedModule>
-          <StageCard title="FILTER" color={COLORS.filter} noBorderRadius="bottom">
+          {/* FILTER */}
+          <StageCard title="FILTER" color={COLORS.filter}>
             <FilterVisualizer
               filterType={params.filter.type}
               cutoff={params.filter.cutoff}
@@ -628,8 +625,8 @@ export function SynthView() {
             </div>
           </StageCard>
 
-          {/* FILTER ENV - stacked below FILTER */}
-          <StageCard title="FILTER ENV" color={COLORS.filterEnv} compact noBorderRadius="top">
+          {/* FILTER ENV */}
+          <StageCard title="FILTER ENV" color={COLORS.filterEnv}>
             <EnvelopeVisualizer
               attack={params.filterEnvelope.attack}
               decay={params.filterEnvelope.decay}
@@ -653,7 +650,6 @@ export function SynthView() {
               <Knob label="Amount" value={params.filterEnvelope.amount} min={-4} max={4} step={0.1} onChange={setFilterEnvelopeAmount} formatValue={(v) => `${v > 0 ? '+' : ''}${v.toFixed(1)}`} paramId="filterEnv.amount" />
             </div>
           </StageCard>
-          </StackedModule>
 
           {/* AMP Stage */}
           <StageCard title="AMP" color={COLORS.amp}>
@@ -832,9 +828,8 @@ export function SynthView() {
             </div>
           </StageCard>
 
-          {/* MOD MATRIX Stack: MOD MATRIX + MOD ENV */}
-          <StackedModule>
-          <StageCard title="MOD MATRIX" color={COLORS.modMatrix} noBorderRadius="bottom">
+          {/* MOD MATRIX */}
+          <StageCard title="MOD MATRIX" color={COLORS.modMatrix} wide>
             <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm }}>
               {params.modMatrix.routes.map((route, i) => (
                 <div
@@ -928,8 +923,8 @@ export function SynthView() {
             </div>
           </StageCard>
 
-          {/* MOD ENV - stacked below MOD MATRIX */}
-          <StageCard title="MOD ENV" color={COLORS.modEnv} compact noBorderRadius="top">
+          {/* MOD ENV */}
+          <StageCard title="MOD ENV" color={COLORS.modEnv}>
             <EnvelopeVisualizer
               attack={params.modEnvelope.attack}
               decay={params.modEnvelope.decay}
@@ -953,7 +948,6 @@ export function SynthView() {
               <Knob label="Amount" value={params.modEnvelope.amount} min={0} max={1} step={0.01} onChange={setModEnvelopeAmount} formatValue={formatPercent} paramId="modEnv.amount" />
             </div>
           </StageCard>
-          </StackedModule>
 
           {/* OUTPUT Stage */}
           <StageCard title="OUTPUT" color={COLORS.output}>
