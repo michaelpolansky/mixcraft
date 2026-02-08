@@ -786,7 +786,122 @@ export interface AdditiveSynthParams {
   effects: EffectsParams;
   /** Master volume in dB (-60 to 0) */
   volume: number;
+  /** LFO for additive-specific modulation */
+  lfo: AdditiveLFOParams;
+  /** Noise generator mixed with additive output */
+  noise: NoiseParams;
+  /** Portamento/glide between notes */
+  glide: GlideParams;
+  /** Velocity sensitivity settings */
+  velocity: AdditiveVelocityParams;
+  /** Arpeggiator for automatic note patterns */
+  arpeggiator: ArpeggiatorParams;
+  /** Modulation matrix for flexible routing */
+  modMatrix: AdditiveModMatrix;
+  /** Master pan position (-1 to +1, 0 = center) */
+  pan: number;
 }
+
+/** Additive LFO destination options */
+export type AdditiveLFODestination = 'brightness' | 'pitch';
+
+/** Additive Mod Matrix sources */
+export type AdditiveModSource = 'lfo' | 'ampEnvelope' | 'velocity';
+
+/** Additive Mod Matrix destinations */
+export type AdditiveModDestination = 'brightness' | 'pitch' | 'pan' | 'amplitude' | 'oddHarmonics' | 'evenHarmonics';
+
+/** Additive-specific LFO params */
+export interface AdditiveLFOParams {
+  /** LFO rate in Hz (0.1 to 20) */
+  rate: number;
+  /** LFO depth/amount (0 to 1) */
+  depth: number;
+  /** LFO waveform shape */
+  waveform: LFOWaveform;
+  /** Modulation destination */
+  destination: AdditiveLFODestination;
+}
+
+/** Additive Mod Matrix route */
+export interface AdditiveModRoute {
+  /** Source of modulation */
+  source: AdditiveModSource;
+  /** Destination to modulate */
+  destination: AdditiveModDestination;
+  /** Amount of modulation (-1 to +1) */
+  amount: number;
+  /** Whether this route is active */
+  enabled: boolean;
+}
+
+/** Additive Mod Matrix */
+export interface AdditiveModMatrix {
+  routes: [AdditiveModRoute, AdditiveModRoute, AdditiveModRoute, AdditiveModRoute];
+}
+
+/** Additive Velocity params */
+export interface AdditiveVelocityParams {
+  /** How much velocity affects amplitude (0 to 1) */
+  ampAmount: number;
+  /** How much velocity affects brightness/harmonic content (0 to 1) */
+  brightnessAmount: number;
+}
+
+/** All Additive mod sources for iteration */
+export const ADDITIVE_MOD_SOURCES: AdditiveModSource[] = ['lfo', 'ampEnvelope', 'velocity'];
+
+/** All Additive mod destinations for iteration */
+export const ADDITIVE_MOD_DESTINATIONS: AdditiveModDestination[] = ['brightness', 'pitch', 'pan', 'amplitude', 'oddHarmonics', 'evenHarmonics'];
+
+/** Display labels for Additive mod sources */
+export const ADDITIVE_MOD_SOURCE_LABELS: Record<AdditiveModSource, string> = {
+  lfo: 'LFO',
+  ampEnvelope: 'Amp',
+  velocity: 'Vel',
+};
+
+/** Display labels for Additive mod destinations */
+export const ADDITIVE_MOD_DEST_LABELS: Record<AdditiveModDestination, string> = {
+  brightness: 'Bright',
+  pitch: 'Pitch',
+  pan: 'Pan',
+  amplitude: 'Amp',
+  oddHarmonics: 'Odd',
+  evenHarmonics: 'Even',
+};
+
+/** Default Additive LFO params */
+export const DEFAULT_ADDITIVE_LFO: AdditiveLFOParams = {
+  rate: 1,
+  depth: 0,
+  waveform: 'sine',
+  destination: 'brightness',
+};
+
+/** Default Additive Mod Route */
+export const DEFAULT_ADDITIVE_MOD_ROUTE: AdditiveModRoute = {
+  source: 'lfo',
+  destination: 'brightness',
+  amount: 0,
+  enabled: false,
+};
+
+/** Default Additive Mod Matrix */
+export const DEFAULT_ADDITIVE_MOD_MATRIX: AdditiveModMatrix = {
+  routes: [
+    { source: 'lfo', destination: 'brightness', amount: 0, enabled: false },
+    { source: 'lfo', destination: 'pitch', amount: 0, enabled: false },
+    { source: 'ampEnvelope', destination: 'brightness', amount: 0, enabled: false },
+    { source: 'velocity', destination: 'amplitude', amount: 0, enabled: false },
+  ],
+};
+
+/** Default Additive Velocity params */
+export const DEFAULT_ADDITIVE_VELOCITY: AdditiveVelocityParams = {
+  ampAmount: 0,
+  brightnessAmount: 0,
+};
 
 export const DEFAULT_ADDITIVE_SYNTH_PARAMS: AdditiveSynthParams = {
   harmonics: [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -798,6 +913,19 @@ export const DEFAULT_ADDITIVE_SYNTH_PARAMS: AdditiveSynthParams = {
   },
   effects: DEFAULT_EFFECTS,
   volume: -12,
+  lfo: DEFAULT_ADDITIVE_LFO,
+  noise: { type: 'white', level: 0 },
+  glide: { enabled: false, time: 0.1 },
+  velocity: DEFAULT_ADDITIVE_VELOCITY,
+  arpeggiator: {
+    enabled: false,
+    pattern: 'up',
+    division: '8n',
+    octaves: 1,
+    gate: 0.5,
+  },
+  modMatrix: DEFAULT_ADDITIVE_MOD_MATRIX,
+  pan: 0,
 };
 
 /** Harmonic presets for common waveforms and timbres */
