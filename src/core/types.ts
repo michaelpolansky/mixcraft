@@ -603,6 +603,20 @@ export interface FMSynthParams {
   effects: EffectsParams;
   /** Master volume in dB (-60 to 0) */
   volume: number;
+  /** LFO for FM-specific modulation */
+  lfo: FMLFOParams;
+  /** Noise generator mixed with FM output */
+  noise: NoiseParams;
+  /** Portamento/glide between notes */
+  glide: GlideParams;
+  /** Velocity sensitivity settings */
+  velocity: FMVelocityParams;
+  /** Arpeggiator for automatic note patterns */
+  arpeggiator: ArpeggiatorParams;
+  /** Modulation matrix for flexible routing */
+  modMatrix: FMModMatrix;
+  /** Master pan position (-1 to +1, 0 = center) */
+  pan: number;
 }
 
 export const DEFAULT_FM_SYNTH_PARAMS: FMSynthParams = {
@@ -619,6 +633,31 @@ export const DEFAULT_FM_SYNTH_PARAMS: FMSynthParams = {
   modulationEnvelopeAmount: 0.5,
   effects: DEFAULT_EFFECTS,
   volume: -12,
+  lfo: {
+    rate: 1,
+    depth: 0,
+    waveform: 'sine',
+    destination: 'modulationIndex',
+  },
+  noise: { type: 'white', level: 0 },
+  glide: { enabled: false, time: 0.1 },
+  velocity: { ampAmount: 0, modIndexAmount: 0 },
+  arpeggiator: {
+    enabled: false,
+    pattern: 'up',
+    division: '8n',
+    octaves: 1,
+    gate: 0.5,
+  },
+  modMatrix: {
+    routes: [
+      { source: 'lfo', destination: 'modulationIndex', amount: 0, enabled: false },
+      { source: 'lfo', destination: 'pitch', amount: 0, enabled: false },
+      { source: 'modEnvelope', destination: 'modulationIndex', amount: 0, enabled: false },
+      { source: 'velocity', destination: 'amplitude', amount: 0, enabled: false },
+    ],
+  },
+  pan: 0,
 };
 
 export const FM_PARAM_RANGES = {
@@ -629,6 +668,110 @@ export const FM_PARAM_RANGES = {
 
 /** Common harmonicity presets for quick selection */
 export const HARMONICITY_PRESETS = [1, 2, 3, 4, 5, 6] as const;
+
+// ============================================
+// FM Synth Extended Types (LFO, ModMatrix, Velocity)
+// ============================================
+
+/** FM LFO destination options */
+export type FMLFODestination = 'modulationIndex' | 'harmonicity' | 'pitch';
+
+/** FM Mod Matrix sources */
+export type FMModSource = 'lfo' | 'modEnvelope' | 'velocity';
+
+/** FM Mod Matrix destinations */
+export type FMModDestination = 'modulationIndex' | 'harmonicity' | 'pitch' | 'pan' | 'amplitude';
+
+/** FM-specific LFO params */
+export interface FMLFOParams {
+  /** LFO rate in Hz (0.1 to 20) */
+  rate: number;
+  /** LFO depth/amount (0 to 1) */
+  depth: number;
+  /** LFO waveform shape */
+  waveform: LFOWaveform;
+  /** Modulation destination */
+  destination: FMLFODestination;
+}
+
+/** FM Mod Matrix route */
+export interface FMModRoute {
+  /** Source of modulation */
+  source: FMModSource;
+  /** Destination to modulate */
+  destination: FMModDestination;
+  /** Amount of modulation (-1 to +1) */
+  amount: number;
+  /** Whether this route is active */
+  enabled: boolean;
+}
+
+/** FM Mod Matrix */
+export interface FMModMatrix {
+  routes: [FMModRoute, FMModRoute, FMModRoute, FMModRoute];
+}
+
+/** FM Velocity params */
+export interface FMVelocityParams {
+  /** How much velocity affects amplitude (0 to 1) */
+  ampAmount: number;
+  /** How much velocity affects modulation index (0 to 1) */
+  modIndexAmount: number;
+}
+
+/** All FM mod sources for iteration */
+export const FM_MOD_SOURCES: FMModSource[] = ['lfo', 'modEnvelope', 'velocity'];
+
+/** All FM mod destinations for iteration */
+export const FM_MOD_DESTINATIONS: FMModDestination[] = ['modulationIndex', 'harmonicity', 'pitch', 'pan', 'amplitude'];
+
+/** Display labels for FM mod sources */
+export const FM_MOD_SOURCE_LABELS: Record<FMModSource, string> = {
+  lfo: 'LFO',
+  modEnvelope: 'Mod Env',
+  velocity: 'Velocity',
+};
+
+/** Display labels for FM mod destinations */
+export const FM_MOD_DEST_LABELS: Record<FMModDestination, string> = {
+  modulationIndex: 'Mod Index',
+  harmonicity: 'Harmonic',
+  pitch: 'Pitch',
+  pan: 'Pan',
+  amplitude: 'Amp',
+};
+
+/** Default FM LFO params */
+export const DEFAULT_FM_LFO: FMLFOParams = {
+  rate: 1,
+  depth: 0,
+  waveform: 'sine',
+  destination: 'modulationIndex',
+};
+
+/** Default FM Mod Route */
+export const DEFAULT_FM_MOD_ROUTE: FMModRoute = {
+  source: 'lfo',
+  destination: 'modulationIndex',
+  amount: 0,
+  enabled: false,
+};
+
+/** Default FM Mod Matrix */
+export const DEFAULT_FM_MOD_MATRIX: FMModMatrix = {
+  routes: [
+    { source: 'lfo', destination: 'modulationIndex', amount: 0, enabled: false },
+    { source: 'lfo', destination: 'pitch', amount: 0, enabled: false },
+    { source: 'modEnvelope', destination: 'modulationIndex', amount: 0, enabled: false },
+    { source: 'velocity', destination: 'amplitude', amount: 0, enabled: false },
+  ],
+};
+
+/** Default FM Velocity params */
+export const DEFAULT_FM_VELOCITY: FMVelocityParams = {
+  ampAmount: 0,
+  modIndexAmount: 0,
+};
 
 // ============================================
 // Additive Synth Types
