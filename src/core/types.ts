@@ -292,19 +292,19 @@ export const DEFAULT_OSCILLATOR: OscillatorParams = {
 };
 
 export const DEFAULT_SUB_OSCILLATOR: SubOscillatorParams = {
-  enabled: false,
+  enabled: true,
   type: 'sine',
   octave: -1,
-  level: 0.5,
+  level: 0,
 };
 
 export const DEFAULT_OSCILLATOR_2: Oscillator2Params = {
-  enabled: false,
+  enabled: true,
   type: 'sawtooth',
   octave: 0,
   detune: 7,
   pulseWidth: 0.5,
-  level: 0.5,
+  level: 0,
 };
 
 export const DEFAULT_FILTER: FilterParams = {
