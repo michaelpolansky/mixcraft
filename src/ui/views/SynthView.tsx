@@ -419,10 +419,12 @@ export function SynthView() {
               compact
               isTriggered={isPlaying}
             />
-            <div style={{ display: 'flex', gap: '8px', marginTop: '8px', justifyContent: 'center', alignItems: 'center' }}>
-              <MiniSlider label="A" value={params.pitchEnvelope.attack} min={0.001} max={2} onChange={setPitchEnvelopeAttack} color={COLORS.pitchEnv} />
-              <MiniSlider label="D" value={params.pitchEnvelope.decay} min={0.001} max={2} onChange={setPitchEnvelopeDecay} color={COLORS.pitchEnv} />
-              <Knob label="Amt" value={params.pitchEnvelope.amount} min={-24} max={24} step={1} onChange={setPitchEnvelopeAmount} formatValue={(v) => `${v > 0 ? '+' : ''}${v}st`} size={32} paramId="pitchEnv.amount" />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '8px' }}>
+              <Knob label="Attack" value={params.pitchEnvelope.attack} min={0.001} max={2} step={0.001} onChange={setPitchEnvelopeAttack} formatValue={formatMs} paramId="pitchEnv.attack" />
+              <Knob label="Decay" value={params.pitchEnvelope.decay} min={0.001} max={2} step={0.001} onChange={setPitchEnvelopeDecay} formatValue={formatMs} paramId="pitchEnv.decay" />
+              <Knob label="Sustain" value={params.pitchEnvelope.sustain} min={0} max={1} step={0.01} onChange={setPitchEnvelopeSustain} formatValue={formatPercent} paramId="pitchEnv.sustain" />
+              <Knob label="Release" value={params.pitchEnvelope.release} min={0.001} max={4} step={0.001} onChange={setPitchEnvelopeRelease} formatValue={formatMs} paramId="pitchEnv.release" />
+              <Knob label="Amount" value={params.pitchEnvelope.amount} min={-24} max={24} step={1} onChange={setPitchEnvelopeAmount} formatValue={(v) => `${v > 0 ? '+' : ''}${v} st`} paramId="pitchEnv.amount" />
             </div>
           </StageCard>
 
@@ -443,13 +445,12 @@ export function SynthView() {
               compact
               isTriggered={isPlaying}
             />
-            <div style={{ display: 'flex', gap: '8px', marginTop: '8px', justifyContent: 'center', alignItems: 'center' }}>
-              <MiniSlider label="A" value={params.pwmEnvelope.attack} min={0.001} max={2} onChange={setPWMEnvelopeAttack} color={COLORS.pwmEnv} />
-              <MiniSlider label="D" value={params.pwmEnvelope.decay} min={0.001} max={2} onChange={setPWMEnvelopeDecay} color={COLORS.pwmEnv} />
-              <Knob label="Amt" value={params.pwmEnvelope.amount} min={0} max={1} step={0.01} onChange={setPWMEnvelopeAmount} formatValue={formatPercent} size={32} paramId="pwmEnv.amount" />
-            </div>
-            <div style={{ fontSize: '8px', color: '#666', textAlign: 'center', marginTop: '4px' }}>
-              Pulse width (square osc)
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '8px' }}>
+              <Knob label="Attack" value={params.pwmEnvelope.attack} min={0.001} max={2} step={0.001} onChange={setPWMEnvelopeAttack} formatValue={formatMs} paramId="pwmEnv.attack" />
+              <Knob label="Decay" value={params.pwmEnvelope.decay} min={0.001} max={2} step={0.001} onChange={setPWMEnvelopeDecay} formatValue={formatMs} paramId="pwmEnv.decay" />
+              <Knob label="Sustain" value={params.pwmEnvelope.sustain} min={0} max={1} step={0.01} onChange={setPWMEnvelopeSustain} formatValue={formatPercent} paramId="pwmEnv.sustain" />
+              <Knob label="Release" value={params.pwmEnvelope.release} min={0.001} max={4} step={0.001} onChange={setPWMEnvelopeRelease} formatValue={formatMs} paramId="pwmEnv.release" />
+              <Knob label="Amount" value={params.pwmEnvelope.amount} min={0} max={1} step={0.01} onChange={setPWMEnvelopeAmount} formatValue={formatPercent} paramId="pwmEnv.amount" />
             </div>
           </StageCard>
           </StackedModule>
@@ -719,10 +720,12 @@ export function SynthView() {
               compact
               isTriggered={isPlaying}
             />
-            <div style={{ display: 'flex', gap: '8px', marginTop: '8px', justifyContent: 'center', alignItems: 'center' }}>
-              <MiniSlider label="A" value={params.filterEnvelope.attack} min={0.001} max={2} onChange={setFilterEnvelopeAttack} color={COLORS.filterEnv} />
-              <MiniSlider label="D" value={params.filterEnvelope.decay} min={0.001} max={2} onChange={setFilterEnvelopeDecay} color={COLORS.filterEnv} />
-              <Knob label="Amt" value={params.filterEnvelope.amount} min={-4} max={4} step={0.1} onChange={setFilterEnvelopeAmount} formatValue={(v) => `${v > 0 ? '+' : ''}${v.toFixed(1)}`} size={32} paramId="filterEnv.amount" />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '8px' }}>
+              <Knob label="Attack" value={params.filterEnvelope.attack} min={0.001} max={2} step={0.001} onChange={setFilterEnvelopeAttack} formatValue={formatMs} paramId="filterEnv.attack" />
+              <Knob label="Decay" value={params.filterEnvelope.decay} min={0.001} max={2} step={0.001} onChange={setFilterEnvelopeDecay} formatValue={formatMs} paramId="filterEnv.decay" />
+              <Knob label="Sustain" value={params.filterEnvelope.sustain} min={0} max={1} step={0.01} onChange={setFilterEnvelopeSustain} formatValue={formatPercent} paramId="filterEnv.sustain" />
+              <Knob label="Release" value={params.filterEnvelope.release} min={0.001} max={4} step={0.001} onChange={setFilterEnvelopeRelease} formatValue={formatMs} paramId="filterEnv.release" />
+              <Knob label="Amount" value={params.filterEnvelope.amount} min={-4} max={4} step={0.1} onChange={setFilterEnvelopeAmount} formatValue={(v) => `${v > 0 ? '+' : ''}${v.toFixed(1)}`} paramId="filterEnv.amount" />
             </div>
           </StageCard>
           </StackedModule>
@@ -744,11 +747,11 @@ export function SynthView() {
               compact
               isTriggered={isPlaying}
             />
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '12px' }}>
-              <MiniSlider label="A" value={params.amplitudeEnvelope.attack} min={0.001} max={2} onChange={setAmplitudeAttack} />
-              <MiniSlider label="D" value={params.amplitudeEnvelope.decay} min={0.001} max={2} onChange={setAmplitudeDecay} />
-              <MiniSlider label="S" value={params.amplitudeEnvelope.sustain} min={0} max={1} onChange={setAmplitudeSustain} />
-              <MiniSlider label="R" value={params.amplitudeEnvelope.release} min={0.001} max={4} onChange={setAmplitudeRelease} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '12px' }}>
+              <Knob label="Attack" value={params.amplitudeEnvelope.attack} min={0.001} max={2} step={0.001} onChange={setAmplitudeAttack} formatValue={formatMs} paramId="amp.attack" />
+              <Knob label="Decay" value={params.amplitudeEnvelope.decay} min={0.001} max={2} step={0.001} onChange={setAmplitudeDecay} formatValue={formatMs} paramId="amp.decay" />
+              <Knob label="Sustain" value={params.amplitudeEnvelope.sustain} min={0} max={1} step={0.01} onChange={setAmplitudeSustain} formatValue={formatPercent} paramId="amp.sustain" />
+              <Knob label="Release" value={params.amplitudeEnvelope.release} min={0.001} max={4} step={0.001} onChange={setAmplitudeRelease} formatValue={formatMs} paramId="amp.release" />
             </div>
           </StageCard>
 
@@ -1062,10 +1065,12 @@ export function SynthView() {
               compact
               isTriggered={isPlaying}
             />
-            <div style={{ display: 'flex', gap: '8px', marginTop: '8px', justifyContent: 'center', alignItems: 'center' }}>
-              <MiniSlider label="A" value={params.modEnvelope.attack} min={0.001} max={2} onChange={setModEnvelopeAttack} color={COLORS.modEnv} />
-              <MiniSlider label="D" value={params.modEnvelope.decay} min={0.001} max={2} onChange={setModEnvelopeDecay} color={COLORS.modEnv} />
-              <Knob label="Amt" value={params.modEnvelope.amount} min={0} max={1} step={0.01} onChange={setModEnvelopeAmount} formatValue={formatPercent} size={32} paramId="modEnv.amount" />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '8px' }}>
+              <Knob label="Attack" value={params.modEnvelope.attack} min={0.001} max={2} step={0.001} onChange={setModEnvelopeAttack} formatValue={formatMs} paramId="modEnv.attack" />
+              <Knob label="Decay" value={params.modEnvelope.decay} min={0.001} max={2} step={0.001} onChange={setModEnvelopeDecay} formatValue={formatMs} paramId="modEnv.decay" />
+              <Knob label="Sustain" value={params.modEnvelope.sustain} min={0} max={1} step={0.01} onChange={setModEnvelopeSustain} formatValue={formatPercent} paramId="modEnv.sustain" />
+              <Knob label="Release" value={params.modEnvelope.release} min={0.001} max={4} step={0.001} onChange={setModEnvelopeRelease} formatValue={formatMs} paramId="modEnv.release" />
+              <Knob label="Amount" value={params.modEnvelope.amount} min={0} max={1} step={0.01} onChange={setModEnvelopeAmount} formatValue={formatPercent} paramId="modEnv.amount" />
             </div>
           </StageCard>
           </StackedModule>
