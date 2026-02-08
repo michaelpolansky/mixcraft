@@ -42,9 +42,8 @@ export function Knob({
   const trackRef = useRef<HTMLDivElement>(null);
   const { setHoveredParam } = useInfoPanel();
 
-  // Slider dimensions - width based on size prop, fixed height
-  const sliderWidth = Math.max(size * 1.5, 80);
-  const sliderHeight = 8;
+  // Slider dimensions - full width, fixed height
+  const sliderHeight = 6;
 
   // Convert between linear position (0-1) and actual value
   const valueToPosition = useCallback((v: number): number => {
@@ -173,25 +172,62 @@ export function Knob({
       style={{
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center',
         gap: SPACING.xs,
         userSelect: 'none',
-        minWidth: sliderWidth,
+        width: '100%',
       }}
     >
-      {/* Label */}
-      <span
+      {/* Header row: Label left, Value right */}
+      <div
         style={{
-          fontSize: TYPOGRAPHY.size.sm,
-          color: COLORS.text.tertiary,
-          textTransform: 'uppercase',
-          letterSpacing: TYPOGRAPHY.letterSpacing.wide,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
         }}
       >
-        {label}
-      </span>
+        <span
+          style={{
+            fontSize: TYPOGRAPHY.size.sm,
+            color: COLORS.text.tertiary,
+            textTransform: 'uppercase',
+            letterSpacing: TYPOGRAPHY.letterSpacing.wide,
+          }}
+        >
+          {label}
+        </span>
 
-      {/* Slider track - accessible */}
+        {/* Value display */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: SPACING.xs,
+        }}>
+          <span
+            style={{
+              fontSize: TYPOGRAPHY.size.sm,
+              fontFamily: TYPOGRAPHY.family.mono,
+              color: isModulated ? COLORS.text.muted : COLORS.accent.primary,
+            }}
+          >
+            {displayValue}
+          </span>
+          {/* Modulated value display */}
+          {isModulated && modulatedDisplayValue && (
+            <span
+              style={{
+                fontSize: TYPOGRAPHY.size.sm,
+                fontFamily: TYPOGRAPHY.family.mono,
+                color: COLORS.accent.secondary,
+                fontWeight: TYPOGRAPHY.weight.medium,
+              }}
+            >
+              → {modulatedDisplayValue}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Full-width slider track - accessible */}
       <div
         ref={trackRef}
         role="slider"
@@ -205,7 +241,7 @@ export function Knob({
         onDoubleClick={handleDoubleClick}
         onKeyDown={handleKeyDown}
         style={{
-          width: sliderWidth,
+          width: '100%',
           height: sliderHeight,
           background: COLORS.bg.tertiary,
           borderRadius: RADIUS.full,
@@ -271,8 +307,8 @@ export function Knob({
             position: 'absolute',
             top: '50%',
             left: `${fillWidth}%`,
-            width: 14,
-            height: 14,
+            width: 12,
+            height: 12,
             background: COLORS.text.primary,
             borderRadius: RADIUS.full,
             transform: 'translate(-50%, -50%)',
@@ -281,37 +317,6 @@ export function Knob({
             transition: `left ${TRANSITIONS.fast}`,
           }}
         />
-      </div>
-
-      {/* Value display */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: SPACING.sm,
-        minHeight: SPACING.lg,
-      }}>
-        <span
-          style={{
-            fontSize: TYPOGRAPHY.size.base,
-            fontFamily: TYPOGRAPHY.family.mono,
-            color: isModulated ? COLORS.text.muted : COLORS.accent.primary,
-          }}
-        >
-          {displayValue}
-        </span>
-        {/* Modulated value display */}
-        {isModulated && modulatedDisplayValue && (
-          <span
-            style={{
-              fontSize: TYPOGRAPHY.size.base,
-              fontFamily: TYPOGRAPHY.family.mono,
-              color: COLORS.accent.secondary,
-              fontWeight: TYPOGRAPHY.weight.medium,
-            }}
-          >
-            → {modulatedDisplayValue}
-          </span>
-        )}
       </div>
     </div>
   );

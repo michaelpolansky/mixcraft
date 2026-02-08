@@ -360,11 +360,11 @@ export function SynthView() {
             <div style={{ marginTop: '12px' }}>
               <WaveformSelector value={params.oscillator.type} onChange={setOscillatorType} />
             </div>
-            <div style={{ display: 'flex', gap: '12px', marginTop: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
-              <Knob label="Oct" value={params.oscillator.octave} min={-2} max={2} step={1} onChange={setOctave} formatValue={(v) => v >= 0 ? `+${v}` : `${v}`} size={40} paramId="oscillator.octave" />
-              <Knob label="Detune" value={params.oscillator.detune} min={-100} max={100} step={1} onChange={setDetune} formatValue={(v) => `${v}`} size={40} paramId="oscillator.detune" modulatedValue={modulatedValues?.pitch} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px' }}>
+              <Knob label="Octave" value={params.oscillator.octave} min={-2} max={2} step={1} onChange={setOctave} formatValue={(v) => v >= 0 ? `+${v}` : `${v}`} paramId="oscillator.octave" />
+              <Knob label="Detune" value={params.oscillator.detune} min={-100} max={100} step={1} onChange={setDetune} formatValue={(v) => `${v} ct`} paramId="oscillator.detune" modulatedValue={modulatedValues?.pitch} />
               {params.oscillator.type === 'square' && (
-                <Knob label="PW" value={params.oscillator.pulseWidth} min={0.1} max={0.9} step={0.01} onChange={setPulseWidth} formatValue={(v) => `${Math.round(v * 100)}%`} size={40} paramId="oscillator.pulseWidth" />
+                <Knob label="Pulse Width" value={params.oscillator.pulseWidth} min={0.1} max={0.9} step={0.01} onChange={setPulseWidth} formatValue={(v) => `${Math.round(v * 100)}%`} paramId="oscillator.pulseWidth" />
               )}
             </div>
             {/* Glide controls */}
@@ -474,17 +474,16 @@ export function SynthView() {
                 onChange={(t: OscillatorType) => setOsc2Type(t)}
               />
 
-              {/* Control knobs */}
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
+              {/* Control sliders */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
                 <Knob
-                  label="Oct"
+                  label="Octave"
                   value={params.oscillator2.octave}
                   min={-2}
                   max={2}
                   step={1}
                   onChange={setOsc2Octave}
                   formatValue={(v) => v >= 0 ? `+${v}` : `${v}`}
-                  size={36}
                   paramId="osc2.octave"
                 />
                 <Knob
@@ -494,8 +493,7 @@ export function SynthView() {
                   max={100}
                   step={1}
                   onChange={setOsc2Detune}
-                  formatValue={(v) => `${v}`}
-                  size={36}
+                  formatValue={(v) => `${v} ct`}
                   paramId="osc2.detune"
                 />
               </div>
@@ -697,10 +695,10 @@ export function SynthView() {
             <div style={{ marginTop: '12px' }}>
               <FilterTypeSelector value={params.filter.type} onChange={setFilterType} />
             </div>
-            <div style={{ display: 'flex', gap: '12px', marginTop: '12px', justifyContent: 'center' }}>
-              <Knob label="Cutoff" value={params.filter.cutoff} min={PARAM_RANGES.cutoff.min} max={PARAM_RANGES.cutoff.max} step={1} onChange={setFilterCutoff} formatValue={formatHz} logarithmic size={40} paramId="filter.cutoff" modulatedValue={modulatedValues?.filterCutoff} />
-              <Knob label="Res" value={params.filter.resonance} min={0} max={20} step={0.1} onChange={setFilterResonance} formatValue={(v) => v.toFixed(1)} size={40} paramId="filter.resonance" />
-              <Knob label="Key" value={params.filter.keyTracking} min={0} max={1} step={0.01} onChange={setFilterKeyTracking} formatValue={formatPercent} size={40} paramId="filter.keyTracking" />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px' }}>
+              <Knob label="Cutoff" value={params.filter.cutoff} min={PARAM_RANGES.cutoff.min} max={PARAM_RANGES.cutoff.max} step={1} onChange={setFilterCutoff} formatValue={formatHz} logarithmic paramId="filter.cutoff" modulatedValue={modulatedValues?.filterCutoff} />
+              <Knob label="Resonance" value={params.filter.resonance} min={0} max={20} step={0.1} onChange={setFilterResonance} formatValue={(v) => v.toFixed(1)} paramId="filter.resonance" />
+              <Knob label="Key Tracking" value={params.filter.keyTracking} min={0} max={1} step={0.01} onChange={setFilterKeyTracking} formatValue={formatPercent} paramId="filter.keyTracking" />
             </div>
           </StageCard>
 
@@ -768,13 +766,13 @@ export function SynthView() {
             <div style={{ marginTop: '12px' }}>
               <LFOWaveformSelector value={params.lfo.waveform} onChange={setLFOWaveform} />
             </div>
-            <div style={{ display: 'flex', gap: '12px', marginTop: '12px', justifyContent: 'center' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px' }}>
               {/* Show Rate knob when not synced, Division selector when synced */}
               {!params.lfo.sync ? (
-                <Knob label="Rate" value={params.lfo.rate} min={0.1} max={20} step={0.1} onChange={setLFORate} formatValue={(v) => `${v.toFixed(1)}`} size={40} paramId="lfo.rate" modulatedValue={modulatedValues?.lfo1Rate} />
+                <Knob label="Rate" value={params.lfo.rate} min={0.1} max={20} step={0.1} onChange={setLFORate} formatValue={(v) => `${v.toFixed(1)} Hz`} paramId="lfo.rate" modulatedValue={modulatedValues?.lfo1Rate} />
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-                  <span style={{ fontSize: '9px', color: '#888' }}>Division</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '10px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Division</span>
                   <select
                     value={params.lfo.syncDivision}
                     onChange={(e) => setLFOSyncDivision(e.target.value as LFOSyncDivision)}
@@ -794,7 +792,7 @@ export function SynthView() {
                   </select>
                 </div>
               )}
-              <Knob label="Depth" value={params.lfo.depth} min={0} max={1} step={0.01} onChange={setLFODepth} formatValue={formatPercent} size={40} paramId="lfo.depth" />
+              <Knob label="Depth" value={params.lfo.depth} min={0} max={1} step={0.01} onChange={setLFODepth} formatValue={formatPercent} paramId="lfo.depth" />
             </div>
             {/* Sync toggle */}
             <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'center' }}>
@@ -844,8 +842,8 @@ export function SynthView() {
                     onChange={(waveform: LFOWaveform) => setLfo2Type(waveform)}
                   />
 
-                  {/* Rate and Depth knobs */}
-                  <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                  {/* Rate and Depth sliders */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
                     <Knob
                       label="Rate"
                       value={params.lfo2.rate}
@@ -854,7 +852,6 @@ export function SynthView() {
                       step={0.1}
                       onChange={setLfo2Rate}
                       formatValue={(v) => `${v.toFixed(1)} Hz`}
-                      size={40}
                       paramId="lfo2.rate"
                       modulatedValue={modulatedValues?.lfo2Rate}
                     />
@@ -866,7 +863,6 @@ export function SynthView() {
                       step={0.01}
                       onChange={setLfo2Depth}
                       formatValue={formatPercent}
-                      size={40}
                       paramId="lfo2.depth"
                     />
                   </div>
@@ -1084,8 +1080,8 @@ export function SynthView() {
                 height={80}
                 accentColor={COLORS.output}
               />
-              {/* Volume and Pan knobs */}
-              <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+              {/* Volume and Pan sliders */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
                 <Knob
                   label="Volume"
                   value={params.volume}
@@ -1094,32 +1090,23 @@ export function SynthView() {
                   step={0.5}
                   onChange={setVolume}
                   formatValue={formatDb}
-                  size={48}
                   paramId="volume"
                 />
-                {/* Pan with L/R labels */}
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <span style={{ fontSize: '9px', color: params.pan < 0 ? COLORS.output : '#666', fontWeight: params.pan < 0 ? 600 : 400 }}>L</span>
-                    <Knob
-                      label="Pan"
-                      value={params.pan}
-                      min={-1}
-                      max={1}
-                      step={0.01}
-                      onChange={setPan}
-                      formatValue={(v) => {
-                        if (Math.abs(v) < 0.05) return 'C';
-                        if (v < 0) return `${Math.round(Math.abs(v) * 100)}L`;
-                        return `${Math.round(v * 100)}R`;
-                      }}
-                      size={40}
-                      paramId="pan"
-                      modulatedValue={modulatedValues?.pan}
-                    />
-                    <span style={{ fontSize: '9px', color: params.pan > 0 ? COLORS.output : '#666', fontWeight: params.pan > 0 ? 600 : 400 }}>R</span>
-                  </div>
-                </div>
+                <Knob
+                  label="Pan"
+                  value={params.pan}
+                  min={-1}
+                  max={1}
+                  step={0.01}
+                  onChange={setPan}
+                  formatValue={(v) => {
+                    if (Math.abs(v) < 0.05) return 'Center';
+                    if (v < 0) return `${Math.round(Math.abs(v) * 100)}% L`;
+                    return `${Math.round(v * 100)}% R`;
+                  }}
+                  paramId="pan"
+                  modulatedValue={modulatedValues?.pan}
+                />
               </div>
               <RecordingControl
                 sourceNode={engine?.getOutputNode() ?? null}
