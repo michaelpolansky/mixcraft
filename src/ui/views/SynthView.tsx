@@ -22,6 +22,7 @@ import {
   FilterVisualizer,
   EnvelopeVisualizer,
   LFOVisualizer,
+  NoiseVisualizer,
   XYPad,
   Oscilloscope,
   Tooltip,
@@ -629,6 +630,16 @@ export function SynthView() {
           {/* NOISE Stage */}
           <StageCard title="NOISE" color={COLORS.noise}>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+              {/* Noise visualizer */}
+              <NoiseVisualizer
+                noiseType={params.noise.type}
+                level={params.noise.level}
+                width={200}
+                height={100}
+                accentColor={COLORS.noise}
+                compact
+              />
+
               {/* Noise Type Selector */}
               <div style={{ display: 'flex', gap: '4px' }}>
                 {NOISE_TYPES.map((nt) => (
