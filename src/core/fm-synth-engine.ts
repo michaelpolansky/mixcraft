@@ -624,6 +624,193 @@ export class FMSynthEngine {
   }
 
   // ============================================
+  // Arpeggiator
+  // ============================================
+
+  /**
+   * Builds the note pattern array based on held notes and arp settings
+   */
+  private buildArpPattern(): string[] {
+    if (this.heldNotes.length === 0) return [];
+
+    // Sort notes by frequency (low to high)
+    const notes = [...this.heldNotes].sort((a, b) => {
+      return Tone.Frequency(a).toFrequency() - Tone.Frequency(b).toFrequency();
+    });
+
+    // Expand across octaves
+    const expanded: string[] = [];
+    for (let oct = 0; oct < this.params.arpeggiator.octaves; oct++) {
+      for (const note of notes) {
+        const freq = Tone.Frequency(note).toFrequency();
+        const octaveFreq = freq * Math.pow(2, oct);
+        expanded.push(Tone.Frequency(octaveFreq).toNote());
+      }
+    }
+
+    // Apply pattern
+    switch (this.params.arpeggiator.pattern) {
+      case 'up':
+        return expanded;
+      case 'down':
+        return expanded.reverse();
+      case 'upDown':
+        if (expanded.length <= 1) return expanded;
+        const down = expanded.slice(1, -1).reverse();
+        return [...expanded, ...down];
+      case 'random':
+        return expanded; // Shuffle happens in sequence callback
+      default:
+        return expanded;
+    }
+  }
+
+  /**
+   * Starts the arpeggiator sequence
+   */
+  private startArpeggiator(): void {
+    this.stopArpeggiator();
+
+    this.arpNotes = this.buildArpPattern();
+    if (this.arpNotes.length === 0) return;
+
+    const division = this.params.arpeggiator.division;
+    const gate = this.params.arpeggiator.gate;
+    const isRandom = this.params.arpeggiator.pattern === 'random';
+
+    let index = 0;
+    this.arpSequence = new Tone.Sequence(
+      (time, _) => {
+        let note: string;
+        if (isRandom) {
+          note = this.arpNotes[Math.floor(Math.random() * this.arpNotes.length)]!;
+        } else {
+          note = this.arpNotes[index % this.arpNotes.length]!;
+          index++;
+        }
+
+        // Calculate gate duration
+        const stepDuration = Tone.Time(division).toSeconds();
+        const noteDuration = stepDuration * gate;
+
+        // Trigger the note with velocity-aware method
+        this.triggerAttack(note, 0.8);
+        Tone.getTransport().scheduleOnce(() => {
+          this.triggerRelease();
+        }, time + noteDuration);
+      },
+      this.arpNotes,
+      division
+    );
+
+    this.arpSequence.start(0);
+    if (Tone.getTransport().state !== 'started') {
+      Tone.getTransport().start();
+    }
+  }
+
+  /**
+   * Stops the arpeggiator sequence
+   */
+  private stopArpeggiator(): void {
+    if (this.arpSequence) {
+      this.arpSequence.stop();
+      this.arpSequence.dispose();
+      this.arpSequence = null;
+    }
+    this.triggerRelease();
+  }
+
+  /**
+   * Adds a note to the arpeggiator (called on note on)
+   */
+  arpAddNote(note: string): void {
+    if (!this.params.arpeggiator.enabled) {
+      this.triggerAttack(note);
+      return;
+    }
+    if (!this.heldNotes.includes(note)) {
+      this.heldNotes.push(note);
+    }
+    this.startArpeggiator();
+  }
+
+  /**
+   * Removes a note from the arpeggiator (called on note off)
+   */
+  arpRemoveNote(note: string): void {
+    if (!this.params.arpeggiator.enabled) {
+      this.triggerRelease();
+      return;
+    }
+    this.heldNotes = this.heldNotes.filter(n => n !== note);
+    if (this.heldNotes.length === 0) {
+      this.stopArpeggiator();
+    } else {
+      this.startArpeggiator(); // Rebuild with remaining notes
+    }
+  }
+
+  /**
+   * Sets the arpeggiator enabled state
+   */
+  setArpEnabled(enabled: boolean): void {
+    this.params.arpeggiator.enabled = enabled;
+    if (!enabled) {
+      this.stopArpeggiator();
+      this.heldNotes = [];
+    }
+  }
+
+  /**
+   * Sets the arpeggiator pattern
+   */
+  setArpPattern(pattern: ArpPattern): void {
+    this.params.arpeggiator.pattern = pattern;
+    if (this.params.arpeggiator.enabled && this.heldNotes.length > 0) {
+      this.startArpeggiator();
+    }
+  }
+
+  /**
+   * Sets the arpeggiator division (tempo sync)
+   */
+  setArpDivision(division: ArpDivision): void {
+    this.params.arpeggiator.division = division;
+    if (this.params.arpeggiator.enabled && this.heldNotes.length > 0) {
+      this.startArpeggiator();
+    }
+  }
+
+  /**
+   * Sets the arpeggiator octave range
+   */
+  setArpOctaves(octaves: 1 | 2 | 3 | 4): void {
+    this.params.arpeggiator.octaves = octaves;
+    if (this.params.arpeggiator.enabled && this.heldNotes.length > 0) {
+      this.startArpeggiator();
+    }
+  }
+
+  /**
+   * Sets the arpeggiator gate (note length percentage)
+   */
+  setArpGate(gate: number): void {
+    this.params.arpeggiator.gate = clamp(gate, 0.1, 1);
+  }
+
+  /**
+   * Sets all arpeggiator parameters at once
+   */
+  setArpeggiator(params: Partial<ArpeggiatorParams>): void {
+    if (params.enabled !== undefined) this.setArpEnabled(params.enabled);
+    if (params.pattern !== undefined) this.setArpPattern(params.pattern);
+    if (params.division !== undefined) this.setArpDivision(params.division);
+    if (params.octaves !== undefined) this.setArpOctaves(params.octaves);
+    if (params.gate !== undefined) this.setArpGate(params.gate);
+  }
+
+  // ============================================
   // Effects Controls (delegated to EffectsChain)
   // ============================================
 
@@ -767,6 +954,9 @@ export class FMSynthEngine {
     if (params.modMatrix) {
       this.setModMatrix(params.modMatrix);
     }
+    if (params.arpeggiator) {
+      this.setArpeggiator(params.arpeggiator);
+    }
   }
 
   // ============================================
@@ -777,6 +967,10 @@ export class FMSynthEngine {
    * Disposes of the synth and releases resources
    */
   dispose(): void {
+    // Stop arpeggiator first
+    this.stopArpeggiator();
+    this.heldNotes = [];
+
     this.lfo.stop();
     this.lfo.dispose();
     this.lfoGain.dispose();
