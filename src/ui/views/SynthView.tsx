@@ -445,6 +445,91 @@ export function SynthView() {
           </StageCard>
           </StackedModule>
 
+          {/* OSC 2 Stage */}
+          <StageCard title="OSC 2" color={COLORS.osc2}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+              {/* Enable toggle */}
+              <button
+                onClick={() => setOsc2Enabled(!params.oscillator2.enabled)}
+                style={{
+                  padding: '6px 16px',
+                  background: params.oscillator2.enabled ? COLORS.osc2 : '#222',
+                  border: `1px solid ${params.oscillator2.enabled ? COLORS.osc2 : '#444'}`,
+                  borderRadius: '4px',
+                  color: params.oscillator2.enabled ? '#000' : '#888',
+                  fontSize: '11px',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                }}
+              >
+                {params.oscillator2.enabled ? 'ON' : 'OFF'}
+              </button>
+
+              {params.oscillator2.enabled && (
+                <>
+                  {/* Waveform visualizer */}
+                  <OscillatorVisualizer
+                    waveform={params.oscillator2.type}
+                    octave={params.oscillator2.octave}
+                    detune={params.oscillator2.detune}
+                    width={200}
+                    height={100}
+                    accentColor={COLORS.osc2}
+                    compact
+                  />
+
+                  {/* Waveform selector */}
+                  <WaveformSelector
+                    value={params.oscillator2.type}
+                    onChange={(t: OscillatorType) => setOsc2Type(t)}
+                  />
+
+                  {/* Control knobs */}
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                    <Knob
+                      label="Oct"
+                      value={params.oscillator2.octave}
+                      min={-2}
+                      max={2}
+                      step={1}
+                      onChange={setOsc2Octave}
+                      formatValue={(v) => v >= 0 ? `+${v}` : `${v}`}
+                      size={36}
+                      paramId="osc2.octave"
+                    />
+                    <Knob
+                      label="Detune"
+                      value={params.oscillator2.detune}
+                      min={-100}
+                      max={100}
+                      step={1}
+                      onChange={setOsc2Detune}
+                      formatValue={(v) => `${v}`}
+                      size={36}
+                      paramId="osc2.detune"
+                    />
+                    <Knob
+                      label="Level"
+                      value={params.oscillator2.level}
+                      min={0}
+                      max={1}
+                      step={0.01}
+                      onChange={setOsc2Level}
+                      formatValue={(v) => `${Math.round(v * 100)}%`}
+                      size={36}
+                      paramId="osc2.level"
+                      modulatedValue={modulatedValues?.osc2Mix}
+                    />
+                  </div>
+                </>
+              )}
+
+              <div style={{ fontSize: '9px', color: '#666', textAlign: 'center' }}>
+                Layered oscillator
+              </div>
+            </div>
+          </StageCard>
+
           {/* SUB OSC Stage */}
           <StageCard title="SUB OSC" color={COLORS.subOsc}>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
@@ -540,91 +625,6 @@ export function SynthView() {
 
               <div style={{ fontSize: '9px', color: '#666', textAlign: 'center' }}>
                 Adds low-end weight
-              </div>
-            </div>
-          </StageCard>
-
-          {/* OSC 2 Stage */}
-          <StageCard title="OSC 2" color={COLORS.osc2}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
-              {/* Enable toggle */}
-              <button
-                onClick={() => setOsc2Enabled(!params.oscillator2.enabled)}
-                style={{
-                  padding: '6px 16px',
-                  background: params.oscillator2.enabled ? COLORS.osc2 : '#222',
-                  border: `1px solid ${params.oscillator2.enabled ? COLORS.osc2 : '#444'}`,
-                  borderRadius: '4px',
-                  color: params.oscillator2.enabled ? '#000' : '#888',
-                  fontSize: '11px',
-                  cursor: 'pointer',
-                  fontWeight: 600,
-                }}
-              >
-                {params.oscillator2.enabled ? 'ON' : 'OFF'}
-              </button>
-
-              {params.oscillator2.enabled && (
-                <>
-                  {/* Waveform visualizer */}
-                  <OscillatorVisualizer
-                    waveform={params.oscillator2.type}
-                    octave={params.oscillator2.octave}
-                    detune={params.oscillator2.detune}
-                    width={200}
-                    height={100}
-                    accentColor={COLORS.osc2}
-                    compact
-                  />
-
-                  {/* Waveform selector */}
-                  <WaveformSelector
-                    value={params.oscillator2.type}
-                    onChange={(t: OscillatorType) => setOsc2Type(t)}
-                  />
-
-                  {/* Control knobs */}
-                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
-                    <Knob
-                      label="Oct"
-                      value={params.oscillator2.octave}
-                      min={-2}
-                      max={2}
-                      step={1}
-                      onChange={setOsc2Octave}
-                      formatValue={(v) => v >= 0 ? `+${v}` : `${v}`}
-                      size={36}
-                      paramId="osc2.octave"
-                    />
-                    <Knob
-                      label="Detune"
-                      value={params.oscillator2.detune}
-                      min={-100}
-                      max={100}
-                      step={1}
-                      onChange={setOsc2Detune}
-                      formatValue={(v) => `${v}`}
-                      size={36}
-                      paramId="osc2.detune"
-                    />
-                    <Knob
-                      label="Level"
-                      value={params.oscillator2.level}
-                      min={0}
-                      max={1}
-                      step={0.01}
-                      onChange={setOsc2Level}
-                      formatValue={(v) => `${Math.round(v * 100)}%`}
-                      size={36}
-                      paramId="osc2.level"
-                      modulatedValue={modulatedValues?.osc2Mix}
-                    />
-                  </div>
-                </>
-              )}
-
-              <div style={{ fontSize: '9px', color: '#666', textAlign: 'center' }}>
-                Layered oscillator
               </div>
             </div>
           </StageCard>
