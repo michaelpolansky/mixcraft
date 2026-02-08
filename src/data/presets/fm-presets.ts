@@ -4,7 +4,16 @@
  */
 
 import type { FMSynthParams } from '../../core/types.ts';
-import { DEFAULT_FM_SYNTH_PARAMS, DEFAULT_EFFECTS } from '../../core/types.ts';
+import {
+  DEFAULT_FM_SYNTH_PARAMS,
+  DEFAULT_EFFECTS,
+  DEFAULT_FM_LFO,
+  DEFAULT_NOISE,
+  DEFAULT_GLIDE,
+  DEFAULT_ARPEGGIATOR,
+  DEFAULT_FM_MOD_MATRIX,
+  DEFAULT_FM_VELOCITY,
+} from '../../core/types.ts';
 
 export interface FMPreset {
   name: string;
@@ -36,6 +45,13 @@ export const FM_PRESETS: FMPreset[] = [
         chorus: { rate: 1.5, depth: 0.4, mix: 0.2 },
       },
       volume: -12,
+      lfo: { ...DEFAULT_FM_LFO },
+      noise: { ...DEFAULT_NOISE },
+      glide: { ...DEFAULT_GLIDE },
+      velocity: { ...DEFAULT_FM_VELOCITY },
+      arpeggiator: { ...DEFAULT_ARPEGGIATOR },
+      modMatrix: { ...DEFAULT_FM_MOD_MATRIX },
+      pan: 0,
     },
   },
   {
@@ -57,6 +73,13 @@ export const FM_PRESETS: FMPreset[] = [
         reverb: { decay: 4, mix: 0.4 },
       },
       volume: -14,
+      lfo: { ...DEFAULT_FM_LFO },
+      noise: { ...DEFAULT_NOISE },
+      glide: { ...DEFAULT_GLIDE },
+      velocity: { ...DEFAULT_FM_VELOCITY },
+      arpeggiator: { ...DEFAULT_ARPEGGIATOR },
+      modMatrix: { ...DEFAULT_FM_MOD_MATRIX },
+      pan: 0,
     },
   },
   {
@@ -75,6 +98,13 @@ export const FM_PRESETS: FMPreset[] = [
       modulationEnvelopeAmount: 0.7,
       effects: { ...DEFAULT_EFFECTS },
       volume: -10,
+      lfo: { ...DEFAULT_FM_LFO },
+      noise: { ...DEFAULT_NOISE },
+      glide: { ...DEFAULT_GLIDE },
+      velocity: { ...DEFAULT_FM_VELOCITY },
+      arpeggiator: { ...DEFAULT_ARPEGGIATOR },
+      modMatrix: { ...DEFAULT_FM_MOD_MATRIX },
+      pan: 0,
     },
   },
   {
@@ -96,6 +126,13 @@ export const FM_PRESETS: FMPreset[] = [
         reverb: { decay: 3, mix: 0.3 },
       },
       volume: -16,
+      lfo: { ...DEFAULT_FM_LFO },
+      noise: { ...DEFAULT_NOISE },
+      glide: { ...DEFAULT_GLIDE },
+      velocity: { ...DEFAULT_FM_VELOCITY },
+      arpeggiator: { ...DEFAULT_ARPEGGIATOR },
+      modMatrix: { ...DEFAULT_FM_MOD_MATRIX },
+      pan: 0,
     },
   },
   {
@@ -114,6 +151,13 @@ export const FM_PRESETS: FMPreset[] = [
       modulationEnvelopeAmount: 0.6,
       effects: { ...DEFAULT_EFFECTS },
       volume: -12,
+      lfo: { ...DEFAULT_FM_LFO },
+      noise: { ...DEFAULT_NOISE },
+      glide: { ...DEFAULT_GLIDE },
+      velocity: { ...DEFAULT_FM_VELOCITY },
+      arpeggiator: { ...DEFAULT_ARPEGGIATOR },
+      modMatrix: { ...DEFAULT_FM_MOD_MATRIX },
+      pan: 0,
     },
   },
   {
@@ -136,6 +180,13 @@ export const FM_PRESETS: FMPreset[] = [
         reverb: { decay: 1.5, mix: 0.2 },
       },
       volume: -14,
+      lfo: { ...DEFAULT_FM_LFO },
+      noise: { ...DEFAULT_NOISE },
+      glide: { ...DEFAULT_GLIDE },
+      velocity: { ...DEFAULT_FM_VELOCITY },
+      arpeggiator: { ...DEFAULT_ARPEGGIATOR },
+      modMatrix: { ...DEFAULT_FM_MOD_MATRIX },
+      pan: 0,
     },
   },
   {
@@ -157,6 +208,13 @@ export const FM_PRESETS: FMPreset[] = [
         reverb: { decay: 2, mix: 0.3 },
       },
       volume: -12,
+      lfo: { ...DEFAULT_FM_LFO },
+      noise: { ...DEFAULT_NOISE },
+      glide: { ...DEFAULT_GLIDE },
+      velocity: { ...DEFAULT_FM_VELOCITY },
+      arpeggiator: { ...DEFAULT_ARPEGGIATOR },
+      modMatrix: { ...DEFAULT_FM_MOD_MATRIX },
+      pan: 0,
     },
   },
   {
@@ -179,6 +237,13 @@ export const FM_PRESETS: FMPreset[] = [
         reverb: { decay: 2, mix: 0.2 },
       },
       volume: -12,
+      lfo: { ...DEFAULT_FM_LFO },
+      noise: { ...DEFAULT_NOISE },
+      glide: { ...DEFAULT_GLIDE },
+      velocity: { ...DEFAULT_FM_VELOCITY },
+      arpeggiator: { ...DEFAULT_ARPEGGIATOR },
+      modMatrix: { ...DEFAULT_FM_MOD_MATRIX },
+      pan: 0,
     },
   },
   {
@@ -200,6 +265,141 @@ export const FM_PRESETS: FMPreset[] = [
         distortion: { amount: 0.3, mix: 0.2 },
       },
       volume: -10,
+      lfo: { ...DEFAULT_FM_LFO },
+      noise: { ...DEFAULT_NOISE },
+      glide: { ...DEFAULT_GLIDE },
+      velocity: { ...DEFAULT_FM_VELOCITY },
+      arpeggiator: { ...DEFAULT_ARPEGGIATOR },
+      modMatrix: { ...DEFAULT_FM_MOD_MATRIX },
+      pan: 0,
+    },
+  },
+  // New presets showcasing new features
+  {
+    name: 'Wobble Bass',
+    params: {
+      harmonicity: 0.5,
+      modulationIndex: 6,
+      carrierType: 'sine',
+      modulatorType: 'sine',
+      amplitudeEnvelope: {
+        attack: 0.01,
+        decay: 0.2,
+        sustain: 0.7,
+        release: 0.2,
+      },
+      modulationEnvelopeAmount: 0.5,
+      effects: {
+        ...DEFAULT_EFFECTS,
+        distortion: { amount: 0.4, mix: 0.3 },
+      },
+      volume: -10,
+      // LFO modulating mod index for wobble effect
+      lfo: {
+        rate: 4,
+        depth: 0.7,
+        waveform: 'sine',
+        destination: 'modulationIndex',
+      },
+      noise: { ...DEFAULT_NOISE },
+      glide: { enabled: true, time: 0.05 },
+      velocity: { ampAmount: 0.3, modIndexAmount: 0.5 },
+      arpeggiator: { ...DEFAULT_ARPEGGIATOR },
+      modMatrix: {
+        routes: [
+          { source: 'lfo', destination: 'modulationIndex', amount: 0.7, enabled: true },
+          { source: 'lfo', destination: 'pitch', amount: 0, enabled: false },
+          { source: 'modEnvelope', destination: 'modulationIndex', amount: 0, enabled: false },
+          { source: 'velocity', destination: 'amplitude', amount: 0.3, enabled: true },
+        ],
+      },
+      pan: 0,
+    },
+  },
+  {
+    name: 'Arp Lead',
+    params: {
+      harmonicity: 3,
+      modulationIndex: 4,
+      carrierType: 'sine',
+      modulatorType: 'sine',
+      amplitudeEnvelope: {
+        attack: 0.005,
+        decay: 0.15,
+        sustain: 0.4,
+        release: 0.3,
+      },
+      modulationEnvelopeAmount: 0.6,
+      effects: {
+        ...DEFAULT_EFFECTS,
+        delay: { time: 0.375, feedback: 0.4, mix: 0.3 },
+        reverb: { decay: 2.5, mix: 0.35 },
+      },
+      volume: -14,
+      lfo: { ...DEFAULT_FM_LFO },
+      noise: { ...DEFAULT_NOISE },
+      glide: { enabled: false, time: 0.1 },
+      velocity: { ampAmount: 0.4, modIndexAmount: 0.3 },
+      // Arpeggiator enabled with up-down pattern
+      arpeggiator: {
+        enabled: true,
+        pattern: 'upDown',
+        division: '16n',
+        octaves: 2,
+        gate: 0.6,
+      },
+      modMatrix: {
+        routes: [
+          { source: 'lfo', destination: 'modulationIndex', amount: 0, enabled: false },
+          { source: 'lfo', destination: 'pitch', amount: 0, enabled: false },
+          { source: 'modEnvelope', destination: 'modulationIndex', amount: 0.4, enabled: true },
+          { source: 'velocity', destination: 'amplitude', amount: 0.4, enabled: true },
+        ],
+      },
+      pan: 0,
+    },
+  },
+  {
+    name: 'Glide Pad',
+    params: {
+      harmonicity: 2,
+      modulationIndex: 3,
+      carrierType: 'sine',
+      modulatorType: 'triangle',
+      amplitudeEnvelope: {
+        attack: 0.4,
+        decay: 0.5,
+        sustain: 0.7,
+        release: 1.5,
+      },
+      modulationEnvelopeAmount: 0.3,
+      effects: {
+        ...DEFAULT_EFFECTS,
+        chorus: { rate: 1, depth: 0.6, mix: 0.4 },
+        reverb: { decay: 4, mix: 0.5 },
+      },
+      volume: -14,
+      // Slow LFO for gentle movement
+      lfo: {
+        rate: 0.3,
+        depth: 0.2,
+        waveform: 'sine',
+        destination: 'harmonicity',
+      },
+      noise: { type: 'white', level: 0.05 },
+      // Long glide time for smooth transitions
+      glide: { enabled: true, time: 0.5 },
+      velocity: { ampAmount: 0.2, modIndexAmount: 0.1 },
+      arpeggiator: { ...DEFAULT_ARPEGGIATOR },
+      modMatrix: {
+        routes: [
+          { source: 'lfo', destination: 'harmonicity', amount: 0.2, enabled: true },
+          { source: 'lfo', destination: 'pan', amount: 0.3, enabled: true },
+          { source: 'modEnvelope', destination: 'modulationIndex', amount: 0, enabled: false },
+          { source: 'velocity', destination: 'amplitude', amount: 0.2, enabled: true },
+        ],
+      },
+      pan: 0,
     },
   },
 ];
