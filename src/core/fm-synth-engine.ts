@@ -13,6 +13,9 @@ import type {
   DelayParams,
   ReverbParams,
   ChorusParams,
+  FMLFOParams,
+  FMLFODestination,
+  LFOWaveform,
 } from './types.ts';
 import {
   DEFAULT_FM_SYNTH_PARAMS,
@@ -46,6 +49,12 @@ export class FMSynthEngine {
 
   // Effects chain
   private effectsChain: EffectsChain;
+
+  // LFO for FM-specific modulation
+  private lfo: Tone.LFO;
+  private lfoGain: Tone.Gain;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private lfoDestinationNode: Tone.Signal<any> | null = null;
 
   constructor(initialParams: Partial<FMSynthParams> = {}) {
     // Merge defaults with initial params
@@ -126,10 +135,50 @@ export class FMSynthEngine {
     this.analyser = Tone.getContext().createAnalyser();
     this.configureAnalyser(DEFAULT_ANALYSER_CONFIG);
 
+    // Create LFO for FM-specific modulation
+    this.lfo = new Tone.LFO({
+      frequency: this.params.lfo.rate,
+      min: -1,
+      max: 1,
+      type: this.params.lfo.waveform as Tone.ToneOscillatorType,
+    });
+    this.lfoGain = new Tone.Gain(this.params.lfo.depth);
+    this.lfo.connect(this.lfoGain);
+
+    // Connect LFO to initial destination
+    this.connectLFOToDestination(this.params.lfo.destination);
+
     // Wire: synth -> effectsChain -> analyser -> destination
     this.synth.connect(this.effectsChain.input);
     this.effectsChain.connect(this.analyser);
     Tone.connect(this.analyser, Tone.getDestination());
+  }
+
+  /**
+   * Connects LFO to the specified destination parameter
+   */
+  private connectLFOToDestination(destination: FMLFODestination): void {
+    // Disconnect from previous destination
+    if (this.lfoDestinationNode) {
+      this.lfoGain.disconnect(this.lfoDestinationNode);
+    }
+
+    // Connect to new destination
+    switch (destination) {
+      case 'modulationIndex':
+        this.lfoDestinationNode = this.synth.modulationIndex;
+        break;
+      case 'harmonicity':
+        this.lfoDestinationNode = this.synth.harmonicity;
+        break;
+      case 'pitch':
+        this.lfoDestinationNode = this.synth.detune;
+        break;
+    }
+
+    if (this.lfoDestinationNode) {
+      this.lfoGain.connect(this.lfoDestinationNode);
+    }
   }
 
   /**
@@ -149,6 +198,7 @@ export class FMSynthEngine {
   async start(): Promise<void> {
     if (!this.isInitialized) {
       await Tone.start();
+      this.lfo.start();
       this.isInitialized = true;
     }
   }
@@ -173,6 +223,7 @@ export class FMSynthEngine {
         reverb: { ...this.params.effects.reverb },
         chorus: { ...this.params.effects.chorus },
       },
+      lfo: { ...this.params.lfo },
     };
   }
 
@@ -311,6 +362,52 @@ export class FMSynthEngine {
   }
 
   // ============================================
+  // LFO Controls
+  // ============================================
+
+  /**
+   * Sets the LFO rate in Hz
+   */
+  setLFORate(rate: number): void {
+    this.params.lfo.rate = rate;
+    this.lfo.frequency.value = rate;
+  }
+
+  /**
+   * Sets the LFO depth/amount (0-1)
+   */
+  setLFODepth(depth: number): void {
+    this.params.lfo.depth = depth;
+    this.lfoGain.gain.value = depth;
+  }
+
+  /**
+   * Sets the LFO waveform shape
+   */
+  setLFOWaveform(waveform: LFOWaveform): void {
+    this.params.lfo.waveform = waveform;
+    this.lfo.type = waveform as Tone.ToneOscillatorType;
+  }
+
+  /**
+   * Sets the LFO modulation destination
+   */
+  setLFODestination(destination: FMLFODestination): void {
+    this.params.lfo.destination = destination;
+    this.connectLFOToDestination(destination);
+  }
+
+  /**
+   * Sets all LFO parameters at once
+   */
+  setLFO(params: Partial<FMLFOParams>): void {
+    if (params.rate !== undefined) this.setLFORate(params.rate);
+    if (params.depth !== undefined) this.setLFODepth(params.depth);
+    if (params.waveform !== undefined) this.setLFOWaveform(params.waveform);
+    if (params.destination !== undefined) this.setLFODestination(params.destination);
+  }
+
+  // ============================================
   // Effects Controls (delegated to EffectsChain)
   // ============================================
 
@@ -411,6 +508,9 @@ export class FMSynthEngine {
     if (params.volume !== undefined) {
       this.setVolume(params.volume);
     }
+    if (params.lfo) {
+      this.setLFO(params.lfo);
+    }
   }
 
   // ============================================
@@ -421,6 +521,9 @@ export class FMSynthEngine {
    * Disposes of the synth and releases resources
    */
   dispose(): void {
+    this.lfo.stop();
+    this.lfo.dispose();
+    this.lfoGain.dispose();
     this.effectsChain.dispose();
     this.synth.dispose();
   }
