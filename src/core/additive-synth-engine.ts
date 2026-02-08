@@ -13,6 +13,9 @@ import type {
   DelayParams,
   ReverbParams,
   ChorusParams,
+  AdditiveLFOParams,
+  AdditiveLFODestination,
+  LFOWaveform,
 } from './types.ts';
 import {
   DEFAULT_ADDITIVE_SYNTH_PARAMS,
@@ -54,6 +57,10 @@ export class AdditiveSynthEngine {
   private isInitialized = false;
   private currentFrequency = 440; // Default to A4
 
+  // LFO for modulation
+  private lfo: Tone.LFO;
+  private lfoGain: Tone.Gain;
+
   // Effects chain
   private effectsChain: EffectsChain;
 
@@ -90,6 +97,10 @@ export class AdditiveSynthEngine {
           ...DEFAULT_ADDITIVE_SYNTH_PARAMS.effects.chorus,
           ...initialParams.effects?.chorus,
         },
+      },
+      lfo: {
+        ...DEFAULT_ADDITIVE_SYNTH_PARAMS.lfo,
+        ...initialParams.lfo,
       },
     };
 
@@ -131,6 +142,19 @@ export class AdditiveSynthEngine {
     for (const gain of this.harmonicGains) {
       gain.connect(this.sumGain);
     }
+
+    // Create LFO for modulation
+    this.lfo = new Tone.LFO({
+      frequency: this.params.lfo.rate,
+      min: -1,
+      max: 1,
+      type: this.params.lfo.waveform as Tone.ToneOscillatorType,
+    });
+    this.lfoGain = new Tone.Gain(this.params.lfo.depth);
+    this.lfo.connect(this.lfoGain);
+
+    // Connect LFO to initial destination
+    this.connectLFOToDestination(this.params.lfo.destination);
 
     // Create amplitude envelope
     this.envelope = new Tone.AmplitudeEnvelope({
@@ -174,6 +198,32 @@ export class AdditiveSynthEngine {
   }
 
   /**
+   * Connects the LFO to its destination
+   */
+  private connectLFOToDestination(destination: AdditiveLFODestination): void {
+    // Disconnect from all previous destinations
+    this.lfoGain.disconnect();
+
+    switch (destination) {
+      case 'brightness':
+        // Modulate harmonics 5-16 (indices 4-15) - high harmonics control brightness
+        for (let i = 4; i < NUM_HARMONICS; i++) {
+          const gain = this.harmonicGains[i];
+          if (gain) {
+            this.lfoGain.connect(gain.gain);
+          }
+        }
+        break;
+      case 'pitch':
+        // Modulate frequency of all oscillators
+        for (const osc of this.oscillators) {
+          this.lfoGain.connect(osc.frequency);
+        }
+        break;
+    }
+  }
+
+  /**
    * Ensures the audio context is started and starts all oscillators
    */
   async start(): Promise<void> {
@@ -183,6 +233,8 @@ export class AdditiveSynthEngine {
       for (const osc of this.oscillators) {
         osc.start();
       }
+      // Start LFO
+      this.lfo.start();
       this.isInitialized = true;
     }
   }
@@ -208,6 +260,7 @@ export class AdditiveSynthEngine {
         reverb: { ...this.params.effects.reverb },
         chorus: { ...this.params.effects.chorus },
       },
+      lfo: { ...this.params.lfo },
     };
   }
 
@@ -352,6 +405,52 @@ export class AdditiveSynthEngine {
   }
 
   // ============================================
+  // LFO Controls
+  // ============================================
+
+  /**
+   * Sets the LFO rate in Hz
+   */
+  setLFORate(rate: number): void {
+    this.params.lfo.rate = rate;
+    this.lfo.frequency.value = rate;
+  }
+
+  /**
+   * Sets the LFO depth/amount
+   */
+  setLFODepth(depth: number): void {
+    this.params.lfo.depth = depth;
+    this.lfoGain.gain.value = depth;
+  }
+
+  /**
+   * Sets the LFO waveform
+   */
+  setLFOWaveform(waveform: LFOWaveform): void {
+    this.params.lfo.waveform = waveform;
+    this.lfo.type = waveform as Tone.ToneOscillatorType;
+  }
+
+  /**
+   * Sets the LFO destination
+   */
+  setLFODestination(destination: AdditiveLFODestination): void {
+    this.params.lfo.destination = destination;
+    this.connectLFOToDestination(destination);
+  }
+
+  /**
+   * Sets multiple LFO parameters at once
+   */
+  setLFO(params: Partial<AdditiveLFOParams>): void {
+    if (params.rate !== undefined) this.setLFORate(params.rate);
+    if (params.depth !== undefined) this.setLFODepth(params.depth);
+    if (params.waveform !== undefined) this.setLFOWaveform(params.waveform);
+    if (params.destination !== undefined) this.setLFODestination(params.destination);
+  }
+
+  // ============================================
   // Effects Controls (delegated to EffectsChain)
   // ============================================
 
@@ -466,6 +565,9 @@ export class AdditiveSynthEngine {
     if (params.volume !== undefined) {
       this.setVolume(params.volume);
     }
+    if (params.lfo) {
+      this.setLFO(params.lfo);
+    }
   }
 
   // ============================================
@@ -487,6 +589,10 @@ export class AdditiveSynthEngine {
     }
     // Dispose sum gain
     this.sumGain.dispose();
+    // Stop and dispose LFO
+    this.lfo.stop();
+    this.lfo.dispose();
+    this.lfoGain.dispose();
     // Dispose envelope
     this.envelope.dispose();
     // Dispose effects chain
