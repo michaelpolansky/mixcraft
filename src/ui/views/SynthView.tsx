@@ -886,6 +886,9 @@ export function SynthView() {
                   onChange={setVolume}
                   formatValue={formatDb}
                   paramId="volume"
+                  modulatedValue={modulatedValues?.amplitude !== undefined
+                    ? 20 * Math.log10(Math.max(0.0001, modulatedValues.amplitude))
+                    : undefined}
                 />
                 <Knob
                   label="Pan"
