@@ -27,6 +27,7 @@ import { allMixingChallenges, mixingModules, getMixingChallenge, getNextMixingCh
 import { allProductionChallenges, productionModules, getProductionChallenge, getNextProductionChallenge } from './data/challenges/production/index.ts';
 import { useIsMobile } from './ui/hooks/useMediaQuery.ts';
 import { BackButton, CardButton } from './ui/components/Button.tsx';
+import { ToastProvider } from './ui/components/Toast.tsx';
 import type { MixingChallenge, ProductionChallenge, SamplingChallenge, DrumSequencingChallenge } from './core/types.ts';
 
 // Loading fallback for lazy-loaded views
@@ -64,7 +65,7 @@ function LoadingFallback() {
 
 type View = 'menu' | 'sandbox' | 'fm-sandbox' | 'additive-sandbox' | 'sampler' | 'drum-sequencer' | 'challenge' | 'mixing-challenge' | 'production-challenge' | 'sampling-challenge' | 'drum-sequencer-challenge';
 
-export function App() {
+function AppContent() {
   const [view, setView] = useState<View>('menu');
   const { initEngine, startAudio, isInitialized } = useSynthStore();
   const { loadChallenge, currentChallenge, exitChallenge, getChallengeProgress, getTotalProgress, getModuleProgress } = useChallengeStore();
@@ -3936,5 +3937,16 @@ export function App() {
         </div>
       </div>
     </div>
+  );
+}
+
+/**
+ * App wrapper with global providers
+ */
+export function App() {
+  return (
+    <ToastProvider>
+      <AppContent />
+    </ToastProvider>
   );
 }

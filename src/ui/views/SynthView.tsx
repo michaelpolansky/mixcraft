@@ -31,6 +31,7 @@ import type { LFOSyncDivision, LFOWaveform, NoiseType, OscillatorType, ModSource
 import { SUBTRACTIVE_PRESETS } from '../../data/presets/subtractive-presets.ts';
 import { InfoPanelProvider, useInfoPanel } from '../context/InfoPanelContext.tsx';
 import { PARAM_RANGES } from '../../core/types.ts';
+import { useToast } from '../components/Toast.tsx';
 
 // Stage colors following signal flow
 const COLORS = {
@@ -177,6 +178,15 @@ export function SynthView() {
     await startAudio();
   }, [startAudio]);
 
+  // Toast notifications
+  const { toast } = useToast();
+
+  // Handle preset loading with toast feedback
+  const handleLoadPreset = useCallback((presetName: string) => {
+    loadPreset(presetName);
+    toast.success(`Loaded preset: ${presetName}`);
+  }, [loadPreset, toast]);
+
   // Format helpers
   const formatHz = (value: number) => value >= 1000 ? `${(value / 1000).toFixed(1)}k` : `${Math.round(value)}`;
   const formatMs = (value: number) => value >= 1 ? `${value.toFixed(2)}s` : `${Math.round(value * 1000)}ms`;
@@ -281,7 +291,7 @@ export function SynthView() {
             <PresetDropdown
               presets={SUBTRACTIVE_PRESETS}
               currentPreset={currentPreset}
-              onSelect={loadPreset}
+              onSelect={handleLoadPreset}
               accentColor="#4ade80"
             />
             <button
