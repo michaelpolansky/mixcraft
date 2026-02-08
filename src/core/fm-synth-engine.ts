@@ -16,6 +16,16 @@ import type {
   FMLFOParams,
   FMLFODestination,
   LFOWaveform,
+  NoiseType,
+  NoiseParams,
+  GlideParams,
+  FMVelocityParams,
+  ArpPattern,
+  ArpDivision,
+  ArpeggiatorParams,
+  FMModRoute,
+  FMModMatrix,
+  FMModDestination,
 } from './types.ts';
 import {
   DEFAULT_FM_SYNTH_PARAMS,
@@ -55,6 +65,23 @@ export class FMSynthEngine {
   private lfoGain: Tone.Gain;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private lfoDestinationNode: Tone.Signal<any> | null = null;
+
+  // Noise generator
+  private noise: Tone.Noise;
+  private noiseGain: Tone.Gain;
+  private noiseFilter: Tone.Filter;
+
+  // Panner for stereo positioning
+  private panner: Tone.Panner;
+
+  // Velocity tracking
+  private currentVelocity = 1;
+  private baseModulationIndex: number;
+
+  // Arpeggiator state
+  private arpSequence: Tone.Sequence<string> | null = null;
+  private heldNotes: string[] = [];
+  private arpNotes: string[] = [];
 
   constructor(initialParams: Partial<FMSynthParams> = {}) {
     // Merge defaults with initial params
@@ -148,9 +175,30 @@ export class FMSynthEngine {
     // Connect LFO to initial destination
     this.connectLFOToDestination(this.params.lfo.destination);
 
-    // Wire: synth -> effectsChain -> analyser -> destination
+    // Create noise generator with filter for shaping
+    this.noiseFilter = new Tone.Filter({
+      frequency: 5000,
+      type: 'lowpass',
+    });
+    this.noiseGain = new Tone.Gain(this.params.noise.level);
+    this.noise = new Tone.Noise(this.params.noise.type);
+    this.noise.connect(this.noiseFilter);
+    this.noiseFilter.connect(this.noiseGain);
+
+    // Create panner for stereo positioning
+    this.panner = new Tone.Panner(this.params.pan);
+
+    // Set up glide/portamento
+    this.synth.portamento = this.params.glide.enabled ? this.params.glide.time : 0;
+
+    // Store base modulation index for velocity scaling
+    this.baseModulationIndex = this.params.modulationIndex;
+
+    // Wire: synth + noise -> effectsChain -> panner -> analyser -> destination
     this.synth.connect(this.effectsChain.input);
-    this.effectsChain.connect(this.analyser);
+    this.noiseGain.connect(this.effectsChain.input);
+    this.effectsChain.connect(this.panner);
+    Tone.connect(this.panner, this.analyser);
     Tone.connect(this.analyser, Tone.getDestination());
   }
 
@@ -199,6 +247,7 @@ export class FMSynthEngine {
     if (!this.isInitialized) {
       await Tone.start();
       this.lfo.start();
+      this.noise.start();
       this.isInitialized = true;
     }
   }
@@ -224,6 +273,13 @@ export class FMSynthEngine {
         chorus: { ...this.params.effects.chorus },
       },
       lfo: { ...this.params.lfo },
+      noise: { ...this.params.noise },
+      glide: { ...this.params.glide },
+      velocity: { ...this.params.velocity },
+      arpeggiator: { ...this.params.arpeggiator },
+      modMatrix: {
+        routes: this.params.modMatrix.routes.map(route => ({ ...route })) as [FMModRoute, FMModRoute, FMModRoute, FMModRoute],
+      },
     };
   }
 
@@ -291,6 +347,7 @@ export class FMSynthEngine {
       FM_PARAM_RANGES.modulationIndex.max
     );
     this.params.modulationIndex = clamped;
+    this.baseModulationIndex = clamped;
     this.synth.modulationIndex.value = clamped;
   }
 
@@ -408,6 +465,165 @@ export class FMSynthEngine {
   }
 
   // ============================================
+  // Noise Controls
+  // ============================================
+
+  /**
+   * Sets the noise generator type (white, pink, brown)
+   */
+  setNoiseType(type: NoiseType): void {
+    this.params.noise.type = type;
+    this.noise.type = type;
+  }
+
+  /**
+   * Sets the noise level (0-1)
+   */
+  setNoiseLevel(level: number): void {
+    this.params.noise.level = level;
+    this.noiseGain.gain.value = level;
+  }
+
+  /**
+   * Sets all noise parameters at once
+   */
+  setNoise(params: Partial<NoiseParams>): void {
+    if (params.type !== undefined) this.setNoiseType(params.type);
+    if (params.level !== undefined) this.setNoiseLevel(params.level);
+  }
+
+  // ============================================
+  // Glide/Portamento Controls
+  // ============================================
+
+  /**
+   * Enables or disables glide/portamento
+   */
+  setGlideEnabled(enabled: boolean): void {
+    this.params.glide.enabled = enabled;
+    this.synth.portamento = enabled ? this.params.glide.time : 0;
+  }
+
+  /**
+   * Sets the glide time in seconds
+   */
+  setGlideTime(time: number): void {
+    this.params.glide.time = time;
+    if (this.params.glide.enabled) {
+      this.synth.portamento = time;
+    }
+  }
+
+  /**
+   * Sets all glide parameters at once
+   */
+  setGlide(params: Partial<GlideParams>): void {
+    if (params.enabled !== undefined) this.setGlideEnabled(params.enabled);
+    if (params.time !== undefined) this.setGlideTime(params.time);
+  }
+
+  // ============================================
+  // Pan Control
+  // ============================================
+
+  /**
+   * Sets the pan position (-1 to +1, 0 = center)
+   */
+  setPan(pan: number): void {
+    this.params.pan = pan;
+    this.panner.pan.value = pan;
+  }
+
+  // ============================================
+  // Velocity Controls
+  // ============================================
+
+  /**
+   * Sets how much velocity affects amplitude (0 to 1)
+   * At 0, all notes play at full volume regardless of velocity
+   * At 1, soft notes (low velocity) are much quieter
+   */
+  setVelocityAmpAmount(amount: number): void {
+    this.params.velocity.ampAmount = clamp(amount, 0, 1);
+  }
+
+  /**
+   * Sets how much velocity affects modulation index (0 to 1)
+   * At 0, modulation index is constant regardless of velocity
+   * At 1, soft notes have less modulation (darker timbre)
+   */
+  setVelocityModIndexAmount(amount: number): void {
+    this.params.velocity.modIndexAmount = clamp(amount, 0, 1);
+  }
+
+  /**
+   * Sets all velocity parameters at once
+   */
+  setVelocity(params: Partial<FMVelocityParams>): void {
+    if (params.ampAmount !== undefined) this.setVelocityAmpAmount(params.ampAmount);
+    if (params.modIndexAmount !== undefined) this.setVelocityModIndexAmount(params.modIndexAmount);
+  }
+
+  // ============================================
+  // Mod Matrix Controls
+  // ============================================
+
+  /**
+   * Gets the current modulated values for real-time display
+   * Returns the current values of all mod destinations
+   */
+  getModulatedValues(): Record<FMModDestination, number> {
+    return {
+      modulationIndex: this.synth.modulationIndex.value,
+      harmonicity: this.synth.harmonicity.value,
+      pitch: this.synth.detune.value,
+      pan: this.panner.pan.value,
+      amplitude: 1, // Base amplitude (actual amplitude depends on velocity)
+    };
+  }
+
+  /**
+   * Sets a single modulation route
+   * @param index - Route index (0-3)
+   * @param route - Partial route parameters to update
+   */
+  setModRoute(index: number, route: Partial<FMModRoute>): void {
+    if (index < 0 || index > 3) return;
+
+    const currentRoute = this.params.modMatrix.routes[index];
+    // Spread current route with partial updates - type assertion needed since
+    // TypeScript can't verify that spreading Partial onto a complete object
+    // produces a complete object
+    this.params.modMatrix.routes[index] = {
+      ...currentRoute,
+      ...route,
+    } as FMModRoute;
+  }
+
+  /**
+   * Sets the entire modulation matrix
+   * @param params - Partial mod matrix parameters to update
+   *
+   * Note: The mod matrix provides additional flexibility beyond the existing
+   * LFO destination system. The core modulation is handled by:
+   * - LFO with destination selector (modulationIndex, harmonicity, pitch)
+   * - Mod envelope affecting modulation index
+   * - Velocity affecting amplitude and mod index
+   *
+   * The mod matrix allows for more complex routing combinations.
+   */
+  setModMatrix(params: Partial<FMModMatrix>): void {
+    if (params.routes) {
+      for (let i = 0; i < 4; i++) {
+        const route = params.routes[i];
+        if (route) {
+          this.setModRoute(i, route);
+        }
+      }
+    }
+  }
+
+  // ============================================
   // Effects Controls (delegated to EffectsChain)
   // ============================================
 
@@ -438,12 +654,25 @@ export class FMSynthEngine {
   /**
    * Triggers a note with the current envelope settings
    * @param note - Note name (e.g., 'C4', 'A3') or frequency in Hz
+   * @param velocity - Note velocity (0-1), affects amplitude and modulation index based on velocity settings
    */
-  triggerAttack(note: string | number): void {
+  triggerAttack(note: string | number, velocity = 1): void {
+    this.currentVelocity = velocity;
+
+    // Apply velocity to amplitude
+    const ampScale = 1 - this.params.velocity.ampAmount * (1 - velocity);
+
+    // Apply velocity to modulation index
+    const modIndexScale = 1 - this.params.velocity.modIndexAmount * (1 - velocity);
+    const scaledModIndex = this.baseModulationIndex * modIndexScale;
+    this.synth.modulationIndex.value = scaledModIndex;
+
     const frequency = typeof note === 'number'
       ? note
       : Tone.Frequency(note).toFrequency();
-    this.synth.triggerAttack(frequency);
+
+    // Trigger with velocity-scaled amplitude
+    this.synth.triggerAttack(frequency, Tone.now(), ampScale);
   }
 
   /**
@@ -457,12 +686,24 @@ export class FMSynthEngine {
    * Triggers a note for a specific duration
    * @param note - Note name or frequency
    * @param duration - Duration in seconds or Tone.js time notation
+   * @param velocity - Note velocity (0-1), affects amplitude and modulation index based on velocity settings
    */
-  triggerAttackRelease(note: string | number, duration: number | string = '8n'): void {
+  triggerAttackRelease(note: string | number, duration: number | string = '8n', velocity = 1): void {
+    this.currentVelocity = velocity;
+
+    // Apply velocity to amplitude
+    const ampScale = 1 - this.params.velocity.ampAmount * (1 - velocity);
+
+    // Apply velocity to modulation index
+    const modIndexScale = 1 - this.params.velocity.modIndexAmount * (1 - velocity);
+    const scaledModIndex = this.baseModulationIndex * modIndexScale;
+    this.synth.modulationIndex.value = scaledModIndex;
+
     const frequency = typeof note === 'number'
       ? note
       : Tone.Frequency(note).toFrequency();
-    this.synth.triggerAttackRelease(frequency, duration);
+
+    this.synth.triggerAttackRelease(frequency, duration, Tone.now(), ampScale);
   }
 
   // ============================================
@@ -511,6 +752,21 @@ export class FMSynthEngine {
     if (params.lfo) {
       this.setLFO(params.lfo);
     }
+    if (params.noise) {
+      this.setNoise(params.noise);
+    }
+    if (params.glide) {
+      this.setGlide(params.glide);
+    }
+    if (params.pan !== undefined) {
+      this.setPan(params.pan);
+    }
+    if (params.velocity) {
+      this.setVelocity(params.velocity);
+    }
+    if (params.modMatrix) {
+      this.setModMatrix(params.modMatrix);
+    }
   }
 
   // ============================================
@@ -524,6 +780,11 @@ export class FMSynthEngine {
     this.lfo.stop();
     this.lfo.dispose();
     this.lfoGain.dispose();
+    this.noise.stop();
+    this.noise.dispose();
+    this.noiseGain.dispose();
+    this.noiseFilter.dispose();
+    this.panner.dispose();
     this.effectsChain.dispose();
     this.synth.dispose();
   }
