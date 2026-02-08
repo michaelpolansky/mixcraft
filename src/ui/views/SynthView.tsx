@@ -692,7 +692,7 @@ export function SynthView() {
               compact
             />
             <div style={{ marginTop: SIZES.margin.section }}>
-              <LFOWaveformSelector value={params.lfo.waveform} onChange={setLFOWaveform} />
+              <WaveformSelector value={params.lfo.waveform} onChange={setLFOWaveform} accentColor={COLORS.lfo} />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm, marginTop: SIZES.margin.section }}>
               {/* Show Rate knob when not synced, Division selector when synced */}
@@ -744,38 +744,44 @@ export function SynthView() {
 
           {/* LFO 2 Stage */}
           <StageCard title="LFO 2" color={COLORS.lfo2}>
+            <LFOVisualizer
+              waveform={params.lfo2.type}
+              rate={params.lfo2.rate}
+              depth={params.lfo2.enabled ? params.lfo2.depth : 0}
+              width={SIZES.visualizer.width}
+              height={SIZES.visualizer.height}
+              accentColor={COLORS.lfo2}
+              compact
+            />
+            <div style={{ marginTop: SIZES.margin.section }}>
+              <WaveformSelector
+                value={params.lfo2.type}
+                onChange={(waveform: LFOWaveform) => setLfo2Type(waveform)}
+                accentColor={COLORS.lfo2}
+              />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm, marginTop: SIZES.margin.section }}>
+              <Knob label="Rate" value={params.lfo2.rate} min={0.1} max={20} step={0.1} onChange={setLfo2Rate} formatValue={(v) => `${v.toFixed(1)} Hz`} paramId="lfo2.rate" modulatedValue={modulatedValues?.lfo2Rate} />
+              <Knob label="Depth" value={params.lfo2.depth} min={0} max={1} step={0.01} onChange={setLfo2Depth} formatValue={formatPercent} paramId="lfo2.depth" />
+            </div>
             {/* Enable toggle */}
-            <button
-              onClick={() => setLfo2Enabled(!params.lfo2.enabled)}
-              style={{
-                padding: '6px 16px',
-                width: '100%',
-                background: params.lfo2.enabled ? COLORS.lfo2 : '#222',
-                border: `1px solid ${params.lfo2.enabled ? COLORS.lfo2 : '#444'}`,
-                borderRadius: '4px',
-                color: params.lfo2.enabled ? '#fff' : '#888',
-                fontSize: '11px',
-                cursor: 'pointer',
-                fontWeight: 600,
-              }}
-            >
-              {params.lfo2.enabled ? 'ON' : 'OFF'}
-            </button>
-
-            {params.lfo2.enabled && (
-              <>
-                <div style={{ marginTop: SIZES.margin.section }}>
-                  <LFOWaveformSelector
-                    value={params.lfo2.type}
-                    onChange={(waveform: LFOWaveform) => setLfo2Type(waveform)}
-                  />
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm, marginTop: SIZES.margin.section }}>
-                  <Knob label="Rate" value={params.lfo2.rate} min={0.1} max={20} step={0.1} onChange={setLfo2Rate} formatValue={(v) => `${v.toFixed(1)} Hz`} paramId="lfo2.rate" modulatedValue={modulatedValues?.lfo2Rate} />
-                  <Knob label="Depth" value={params.lfo2.depth} min={0} max={1} step={0.01} onChange={setLfo2Depth} formatValue={formatPercent} paramId="lfo2.depth" />
-                </div>
-              </>
-            )}
+            <div style={{ marginTop: SIZES.margin.section, display: 'flex', justifyContent: 'center' }}>
+              <button
+                onClick={() => setLfo2Enabled(!params.lfo2.enabled)}
+                style={{
+                  padding: '4px 12px',
+                  background: params.lfo2.enabled ? COLORS.lfo2 : '#222',
+                  border: `1px solid ${params.lfo2.enabled ? COLORS.lfo2 : '#444'}`,
+                  borderRadius: '4px',
+                  color: params.lfo2.enabled ? '#fff' : '#888',
+                  fontSize: '10px',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                }}
+              >
+                {params.lfo2.enabled ? 'ON' : 'OFF'}
+              </button>
+            </div>
           </StageCard>
 
           {/* VELOCITY Stage */}
