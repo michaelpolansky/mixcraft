@@ -56,3 +56,7 @@ export { EffectMini } from './EffectMini.tsx';
 export type { EffectMiniProps, EffectKnobConfig } from './EffectMini.tsx';
 export { ToggleButton } from './ToggleButton.tsx';
 export type { ToggleButtonProps } from './ToggleButton.tsx';
+export { AudioInitScreen } from './AudioInitScreen.tsx';
+export type { AudioInitScreenProps } from './AudioInitScreen.tsx';
+export { SynthHeader } from './SynthHeader.tsx';
+export type { SynthHeaderProps } from './SynthHeader.tsx';
