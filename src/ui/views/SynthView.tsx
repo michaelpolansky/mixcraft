@@ -8,14 +8,11 @@ import { useSynthStore } from '../stores/synth-store.ts';
 import { useModulatedValues } from '../hooks/useModulatedValues.ts';
 import {
   Knob,
-  Slider,
   WaveformSelector,
   FilterTypeSelector,
-  LFOWaveformSelector,
   SpectrumAnalyzer,
   PianoKeyboard,
   InfoPanel,
-  PresetDropdown,
   Sequencer,
   RecordingControl,
   OscillatorVisualizer,
@@ -28,6 +25,12 @@ import {
   Tooltip,
   ModMatrixGrid,
   ArpeggiatorControls,
+  StageCard,
+  EffectMini,
+  AudioInitScreen,
+  SynthHeader,
+  GlideControls,
+  VelocityControls,
 } from '../components/index.ts';
 import type { LFOSyncDivision, LFOWaveform, NoiseType, OscillatorType, ModSource, ModDestination } from '../../core/types.ts';
 import { SUBTRACTIVE_PRESETS } from '../../data/presets/subtractive-presets.ts';
@@ -248,62 +251,14 @@ export function SynthView() {
   // Not initialized - show start button
   if (!isInitialized) {
     return (
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '100vh',
-        background: '#0a0a0f',
-        color: '#fff',
-        fontFamily: 'system-ui, -apple-system, sans-serif',
-      }}>
-        <h1 style={{ fontSize: '32px', fontWeight: 300, marginBottom: '8px', color: '#4ade80' }}>
-          MIXCRAFT
-        </h1>
-        <p style={{ color: '#666', marginBottom: '32px' }}>Subtractive Synthesizer</p>
-        <button
-          onClick={handleStartAudio}
-          disabled={isInitializing}
-          style={{
-            padding: '16px 48px',
-            fontSize: '16px',
-            background: isInitializing
-              ? 'linear-gradient(145deg, #166534, #14532d)'
-              : 'linear-gradient(145deg, #22c55e, #16a34a)',
-            border: 'none',
-            borderRadius: '8px',
-            color: '#fff',
-            cursor: isInitializing ? 'wait' : 'pointer',
-            fontWeight: 600,
-            boxShadow: isInitializing
-              ? '0 4px 12px rgba(34, 197, 94, 0.15)'
-              : '0 4px 12px rgba(34, 197, 94, 0.3)',
-            opacity: isInitializing ? 0.8 : 1,
-            transition: 'all 0.2s ease',
-          }}
-        >
-          {isInitializing ? 'Starting Audio...' : 'Start Audio Engine'}
-        </button>
-        <p style={{ color: '#444', fontSize: '12px', marginTop: '16px' }}>
-          Click to enable audio (browser requirement)
-        </p>
-        {initError && (
-          <div style={{
-            marginTop: '24px',
-            padding: '12px 20px',
-            background: 'rgba(239, 68, 68, 0.1)',
-            border: '1px solid rgba(239, 68, 68, 0.3)',
-            borderRadius: '8px',
-            color: '#f87171',
-            fontSize: '13px',
-            maxWidth: '400px',
-            textAlign: 'center',
-          }}>
-            {initError}
-          </div>
-        )}
-      </div>
+      <AudioInitScreen
+        title="MIXCRAFT"
+        subtitle="Subtractive Synthesizer"
+        accentColor="#4ade80"
+        isInitializing={isInitializing}
+        initError={initError}
+        onStart={handleStartAudio}
+      />
     );
   }
 
@@ -318,59 +273,17 @@ export function SynthView() {
         flexDirection: 'column',
       }}>
         {/* Header */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          padding: '16px 24px',
-          paddingLeft: '120px', // Room for fixed menu button
-          borderBottom: '1px solid #1a1a1a',
-        }}>
-          <div>
-            <h1 style={{ fontSize: '20px', fontWeight: 300, margin: 0, color: '#4ade80' }}>
-              MIXCRAFT
-            </h1>
-            <span style={{ fontSize: '11px', color: '#666' }}>Subtractive Synthesizer</span>
-          </div>
-          <div style={{ display: 'flex', gap: SIZES.gap.md, alignItems: 'center' }}>
-            <PresetDropdown
-              presets={SUBTRACTIVE_PRESETS}
-              currentPreset={currentPreset}
-              onSelect={handleLoadPreset}
-              accentColor="#4ade80"
-            />
-            <button
-              onClick={randomize}
-              style={{
-                padding: '6px 12px',
-                background: 'linear-gradient(145deg, #8b5cf6, #7c3aed)',
-                border: 'none',
-                borderRadius: '4px',
-                color: '#fff',
-                cursor: 'pointer',
-                fontSize: '11px',
-                fontWeight: 600,
-              }}
-            >
-              Randomize
-            </button>
-            <button
-              onClick={resetToDefaults}
-              style={{
-                padding: '6px 12px',
-                background: '#1a1a1a',
-                border: '1px solid #333',
-                borderRadius: '4px',
-                color: '#888',
-                cursor: 'pointer',
-                fontSize: '11px',
-              }}
-            >
-              Reset
-            </button>
-            <HelpModeButton />
-          </div>
-        </div>
+        <SynthHeader
+          title="MIXCRAFT"
+          subtitle="Subtractive Synthesizer"
+          accentColor="#4ade80"
+          presets={SUBTRACTIVE_PRESETS}
+          currentPreset={currentPreset}
+          onPresetSelect={handleLoadPreset}
+          onRandomize={randomize}
+          onReset={resetToDefaults}
+          helpButton={<HelpModeButton />}
+        />
 
         {/* Floating tooltip (shows when Help Mode is ON) */}
         <Tooltip accentColor="#4ade80" />
@@ -412,38 +325,13 @@ export function SynthView() {
               )}
             </div>
             {/* Glide controls */}
-            <div style={{ marginTop: SIZES.gap.md, paddingTop: SIZES.gap.md, borderTop: '1px solid #222' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: SIZES.gap.sm, marginBottom: SIZES.gap.sm }}>
-                <button
-                  onClick={() => setGlideEnabled(!params.glide.enabled)}
-                  style={{
-                    padding: '4px 8px',
-                    background: params.glide.enabled ? COLORS.oscillator : '#222',
-                    border: `1px solid ${params.glide.enabled ? COLORS.oscillator : '#444'}`,
-                    borderRadius: '4px',
-                    color: params.glide.enabled ? '#fff' : '#888',
-                    fontSize: '10px',
-                    cursor: 'pointer',
-                    fontWeight: 600,
-                  }}
-                >
-                  GLIDE
-                </button>
-                {params.glide.enabled && (
-                  <Knob
-                    label="Time"
-                    value={params.glide.time}
-                    min={0.01}
-                    max={1}
-                    step={0.01}
-                    onChange={setGlideTime}
-                    formatValue={(v) => `${Math.round(v * 1000)}ms`}
-                    size={32}
-                    paramId="glide.time"
-                  />
-                )}
-              </div>
-            </div>
+            <GlideControls
+              enabled={params.glide.enabled}
+              time={params.glide.time}
+              onEnabledChange={setGlideEnabled}
+              onTimeChange={setGlideTime}
+              color={COLORS.oscillator}
+            />
 
             {/* Unison controls */}
             <div style={{ marginTop: SIZES.gap.md, paddingTop: SIZES.gap.md, borderTop: '1px solid #222' }}>
@@ -895,10 +783,14 @@ export function SynthView() {
 
           {/* VELOCITY Stage */}
           <StageCard title="VELOCITY" color={COLORS.velocity}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm }}>
-              <Knob label="Amp Amount" value={params.velocity.ampAmount} min={0} max={1} step={0.01} onChange={setVelocityAmpAmount} formatValue={formatPercent} paramId="velocity.ampAmount" />
-              <Knob label="Filter Amount" value={params.velocity.filterAmount} min={0} max={1} step={0.01} onChange={setVelocityFilterAmount} formatValue={formatPercent} paramId="velocity.filterAmount" />
-            </div>
+            <VelocityControls
+              ampAmount={params.velocity.ampAmount}
+              secondaryAmount={params.velocity.filterAmount}
+              secondaryLabel="Filter"
+              onAmpAmountChange={setVelocityAmpAmount}
+              onSecondaryAmountChange={setVelocityFilterAmount}
+              color={COLORS.velocity}
+            />
           </StageCard>
 
           {/* FX Stage */}
@@ -1159,155 +1051,3 @@ function HelpModeButton() {
   );
 }
 
-// Standard module widths
-const MODULE_WIDTH = {
-  standard: 224,  // 200px visualizer + 12px padding each side
-  wide: 320,      // FX and mod matrix
-  compact: 224,   // Stacked envelope modules (same as parent)
-};
-
-// Stage card component
-function StageCard({
-  title,
-  color,
-  wide = false,
-  compact = false,
-  noBorderRadius,
-  children
-}: {
-  title: string;
-  color: string;
-  wide?: boolean;
-  compact?: boolean;
-  noBorderRadius?: 'top' | 'bottom' | 'both';
-  children: React.ReactNode;
-}) {
-  const borderRadius = noBorderRadius === 'both' ? '0' :
-    noBorderRadius === 'top' ? '0 0 8px 8px' :
-    noBorderRadius === 'bottom' ? '8px 8px 0 0' : '8px';
-
-  const width = wide ? MODULE_WIDTH.wide : MODULE_WIDTH.standard;
-
-  return (
-    <div style={{
-      background: '#111',
-      border: `1px solid ${color}40`,
-      borderRadius,
-      padding: compact ? SIZES.gap.sm : SIZES.gap.md,
-      width: `${width}px`,
-      boxSizing: 'border-box',
-      alignSelf: 'flex-start',
-    }}>
-      <div style={{
-        fontSize: '11px',
-        fontWeight: 600,
-        color: color,
-        letterSpacing: '0.5px',
-        marginBottom: compact ? '8px' : '12px',
-      }}>
-        {title}
-      </div>
-      {children}
-    </div>
-  );
-}
-
-// Stacked module - vertically connects a main module with its envelope(s)
-function StackedModule({
-  children
-}: {
-  children: React.ReactNode;
-}) {
-  return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '0px', // No gap - cards connect visually
-      alignSelf: 'flex-start',
-    }}>
-      {children}
-    </div>
-  );
-}
-
-// Mini slider for ADSR
-function MiniSlider({
-  label,
-  value,
-  min,
-  max,
-  onChange,
-  color = COLORS.amp,
-}: {
-  label: string;
-  value: number;
-  min: number;
-  max: number;
-  onChange: (v: number) => void;
-  color?: string;
-}) {
-  const percent = ((value - min) / (max - min)) * 100;
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: SIZES.gap.xs + 2 }}>
-      <span style={{ fontSize: '10px', color: '#666', width: '12px' }}>{label}</span>
-      <div
-        style={{
-          flex: 1,
-          height: '4px',
-          background: '#222',
-          borderRadius: '2px',
-          cursor: 'pointer',
-          position: 'relative',
-        }}
-        onClick={(e) => {
-          const rect = e.currentTarget.getBoundingClientRect();
-          const x = (e.clientX - rect.left) / rect.width;
-          onChange(min + x * (max - min));
-        }}
-      >
-        <div style={{
-          position: 'absolute',
-          left: 0,
-          top: 0,
-          height: '100%',
-          width: `${percent}%`,
-          background: color,
-          borderRadius: '2px',
-        }} />
-      </div>
-    </div>
-  );
-}
-
-// Mini effect control
-function EffectMini({
-  name,
-  color,
-  knobs,
-}: {
-  name: string;
-  color: string;
-  knobs: Array<{ label: string; value: number; onChange: (v: number) => void; max: number }>;
-}) {
-  return (
-    <div style={{ overflow: 'hidden' }}>
-      <div style={{ fontSize: '9px', color, marginBottom: SIZES.gap.xs, fontWeight: 600 }}>{name}</div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.xs }}>
-        {knobs.map((k) => (
-          <Knob
-            key={k.label}
-            label={k.label}
-            value={k.value}
-            min={0}
-            max={k.max}
-            step={0.01}
-            onChange={k.onChange}
-            formatValue={(v) => `${Math.round((v / k.max) * 100)}%`}
-            size={32}
-            paramId={`effect.${name.toLowerCase()}.${k.label.toLowerCase()}`}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}

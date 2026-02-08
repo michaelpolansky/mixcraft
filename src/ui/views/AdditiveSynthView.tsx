@@ -25,6 +25,8 @@ import {
   EffectMini,
   AudioInitScreen,
   SynthHeader,
+  GlideControls,
+  VelocityControls,
 } from '../components/index.ts';
 import { ADDITIVE_PRESETS } from '../../data/presets/additive-presets.ts';
 import { InfoPanelProvider } from '../context/InfoPanelContext.tsx';
@@ -272,38 +274,13 @@ export function AdditiveSynthView() {
             </div>
 
             {/* Glide controls */}
-            <div style={{ marginTop: SIZES.gap.md, paddingTop: SIZES.gap.md, borderTop: '1px solid #222' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: SIZES.gap.sm }}>
-                <button
-                  onClick={() => setGlideEnabled(!params.glide.enabled)}
-                  style={{
-                    padding: '4px 8px',
-                    background: params.glide.enabled ? COLORS.harmonics : '#222',
-                    border: `1px solid ${params.glide.enabled ? COLORS.harmonics : '#444'}`,
-                    borderRadius: '4px',
-                    color: params.glide.enabled ? '#fff' : '#888',
-                    fontSize: '10px',
-                    cursor: 'pointer',
-                    fontWeight: 600,
-                  }}
-                >
-                  GLIDE
-                </button>
-                {params.glide.enabled && (
-                  <Knob
-                    label="Time"
-                    value={params.glide.time}
-                    min={0.01}
-                    max={1}
-                    step={0.01}
-                    onChange={setGlideTime}
-                    formatValue={(v) => `${Math.round(v * 1000)}ms`}
-                    size={32}
-                    paramId="additive.glide.time"
-                  />
-                )}
-              </div>
-            </div>
+            <GlideControls
+              enabled={params.glide.enabled}
+              time={params.glide.time}
+              onEnabledChange={setGlideEnabled}
+              onTimeChange={setGlideTime}
+              color={COLORS.harmonics}
+            />
           </StageCard>
 
           {/* LFO Stage */}
@@ -420,28 +397,14 @@ export function AdditiveSynthView() {
 
           {/* VELOCITY Stage */}
           <StageCard title="VELOCITY" color={COLORS.velocity}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm }}>
-              <Knob
-                label="Amp Amount"
-                value={params.velocity.ampAmount}
-                min={0}
-                max={1}
-                step={0.01}
-                onChange={setVelocityAmpAmount}
-                formatValue={formatPercent}
-                paramId="additive.velocity.ampAmount"
-              />
-              <Knob
-                label="Brightness"
-                value={params.velocity.brightnessAmount}
-                min={0}
-                max={1}
-                step={0.01}
-                onChange={setVelocityBrightnessAmount}
-                formatValue={formatPercent}
-                paramId="additive.velocity.brightnessAmount"
-              />
-            </div>
+            <VelocityControls
+              ampAmount={params.velocity.ampAmount}
+              secondaryAmount={params.velocity.brightnessAmount}
+              secondaryLabel="Brightness"
+              onAmpAmountChange={setVelocityAmpAmount}
+              onSecondaryAmountChange={setVelocityBrightnessAmount}
+              color={COLORS.velocity}
+            />
           </StageCard>
 
           {/* ARP Stage */}
