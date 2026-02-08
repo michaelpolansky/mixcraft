@@ -1260,9 +1260,9 @@ function EffectMini({
   knobs: Array<{ label: string; value: number; onChange: (v: number) => void; max: number }>;
 }) {
   return (
-    <div>
-      <div style={{ fontSize: '9px', color, marginBottom: SIZES.gap.xs + 2, fontWeight: 600 }}>{name}</div>
-      <div style={{ display: 'flex', gap: SIZES.gap.xs + 2 }}>
+    <div style={{ overflow: 'hidden' }}>
+      <div style={{ fontSize: '9px', color, marginBottom: SIZES.gap.xs, fontWeight: 600 }}>{name}</div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.xs }}>
         {knobs.map((k) => (
           <Knob
             key={k.label}
