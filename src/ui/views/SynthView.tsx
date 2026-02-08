@@ -379,7 +379,7 @@ export function SynthView() {
               compact
             />
             <div style={{ marginTop: SIZES.margin.section }}>
-              <WaveformSelector value={params.oscillator.type} onChange={setOscillatorType} />
+              <WaveformSelector value={params.oscillator.type} onChange={setOscillatorType} accentColor={COLORS.oscillator} />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm, marginTop: SIZES.margin.section }}>
               <Knob label="Octave" value={params.oscillator.octave} min={-2} max={2} step={1} onChange={setOctave} formatValue={(v) => v >= 0 ? `+${v}` : `${v}`} paramId="oscillator.octave" />
@@ -491,6 +491,7 @@ export function SynthView() {
               <WaveformSelector
                 value={params.oscillator2.type}
                 onChange={(t: OscillatorType) => setOsc2Type(t)}
+                accentColor={COLORS.osc2}
               />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm, marginTop: SIZES.margin.section }}>

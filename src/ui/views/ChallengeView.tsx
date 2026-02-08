@@ -533,11 +533,11 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
                 <div style={{ display: 'flex', justifyContent: 'space-around', gap: '16px', marginTop: '16px' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                     <span style={{ fontSize: '10px', color: '#00ff88', textTransform: 'uppercase' }}>Carrier</span>
-                    <WaveformSelector value={fmParams.carrierType} onChange={setCarrierType} />
+                    <WaveformSelector value={fmParams.carrierType} onChange={setCarrierType} accentColor="#00ff88" size="compact" />
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                     <span style={{ fontSize: '10px', color: '#ff8800', textTransform: 'uppercase' }}>Modulator</span>
-                    <WaveformSelector value={fmParams.modulatorType} onChange={setModulatorType} />
+                    <WaveformSelector value={fmParams.modulatorType} onChange={setModulatorType} accentColor="#ff8800" size="compact" />
                   </div>
                 </div>
               </Section>
@@ -730,7 +730,7 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
             <>
               {/* Oscillator */}
               <Section title="Oscillator">
-            <WaveformSelector value={params.oscillator.type} onChange={setOscillatorType} />
+            <WaveformSelector value={params.oscillator.type} onChange={setOscillatorType} accentColor="#3b82f6" />
             <div style={{ display: 'flex', gap: '24px', marginTop: '16px' }}>
               <Knob
                 label="Octave"

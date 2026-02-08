@@ -229,11 +229,11 @@ export function FMSynthView() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '12px' }}>
               <div>
                 <div style={{ fontSize: '9px', color: COLORS.fm, marginBottom: '4px', fontWeight: 600 }}>CARRIER</div>
-                <WaveformSelector value={params.carrierType} onChange={setCarrierType} />
+                <WaveformSelector value={params.carrierType} onChange={setCarrierType} accentColor={COLORS.fm} size="compact" />
               </div>
               <div>
                 <div style={{ fontSize: '9px', color: '#666', marginBottom: '4px', fontWeight: 600 }}>MODULATOR</div>
-                <WaveformSelector value={params.modulatorType} onChange={setModulatorType} />
+                <WaveformSelector value={params.modulatorType} onChange={setModulatorType} accentColor={COLORS.fm} size="compact" />
               </div>
             </div>
 

@@ -1,15 +1,29 @@
 /**
- * Waveform type selector with visual icons
+ * Unified Waveform Selector Component
+ *
+ * Visual waveform type selector with customizable accent color and size.
+ * Used for oscillators, LFOs, and FM carrier/modulator selection.
  */
 
-import type { OscillatorType } from '../../core/types.ts';
+import type { OscillatorType, LFOWaveform } from '../../core/types.ts';
+import { COLORS, RADIUS, TRANSITIONS } from '../theme/index.ts';
 
-interface WaveformSelectorProps {
-  value: OscillatorType;
-  onChange: (type: OscillatorType) => void;
+// Waveform can be either oscillator or LFO type
+type WaveformType = OscillatorType | LFOWaveform;
+
+interface WaveformSelectorProps<T extends WaveformType> {
+  value: T;
+  onChange: (type: T) => void;
+  /** Accent color for selected state */
+  accentColor?: string;
+  /** Size variant */
+  size?: 'compact' | 'normal' | 'large';
+  /** Layout direction */
+  direction?: 'row' | 'column';
 }
 
-const WAVEFORMS: { type: OscillatorType; label: string; path: string }[] = [
+// Shared waveform definitions
+const WAVEFORMS: { type: WaveformType; label: string; path: string }[] = [
   {
     type: 'sine',
     label: 'Sine',
@@ -32,46 +46,98 @@ const WAVEFORMS: { type: OscillatorType; label: string; path: string }[] = [
   },
 ];
 
-export function WaveformSelector({ value, onChange }: WaveformSelectorProps) {
+// Size configurations
+const SIZES = {
+  compact: { button: 32, svg: 24, gap: 4, radius: RADIUS.sm },
+  normal: { button: 40, svg: 32, gap: 6, radius: RADIUS.md },
+  large: { button: 48, svg: 40, gap: 8, radius: RADIUS.md },
+};
+
+export function WaveformSelector<T extends WaveformType>({
+  value,
+  onChange,
+  accentColor = COLORS.accent.primary,
+  size = 'normal',
+  direction = 'row',
+}: WaveformSelectorProps<T>) {
+  const sizeConfig = SIZES[size];
+
+  // Calculate selected background with color tint
+  const selectedBg = `${accentColor}20`;
+
   return (
     <div
       style={{
         display: 'flex',
-        flexWrap: 'wrap',
-        gap: '6px',
-        justifyContent: 'center',
+        flexDirection: direction,
+        gap: sizeConfig.gap,
       }}
     >
-      {WAVEFORMS.map(({ type, label, path }) => (
-        <button
-          key={type}
-          onClick={() => onChange(type)}
-          title={label}
-          style={{
-            width: '44px',
-            height: '44px',
-            background: value === type ? '#2a3a2a' : '#1a1a1a',
-            border: value === type ? '2px solid #4ade80' : '2px solid #333',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transition: 'all 0.15s ease',
-          }}
-        >
-          <svg width="36" height="36" viewBox="0 0 40 40">
-            <path
-              d={path}
-              fill="none"
-              stroke={value === type ? '#4ade80' : '#666'}
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </button>
-      ))}
+      {WAVEFORMS.map(({ type, label, path }) => {
+        const isSelected = value === type;
+
+        return (
+          <button
+            key={type}
+            onClick={() => onChange(type as T)}
+            title={label}
+            aria-label={`${label} waveform`}
+            aria-pressed={isSelected}
+            style={{
+              width: sizeConfig.button,
+              height: sizeConfig.button,
+              background: isSelected ? selectedBg : COLORS.bg.tertiary,
+              border: `2px solid ${isSelected ? accentColor : COLORS.border.medium}`,
+              borderRadius: sizeConfig.radius,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: `all ${TRANSITIONS.fast}`,
+              padding: 0,
+            }}
+          >
+            <svg
+              width={sizeConfig.svg}
+              height={sizeConfig.svg}
+              viewBox="0 0 40 40"
+              aria-hidden="true"
+            >
+              <path
+                d={path}
+                fill="none"
+                stroke={isSelected ? accentColor : COLORS.text.muted}
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+        );
+      })}
     </div>
+  );
+}
+
+/**
+ * Convenience wrapper for LFO waveform selection
+ * Pre-configured with LFO color
+ */
+export function LFOWaveformSelector({
+  value,
+  onChange,
+  compact = false,
+}: {
+  value: LFOWaveform;
+  onChange: (type: LFOWaveform) => void;
+  compact?: boolean;
+}) {
+  return (
+    <WaveformSelector
+      value={value}
+      onChange={onChange}
+      accentColor={COLORS.synth.lfo}
+      size={compact ? 'compact' : 'normal'}
+    />
   );
 }
