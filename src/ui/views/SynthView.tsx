@@ -323,7 +323,7 @@ export function SynthView() {
           <SpectrumAnalyzer width={window.innerWidth - 48} height={80} barCount={100} />
         </div>
 
-        {/* Signal Flow - Horizontal flex wrap */}
+        {/* Signal Flow - Horizontal flex wrap with stacked modules */}
         <div style={{
           flex: 1,
           padding: '16px',
@@ -333,8 +333,9 @@ export function SynthView() {
           alignContent: 'flex-start',
           overflow: 'auto',
         }}>
-          {/* OSC Stage */}
-          <StageCard title="OSC" color={COLORS.oscillator}>
+          {/* OSC Stack: OSC + PITCH ENV + PWM ENV */}
+          <StackedModule>
+          <StageCard title="OSC" color={COLORS.oscillator} noBorderRadius="bottom">
             <OscillatorVisualizer
               waveform={params.oscillator.type}
               octave={params.oscillator.octave}
@@ -388,6 +389,58 @@ export function SynthView() {
               </div>
             </div>
           </StageCard>
+
+          {/* PITCH ENV - stacked below OSC */}
+          <StageCard title="PITCH ENV" color={COLORS.pitchEnv} compact noBorderRadius="both">
+            <EnvelopeVisualizer
+              attack={params.pitchEnvelope.attack}
+              decay={params.pitchEnvelope.decay}
+              sustain={params.pitchEnvelope.sustain}
+              release={params.pitchEnvelope.release}
+              onAttackChange={setPitchEnvelopeAttack}
+              onDecayChange={setPitchEnvelopeDecay}
+              onSustainChange={setPitchEnvelopeSustain}
+              onReleaseChange={setPitchEnvelopeRelease}
+              width={180}
+              height={60}
+              accentColor={COLORS.pitchEnv}
+              compact
+              isTriggered={isPlaying}
+            />
+            <div style={{ display: 'flex', gap: '8px', marginTop: '8px', justifyContent: 'center', alignItems: 'center' }}>
+              <MiniSlider label="A" value={params.pitchEnvelope.attack} min={0.001} max={2} onChange={setPitchEnvelopeAttack} color={COLORS.pitchEnv} />
+              <MiniSlider label="D" value={params.pitchEnvelope.decay} min={0.001} max={2} onChange={setPitchEnvelopeDecay} color={COLORS.pitchEnv} />
+              <Knob label="Amt" value={params.pitchEnvelope.amount} min={-24} max={24} step={1} onChange={setPitchEnvelopeAmount} formatValue={(v) => `${v > 0 ? '+' : ''}${v}st`} size={32} paramId="pitchEnv.amount" />
+            </div>
+          </StageCard>
+
+          {/* PWM ENV - stacked below PITCH ENV */}
+          <StageCard title="PWM ENV" color={COLORS.pwmEnv} compact noBorderRadius="top">
+            <EnvelopeVisualizer
+              attack={params.pwmEnvelope.attack}
+              decay={params.pwmEnvelope.decay}
+              sustain={params.pwmEnvelope.sustain}
+              release={params.pwmEnvelope.release}
+              onAttackChange={setPWMEnvelopeAttack}
+              onDecayChange={setPWMEnvelopeDecay}
+              onSustainChange={setPWMEnvelopeSustain}
+              onReleaseChange={setPWMEnvelopeRelease}
+              width={180}
+              height={60}
+              accentColor={COLORS.pwmEnv}
+              compact
+              isTriggered={isPlaying}
+            />
+            <div style={{ display: 'flex', gap: '8px', marginTop: '8px', justifyContent: 'center', alignItems: 'center' }}>
+              <MiniSlider label="A" value={params.pwmEnvelope.attack} min={0.001} max={2} onChange={setPWMEnvelopeAttack} color={COLORS.pwmEnv} />
+              <MiniSlider label="D" value={params.pwmEnvelope.decay} min={0.001} max={2} onChange={setPWMEnvelopeDecay} color={COLORS.pwmEnv} />
+              <Knob label="Amt" value={params.pwmEnvelope.amount} min={0} max={1} step={0.01} onChange={setPWMEnvelopeAmount} formatValue={formatPercent} size={32} paramId="pwmEnv.amount" />
+            </div>
+            <div style={{ fontSize: '8px', color: '#666', textAlign: 'center', marginTop: '4px' }}>
+              Pulse width (square osc)
+            </div>
+          </StageCard>
+          </StackedModule>
 
           {/* SUB OSC Stage */}
           <StageCard title="SUB OSC" color={COLORS.subOsc}>
@@ -593,8 +646,9 @@ export function SynthView() {
             </div>
           </StageCard>
 
-          {/* FILTER Stage */}
-          <StageCard title="FILTER" color={COLORS.filter}>
+          {/* FILTER Stack: FILTER + FILTER ENV */}
+          <StackedModule>
+          <StageCard title="FILTER" color={COLORS.filter} noBorderRadius="bottom">
             <FilterVisualizer
               filterType={params.filter.type}
               cutoff={params.filter.cutoff}
@@ -616,6 +670,31 @@ export function SynthView() {
               <Knob label="Key" value={params.filter.keyTracking} min={0} max={1} step={0.01} onChange={setFilterKeyTracking} formatValue={formatPercent} size={40} paramId="filter.keyTracking" />
             </div>
           </StageCard>
+
+          {/* FILTER ENV - stacked below FILTER */}
+          <StageCard title="FILTER ENV" color={COLORS.filterEnv} compact noBorderRadius="top">
+            <EnvelopeVisualizer
+              attack={params.filterEnvelope.attack}
+              decay={params.filterEnvelope.decay}
+              sustain={params.filterEnvelope.sustain}
+              release={params.filterEnvelope.release}
+              onAttackChange={setFilterEnvelopeAttack}
+              onDecayChange={setFilterEnvelopeDecay}
+              onSustainChange={setFilterEnvelopeSustain}
+              onReleaseChange={setFilterEnvelopeRelease}
+              width={180}
+              height={60}
+              accentColor={COLORS.filterEnv}
+              compact
+              isTriggered={isPlaying}
+            />
+            <div style={{ display: 'flex', gap: '8px', marginTop: '8px', justifyContent: 'center', alignItems: 'center' }}>
+              <MiniSlider label="A" value={params.filterEnvelope.attack} min={0.001} max={2} onChange={setFilterEnvelopeAttack} color={COLORS.filterEnv} />
+              <MiniSlider label="D" value={params.filterEnvelope.decay} min={0.001} max={2} onChange={setFilterEnvelopeDecay} color={COLORS.filterEnv} />
+              <Knob label="Amt" value={params.filterEnvelope.amount} min={-4} max={4} step={0.1} onChange={setFilterEnvelopeAmount} formatValue={(v) => `${v > 0 ? '+' : ''}${v.toFixed(1)}`} size={32} paramId="filterEnv.amount" />
+            </div>
+          </StageCard>
+          </StackedModule>
 
           {/* AMP Stage */}
           <StageCard title="AMP" color={COLORS.amp}>
@@ -639,34 +718,6 @@ export function SynthView() {
               <MiniSlider label="D" value={params.amplitudeEnvelope.decay} min={0.001} max={2} onChange={setAmplitudeDecay} />
               <MiniSlider label="S" value={params.amplitudeEnvelope.sustain} min={0} max={1} onChange={setAmplitudeSustain} />
               <MiniSlider label="R" value={params.amplitudeEnvelope.release} min={0.001} max={4} onChange={setAmplitudeRelease} />
-            </div>
-          </StageCard>
-
-          {/* FILTER ENV Stage */}
-          <StageCard title="FILTER ENV" color={COLORS.filterEnv}>
-            <EnvelopeVisualizer
-              attack={params.filterEnvelope.attack}
-              decay={params.filterEnvelope.decay}
-              sustain={params.filterEnvelope.sustain}
-              release={params.filterEnvelope.release}
-              onAttackChange={setFilterEnvelopeAttack}
-              onDecayChange={setFilterEnvelopeDecay}
-              onSustainChange={setFilterEnvelopeSustain}
-              onReleaseChange={setFilterEnvelopeRelease}
-              width={200}
-              height={100}
-              accentColor={COLORS.filterEnv}
-              compact
-              isTriggered={isPlaying}
-            />
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '12px' }}>
-              <MiniSlider label="A" value={params.filterEnvelope.attack} min={0.001} max={2} onChange={setFilterEnvelopeAttack} color={COLORS.filterEnv} />
-              <MiniSlider label="D" value={params.filterEnvelope.decay} min={0.001} max={2} onChange={setFilterEnvelopeDecay} color={COLORS.filterEnv} />
-              <MiniSlider label="S" value={params.filterEnvelope.sustain} min={0} max={1} onChange={setFilterEnvelopeSustain} color={COLORS.filterEnv} />
-              <MiniSlider label="R" value={params.filterEnvelope.release} min={0.001} max={4} onChange={setFilterEnvelopeRelease} color={COLORS.filterEnv} />
-            </div>
-            <div style={{ display: 'flex', gap: '12px', marginTop: '12px', justifyContent: 'center' }}>
-              <Knob label="Amt" value={params.filterEnvelope.amount} min={-4} max={4} step={0.1} onChange={setFilterEnvelopeAmount} formatValue={(v) => `${v > 0 ? '+' : ''}${v.toFixed(1)}`} size={40} paramId="filterEnv.amount" />
             </div>
           </StageCard>
 
@@ -829,93 +880,6 @@ export function SynthView() {
             </div>
           </StageCard>
 
-          {/* PITCH ENV Stage */}
-          <StageCard title="PITCH ENV" color={COLORS.pitchEnv}>
-            <EnvelopeVisualizer
-              attack={params.pitchEnvelope.attack}
-              decay={params.pitchEnvelope.decay}
-              sustain={params.pitchEnvelope.sustain}
-              release={params.pitchEnvelope.release}
-              onAttackChange={setPitchEnvelopeAttack}
-              onDecayChange={setPitchEnvelopeDecay}
-              onSustainChange={setPitchEnvelopeSustain}
-              onReleaseChange={setPitchEnvelopeRelease}
-              width={200}
-              height={100}
-              accentColor={COLORS.pitchEnv}
-              compact
-              isTriggered={isPlaying}
-            />
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '12px' }}>
-              <MiniSlider label="A" value={params.pitchEnvelope.attack} min={0.001} max={2} onChange={setPitchEnvelopeAttack} color={COLORS.pitchEnv} />
-              <MiniSlider label="D" value={params.pitchEnvelope.decay} min={0.001} max={2} onChange={setPitchEnvelopeDecay} color={COLORS.pitchEnv} />
-              <MiniSlider label="S" value={params.pitchEnvelope.sustain} min={0} max={1} onChange={setPitchEnvelopeSustain} color={COLORS.pitchEnv} />
-              <MiniSlider label="R" value={params.pitchEnvelope.release} min={0.001} max={4} onChange={setPitchEnvelopeRelease} color={COLORS.pitchEnv} />
-            </div>
-            <div style={{ display: 'flex', gap: '12px', marginTop: '12px', justifyContent: 'center' }}>
-              <Knob label="Amt" value={params.pitchEnvelope.amount} min={-24} max={24} step={1} onChange={setPitchEnvelopeAmount} formatValue={(v) => `${v > 0 ? '+' : ''}${v}st`} size={40} paramId="pitchEnv.amount" />
-            </div>
-          </StageCard>
-
-          {/* MOD ENV Stage */}
-          <StageCard title="MOD ENV" color={COLORS.modEnv}>
-            <EnvelopeVisualizer
-              attack={params.modEnvelope.attack}
-              decay={params.modEnvelope.decay}
-              sustain={params.modEnvelope.sustain}
-              release={params.modEnvelope.release}
-              onAttackChange={setModEnvelopeAttack}
-              onDecayChange={setModEnvelopeDecay}
-              onSustainChange={setModEnvelopeSustain}
-              onReleaseChange={setModEnvelopeRelease}
-              width={200}
-              height={100}
-              accentColor={COLORS.modEnv}
-              compact
-              isTriggered={isPlaying}
-            />
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '12px' }}>
-              <MiniSlider label="A" value={params.modEnvelope.attack} min={0.001} max={2} onChange={setModEnvelopeAttack} color={COLORS.modEnv} />
-              <MiniSlider label="D" value={params.modEnvelope.decay} min={0.001} max={2} onChange={setModEnvelopeDecay} color={COLORS.modEnv} />
-              <MiniSlider label="S" value={params.modEnvelope.sustain} min={0} max={1} onChange={setModEnvelopeSustain} color={COLORS.modEnv} />
-              <MiniSlider label="R" value={params.modEnvelope.release} min={0.001} max={4} onChange={setModEnvelopeRelease} color={COLORS.modEnv} />
-            </div>
-            <div style={{ display: 'flex', gap: '12px', marginTop: '12px', justifyContent: 'center' }}>
-              <Knob label="Amt" value={params.modEnvelope.amount} min={0} max={1} step={0.01} onChange={setModEnvelopeAmount} formatValue={formatPercent} size={40} paramId="modEnv.amount" />
-            </div>
-          </StageCard>
-
-          {/* PWM ENV Stage */}
-          <StageCard title="PWM ENV" color={COLORS.pwmEnv}>
-            <EnvelopeVisualizer
-              attack={params.pwmEnvelope.attack}
-              decay={params.pwmEnvelope.decay}
-              sustain={params.pwmEnvelope.sustain}
-              release={params.pwmEnvelope.release}
-              onAttackChange={setPWMEnvelopeAttack}
-              onDecayChange={setPWMEnvelopeDecay}
-              onSustainChange={setPWMEnvelopeSustain}
-              onReleaseChange={setPWMEnvelopeRelease}
-              width={200}
-              height={100}
-              accentColor={COLORS.pwmEnv}
-              compact
-              isTriggered={isPlaying}
-            />
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '12px' }}>
-              <MiniSlider label="A" value={params.pwmEnvelope.attack} min={0.001} max={2} onChange={setPWMEnvelopeAttack} color={COLORS.pwmEnv} />
-              <MiniSlider label="D" value={params.pwmEnvelope.decay} min={0.001} max={2} onChange={setPWMEnvelopeDecay} color={COLORS.pwmEnv} />
-              <MiniSlider label="S" value={params.pwmEnvelope.sustain} min={0} max={1} onChange={setPWMEnvelopeSustain} color={COLORS.pwmEnv} />
-              <MiniSlider label="R" value={params.pwmEnvelope.release} min={0.001} max={4} onChange={setPWMEnvelopeRelease} color={COLORS.pwmEnv} />
-            </div>
-            <div style={{ display: 'flex', gap: '12px', marginTop: '12px', justifyContent: 'center' }}>
-              <Knob label="Amt" value={params.pwmEnvelope.amount} min={0} max={1} step={0.01} onChange={setPWMEnvelopeAmount} formatValue={formatPercent} size={40} paramId="pwmEnv.amount" />
-            </div>
-            <div style={{ fontSize: '9px', color: '#666', textAlign: 'center', marginTop: '8px' }}>
-              (Pulse osc only)
-            </div>
-          </StageCard>
-
           {/* FX Stage */}
           <StageCard title="FX" color={COLORS.effects} wide>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
@@ -956,8 +920,9 @@ export function SynthView() {
             </div>
           </StageCard>
 
-          {/* MOD MATRIX Stage */}
-          <StageCard title="MOD MATRIX" color={COLORS.modMatrix}>
+          {/* MOD MATRIX Stack: MOD MATRIX + MOD ENV */}
+          <StackedModule>
+          <StageCard title="MOD MATRIX" color={COLORS.modMatrix} noBorderRadius="bottom">
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {params.modMatrix.routes.map((route, i) => (
                 <div
@@ -1050,6 +1015,31 @@ export function SynthView() {
               </div>
             </div>
           </StageCard>
+
+          {/* MOD ENV - stacked below MOD MATRIX */}
+          <StageCard title="MOD ENV" color={COLORS.modEnv} compact noBorderRadius="top">
+            <EnvelopeVisualizer
+              attack={params.modEnvelope.attack}
+              decay={params.modEnvelope.decay}
+              sustain={params.modEnvelope.sustain}
+              release={params.modEnvelope.release}
+              onAttackChange={setModEnvelopeAttack}
+              onDecayChange={setModEnvelopeDecay}
+              onSustainChange={setModEnvelopeSustain}
+              onReleaseChange={setModEnvelopeRelease}
+              width={180}
+              height={60}
+              accentColor={COLORS.modEnv}
+              compact
+              isTriggered={isPlaying}
+            />
+            <div style={{ display: 'flex', gap: '8px', marginTop: '8px', justifyContent: 'center', alignItems: 'center' }}>
+              <MiniSlider label="A" value={params.modEnvelope.attack} min={0.001} max={2} onChange={setModEnvelopeAttack} color={COLORS.modEnv} />
+              <MiniSlider label="D" value={params.modEnvelope.decay} min={0.001} max={2} onChange={setModEnvelopeDecay} color={COLORS.modEnv} />
+              <Knob label="Amt" value={params.modEnvelope.amount} min={0} max={1} step={0.01} onChange={setModEnvelopeAmount} formatValue={formatPercent} size={32} paramId="modEnv.amount" />
+            </div>
+          </StageCard>
+          </StackedModule>
 
           {/* OUTPUT Stage */}
           <StageCard title="OUTPUT" color={COLORS.output}>
@@ -1245,34 +1235,58 @@ function StageCard({
   title,
   color,
   wide = false,
+  compact = false,
+  noBorderRadius,
   children
 }: {
   title: string;
   color: string;
   wide?: boolean;
+  compact?: boolean;
+  noBorderRadius?: 'top' | 'bottom' | 'both';
   children: React.ReactNode;
 }) {
+  const borderRadius = noBorderRadius === 'both' ? '0' :
+    noBorderRadius === 'top' ? '0 0 8px 8px' :
+    noBorderRadius === 'bottom' ? '8px 8px 0 0' : '8px';
+
   return (
     <div style={{
       background: '#111',
       border: `1px solid ${color}40`,
-      borderRadius: '8px',
-      padding: '12px',
+      borderRadius,
+      padding: compact ? '8px' : '12px',
       minWidth: wide ? '280px' : '180px',
-      flex: wide ? '2 1 280px' : '1 1 180px',
-      maxWidth: wide ? '400px' : '240px',
+      width: 'fit-content',
       alignSelf: 'flex-start',
-      overflow: 'hidden',
     }}>
       <div style={{
         fontSize: '11px',
         fontWeight: 600,
         color: color,
         letterSpacing: '0.5px',
-        marginBottom: '12px',
+        marginBottom: compact ? '8px' : '12px',
       }}>
         {title}
       </div>
+      {children}
+    </div>
+  );
+}
+
+// Stacked module - vertically connects a main module with its envelope(s)
+function StackedModule({
+  children
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '0px', // No gap - cards connect visually
+      alignSelf: 'flex-start',
+    }}>
       {children}
     </div>
   );
