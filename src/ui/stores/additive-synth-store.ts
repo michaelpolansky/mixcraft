@@ -5,7 +5,15 @@
 
 import { create } from 'zustand';
 import { AdditiveSynthEngine, createAdditiveSynthEngine } from '../../core/additive-synth-engine.ts';
-import type { AdditiveSynthParams, AdditivePreset } from '../../core/types.ts';
+import type {
+  AdditiveSynthParams,
+  AdditivePreset,
+  LFOWaveform,
+  AdditiveLFODestination,
+  NoiseType,
+  ArpPattern,
+  ArpDivision,
+} from '../../core/types.ts';
 import { DEFAULT_ADDITIVE_SYNTH_PARAMS } from '../../core/types.ts';
 import { ADDITIVE_PRESETS } from '../../data/presets/additive-presets.ts';
 
@@ -26,7 +34,7 @@ interface AdditiveSynthStore {
 
   // Note control
   playNote: (note?: string) => void;
-  stopNote: () => void;
+  stopNote: (note?: string) => void;
   setCurrentNote: (note: string) => void;
 
   // Harmonic actions
@@ -60,6 +68,34 @@ interface AdditiveSynthStore {
 
   // Presets
   loadPreset: (name: string) => void;
+
+  // LFO actions
+  setLFORate: (rate: number) => void;
+  setLFODepth: (depth: number) => void;
+  setLFOWaveform: (waveform: LFOWaveform) => void;
+  setLFODestination: (destination: AdditiveLFODestination) => void;
+
+  // Noise actions
+  setNoiseType: (type: NoiseType) => void;
+  setNoiseLevel: (level: number) => void;
+
+  // Glide actions
+  setGlideEnabled: (enabled: boolean) => void;
+  setGlideTime: (time: number) => void;
+
+  // Pan action
+  setPan: (pan: number) => void;
+
+  // Velocity actions
+  setVelocityAmpAmount: (amount: number) => void;
+  setVelocityBrightnessAmount: (amount: number) => void;
+
+  // Arpeggiator actions
+  setArpEnabled: (enabled: boolean) => void;
+  setArpPattern: (pattern: ArpPattern) => void;
+  setArpDivision: (division: ArpDivision) => void;
+  setArpOctaves: (octaves: 1 | 2 | 3 | 4) => void;
+  setArpGate: (gate: number) => void;
 
   // Cleanup
   dispose: () => void;
@@ -112,20 +148,29 @@ export const useAdditiveSynthStore = create<AdditiveSynthStore>((set, get) => ({
 
   // Play a note
   playNote: (note?: string) => {
-    const { engine, currentNote, isInitialized } = get();
+    const { engine, currentNote, isInitialized, params } = get();
     if (!engine || !isInitialized) return;
 
     const noteToPlay = note ?? currentNote;
-    engine.triggerAttack(noteToPlay);
-    set({ isPlaying: true });
+    if (params.arpeggiator.enabled) {
+      engine.arpAddNote(noteToPlay);
+    } else {
+      engine.triggerAttack(noteToPlay);
+    }
+    set({ isPlaying: true, currentNote: noteToPlay });
   },
 
   // Stop the current note
-  stopNote: () => {
-    const { engine } = get();
+  stopNote: (note?: string) => {
+    const { engine, params, currentNote } = get();
     if (!engine) return;
 
-    engine.triggerRelease();
+    if (params.arpeggiator.enabled) {
+      const noteToStop = note ?? currentNote;
+      engine.arpRemoveNote(noteToStop);
+    } else {
+      engine.triggerRelease();
+    }
     set({ isPlaying: false });
   },
 
@@ -301,6 +346,108 @@ export const useAdditiveSynthStore = create<AdditiveSynthStore>((set, get) => ({
       engine.setParams(preset.params);
       set({ params: engine.getParams(), currentPreset: name });
     }
+  },
+
+  // LFO actions
+  setLFORate: (rate: number) => {
+    const { engine, params } = get();
+    engine?.setLFORate(rate);
+    set({ params: { ...params, lfo: { ...params.lfo, rate } } });
+  },
+
+  setLFODepth: (depth: number) => {
+    const { engine, params } = get();
+    engine?.setLFODepth(depth);
+    set({ params: { ...params, lfo: { ...params.lfo, depth } } });
+  },
+
+  setLFOWaveform: (waveform: LFOWaveform) => {
+    const { engine, params } = get();
+    engine?.setLFOWaveform(waveform);
+    set({ params: { ...params, lfo: { ...params.lfo, waveform } } });
+  },
+
+  setLFODestination: (destination: AdditiveLFODestination) => {
+    const { engine, params } = get();
+    engine?.setLFODestination(destination);
+    set({ params: { ...params, lfo: { ...params.lfo, destination } } });
+  },
+
+  // Noise actions
+  setNoiseType: (type: NoiseType) => {
+    const { engine, params } = get();
+    engine?.setNoiseType(type);
+    set({ params: { ...params, noise: { ...params.noise, type } } });
+  },
+
+  setNoiseLevel: (level: number) => {
+    const { engine, params } = get();
+    engine?.setNoiseLevel(level);
+    set({ params: { ...params, noise: { ...params.noise, level } } });
+  },
+
+  // Glide actions
+  setGlideEnabled: (enabled: boolean) => {
+    const { engine, params } = get();
+    engine?.setGlideEnabled(enabled);
+    set({ params: { ...params, glide: { ...params.glide, enabled } } });
+  },
+
+  setGlideTime: (time: number) => {
+    const { engine, params } = get();
+    engine?.setGlideTime(time);
+    set({ params: { ...params, glide: { ...params.glide, time } } });
+  },
+
+  // Pan action
+  setPan: (pan: number) => {
+    const { engine, params } = get();
+    engine?.setPan(pan);
+    set({ params: { ...params, pan } });
+  },
+
+  // Velocity actions
+  setVelocityAmpAmount: (amount: number) => {
+    const { engine, params } = get();
+    engine?.setVelocityAmpAmount(amount);
+    set({ params: { ...params, velocity: { ...params.velocity, ampAmount: amount } } });
+  },
+
+  setVelocityBrightnessAmount: (amount: number) => {
+    const { engine, params } = get();
+    engine?.setVelocityBrightnessAmount(amount);
+    set({ params: { ...params, velocity: { ...params.velocity, brightnessAmount: amount } } });
+  },
+
+  // Arpeggiator actions
+  setArpEnabled: (enabled: boolean) => {
+    const { engine, params } = get();
+    engine?.setArpEnabled(enabled);
+    set({ params: { ...params, arpeggiator: { ...params.arpeggiator, enabled } } });
+  },
+
+  setArpPattern: (pattern: ArpPattern) => {
+    const { engine, params } = get();
+    engine?.setArpPattern(pattern);
+    set({ params: { ...params, arpeggiator: { ...params.arpeggiator, pattern } } });
+  },
+
+  setArpDivision: (division: ArpDivision) => {
+    const { engine, params } = get();
+    engine?.setArpDivision(division);
+    set({ params: { ...params, arpeggiator: { ...params.arpeggiator, division } } });
+  },
+
+  setArpOctaves: (octaves: 1 | 2 | 3 | 4) => {
+    const { engine, params } = get();
+    engine?.setArpOctaves(octaves);
+    set({ params: { ...params, arpeggiator: { ...params.arpeggiator, octaves } } });
+  },
+
+  setArpGate: (gate: number) => {
+    const { engine, params } = get();
+    engine?.setArpGate(gate);
+    set({ params: { ...params, arpeggiator: { ...params.arpeggiator, gate } } });
   },
 
   // Cleanup
