@@ -1,4 +1,11 @@
 import type { Challenge } from '../../../core/types.ts';
+import {
+  DEFAULT_FM_LFO,
+  DEFAULT_NOISE,
+  DEFAULT_GLIDE,
+  DEFAULT_ARPEGGIATOR,
+  DEFAULT_FM_MOD_MATRIX,
+} from '../../../core/types.ts';
 
 export const challenge: Challenge = {
   id: 'sd8-06-pluck-lead',
@@ -47,5 +54,12 @@ export const challenge: Challenge = {
       chorus: { rate: 1.5, depth: 0.5, mix: 0 },
     },
     volume: -12,
+    lfo: DEFAULT_FM_LFO,
+    noise: DEFAULT_NOISE,
+    glide: DEFAULT_GLIDE,
+    velocity: { ampAmount: 0, modIndexAmount: 0 },
+    arpeggiator: DEFAULT_ARPEGGIATOR,
+    modMatrix: DEFAULT_FM_MOD_MATRIX,
+    pan: 0,
   },
 };

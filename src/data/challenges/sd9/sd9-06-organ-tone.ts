@@ -1,5 +1,13 @@
 import type { Challenge } from '../../../core/types.ts';
-import { DEFAULT_EFFECTS, ADDITIVE_PRESETS } from '../../../core/types.ts';
+import {
+  DEFAULT_EFFECTS,
+  ADDITIVE_PRESETS,
+  DEFAULT_ADDITIVE_LFO,
+  DEFAULT_NOISE,
+  DEFAULT_GLIDE,
+  DEFAULT_ARPEGGIATOR,
+  DEFAULT_ADDITIVE_MOD_MATRIX,
+} from '../../../core/types.ts';
 
 export const challenge: Challenge = {
   id: 'sd9-06-organ-tone',
@@ -24,5 +32,12 @@ export const challenge: Challenge = {
     },
     effects: DEFAULT_EFFECTS,
     volume: -12,
+    lfo: DEFAULT_ADDITIVE_LFO,
+    noise: DEFAULT_NOISE,
+    glide: DEFAULT_GLIDE,
+    velocity: { ampAmount: 0, brightnessAmount: 0 },
+    arpeggiator: DEFAULT_ARPEGGIATOR,
+    modMatrix: DEFAULT_ADDITIVE_MOD_MATRIX,
+    pan: 0,
   },
 };
