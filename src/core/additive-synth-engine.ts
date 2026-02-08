@@ -16,6 +16,13 @@ import type {
   AdditiveLFOParams,
   AdditiveLFODestination,
   LFOWaveform,
+  NoiseType,
+  NoiseParams,
+  GlideParams,
+  AdditiveVelocityParams,
+  ArpPattern,
+  ArpDivision,
+  ArpeggiatorParams,
 } from './types.ts';
 import {
   DEFAULT_ADDITIVE_SYNTH_PARAMS,
@@ -44,8 +51,10 @@ function clamp(value: number, min: number, max: number): number {
  * Signal flow:
  * Osc1 -> Gain1 ─┐
  * Osc2 -> Gain2 ─┤
- * ...            ├─> SumGain -> Envelope -> EffectsChain -> Analyser -> Destination
- * Osc16-> Gain16┘
+ * ...            ├─> SumGain -> Envelope ─┐
+ * Osc16-> Gain16┘                         │
+ *                                         ├─> EffectsChain -> MasterGain -> Panner -> Analyser -> Destination
+ * Noise -> NoiseFilter -> NoiseGain ──────┘
  */
 export class AdditiveSynthEngine {
   private oscillators: Tone.Oscillator[];
@@ -61,11 +70,31 @@ export class AdditiveSynthEngine {
   private lfo: Tone.LFO;
   private lfoGain: Tone.Gain;
 
+  // Noise generator
+  private noise: Tone.Noise;
+  private noiseGain: Tone.Gain;
+  private noiseFilter: Tone.Filter;
+
+  // Panner for stereo positioning
+  private panner: Tone.Panner;
+
+  // Velocity tracking
+  private currentVelocity = 1;
+  private baseHarmonics: number[];
+
+  // Velocity gain for amplitude velocity response
+  private velocityGain: Tone.Gain;
+
   // Effects chain
   private effectsChain: EffectsChain;
 
   // Master volume control (after effects)
   private masterGain: Tone.Gain;
+
+  // Arpeggiator state
+  private arpSequence: Tone.Sequence<string> | null = null;
+  private heldNotes: string[] = [];
+  private arpNotes: string[] = [];
 
   constructor(initialParams: Partial<AdditiveSynthParams> = {}) {
     // Merge defaults with initial params
@@ -102,6 +131,19 @@ export class AdditiveSynthEngine {
         ...DEFAULT_ADDITIVE_SYNTH_PARAMS.lfo,
         ...initialParams.lfo,
       },
+      noise: {
+        ...DEFAULT_ADDITIVE_SYNTH_PARAMS.noise,
+        ...initialParams.noise,
+      },
+      glide: {
+        ...DEFAULT_ADDITIVE_SYNTH_PARAMS.glide,
+        ...initialParams.glide,
+      },
+      velocity: {
+        ...DEFAULT_ADDITIVE_SYNTH_PARAMS.velocity,
+        ...initialParams.velocity,
+      },
+      pan: initialParams.pan ?? DEFAULT_ADDITIVE_SYNTH_PARAMS.pan,
     };
 
     // Ensure harmonics array has exactly 16 elements
@@ -112,6 +154,9 @@ export class AdditiveSynthEngine {
 
     // Clamp all harmonic amplitudes to 0-1
     this.params.harmonics = this.params.harmonics.map((amp) => clamp(amp, 0, 1));
+
+    // Store base harmonics for velocity-based brightness scaling
+    this.baseHarmonics = [...this.params.harmonics];
 
     // Create oscillators and individual gains
     this.oscillators = [];
@@ -156,6 +201,16 @@ export class AdditiveSynthEngine {
     // Connect LFO to initial destination
     this.connectLFOToDestination(this.params.lfo.destination);
 
+    // Create noise generator
+    this.noiseFilter = new Tone.Filter({
+      frequency: 5000,
+      type: 'lowpass',
+    });
+    this.noiseGain = new Tone.Gain(this.params.noise.level);
+    this.noise = new Tone.Noise(this.params.noise.type);
+    this.noise.connect(this.noiseFilter);
+    this.noiseFilter.connect(this.noiseGain);
+
     // Create amplitude envelope
     this.envelope = new Tone.AmplitudeEnvelope({
       attack: this.params.amplitudeEnvelope.attack,
@@ -167,22 +222,35 @@ export class AdditiveSynthEngine {
     // Connect sum -> envelope
     this.sumGain.connect(this.envelope);
 
+    // Create velocity gain for amplitude velocity response
+    this.velocityGain = new Tone.Gain(1);
+
+    // Connect envelope -> velocityGain
+    this.envelope.connect(this.velocityGain);
+
     // Create effects chain
     this.effectsChain = new EffectsChain(this.params.effects);
 
-    // Connect envelope -> effects chain
-    this.envelope.connect(this.effectsChain.input);
+    // Connect velocityGain -> effects chain
+    this.velocityGain.connect(this.effectsChain.input);
+
+    // Connect noise to effects chain input
+    this.noiseGain.connect(this.effectsChain.input);
 
     // Create master gain for volume control
     this.masterGain = new Tone.Gain(Tone.dbToGain(this.params.volume));
     this.effectsChain.connect(this.masterGain);
 
+    // Create panner for stereo positioning
+    this.panner = new Tone.Panner(this.params.pan);
+    this.masterGain.connect(this.panner);
+
     // Create analyser node for spectrum visualization
     this.analyser = Tone.getContext().createAnalyser();
     this.configureAnalyser(DEFAULT_ANALYSER_CONFIG);
 
-    // Wire: masterGain -> analyser -> destination
-    Tone.connect(this.masterGain, this.analyser);
+    // Wire: panner -> analyser -> destination
+    Tone.connect(this.panner, this.analyser);
     Tone.connect(this.analyser, Tone.getDestination());
   }
 
@@ -235,6 +303,8 @@ export class AdditiveSynthEngine {
       }
       // Start LFO
       this.lfo.start();
+      // Start noise generator
+      this.noise.start();
       this.isInitialized = true;
     }
   }
@@ -261,6 +331,10 @@ export class AdditiveSynthEngine {
         chorus: { ...this.params.effects.chorus },
       },
       lfo: { ...this.params.lfo },
+      noise: { ...this.params.noise },
+      glide: { ...this.params.glide },
+      velocity: { ...this.params.velocity },
+      arpeggiator: { ...this.params.arpeggiator },
     };
   }
 
@@ -312,6 +386,7 @@ export class AdditiveSynthEngine {
     }
     const clamped = clamp(amplitude, 0, 1);
     this.params.harmonics[index] = clamped;
+    this.baseHarmonics[index] = clamped;
     const gain = this.harmonicGains[index];
     if (gain) {
       gain.gain.value = clamped;
@@ -327,6 +402,8 @@ export class AdditiveSynthEngine {
       const amp = amplitudes[i] ?? 0;
       this.setHarmonic(i, amp);
     }
+    // Update base harmonics for velocity scaling
+    this.baseHarmonics = [...this.params.harmonics];
   }
 
   /**
@@ -451,6 +528,285 @@ export class AdditiveSynthEngine {
   }
 
   // ============================================
+  // Noise Controls
+  // ============================================
+
+  /**
+   * Sets the noise type
+   */
+  setNoiseType(type: NoiseType): void {
+    this.params.noise.type = type;
+    this.noise.type = type;
+  }
+
+  /**
+   * Sets the noise level
+   */
+  setNoiseLevel(level: number): void {
+    this.params.noise.level = level;
+    this.noiseGain.gain.value = level;
+  }
+
+  /**
+   * Sets noise parameters
+   */
+  setNoise(params: Partial<NoiseParams>): void {
+    if (params.type !== undefined) this.setNoiseType(params.type);
+    if (params.level !== undefined) this.setNoiseLevel(params.level);
+  }
+
+  // ============================================
+  // Glide Controls
+  // ============================================
+
+  /**
+   * Sets whether glide is enabled
+   */
+  setGlideEnabled(enabled: boolean): void {
+    this.params.glide.enabled = enabled;
+  }
+
+  /**
+   * Sets the glide time
+   */
+  setGlideTime(time: number): void {
+    this.params.glide.time = time;
+  }
+
+  /**
+   * Sets glide parameters
+   */
+  setGlide(params: Partial<GlideParams>): void {
+    if (params.enabled !== undefined) this.setGlideEnabled(params.enabled);
+    if (params.time !== undefined) this.setGlideTime(params.time);
+  }
+
+  // ============================================
+  // Pan Control
+  // ============================================
+
+  /**
+   * Sets the pan position (-1 = left, 0 = center, 1 = right)
+   */
+  setPan(pan: number): void {
+    this.params.pan = pan;
+    this.panner.pan.value = pan;
+  }
+
+  // ============================================
+  // Velocity Controls
+  // ============================================
+
+  /**
+   * Sets velocity sensitivity for amplitude
+   */
+  setVelocityAmpAmount(amount: number): void {
+    this.params.velocity.ampAmount = clamp(amount, 0, 1);
+  }
+
+  /**
+   * Sets velocity sensitivity for brightness (harmonics 5-16)
+   */
+  setVelocityBrightnessAmount(amount: number): void {
+    this.params.velocity.brightnessAmount = clamp(amount, 0, 1);
+  }
+
+  /**
+   * Sets velocity parameters
+   */
+  setVelocity(params: Partial<AdditiveVelocityParams>): void {
+    if (params.ampAmount !== undefined) this.setVelocityAmpAmount(params.ampAmount);
+    if (params.brightnessAmount !== undefined) this.setVelocityBrightnessAmount(params.brightnessAmount);
+  }
+
+  // ============================================
+  // Arpeggiator
+  // ============================================
+
+  /**
+   * Builds the note pattern array based on held notes and arp settings
+   */
+  private buildArpPattern(): string[] {
+    if (this.heldNotes.length === 0) return [];
+
+    // Sort notes by frequency (low to high)
+    const notes = [...this.heldNotes].sort((a, b) => {
+      return Tone.Frequency(a).toFrequency() - Tone.Frequency(b).toFrequency();
+    });
+
+    // Expand across octaves
+    const expanded: string[] = [];
+    for (let oct = 0; oct < this.params.arpeggiator.octaves; oct++) {
+      for (const note of notes) {
+        const freq = Tone.Frequency(note).toFrequency();
+        const octaveFreq = freq * Math.pow(2, oct);
+        expanded.push(Tone.Frequency(octaveFreq).toNote());
+      }
+    }
+
+    // Apply pattern
+    switch (this.params.arpeggiator.pattern) {
+      case 'up':
+        return expanded;
+      case 'down':
+        return expanded.reverse();
+      case 'upDown':
+        if (expanded.length <= 1) return expanded;
+        const down = expanded.slice(1, -1).reverse();
+        return [...expanded, ...down];
+      case 'random':
+        return expanded; // Shuffle happens in sequence callback
+      default:
+        return expanded;
+    }
+  }
+
+  /**
+   * Starts the arpeggiator sequence
+   */
+  private startArpeggiator(): void {
+    this.stopArpeggiator();
+
+    this.arpNotes = this.buildArpPattern();
+    if (this.arpNotes.length === 0) return;
+
+    const division = this.params.arpeggiator.division;
+    const gate = this.params.arpeggiator.gate;
+    const isRandom = this.params.arpeggiator.pattern === 'random';
+
+    let index = 0;
+    this.arpSequence = new Tone.Sequence(
+      (time, _) => {
+        let note: string;
+        if (isRandom) {
+          note = this.arpNotes[Math.floor(Math.random() * this.arpNotes.length)]!;
+        } else {
+          note = this.arpNotes[index % this.arpNotes.length]!;
+          index++;
+        }
+
+        // Calculate gate duration
+        const stepDuration = Tone.Time(division).toSeconds();
+        const noteDuration = stepDuration * gate;
+
+        // Trigger the note
+        this.triggerAttack(note);
+        Tone.getTransport().scheduleOnce(() => {
+          this.triggerRelease();
+        }, time + noteDuration);
+      },
+      this.arpNotes,
+      division
+    );
+
+    this.arpSequence.start(0);
+    if (Tone.getTransport().state !== 'started') {
+      Tone.getTransport().start();
+    }
+  }
+
+  /**
+   * Stops the arpeggiator sequence
+   */
+  private stopArpeggiator(): void {
+    if (this.arpSequence) {
+      this.arpSequence.stop();
+      this.arpSequence.dispose();
+      this.arpSequence = null;
+    }
+    this.triggerRelease();
+  }
+
+  /**
+   * Adds a note to the arpeggiator (called on note on)
+   */
+  arpAddNote(note: string): void {
+    if (!this.params.arpeggiator.enabled) {
+      this.triggerAttack(note);
+      return;
+    }
+    if (!this.heldNotes.includes(note)) {
+      this.heldNotes.push(note);
+    }
+    this.startArpeggiator();
+  }
+
+  /**
+   * Removes a note from the arpeggiator (called on note off)
+   */
+  arpRemoveNote(note: string): void {
+    if (!this.params.arpeggiator.enabled) {
+      this.triggerRelease();
+      return;
+    }
+    this.heldNotes = this.heldNotes.filter(n => n !== note);
+    if (this.heldNotes.length === 0) {
+      this.stopArpeggiator();
+    } else {
+      this.startArpeggiator(); // Rebuild with remaining notes
+    }
+  }
+
+  /**
+   * Sets the arpeggiator enabled state
+   */
+  setArpEnabled(enabled: boolean): void {
+    this.params.arpeggiator.enabled = enabled;
+    if (!enabled) {
+      this.stopArpeggiator();
+      this.heldNotes = [];
+    }
+  }
+
+  /**
+   * Sets the arpeggiator pattern
+   */
+  setArpPattern(pattern: ArpPattern): void {
+    this.params.arpeggiator.pattern = pattern;
+    if (this.params.arpeggiator.enabled && this.heldNotes.length > 0) {
+      this.startArpeggiator();
+    }
+  }
+
+  /**
+   * Sets the arpeggiator division (tempo sync)
+   */
+  setArpDivision(division: ArpDivision): void {
+    this.params.arpeggiator.division = division;
+    if (this.params.arpeggiator.enabled && this.heldNotes.length > 0) {
+      this.startArpeggiator();
+    }
+  }
+
+  /**
+   * Sets the arpeggiator octave range
+   */
+  setArpOctaves(octaves: 1 | 2 | 3 | 4): void {
+    this.params.arpeggiator.octaves = octaves;
+    if (this.params.arpeggiator.enabled && this.heldNotes.length > 0) {
+      this.startArpeggiator();
+    }
+  }
+
+  /**
+   * Sets the arpeggiator gate (note length percentage)
+   */
+  setArpGate(gate: number): void {
+    this.params.arpeggiator.gate = clamp(gate, 0.1, 1);
+  }
+
+  /**
+   * Sets all arpeggiator parameters at once
+   */
+  setArpeggiator(params: Partial<ArpeggiatorParams>): void {
+    if (params.enabled !== undefined) this.setArpEnabled(params.enabled);
+    if (params.pattern !== undefined) this.setArpPattern(params.pattern);
+    if (params.division !== undefined) this.setArpDivision(params.division);
+    if (params.octaves !== undefined) this.setArpOctaves(params.octaves);
+    if (params.gate !== undefined) this.setArpGate(params.gate);
+  }
+
+  // ============================================
   // Effects Controls (delegated to EffectsChain)
   // ============================================
 
@@ -479,24 +835,56 @@ export class AdditiveSynthEngine {
   // ============================================
 
   /**
+   * Applies velocity to brightness (harmonics 5-16) and amplitude
+   */
+  private applyVelocity(velocity: number): void {
+    this.currentVelocity = velocity;
+
+    // Apply velocity to brightness (harmonics 5-16, indices 4-15)
+    const brightnessScale = 1 - this.params.velocity.brightnessAmount * (1 - velocity);
+    for (let i = 4; i < NUM_HARMONICS; i++) {
+      const baseLevel = this.baseHarmonics[i] ?? 0;
+      const gain = this.harmonicGains[i];
+      if (gain) {
+        gain.gain.value = baseLevel * brightnessScale;
+      }
+    }
+
+    // Apply velocity to amplitude via velocity gain
+    const ampScale = 1 - this.params.velocity.ampAmount * (1 - velocity);
+    this.velocityGain.gain.value = ampScale;
+  }
+
+  /**
    * Triggers a note - sets oscillator frequencies and triggers envelope
    * @param note - Note name (e.g., 'C4', 'A3') or frequency in Hz
+   * @param velocity - Velocity value (0 to 1, default 1)
    */
-  triggerAttack(note: string | number): void {
+  triggerAttack(note: string | number, velocity = 1): void {
+    // Apply velocity effects
+    this.applyVelocity(velocity);
+
     // Convert note to frequency
     const baseFreq = typeof note === 'number'
       ? note
       : Tone.Frequency(note).toFrequency();
 
-    this.currentFrequency = baseFreq;
+    const glideTime = this.params.glide.enabled ? this.params.glide.time : 0;
 
-    // Set each oscillator to its harmonic frequency
+    // Set each oscillator to its harmonic frequency with optional glide
     for (let i = 0; i < NUM_HARMONICS; i++) {
       const osc = this.oscillators[i];
       if (osc) {
-        osc.frequency.value = baseFreq * (i + 1);
+        const targetFreq = baseFreq * (i + 1);
+        if (glideTime > 0) {
+          osc.frequency.rampTo(targetFreq, glideTime);
+        } else {
+          osc.frequency.value = targetFreq;
+        }
       }
     }
+
+    this.currentFrequency = baseFreq;
 
     // Trigger the amplitude envelope
     this.envelope.triggerAttack();
@@ -513,22 +901,33 @@ export class AdditiveSynthEngine {
    * Triggers a note for a specific duration
    * @param note - Note name or frequency
    * @param duration - Duration in seconds or Tone.js time notation
+   * @param velocity - Velocity value (0 to 1, default 1)
    */
-  triggerAttackRelease(note: string | number, duration: number | string = '8n'): void {
+  triggerAttackRelease(note: string | number, duration: number | string = '8n', velocity = 1): void {
+    // Apply velocity effects
+    this.applyVelocity(velocity);
+
     // Convert note to frequency
     const baseFreq = typeof note === 'number'
       ? note
       : Tone.Frequency(note).toFrequency();
 
-    this.currentFrequency = baseFreq;
+    const glideTime = this.params.glide.enabled ? this.params.glide.time : 0;
 
-    // Set each oscillator to its harmonic frequency
+    // Set each oscillator to its harmonic frequency with optional glide
     for (let i = 0; i < NUM_HARMONICS; i++) {
       const osc = this.oscillators[i];
       if (osc) {
-        osc.frequency.value = baseFreq * (i + 1);
+        const targetFreq = baseFreq * (i + 1);
+        if (glideTime > 0) {
+          osc.frequency.rampTo(targetFreq, glideTime);
+        } else {
+          osc.frequency.value = targetFreq;
+        }
       }
     }
+
+    this.currentFrequency = baseFreq;
 
     // Trigger the amplitude envelope with release after duration
     this.envelope.triggerAttackRelease(duration);
@@ -568,6 +967,21 @@ export class AdditiveSynthEngine {
     if (params.lfo) {
       this.setLFO(params.lfo);
     }
+    if (params.noise) {
+      this.setNoise(params.noise);
+    }
+    if (params.glide) {
+      this.setGlide(params.glide);
+    }
+    if (params.pan !== undefined) {
+      this.setPan(params.pan);
+    }
+    if (params.velocity) {
+      this.setVelocity(params.velocity);
+    }
+    if (params.arpeggiator) {
+      this.setArpeggiator(params.arpeggiator);
+    }
   }
 
   // ============================================
@@ -578,6 +992,9 @@ export class AdditiveSynthEngine {
    * Disposes of the synth and releases resources
    */
   dispose(): void {
+    // Stop arpeggiator
+    this.stopArpeggiator();
+    this.heldNotes = [];
     // Stop and dispose all oscillators
     for (const osc of this.oscillators) {
       osc.stop();
@@ -593,8 +1010,17 @@ export class AdditiveSynthEngine {
     this.lfo.stop();
     this.lfo.dispose();
     this.lfoGain.dispose();
+    // Stop and dispose noise
+    this.noise.stop();
+    this.noise.dispose();
+    this.noiseGain.dispose();
+    this.noiseFilter.dispose();
+    // Dispose panner
+    this.panner.dispose();
     // Dispose envelope
     this.envelope.dispose();
+    // Dispose velocity gain
+    this.velocityGain.dispose();
     // Dispose effects chain
     this.effectsChain.dispose();
     // Dispose master gain
