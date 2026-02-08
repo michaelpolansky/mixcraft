@@ -26,6 +26,7 @@ import { allChallenges, modules, allSamplingChallenges, samplingModules, getSamp
 import { allMixingChallenges, mixingModules, getMixingChallenge, getNextMixingChallenge } from './data/challenges/mixing/index.ts';
 import { allProductionChallenges, productionModules, getProductionChallenge, getNextProductionChallenge } from './data/challenges/production/index.ts';
 import { useIsMobile } from './ui/hooks/useMediaQuery.ts';
+import { BackButton, CardButton } from './ui/components/Button.tsx';
 import type { MixingChallenge, ProductionChallenge, SamplingChallenge, DrumSequencingChallenge } from './core/types.ts';
 
 // Loading fallback for lazy-loaded views
@@ -346,20 +347,7 @@ export function App() {
               zIndex: 100,
             }}
           >
-            <button
-              onClick={() => setView('menu')}
-              style={{
-                background: '#1a1a1a',
-                border: '1px solid #333',
-                borderRadius: '4px',
-                color: '#888',
-                cursor: 'pointer',
-                padding: '8px 16px',
-                fontSize: '13px',
-              }}
-            >
-              ← Menu
-            </button>
+            <BackButton onClick={() => setView('menu')} />
           </div>
           <SynthView />
         </div>
@@ -380,20 +368,7 @@ export function App() {
               zIndex: 100,
             }}
           >
-            <button
-              onClick={() => setView('menu')}
-              style={{
-                background: '#1a1a1a',
-                border: '1px solid #333',
-                borderRadius: '4px',
-                color: '#888',
-                cursor: 'pointer',
-                padding: '8px 16px',
-                fontSize: '13px',
-              }}
-            >
-              ← Menu
-            </button>
+            <BackButton onClick={() => setView('menu')} />
           </div>
           <FMSynthView />
         </div>
@@ -414,20 +389,7 @@ export function App() {
               zIndex: 100,
             }}
           >
-            <button
-              onClick={() => setView('menu')}
-              style={{
-                background: '#1a1a1a',
-                border: '1px solid #333',
-                borderRadius: '4px',
-                color: '#888',
-                cursor: 'pointer',
-                padding: '8px 16px',
-                fontSize: '13px',
-              }}
-            >
-              ← Menu
-            </button>
+            <BackButton onClick={() => setView('menu')} />
           </div>
           <AdditiveSynthView />
         </div>
@@ -593,134 +555,48 @@ export function App() {
             if (!nextChallenge) return null;
 
             return (
-              <button
+              <CardButton
                 onClick={() => handleStartChallenge(nextChallenge.id)}
-                style={{
-                  padding: '20px 32px',
-                  background: 'linear-gradient(145deg, #22c55e, #16a34a)',
-                  border: 'none',
-                  borderRadius: '12px',
-                  color: '#fff',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  flex: 1,
-                  boxShadow: '0 4px 12px rgba(34, 197, 94, 0.3)',
-                }}
-              >
-                <div style={{ fontSize: '18px', fontWeight: 600, marginBottom: '4px' }}>
-                  Continue
-                </div>
-                <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.8)' }}>
-                  {nextChallenge.title}
-                </div>
-              </button>
+                title="Continue"
+                description={nextChallenge.title}
+                primary
+              />
             );
           })()}
 
-          <button
+          <CardButton
             onClick={() => setView('sandbox')}
-            style={{
-              padding: '20px 32px',
-              background: '#141414',
-              border: '1px solid #2a2a2a',
-              borderRadius: '12px',
-              color: '#fff',
-              cursor: 'pointer',
-              textAlign: 'left',
-              flex: 1,
-            }}
-          >
-            <div style={{ fontSize: '18px', fontWeight: 600, marginBottom: '4px' }}>
-              Sandbox
-            </div>
-            <div style={{ fontSize: '13px', color: '#666' }}>
-              Free play with the synthesizer
-            </div>
-          </button>
+            title="Sandbox"
+            description="Free play with the synthesizer"
+          />
 
-          <button
+          <CardButton
             onClick={() => setView('fm-sandbox')}
-            style={{
-              padding: '20px 32px',
-              background: '#141414',
-              border: '1px solid #ff8800',
-              borderRadius: '12px',
-              color: '#fff',
-              cursor: 'pointer',
-              textAlign: 'left',
-              flex: 1,
-            }}
-          >
-            <div style={{ fontSize: '18px', fontWeight: 600, marginBottom: '4px', color: '#ff8800' }}>
-              FM Sandbox
-            </div>
-            <div style={{ fontSize: '13px', color: '#666' }}>
-              Explore FM synthesis bells & basses
-            </div>
-          </button>
+            title="FM Sandbox"
+            description="Explore FM synthesis bells & basses"
+            accentColor="#ff8800"
+          />
 
-          <button
+          <CardButton
             onClick={() => setView('additive-sandbox')}
-            style={{
-              padding: '20px 32px',
-              background: '#141414',
-              border: '1px solid #06b6d4',
-              borderRadius: '12px',
-              color: '#fff',
-              cursor: 'pointer',
-              textAlign: 'left',
-              flex: 1,
-            }}
-          >
-            <div style={{ fontSize: '18px', fontWeight: 600, marginBottom: '4px', color: '#06b6d4' }}>
-              Additive Sandbox
-            </div>
-            <div style={{ fontSize: '13px', color: '#666' }}>
-              Build sounds from harmonics
-            </div>
-          </button>
+            title="Additive Sandbox"
+            description="Build sounds from harmonics"
+            accentColor="#06b6d4"
+          />
 
-          <button
+          <CardButton
             onClick={() => setView('sampler')}
-            style={{
-              padding: '20px 32px',
-              background: '#141414',
-              border: '1px solid #a855f7',
-              borderRadius: '12px',
-              color: '#fff',
-              cursor: 'pointer',
-              textAlign: 'left',
-              flex: 1,
-            }}
-          >
-            <div style={{ fontSize: '18px', fontWeight: 600, marginBottom: '4px', color: '#a855f7' }}>
-              Sampler Sandbox
-            </div>
-            <div style={{ fontSize: '13px', color: '#666' }}>
-              Load and manipulate samples
-            </div>
-          </button>
+            title="Sampler Sandbox"
+            description="Load and manipulate samples"
+            accentColor="#a855f7"
+          />
 
-          <button
+          <CardButton
             onClick={() => setView('drum-sequencer')}
-            style={{
-              padding: '20px 32px',
-              background: '#141414',
-              border: '1px solid #f97316',
-              borderRadius: '12px',
-              color: '#fff',
-              cursor: 'pointer',
-              textAlign: 'left',
-              flex: 1,
-            }}
-          >
-            <div style={{ fontSize: '18px', fontWeight: 600, marginBottom: '4px', color: '#f97316' }}>
-              🥁 Drum Sequencer
-            </div>
-            <div style={{ fontSize: '13px', color: '#666' }}>
-              Compose rhythms and patterns
-            </div>
-          </button>
+            title="🥁 Drum Sequencer"
+            description="Compose rhythms and patterns"
+            accentColor="#f97316"
+          />
         </div>
 
         {/* Challenges */}
