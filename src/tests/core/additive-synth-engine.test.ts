@@ -65,6 +65,57 @@ const mockReverb = vi.fn(() => ({
   decay: 1.5,
 }));
 
+const mockLFO = vi.fn(() => ({
+  connect: vi.fn().mockReturnThis(),
+  disconnect: vi.fn(),
+  dispose: vi.fn(),
+  start: vi.fn(),
+  stop: vi.fn(),
+  frequency: { value: 1 },
+  min: -1,
+  max: 1,
+  type: 'sine',
+}));
+
+const mockNoise = vi.fn(() => ({
+  connect: vi.fn().mockReturnThis(),
+  disconnect: vi.fn(),
+  dispose: vi.fn(),
+  start: vi.fn(),
+  stop: vi.fn(),
+  type: 'white',
+}));
+
+const mockFilter = vi.fn(() => ({
+  connect: vi.fn().mockReturnThis(),
+  disconnect: vi.fn(),
+  dispose: vi.fn(),
+  frequency: { value: 1000 },
+  Q: { value: 1 },
+  type: 'lowpass',
+}));
+
+const mockPanner = vi.fn(() => ({
+  connect: vi.fn().mockReturnThis(),
+  disconnect: vi.fn(),
+  dispose: vi.fn(),
+  pan: { value: 0 },
+}));
+
+const mockSequence = vi.fn(() => ({
+  start: vi.fn(),
+  stop: vi.fn(),
+  dispose: vi.fn(),
+}));
+
+const mockTransport = {
+  bpm: { value: 120 },
+  start: vi.fn(),
+  stop: vi.fn(),
+  pause: vi.fn(),
+  cancel: vi.fn(),
+};
+
 const mockAnalyserNode = {
   fftSize: 2048,
   smoothingTimeConstant: 0.8,
@@ -77,6 +128,7 @@ const mockAnalyserNode = {
 
 const mockContext = {
   createAnalyser: vi.fn(() => mockAnalyserNode),
+  now: vi.fn(() => 0),
 };
 
 vi.mock('tone', () => ({
@@ -87,6 +139,12 @@ vi.mock('tone', () => ({
   FeedbackDelay: mockFeedbackDelay,
   Chorus: mockChorus,
   Reverb: mockReverb,
+  LFO: mockLFO,
+  Noise: mockNoise,
+  Filter: mockFilter,
+  Panner: mockPanner,
+  Sequence: mockSequence,
+  Transport: mockTransport,
   getContext: vi.fn(() => mockContext),
   getDestination: vi.fn(() => ({})),
   connect: vi.fn(),
