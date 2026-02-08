@@ -123,6 +123,22 @@ import { challenge as sd9_10 } from './sd9/sd9-10-choir-pad.ts';
 import { challenge as sd9_11 } from './sd9/sd9-11-nasal-reed.ts';
 import { challenge as sd9_12 } from './sd9/sd9-12-shimmer.ts';
 
+// SD10 - Arpeggiator
+import { challenge as sd10_01 } from './sd10/sd10-01-basic-arp.ts';
+import { challenge as sd10_02 } from './sd10/sd10-02-fast-arp.ts';
+import { challenge as sd10_03 } from './sd10/sd10-03-octave-arp.ts';
+import { challenge as sd10_04 } from './sd10/sd10-04-legato-arp.ts';
+import { challenge as sd10_05 } from './sd10/sd10-05-filter-arp.ts';
+import { challenge as sd10_06 } from './sd10/sd10-06-trance-arp.ts';
+
+// SD11 - Unison & Supersaw
+import { challenge as sd11_01 } from './sd11/sd11-01-basic-unison.ts';
+import { challenge as sd11_02 } from './sd11/sd11-02-detuned-unison.ts';
+import { challenge as sd11_03 } from './sd11/sd11-03-stereo-spread.ts';
+import { challenge as sd11_04 } from './sd11/sd11-04-supersaw-basics.ts';
+import { challenge as sd11_05 } from './sd11/sd11-05-classic-supersaw.ts';
+import { challenge as sd11_06 } from './sd11/sd11-06-trance-lead.ts';
+
 /**
  * All challenges indexed by ID
  */
@@ -183,6 +199,18 @@ export const challengesById: Record<string, Challenge> = {
   'sd9-10-choir-pad': sd9_10,
   'sd9-11-nasal-reed': sd9_11,
   'sd9-12-shimmer': sd9_12,
+  'sd10-01-basic-arp': sd10_01,
+  'sd10-02-fast-arp': sd10_02,
+  'sd10-03-octave-arp': sd10_03,
+  'sd10-04-legato-arp': sd10_04,
+  'sd10-05-filter-arp': sd10_05,
+  'sd10-06-trance-arp': sd10_06,
+  'sd11-01-basic-unison': sd11_01,
+  'sd11-02-detuned-unison': sd11_02,
+  'sd11-03-stereo-spread': sd11_03,
+  'sd11-04-supersaw-basics': sd11_04,
+  'sd11-05-classic-supersaw': sd11_05,
+  'sd11-06-trance-lead': sd11_06,
 };
 
 /**
@@ -198,6 +226,8 @@ export const challengesByModule: Record<string, Challenge[]> = {
   SD7: [sd7_01, sd7_02, sd7_03, sd7_04, sd7_05, sd7_06],
   SD8: [sd8_01, sd8_02, sd8_03, sd8_04, sd8_05, sd8_06, sd8_07, sd8_08, sd8_09, sd8_10, sd8_11, sd8_12],
   SD9: [sd9_01, sd9_02, sd9_03, sd9_04, sd9_05, sd9_06, sd9_07, sd9_08, sd9_09, sd9_10, sd9_11, sd9_12],
+  SD10: [sd10_01, sd10_02, sd10_03, sd10_04, sd10_05, sd10_06],
+  SD11: [sd11_01, sd11_02, sd11_03, sd11_04, sd11_05, sd11_06],
 };
 
 /**
@@ -269,6 +299,20 @@ export const allChallenges: Challenge[] = [
   sd9_10,
   sd9_11,
   sd9_12,
+  // SD10 - Arpeggiator
+  sd10_01,
+  sd10_02,
+  sd10_03,
+  sd10_04,
+  sd10_05,
+  sd10_06,
+  // SD11 - Unison & Supersaw
+  sd11_01,
+  sd11_02,
+  sd11_03,
+  sd11_04,
+  sd11_05,
+  sd11_06,
 ];
 
 /**
@@ -328,6 +372,18 @@ export const modules = {
     title: 'Additive Synthesis',
     description: 'Build sounds from individual harmonics using Fourier synthesis.',
     challengeCount: 12,
+  },
+  SD10: {
+    id: 'SD10',
+    title: 'Arpeggiator',
+    description: 'Create rhythmic patterns with the arpeggiator. Control tempo, octaves, and gate.',
+    challengeCount: 6,
+  },
+  SD11: {
+    id: 'SD11',
+    title: 'Unison & Supersaw',
+    description: 'Stack multiple voices for massive sounds. Master the classic supersaw.',
+    challengeCount: 6,
   },
 } as const;
 
