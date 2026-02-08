@@ -401,7 +401,7 @@ export function SynthView() {
               onDecayChange={setPitchEnvelopeDecay}
               onSustainChange={setPitchEnvelopeSustain}
               onReleaseChange={setPitchEnvelopeRelease}
-              width={180}
+              width={200}
               height={60}
               accentColor={COLORS.pitchEnv}
               compact
@@ -425,7 +425,7 @@ export function SynthView() {
               onDecayChange={setPWMEnvelopeDecay}
               onSustainChange={setPWMEnvelopeSustain}
               onReleaseChange={setPWMEnvelopeRelease}
-              width={180}
+              width={200}
               height={60}
               accentColor={COLORS.pwmEnv}
               compact
@@ -464,6 +464,17 @@ export function SynthView() {
 
               {params.subOsc.enabled && (
                 <>
+                  {/* Waveform visualizer */}
+                  <OscillatorVisualizer
+                    waveform={params.subOsc.type}
+                    octave={params.subOsc.octave}
+                    detune={0}
+                    width={200}
+                    height={100}
+                    accentColor={COLORS.subOsc}
+                    compact
+                  />
+
                   {/* Type selector */}
                   <div style={{ display: 'flex', gap: '4px' }}>
                     {(['sine', 'square'] as const).map((t) => (
@@ -552,6 +563,17 @@ export function SynthView() {
 
               {params.oscillator2.enabled && (
                 <>
+                  {/* Waveform visualizer */}
+                  <OscillatorVisualizer
+                    waveform={params.oscillator2.type}
+                    octave={params.oscillator2.octave}
+                    detune={params.oscillator2.detune}
+                    width={200}
+                    height={100}
+                    accentColor={COLORS.osc2}
+                    compact
+                  />
+
                   {/* Waveform selector */}
                   <WaveformSelector
                     value={params.oscillator2.type}
@@ -682,7 +704,7 @@ export function SynthView() {
               onDecayChange={setFilterEnvelopeDecay}
               onSustainChange={setFilterEnvelopeSustain}
               onReleaseChange={setFilterEnvelopeRelease}
-              width={180}
+              width={200}
               height={60}
               accentColor={COLORS.filterEnv}
               compact
@@ -1027,7 +1049,7 @@ export function SynthView() {
               onDecayChange={setModEnvelopeDecay}
               onSustainChange={setModEnvelopeSustain}
               onReleaseChange={setModEnvelopeRelease}
-              width={180}
+              width={200}
               height={60}
               accentColor={COLORS.modEnv}
               compact
@@ -1047,7 +1069,7 @@ export function SynthView() {
               {/* Oscilloscope */}
               <Oscilloscope
                 getAnalyser={() => engine?.getAnalyser() ?? null}
-                width={180}
+                width={200}
                 height={80}
                 accentColor={COLORS.output}
               />
@@ -1230,6 +1252,13 @@ function HelpModeButton() {
   );
 }
 
+// Standard module widths
+const MODULE_WIDTH = {
+  standard: 224,  // 200px visualizer + 12px padding each side
+  wide: 320,      // FX and mod matrix
+  compact: 224,   // Stacked envelope modules (same as parent)
+};
+
 // Stage card component
 function StageCard({
   title,
@@ -1250,14 +1279,16 @@ function StageCard({
     noBorderRadius === 'top' ? '0 0 8px 8px' :
     noBorderRadius === 'bottom' ? '8px 8px 0 0' : '8px';
 
+  const width = wide ? MODULE_WIDTH.wide : MODULE_WIDTH.standard;
+
   return (
     <div style={{
       background: '#111',
       border: `1px solid ${color}40`,
       borderRadius,
       padding: compact ? '8px' : '12px',
-      minWidth: wide ? '280px' : '180px',
-      width: 'fit-content',
+      width: `${width}px`,
+      boxSizing: 'border-box',
       alignSelf: 'flex-start',
     }}>
       <div style={{
