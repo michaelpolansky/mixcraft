@@ -20,6 +20,7 @@ interface AuthStore {
   isInitialized: boolean;
   syncStatus: SyncStatus;
   showAuthModal: boolean;
+  pendingPasswordReset: boolean;
 
   // Actions
   initialize: () => void;
@@ -27,6 +28,8 @@ interface AuthStore {
   signUp: (email: string, password: string) => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
   setShowAuthModal: (show: boolean) => void;
+  resetPassword: (email: string) => Promise<{ error?: string }>;
+  updatePassword: (newPassword: string) => Promise<{ error?: string }>;
 
   // Sync
   syncProgress: () => Promise<void>;
@@ -40,6 +43,7 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
   isInitialized: false,
   syncStatus: 'idle',
   showAuthModal: false,
+  pendingPasswordReset: false,
 
   initialize: () => {
     const supabase = getSupabaseClient();
@@ -49,7 +53,7 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
     }
 
     // Listen for auth state changes
-    supabase.auth.onAuthStateChange((_event, session) => {
+    supabase.auth.onAuthStateChange((event, session) => {
       const prevUser = get().user;
       set({
         user: session?.user ?? null,
@@ -57,6 +61,12 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
         isLoading: false,
         isInitialized: true,
       });
+
+      // Handle password recovery link click
+      if (event === 'PASSWORD_RECOVERY') {
+        set({ pendingPasswordReset: true, showAuthModal: true });
+        return;
+      }
 
       // Sync on sign-in (when transitioning from no user to user)
       if (session?.user && !prevUser) {
@@ -124,6 +134,43 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
 
   setShowAuthModal: (show) => {
     set({ showAuthModal: show });
+  },
+
+  resetPassword: async (email) => {
+    const supabase = getSupabaseClient();
+    if (!supabase) return { error: 'Auth not configured' };
+
+    set({ isLoading: true });
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin,
+    });
+
+    set({ isLoading: false });
+
+    if (error) {
+      return { error: error.message };
+    }
+
+    return {};
+  },
+
+  updatePassword: async (newPassword) => {
+    const supabase = getSupabaseClient();
+    if (!supabase) return { error: 'Auth not configured' };
+
+    set({ isLoading: true });
+
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+
+    set({ isLoading: false });
+
+    if (error) {
+      return { error: error.message };
+    }
+
+    set({ pendingPasswordReset: false });
+    return {};
   },
 
   syncProgress: async () => {
