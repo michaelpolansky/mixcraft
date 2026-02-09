@@ -22,6 +22,10 @@ import { useMixingStore } from './ui/stores/mixing-store.ts';
 import { useProductionStore } from './ui/stores/production-store.ts';
 import { useSamplerStore } from './ui/stores/sampler-store.ts';
 import { useDrumSequencerStore } from './ui/stores/drum-sequencer-store.ts';
+import { useAuthStore } from './ui/stores/auth-store.ts';
+import { useProgressSync } from './ui/hooks/useProgressSync.ts';
+import { AuthButton } from './ui/components/AuthButton.tsx';
+import { AuthModal } from './ui/components/AuthModal.tsx';
 import { allChallenges, modules, allSamplingChallenges, samplingModules, getSamplingChallenge, getNextSamplingChallenge, allDrumSequencingChallenges, drumSequencingModules, getDrumSequencingChallenge, getNextDrumSequencingChallenge } from './data/challenges/index.ts';
 import { allMixingChallenges, mixingModules, getMixingChallenge, getNextMixingChallenge } from './data/challenges/mixing/index.ts';
 import { allProductionChallenges, productionModules, getProductionChallenge, getNextProductionChallenge } from './data/challenges/production/index.ts';
@@ -90,10 +94,16 @@ function AppContent() {
     setShowOnboarding(false);
   };
 
-  // Initialize synth engine on mount
+  // Initialize synth engine and auth on mount
+  const initializeAuth = useAuthStore((s) => s.initialize);
+
   useEffect(() => {
     initEngine();
-  }, [initEngine]);
+    initializeAuth();
+  }, [initEngine, initializeAuth]);
+
+  // Sync progress to cloud when store changes (while signed in)
+  useProgressSync();
 
   // Handle starting audio (requires user gesture)
   const handleStart = async () => {
@@ -429,19 +439,25 @@ function AppContent() {
     >
       <div style={{ maxWidth: '800px', margin: '0 auto' }}>
         {/* Header */}
-        <h1
-          style={{
-            fontSize: '36px',
-            fontWeight: 300,
-            color: '#4ade80',
-            marginBottom: '8px',
-          }}
-        >
-          MIXCRAFT
-        </h1>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+          <h1
+            style={{
+              fontSize: '36px',
+              fontWeight: 300,
+              color: '#4ade80',
+              margin: 0,
+            }}
+          >
+            MIXCRAFT
+          </h1>
+          <AuthButton />
+        </div>
         <p style={{ color: '#666', marginBottom: '24px' }}>
           Learn Sound Design Through Play
         </p>
+
+        {/* Auth Modal */}
+        <AuthModal />
 
         {/* Progress Stats */}
         {(() => {

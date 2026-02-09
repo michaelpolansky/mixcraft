@@ -5,9 +5,11 @@
 
 import { router } from '../trpc.ts';
 import { feedbackRouter } from './feedback.ts';
+import { progressRouter } from './progress.ts';
 
 export const appRouter = router({
   feedback: feedbackRouter,
+  progress: progressRouter,
 });
 
 // Export type for client

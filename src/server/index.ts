@@ -43,7 +43,7 @@ const server = Bun.serve({
     const corsHeaders = {
       'Access-Control-Allow-Origin': corsOrigin,
       'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     };
 
     // Handle CORS preflight
@@ -64,7 +64,7 @@ const server = Bun.serve({
         endpoint: '/trpc',
         req: request,
         router: appRouter,
-        createContext,
+        createContext: () => createContext({ req: request }),
       });
 
       // Add CORS headers to response
