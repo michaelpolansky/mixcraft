@@ -117,10 +117,10 @@ export function WaveformIcon({
   return (
     <canvas
       ref={canvasRef}
+      className="block"
       style={{
         width: size,
         height: size,
-        display: 'block',
       }}
     />
   );

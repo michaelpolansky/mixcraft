@@ -16,7 +16,7 @@ import {
   type ModDestination,
   type ModMatrixGrid as ModMatrixGridType,
 } from '../../core/types.ts';
-import { COLORS, TYPOGRAPHY, RADIUS, TRANSITIONS } from '../theme/index.ts';
+import { COLORS } from '../theme/index.ts';
 
 interface ModMatrixGridProps {
   grid: ModMatrixGridType;
@@ -180,16 +180,16 @@ function MatrixCell({
         height: CELL_SIZE,
         background: bgColor,
         border: `1px solid ${borderColor}`,
-        borderRadius: RADIUS.sm,
+        borderRadius: 4,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         cursor: 'ns-resize',
         userSelect: 'none',
-        transition: `background ${TRANSITIONS.fast}, border-color ${TRANSITIONS.fast}`,
+        transition: 'background 0.1s ease, border-color 0.1s ease',
         fontSize: '8px',
         fontWeight: 600,
-        fontFamily: TYPOGRAPHY.family.mono,
+        fontFamily: 'ui-monospace, SFMono-Regular, SF Mono, Monaco, Consolas, monospace',
         color: isActive ? COLORS.text.primary : 'transparent',
       }}
     >

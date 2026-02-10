@@ -2,31 +2,22 @@
  * Single score breakdown row: label left, colored percentage right
  */
 
+import { cn } from '../../utils/cn.ts';
+
 interface ScoreBreakdownRowProps {
   label: string;
   score: number;
 }
 
 export function ScoreBreakdownRow({ label, score }: ScoreBreakdownRowProps) {
-  const color =
-    score >= 80 ? '#22c55e' : score >= 60 ? '#eab308' : '#ef4444';
-
   return (
-    <div
-      style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '4px',
-      }}
-    >
-      <span style={{ color: '#888', fontSize: '13px' }}>{label}</span>
+    <div className="flex justify-between items-center mb-1">
+      <span className="text-text-tertiary text-lg">{label}</span>
       <span
-        style={{
-          color,
-          fontSize: '13px',
-          fontWeight: 600,
-        }}
+        className={cn(
+          'text-lg font-semibold',
+          score >= 80 ? 'text-success' : score >= 60 ? 'text-warning' : 'text-danger'
+        )}
       >
         {Math.round(score)}%
       </span>

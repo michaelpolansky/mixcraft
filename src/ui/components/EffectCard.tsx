@@ -138,10 +138,10 @@ export const EffectCard: React.FC<EffectCardProps> = ({
   return (
     <canvas
       ref={canvasRef}
+      className="rounded-lg"
       style={{
         width,
         height,
-        borderRadius: 8,
       }}
     />
   );

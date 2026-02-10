@@ -3,6 +3,7 @@
  */
 
 import type { ReactNode } from 'react';
+import { cn } from '../utils/cn.ts';
 
 export interface StageCardProps {
   title: string;
@@ -23,27 +24,23 @@ export function StageCard({
   noBorderRadius,
   children,
 }: StageCardProps) {
-  const borderRadiusClass =
-    noBorderRadius === 'both' ? 'rounded-none' :
-    noBorderRadius === 'top' ? 'rounded-b-lg rounded-t-none' :
-    noBorderRadius === 'bottom' ? 'rounded-t-lg rounded-b-none' : 'rounded-lg';
-
-  const widthClass = extraWide
-    ? 'w-[440px]'
-    : wide
-      ? 'w-[320px]'
-      : 'w-[224px]';
-
-  const paddingClass = compact ? 'p-2' : 'p-3';
-
   return (
     <div
-      className={`bg-[#111] ${borderRadiusClass} ${widthClass} ${paddingClass} self-start overflow-hidden box-border`}
-      style={{ border: `1px solid ${color}40` }}
+      className={cn(
+        'bg-bg-secondary self-start overflow-hidden box-border border border-(--stage-color)/25',
+        noBorderRadius === 'both' ? 'rounded-none' :
+        noBorderRadius === 'top' ? 'rounded-b-lg rounded-t-none' :
+        noBorderRadius === 'bottom' ? 'rounded-t-lg rounded-b-none' : 'rounded-lg',
+        extraWide ? 'w-[440px]' : wide ? 'w-[320px]' : 'w-[224px]',
+        compact ? 'p-2' : 'p-3',
+      )}
+      style={{ '--stage-color': color } as React.CSSProperties}
     >
       <div
-        className={`text-[11px] font-semibold tracking-wide ${compact ? 'mb-2' : 'mb-3'}`}
-        style={{ color }}
+        className={cn(
+          'text-base font-semibold tracking-wide text-(--stage-color)',
+          compact ? 'mb-2' : 'mb-3'
+        )}
       >
         {title}
       </div>

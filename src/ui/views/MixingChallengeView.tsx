@@ -7,6 +7,8 @@ import { useEffect, useRef, useCallback, useState } from 'react';
 import * as Tone from 'tone';
 import { useMixingStore } from '../stores/mixing-store.ts';
 import { EQControl, CompressorControl, SpectrumAnalyzer } from '../components/index.ts';
+import { Section } from '../components/challenge/Section.tsx';
+import { cn } from '../utils/cn.ts';
 import { createAudioSource, type AudioSource } from '../../core/audio-source.ts';
 import { MixingEQ, MixingCompressor } from '../../core/mixing-effects.ts';
 import { evaluateMixingChallenge } from '../../core/mixing-evaluation.ts';
@@ -152,64 +154,27 @@ export function MixingChallengeView({
   const compressorMode = challenge.controls.compressor === 'full' ? 'full' : 'simple';
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: '#0a0a0a',
-        color: '#fff',
-        fontFamily: 'system-ui, -apple-system, sans-serif',
-        padding: '24px',
-      }}
-    >
+    <div className="min-h-screen bg-[#0a0a0a] text-text-primary font-sans p-6">
       {/* Header */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          marginBottom: '24px',
-        }}
-      >
+      <div className="flex justify-between items-start mb-6">
         <div>
           <button
             onClick={handleExit}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: '#666',
-              cursor: 'pointer',
-              fontSize: '14px',
-              marginBottom: '8px',
-              padding: 0,
-            }}
+            className="bg-transparent border-none text-text-muted cursor-pointer text-xl mb-2 p-0"
           >
             ← Back
           </button>
-          <h1
-            style={{
-              fontSize: '24px',
-              fontWeight: 600,
-              margin: 0,
-              color: '#fff',
-            }}
-          >
+          <h1 className="text-4xl font-semibold m-0">
             {challenge.title}
           </h1>
-          <p
-            style={{
-              color: '#888',
-              margin: '8px 0 0 0',
-              fontSize: '14px',
-              maxWidth: '600px',
-            }}
-          >
+          <p className="text-text-tertiary mt-2 text-xl max-w-[600px]">
             {challenge.description}
           </p>
         </div>
 
-        <div style={{ textAlign: 'right' }}>
-          <div style={{ color: '#666', fontSize: '12px' }}>Attempt {currentAttempt}</div>
-          <div style={{ color: '#eab308', fontSize: '18px' }}>
+        <div className="text-right">
+          <div className="text-text-muted text-md">Attempt {currentAttempt}</div>
+          <div className="text-warning text-[18px]">
             {'★'.repeat(challenge.difficulty)}
             {'☆'.repeat(3 - challenge.difficulty)}
           </div>
@@ -217,32 +182,18 @@ export function MixingChallengeView({
       </div>
 
       {/* Main Layout */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: '24px',
-          maxWidth: '1000px',
-        }}
-      >
+      <div className="grid grid-cols-2 gap-6 max-w-[1000px]">
         {/* Left Column - Controls */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div className="flex flex-col gap-4">
           {/* Play/Stop */}
           <Section title="Audio Source">
             <button
               onClick={togglePlayback}
+              className="py-3 px-6 border-none rounded-lg text-text-primary cursor-pointer text-xl font-semibold w-full"
               style={{
-                padding: '12px 24px',
                 background: isPlaying
                   ? 'linear-gradient(145deg, #ef4444, #dc2626)'
                   : 'linear-gradient(145deg, #22c55e, #16a34a)',
-                border: 'none',
-                borderRadius: '8px',
-                color: '#fff',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: 600,
-                width: '100%',
               }}
             >
               {isPlaying ? '■ Stop' : '▶ Play'}
@@ -274,7 +225,7 @@ export function MixingChallengeView({
         </div>
 
         {/* Right Column - Visualization & Hints */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div className="flex flex-col gap-4">
           {/* Spectrum Analyzer */}
           <Section title="Spectrum Analyzer">
             <SpectrumAnalyzer width={400} height={180} barCount={48} />
@@ -282,17 +233,11 @@ export function MixingChallengeView({
 
           {/* Hints */}
           <Section title="Hints">
-            <div style={{ minHeight: '80px' }}>
+            <div className="min-h-[80px]">
               {challenge.hints.slice(0, hintsRevealed).map((hint, i) => (
                 <div
                   key={i}
-                  style={{
-                    color: '#888',
-                    fontSize: '13px',
-                    marginBottom: '8px',
-                    paddingLeft: '12px',
-                    borderLeft: '2px solid #333',
-                  }}
+                  className="text-text-tertiary text-lg mb-2 pl-3 border-l-2 border-border-default"
                 >
                   {hint}
                 </div>
@@ -301,15 +246,7 @@ export function MixingChallengeView({
               {hintsRevealed < challenge.hints.length && (
                 <button
                   onClick={revealHint}
-                  style={{
-                    background: 'none',
-                    border: '1px solid #333',
-                    borderRadius: '4px',
-                    color: '#666',
-                    cursor: 'pointer',
-                    fontSize: '12px',
-                    padding: '6px 12px',
-                  }}
+                  className="bg-transparent border border-border-default rounded-sm text-text-muted cursor-pointer text-md py-1.5 px-3"
                 >
                   Reveal Hint ({hintsRevealed + 1}/{challenge.hints.length})
                 </button>
@@ -318,22 +255,18 @@ export function MixingChallengeView({
           </Section>
 
           {/* Submit */}
-          <div style={{ marginTop: 'auto' }}>
+          <div className="mt-auto">
             <button
               onClick={handleSubmit}
               disabled={isScoring}
+              className={cn(
+                'w-full py-4 px-8 border-none rounded-lg text-text-primary text-2xl font-semibold',
+                isScoring ? 'cursor-wait' : 'cursor-pointer'
+              )}
               style={{
-                width: '100%',
-                padding: '16px 32px',
                 background: isScoring
                   ? '#333'
                   : 'linear-gradient(145deg, #3b82f6, #2563eb)',
-                border: 'none',
-                borderRadius: '8px',
-                color: '#fff',
-                cursor: isScoring ? 'wait' : 'pointer',
-                fontSize: '16px',
-                fontWeight: 600,
               }}
             >
               {isScoring ? 'Scoring...' : 'Submit'}
@@ -352,36 +285,6 @@ export function MixingChallengeView({
           hasNext={hasNext}
         />
       )}
-    </div>
-  );
-}
-
-/**
- * Section wrapper
- */
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div
-      style={{
-        background: '#141414',
-        borderRadius: '12px',
-        padding: '16px',
-        border: '1px solid #2a2a2a',
-      }}
-    >
-      <h3
-        style={{
-          margin: '0 0 12px 0',
-          fontSize: '11px',
-          fontWeight: 600,
-          color: '#666',
-          textTransform: 'uppercase',
-          letterSpacing: '1px',
-        }}
-      >
-        {title}
-      </h3>
-      {children}
     </div>
   );
 }
@@ -410,59 +313,32 @@ function MixingResultsModal({
   hasNext,
 }: MixingResultsModalProps) {
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0, 0, 0, 0.8)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000,
-      }}
-    >
-      <div
-        style={{
-          background: '#1a1a1a',
-          borderRadius: '16px',
-          padding: '32px',
-          maxWidth: '400px',
-          width: '90%',
-          border: '1px solid #333',
-        }}
-      >
+    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-modal">
+      <div className="bg-bg-tertiary rounded-xl p-8 max-w-[400px] w-[90%] border border-border-medium">
         {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-          <div
-            style={{
-              fontSize: '48px',
-              marginBottom: '8px',
-              color: result.passed ? '#22c55e' : '#666',
-            }}
-          >
+        <div className="text-center mb-6">
+          <div className={cn(
+            'text-5xl mb-2',
+            result.passed ? 'text-success' : 'text-text-muted'
+          )}>
             {'★'.repeat(result.stars)}
             {'☆'.repeat(3 - result.stars)}
           </div>
-          <h2 style={{ margin: '0 0 8px 0', fontSize: '24px' }}>
+          <h2 className="m-0 mb-2 text-4xl">
             {result.passed ? 'Nice!' : 'Keep Trying'}
           </h2>
-          <div style={{ fontSize: '32px', fontWeight: 700, color: '#fff' }}>
+          <div className="text-5xl font-bold text-text-primary">
             {result.overall}%
           </div>
         </div>
 
         {/* Feedback */}
-        <div style={{ marginBottom: '24px' }}>
+        <div className="mb-6">
           {result.feedback.map((fb, i) => (
             <div
               key={i}
-              style={{
-                color: '#888',
-                fontSize: '14px',
-                marginBottom: '8px',
-                paddingLeft: '12px',
-                borderLeft: `2px solid ${result.passed ? '#22c55e' : '#f59e0b'}`,
-              }}
+              className="text-text-tertiary text-xl mb-2 pl-3 border-l-2"
+              style={{ borderLeftColor: result.passed ? '#22c55e' : '#f59e0b' }}
             >
               {fb}
             </div>
@@ -470,20 +346,10 @@ function MixingResultsModal({
         </div>
 
         {/* Actions */}
-        <div style={{ display: 'flex', gap: '12px' }}>
+        <div className="flex gap-3">
           <button
             onClick={onRetry}
-            style={{
-              flex: 1,
-              padding: '12px',
-              background: '#333',
-              border: 'none',
-              borderRadius: '8px',
-              color: '#fff',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: 600,
-            }}
+            className="flex-1 py-3 bg-border-medium border-none rounded-lg text-text-primary cursor-pointer text-xl font-semibold"
           >
             Try Again
           </button>
@@ -491,17 +357,8 @@ function MixingResultsModal({
           {result.passed && hasNext && onNext && (
             <button
               onClick={onNext}
-              style={{
-                flex: 1,
-                padding: '12px',
-                background: 'linear-gradient(145deg, #22c55e, #16a34a)',
-                border: 'none',
-                borderRadius: '8px',
-                color: '#fff',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: 600,
-              }}
+              className="flex-1 py-3 border-none rounded-lg text-text-primary cursor-pointer text-xl font-semibold"
+              style={{ background: 'linear-gradient(145deg, #22c55e, #16a34a)' }}
             >
               Next Challenge →
             </button>

@@ -10,36 +10,23 @@ export function ChallengeButton({ title, difficulty, stars, completed, onClick }
   return (
     <button
       onClick={onClick}
-      style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '12px 16px',
-        background: '#0a0a0a',
-        border: '1px solid #222',
-        borderRadius: '8px',
-        color: '#fff',
-        cursor: 'pointer',
-        textAlign: 'left',
-      }}
+      className="flex justify-between items-center py-3 px-4 bg-bg-primary border border-bg-quaternary rounded-md text-text-primary cursor-pointer text-left"
     >
       <div>
-        <div style={{ fontSize: '14px', fontWeight: 500 }}>
-          {title}
-        </div>
-        <div style={{ fontSize: '12px', color: '#666' }}>
+        <div className="text-xl font-medium">{title}</div>
+        <div className="text-md text-text-muted">
           {'★'.repeat(difficulty)}
           {'☆'.repeat(3 - difficulty)}
         </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <div style={{ color: '#eab308', fontSize: '14px' }}>
+      <div className="flex items-center gap-3">
+        <div className="text-warning text-xl">
           {'★'.repeat(stars)}
-          <span style={{ color: '#333' }}>{'★'.repeat(3 - stars)}</span>
+          <span className="text-border-medium">{'★'.repeat(3 - stars)}</span>
         </div>
         {completed && (
-          <span style={{ color: '#22c55e', fontSize: '16px' }}>✓</span>
+          <span className="text-success text-2xl">✓</span>
         )}
       </div>
     </button>

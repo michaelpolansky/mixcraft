@@ -17,11 +17,6 @@ interface OutputStageProps {
   color: string;
 }
 
-const SIZES = {
-  visualizer: { width: 200, compactHeight: 60 },
-  gap: { sm: 8, md: 12 },
-};
-
 export function OutputStage({
   volume,
   pan,
@@ -34,14 +29,14 @@ export function OutputStage({
 }: OutputStageProps) {
   return (
     <StageCard title="OUTPUT" color={color}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.md }}>
+      <div className="flex flex-col gap-3">
         <Oscilloscope
           getAnalyser={() => engine?.getAnalyser() ?? null}
-          width={SIZES.visualizer.width}
-          height={SIZES.visualizer.compactHeight}
+          width={200}
+          height={60}
           accentColor={color}
         />
-        <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm }}>
+        <div className="flex flex-col gap-2">
           <Knob
             label="Volume"
             value={volume}

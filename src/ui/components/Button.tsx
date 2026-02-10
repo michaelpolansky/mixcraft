@@ -6,7 +6,7 @@
  */
 
 import { type ReactNode, type ButtonHTMLAttributes, forwardRef } from 'react';
-import { COLORS, TYPOGRAPHY, SPACING, RADIUS, TRANSITIONS, SHADOWS } from '../theme/index.ts';
+import { cn } from '../utils/cn.ts';
 
 type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'outline';
 type ButtonSize = 'sm' | 'md' | 'lg';
@@ -31,76 +31,26 @@ interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'sty
   children: ReactNode;
 }
 
-// Size configurations
-const SIZES: Record<ButtonSize, { height: number; padding: string; fontSize: string; iconSize: number }> = {
-  sm: {
-    height: 32,
-    padding: `0 ${SPACING.md}px`,
-    fontSize: TYPOGRAPHY.size.sm,
-    iconSize: 14,
-  },
-  md: {
-    height: 40,
-    padding: `0 ${SPACING.lg}px`,
-    fontSize: TYPOGRAPHY.size.md,
-    iconSize: 16,
-  },
-  lg: {
-    height: 48,
-    padding: `0 ${SPACING.xl}px`,
-    fontSize: TYPOGRAPHY.size.lg,
-    iconSize: 18,
-  },
+// Size class mappings
+const SIZE_CLASSES: Record<ButtonSize, string> = {
+  sm: 'h-8 px-3 text-sm',
+  md: 'h-10 px-4 text-md',
+  lg: 'h-12 px-6 text-lg',
 };
 
-// Variant configurations
-const getVariantStyles = (variant: ButtonVariant, accentColor?: string) => {
-  const accent = accentColor || COLORS.accent.primary;
+const ICON_SIZES: Record<ButtonSize, number> = {
+  sm: 14,
+  md: 16,
+  lg: 18,
+};
 
-  switch (variant) {
-    case 'primary':
-      return {
-        background: `linear-gradient(135deg, ${COLORS.success}, ${COLORS.successLight})`,
-        color: COLORS.bg.primary,
-        border: 'none',
-        hoverBackground: COLORS.successLight,
-        activeBackground: COLORS.success,
-      };
-    case 'secondary':
-      return {
-        background: COLORS.bg.tertiary,
-        color: COLORS.text.primary,
-        border: `1px solid ${COLORS.border.medium}`,
-        hoverBackground: COLORS.bg.quaternary,
-        activeBackground: COLORS.border.default,
-      };
-    case 'danger':
-      return {
-        background: COLORS.danger,
-        color: COLORS.text.primary,
-        border: 'none',
-        hoverBackground: '#dc2626', // Slightly darker red
-        activeBackground: '#b91c1c',
-      };
-    case 'ghost':
-      return {
-        background: 'transparent',
-        color: COLORS.text.secondary,
-        border: 'none',
-        hoverBackground: COLORS.interactive.hover,
-        activeBackground: COLORS.interactive.active,
-      };
-    case 'outline':
-      return {
-        background: 'transparent',
-        color: accent,
-        border: `1px solid ${accent}`,
-        hoverBackground: `${accent}15`,
-        activeBackground: `${accent}25`,
-      };
-    default:
-      return getVariantStyles('secondary');
-  }
+// Variant class mappings
+const VARIANT_CLASSES: Record<ButtonVariant, string> = {
+  primary: 'bg-gradient-to-br from-success to-success-light text-bg-primary border-none hover:brightness-110 active:scale-[0.98]',
+  secondary: 'bg-bg-tertiary text-text-primary border border-border-medium hover:bg-bg-quaternary active:bg-border-default',
+  danger: 'bg-danger text-text-primary border-none hover:bg-[#dc2626] active:bg-[#b91c1c]',
+  ghost: 'bg-transparent text-text-secondary border-none hover:bg-interactive-hover active:bg-interactive-active',
+  outline: 'bg-transparent border hover:bg-(--btn-accent)/8 active:bg-(--btn-accent)/15',
 };
 
 /**
@@ -113,13 +63,8 @@ function Spinner({ size }: { size: number }) {
       height={size}
       viewBox="0 0 24 24"
       fill="none"
-      style={{
-        animation: 'spin 1s linear infinite',
-      }}
+      className="animate-spin"
     >
-      <style>
-        {`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}
-      </style>
       <circle
         cx="12"
         cy="12"
@@ -157,111 +102,39 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
   accentColor,
   disabled,
   children,
+  className,
   style,
-  onMouseEnter,
-  onMouseLeave,
-  onMouseDown,
-  onMouseUp,
-  onFocus,
-  onBlur,
   ...props
 }, ref) => {
-  const sizeConfig = SIZES[size];
-  const variantStyles = getVariantStyles(variant, accentColor);
   const isDisabled = disabled || loading;
-
-  // State for hover/active effects
-  const handleMouseEnter = (e: React.MouseEvent<HTMLButtonElement>) => {
-    if (!isDisabled) {
-      e.currentTarget.style.background = variantStyles.hoverBackground;
-    }
-    onMouseEnter?.(e);
-  };
-
-  const handleMouseLeave = (e: React.MouseEvent<HTMLButtonElement>) => {
-    if (!isDisabled) {
-      e.currentTarget.style.background = variantStyles.background;
-    }
-    onMouseLeave?.(e);
-  };
-
-  const handleMouseDown = (e: React.MouseEvent<HTMLButtonElement>) => {
-    if (!isDisabled) {
-      e.currentTarget.style.background = variantStyles.activeBackground;
-      e.currentTarget.style.transform = 'scale(0.98)';
-    }
-    onMouseDown?.(e);
-  };
-
-  const handleMouseUp = (e: React.MouseEvent<HTMLButtonElement>) => {
-    if (!isDisabled) {
-      e.currentTarget.style.background = variantStyles.hoverBackground;
-      e.currentTarget.style.transform = 'scale(1)';
-    }
-    onMouseUp?.(e);
-  };
-
-  const handleFocus = (e: React.FocusEvent<HTMLButtonElement>) => {
-    e.currentTarget.style.boxShadow = `0 0 0 2px ${COLORS.interactive.focus}`;
-    onFocus?.(e);
-  };
-
-  const handleBlur = (e: React.FocusEvent<HTMLButtonElement>) => {
-    e.currentTarget.style.boxShadow = 'none';
-    onBlur?.(e);
-  };
 
   return (
     <button
       ref={ref}
       disabled={isDisabled}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      onMouseDown={handleMouseDown}
-      onMouseUp={handleMouseUp}
-      onFocus={handleFocus}
-      onBlur={handleBlur}
+      className={cn(
+        'inline-flex items-center justify-center gap-2 font-sans font-medium leading-none whitespace-nowrap rounded-md cursor-pointer outline-none transition-all duration-100 focus:ring-2 focus:ring-interactive-focus',
+        SIZE_CLASSES[size],
+        VARIANT_CLASSES[variant],
+        fullWidth && 'w-full',
+        isDisabled && 'opacity-50 cursor-not-allowed',
+        className,
+      )}
       style={{
-        // Layout
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: SPACING.sm,
-        width: fullWidth ? '100%' : 'auto',
-        height: sizeConfig.height,
-        padding: sizeConfig.padding,
-
-        // Typography
-        fontSize: sizeConfig.fontSize,
-        fontFamily: TYPOGRAPHY.family.sans,
-        fontWeight: TYPOGRAPHY.weight.medium,
-        lineHeight: 1,
-        textDecoration: 'none',
-        whiteSpace: 'nowrap',
-
-        // Appearance
-        background: variantStyles.background,
-        color: variantStyles.color,
-        border: variantStyles.border,
-        borderRadius: RADIUS.md,
-        cursor: isDisabled ? 'not-allowed' : 'pointer',
-        opacity: isDisabled ? 0.5 : 1,
-
-        // Interaction
-        outline: 'none',
-        transition: `all ${TRANSITIONS.fast}`,
-        transform: 'scale(1)',
-
-        // Merge custom styles
+        ...(variant === 'outline' && accentColor ? {
+          '--btn-accent': accentColor,
+          color: accentColor,
+          borderColor: accentColor,
+        } as React.CSSProperties : {}),
         ...style,
       }}
       {...props}
     >
       {/* Loading spinner replaces left icon */}
       {loading ? (
-        <Spinner size={sizeConfig.iconSize} />
+        <Spinner size={ICON_SIZES[size]} />
       ) : leftIcon ? (
-        <span style={{ display: 'flex', alignItems: 'center' }}>
+        <span className="flex items-center">
           {leftIcon}
         </span>
       ) : null}
@@ -271,7 +144,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
 
       {/* Right icon (hidden when loading) */}
       {rightIcon && !loading && (
-        <span style={{ display: 'flex', alignItems: 'center' }}>
+        <span className="flex items-center">
           {rightIcon}
         </span>
       )}
@@ -294,21 +167,20 @@ interface IconButtonProps extends Omit<ButtonProps, 'children' | 'leftIcon' | 'r
 export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(({
   icon,
   size = 'md',
-  style,
+  className,
   ...props
 }, ref) => {
-  const sizeConfig = SIZES[size];
+  const sizeMap: Record<ButtonSize, string> = {
+    sm: 'p-0 w-8 min-w-8',
+    md: 'p-0 w-10 min-w-10',
+    lg: 'p-0 w-12 min-w-12',
+  };
 
   return (
     <Button
       ref={ref}
       size={size}
-      style={{
-        padding: 0,
-        width: sizeConfig.height,
-        minWidth: sizeConfig.height,
-        ...style,
-      }}
+      className={cn(sizeMap[size], className)}
       {...props}
     >
       {icon}
@@ -323,25 +195,16 @@ IconButton.displayName = 'IconButton';
  */
 interface ButtonGroupProps {
   children: ReactNode;
-  /** Spacing between buttons */
-  spacing?: number;
   /** Direction of button layout */
   direction?: 'horizontal' | 'vertical';
 }
 
 export function ButtonGroup({
   children,
-  spacing = SPACING.sm,
   direction = 'horizontal',
 }: ButtonGroupProps) {
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: direction === 'horizontal' ? 'row' : 'column',
-        gap: spacing,
-      }}
-    >
+    <div className={cn('flex gap-2', direction === 'vertical' && 'flex-col')}>
       {children}
     </div>
   );
@@ -361,10 +224,7 @@ export function BackButton({ onClick, label = 'Menu' }: BackButtonProps) {
       variant="ghost"
       size="sm"
       onClick={onClick}
-      style={{
-        background: COLORS.bg.tertiary,
-        border: `1px solid ${COLORS.border.medium}`,
-      }}
+      className="bg-bg-tertiary border border-border-medium"
     >
       ← {label}
     </Button>
@@ -392,62 +252,31 @@ export function CardButton({
   icon,
   primary = false,
 }: CardButtonProps) {
-  const borderColor = accentColor || COLORS.border.default;
-  const titleColor = accentColor || COLORS.text.primary;
-
   return (
     <button
       onClick={onClick}
-      style={{
-        padding: `${SPACING.xl}px ${SPACING['2xl']}px`,
-        background: primary
-          ? `linear-gradient(145deg, ${COLORS.success}, #16a34a)`
-          : COLORS.bg.secondary,
-        border: primary ? 'none' : `1px solid ${borderColor}`,
-        borderRadius: RADIUS.lg,
-        color: COLORS.text.primary,
-        cursor: 'pointer',
-        textAlign: 'left',
-        flex: 1,
-        boxShadow: primary ? `0 4px 12px rgba(34, 197, 94, 0.3)` : 'none',
-        transition: `all ${TRANSITIONS.normal}`,
-        outline: 'none',
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = 'translateY(-2px)';
-        if (!primary) {
-          e.currentTarget.style.borderColor = accentColor || COLORS.border.bright;
-        }
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = 'translateY(0)';
-        if (!primary) {
-          e.currentTarget.style.borderColor = borderColor;
-        }
-      }}
-      onFocus={(e) => {
-        e.currentTarget.style.boxShadow = `0 0 0 2px ${COLORS.interactive.focus}`;
-      }}
-      onBlur={(e) => {
-        e.currentTarget.style.boxShadow = primary ? `0 4px 12px rgba(34, 197, 94, 0.3)` : 'none';
-      }}
+      className={cn(
+        'py-6 px-8 rounded-lg text-text-primary cursor-pointer text-left flex-1 outline-none transition-all duration-200 hover:-translate-y-0.5 focus:ring-2 focus:ring-interactive-focus',
+        primary
+          ? 'bg-gradient-to-br from-success to-[#16a34a] border-none shadow-[0_4px_12px_rgba(34,197,94,0.3)]'
+          : 'bg-bg-secondary border hover:border-border-bright'
+      )}
+      style={!primary && accentColor ? {
+        '--card-accent': accentColor,
+        borderColor: `${accentColor}40`,
+      } as React.CSSProperties : undefined}
     >
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: SPACING.sm,
-        fontSize: TYPOGRAPHY.size['2xl'],
-        fontWeight: TYPOGRAPHY.weight.semibold,
-        marginBottom: SPACING.xs,
-        color: primary ? COLORS.text.primary : titleColor,
-      }}>
+      <div
+        className="flex items-center gap-2 text-2xl font-semibold mb-1"
+        style={{ color: primary ? undefined : accentColor }}
+      >
         {icon}
         {title}
       </div>
-      <div style={{
-        fontSize: TYPOGRAPHY.size.lg,
-        color: primary ? 'rgba(255,255,255,0.8)' : COLORS.text.muted,
-      }}>
+      <div className={cn(
+        'text-lg',
+        primary ? 'text-white/80' : 'text-text-muted'
+      )}>
         {description}
       </div>
     </button>

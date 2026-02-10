@@ -23,7 +23,7 @@ import {
   useEffect,
   type ReactNode,
 } from 'react';
-import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS, Z_INDEX, TRANSITIONS } from '../theme/index.ts';
+import { cn } from '../utils/cn.ts';
 
 // Toast types
 type ToastType = 'success' | 'error' | 'warning' | 'info';
@@ -64,33 +64,33 @@ const DEFAULT_DURATIONS: Record<ToastType, number> = {
 
 // Icons for each type
 const TOAST_ICONS: Record<ToastType, string> = {
-  success: '✓',
-  error: '✕',
-  warning: '⚠',
-  info: 'ℹ',
+  success: '\u2713',
+  error: '\u2715',
+  warning: '\u26A0',
+  info: '\u2139',
 };
 
-// Colors for each type
+// Colors for each type (kept as raw values for dynamic styling)
 const TOAST_COLORS: Record<ToastType, { bg: string; border: string; icon: string }> = {
   success: {
-    bg: `${COLORS.success}15`,
-    border: COLORS.success,
-    icon: COLORS.success,
+    bg: 'rgba(34, 197, 94, 0.08)',
+    border: '#22c55e',
+    icon: '#22c55e',
   },
   error: {
-    bg: `${COLORS.danger}15`,
-    border: COLORS.danger,
-    icon: COLORS.danger,
+    bg: 'rgba(239, 68, 68, 0.08)',
+    border: '#ef4444',
+    icon: '#ef4444',
   },
   warning: {
-    bg: `${COLORS.warning}15`,
-    border: COLORS.warning,
-    icon: COLORS.warning,
+    bg: 'rgba(234, 179, 8, 0.08)',
+    border: '#eab308',
+    icon: '#eab308',
   },
   info: {
-    bg: `${COLORS.info}15`,
-    border: COLORS.info,
-    icon: COLORS.info,
+    bg: 'rgba(59, 130, 246, 0.08)',
+    border: '#3b82f6',
+    icon: '#3b82f6',
   },
 };
 
@@ -163,16 +163,7 @@ function ToastContainer({
 
   return (
     <div
-      style={{
-        position: 'fixed',
-        top: SPACING.lg,
-        right: SPACING.lg,
-        zIndex: Z_INDEX.toast,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: SPACING.sm,
-        pointerEvents: 'none',
-      }}
+      className="fixed top-4 right-4 z-[80] flex flex-col gap-2 pointer-events-none"
       role="region"
       aria-label="Notifications"
       aria-live="polite"
@@ -223,53 +214,24 @@ function ToastItem({
   return (
     <div
       role="alert"
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: SPACING.md,
-        padding: `${SPACING.md}px ${SPACING.lg}px`,
-        background: COLORS.bg.secondary,
-        border: `1px solid ${colors.border}`,
-        borderRadius: RADIUS.md,
-        boxShadow: SHADOWS.lg,
-        pointerEvents: 'auto',
-        minWidth: 280,
-        maxWidth: 400,
-
-        // Animation
-        opacity: isVisible && !isExiting ? 1 : 0,
-        transform: isVisible && !isExiting ? 'translateX(0)' : 'translateX(100%)',
-        transition: `all ${TRANSITIONS.normal}`,
-      }}
+      className={cn(
+        'flex items-center gap-3 py-3 px-4 bg-bg-secondary rounded-lg shadow-lg pointer-events-auto min-w-[280px] max-w-[400px] transition-all duration-200 relative',
+        isVisible && !isExiting
+          ? 'opacity-100 translate-x-0'
+          : 'opacity-0 translate-x-full'
+      )}
+      style={{ border: `1px solid ${colors.border}` }}
     >
       {/* Icon */}
       <div
-        style={{
-          width: 24,
-          height: 24,
-          borderRadius: RADIUS.full,
-          background: colors.bg,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: TYPOGRAPHY.size.sm,
-          fontWeight: TYPOGRAPHY.weight.bold,
-          color: colors.icon,
-          flexShrink: 0,
-        }}
+        className="w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold shrink-0"
+        style={{ background: colors.bg, color: colors.icon }}
       >
         {TOAST_ICONS[toast.type]}
       </div>
 
       {/* Message */}
-      <div
-        style={{
-          flex: 1,
-          fontSize: TYPOGRAPHY.size.md,
-          color: COLORS.text.primary,
-          lineHeight: TYPOGRAPHY.lineHeight.normal,
-        }}
-      >
+      <div className="flex-1 text-md text-text-primary leading-normal">
         {toast.message}
       </div>
 
@@ -277,46 +239,17 @@ function ToastItem({
       <button
         onClick={handleDismiss}
         aria-label="Dismiss notification"
-        style={{
-          background: 'transparent',
-          border: 'none',
-          padding: SPACING.xs,
-          cursor: 'pointer',
-          color: COLORS.text.tertiary,
-          fontSize: TYPOGRAPHY.size.lg,
-          lineHeight: 1,
-          borderRadius: RADIUS.sm,
-          transition: `color ${TRANSITIONS.fast}`,
-          flexShrink: 0,
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.color = COLORS.text.primary;
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.color = COLORS.text.tertiary;
-        }}
+        className="bg-transparent border-none p-1 cursor-pointer text-text-tertiary text-lg leading-none rounded-sm shrink-0 hover:text-text-primary transition-colors duration-100"
       >
         ×
       </button>
 
       {/* Progress bar */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: 2,
-          background: COLORS.border.subtle,
-          borderRadius: `0 0 ${RADIUS.md}px ${RADIUS.md}px`,
-          overflow: 'hidden',
-        }}
-      >
+      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-border-subtle rounded-b-lg overflow-hidden">
         <div
+          className="h-full w-full"
           style={{
-            height: '100%',
             background: colors.border,
-            width: '100%',
             animation: `shrink ${toast.duration}ms linear forwards`,
           }}
         />

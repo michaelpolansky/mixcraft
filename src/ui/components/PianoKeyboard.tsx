@@ -99,7 +99,7 @@ export function PianoKeyboard({
   const blackKeyHeight = 60;
 
   const keys: ReactElement[] = [];
-  const blackKeys: ReactElement[] = [];
+  const blackKeyElements: ReactElement[] = [];
 
   // Generate keys for each octave
   for (let o = 0; o < octaves; o++) {
@@ -138,7 +138,7 @@ export function PianoKeyboard({
       // Position black keys between white keys
       const x = (o * 7 + i) * whiteKeyWidth + whiteKeyWidth * 0.7;
 
-      blackKeys.push(
+      blackKeyElements.push(
         <rect
           key={fullNote}
           x={x}
@@ -163,30 +163,16 @@ export function PianoKeyboard({
   const totalWidth = octaves * 7 * whiteKeyWidth;
 
   return (
-    <div
-      style={{
-        background: '#1a1a1a',
-        padding: '12px',
-        borderRadius: '8px',
-        border: '1px solid #333',
-      }}
-    >
+    <div className="bg-bg-tertiary p-3 rounded-lg border border-border-medium">
       <svg
         width={totalWidth}
         height={whiteKeyHeight}
-        style={{ display: 'block' }}
+        className="block"
       >
         {keys}
-        {blackKeys}
+        {blackKeyElements}
       </svg>
-      <div
-        style={{
-          marginTop: '8px',
-          fontSize: '10px',
-          color: '#666',
-          textAlign: 'center',
-        }}
-      >
+      <div className="mt-2 text-xs text-text-muted text-center">
         Use keyboard: A-S-D-F-G-H-J-K (white) W-E-T-Y-U (black)
       </div>
     </div>

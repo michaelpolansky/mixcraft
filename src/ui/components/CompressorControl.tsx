@@ -3,6 +3,7 @@
  * Progressive disclosure: simple (threshold/amount) or full (+ attack/release)
  */
 
+import { cn } from '../utils/cn.ts';
 import { Knob } from './Knob.tsx';
 import type { CompressorFullParams } from '../../core/mixing-effects.ts';
 import { COMPRESSOR_RANGES } from '../../core/mixing-effects.ts';
@@ -27,30 +28,13 @@ function GainReductionMeter({ value }: GainReductionMeterProps) {
   const percent = Math.min(100, (Math.abs(value) / maxReduction) * 100);
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '4px',
-      }}
-    >
-      <div style={{ fontSize: '10px', color: '#666', textTransform: 'uppercase' }}>
+    <div className="flex flex-col items-center gap-1">
+      <div className="text-xs text-text-muted uppercase">
         GR
       </div>
 
       {/* Vertical meter */}
-      <div
-        style={{
-          width: '16px',
-          height: '80px',
-          background: '#1a1a1a',
-          borderRadius: '3px',
-          border: '1px solid #333',
-          position: 'relative',
-          overflow: 'hidden',
-        }}
-      >
+      <div className="w-4 h-20 bg-bg-tertiary rounded-sm border border-border-medium relative overflow-hidden">
         {/* Fill from top down */}
         <div
           style={{
@@ -66,13 +50,7 @@ function GainReductionMeter({ value }: GainReductionMeterProps) {
       </div>
 
       {/* Value display */}
-      <div
-        style={{
-          fontSize: '11px',
-          fontFamily: 'monospace',
-          color: value < -6 ? '#ef4444' : '#888',
-        }}
-      >
+      <div className={cn('text-sm font-mono', value < -6 ? 'text-danger' : 'text-text-muted')}>
         {value.toFixed(1)}
       </div>
     </div>
@@ -89,40 +67,17 @@ export function CompressorControl({
   onReleaseChange,
 }: CompressorControlProps) {
   return (
-    <div
-      style={{
-        background: '#141414',
-        borderRadius: '8px',
-        padding: '16px',
-        border: '1px solid #2a2a2a',
-      }}
-    >
+    <div className="bg-bg-secondary rounded-lg p-4 border border-border-default">
       {/* Header */}
-      <div
-        style={{
-          fontSize: '11px',
-          fontWeight: 600,
-          color: '#666',
-          textTransform: 'uppercase',
-          letterSpacing: '1px',
-          marginBottom: '16px',
-          textAlign: 'center',
-        }}
-      >
+      <div className="text-sm font-semibold text-text-muted uppercase tracking-wider mb-4 text-center">
         Compressor
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
+      <div className="flex items-start gap-4">
         {/* Main controls */}
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '16px',
-          }}
-        >
+        <div className="flex flex-col gap-4">
           {/* Row 1: Threshold + Amount */}
-          <div style={{ display: 'flex', gap: '16px' }}>
+          <div className="flex gap-4">
             <Knob
               value={params.threshold}
               min={COMPRESSOR_RANGES.threshold.min}
@@ -130,7 +85,7 @@ export function CompressorControl({
               onChange={onThresholdChange}
               label="Threshold"
               size={50}
-                            formatValue={(v) => `${v.toFixed(0)} dB`}
+              formatValue={(v) => `${v.toFixed(0)} dB`}
             />
             <Knob
               value={params.amount}
@@ -139,13 +94,13 @@ export function CompressorControl({
               onChange={onAmountChange}
               label="Amount"
               size={50}
-                            formatValue={(v) => `${v.toFixed(0)}%`}
+              formatValue={(v) => `${v.toFixed(0)}%`}
             />
           </div>
 
           {/* Row 2: Attack + Release (if advanced) */}
           {showAdvanced && onAttackChange && onReleaseChange && (
-            <div style={{ display: 'flex', gap: '16px' }}>
+            <div className="flex gap-4">
               <Knob
                 value={params.attack * 1000} // Show in ms
                 min={COMPRESSOR_RANGES.attack.min * 1000}
@@ -153,7 +108,7 @@ export function CompressorControl({
                 onChange={(v) => onAttackChange(v / 1000)}
                 label="Attack"
                 size={50}
-                                formatValue={(v) => `${v.toFixed(0)} ms`}
+                formatValue={(v) => `${v.toFixed(0)} ms`}
               />
               <Knob
                 value={params.release * 1000} // Show in ms
@@ -162,7 +117,7 @@ export function CompressorControl({
                 onChange={(v) => onReleaseChange(v / 1000)}
                 label="Release"
                 size={50}
-                                formatValue={(v) => `${v.toFixed(0)} ms`}
+                formatValue={(v) => `${v.toFixed(0)} ms`}
               />
             </div>
           )}

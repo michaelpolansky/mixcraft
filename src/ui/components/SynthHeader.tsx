@@ -31,15 +31,15 @@ export function SynthHeader({
 }: SynthHeaderProps) {
   return (
     <>
-      <div className="flex justify-between items-center px-6 py-4 pl-[120px] border-b border-[#1a1a1a]">
+      <div
+        className="flex justify-between items-center px-6 py-4 pl-[120px] border-b border-border-subtle"
+        style={{ '--header-accent': accentColor } as React.CSSProperties}
+      >
         <div>
-          <h1
-            className="text-xl font-light m-0"
-            style={{ color: accentColor }}
-          >
+          <h1 className="text-xl font-light m-0 text-(--header-accent)">
             {title}
           </h1>
-          <span className="text-[11px] text-[#666]">{subtitle}</span>
+          <span className="text-base text-text-muted">{subtitle}</span>
         </div>
         <div className="flex gap-3 items-center">
           <PresetDropdown
@@ -51,14 +51,14 @@ export function SynthHeader({
           {onRandomize && (
             <button
               onClick={onRandomize}
-              className="px-3 py-1.5 bg-gradient-to-br from-violet-500 to-violet-600 border-none rounded text-white cursor-pointer text-[11px] font-semibold hover:from-violet-400 hover:to-violet-500 transition-all"
+              className="px-3 py-1.5 bg-gradient-to-br from-violet-500 to-violet-600 border-none rounded text-white cursor-pointer text-base font-semibold hover:from-violet-400 hover:to-violet-500 transition-all"
             >
               Randomize
             </button>
           )}
           <button
             onClick={onReset}
-            className="px-3 py-1.5 bg-[#1a1a1a] border border-[#333] rounded text-[#888] cursor-pointer text-[11px] hover:bg-[#222] transition-all"
+            className="px-3 py-1.5 bg-bg-secondary border border-border-medium rounded text-text-muted cursor-pointer text-base hover:bg-bg-tertiary transition-all"
           >
             Reset
           </button>

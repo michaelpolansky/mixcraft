@@ -287,11 +287,7 @@ export function VelocityLane({
       ref={canvasRef}
       width={width}
       height={height}
-      style={{
-        borderRadius: '8px',
-        display: 'block',
-        border: '1px solid #333',
-      }}
+      className="rounded-lg block border border-border-default"
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}

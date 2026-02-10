@@ -1,39 +1,12 @@
 /**
- * MIXCRAFT Design System
+ * MIXCRAFT Design System — Colors Only
  *
- * Centralized theme configuration for consistent UI.
+ * Canvas-based visualizers (16 components) reference COLORS for
+ * ctx.fillStyle / ctx.strokeStyle. All other styling uses Tailwind.
  *
  * Usage:
- *   import { COLORS, TYPOGRAPHY, SPACING } from './theme';
- *   // or
- *   import { theme } from './theme';
- *   style={{ background: theme.colors.bg.primary }}
+ *   import { COLORS } from '../theme/index.ts';
+ *   ctx.fillStyle = COLORS.synth.oscillator;
  */
 
 export { COLORS, type SynthStage, type TrackType } from './colors.ts';
-export { TYPOGRAPHY, TEXT_STYLES } from './typography.ts';
-export {
-  SPACING,
-  RADIUS,
-  LAYOUT,
-  Z_INDEX,
-  TRANSITIONS,
-  SHADOWS,
-} from './spacing.ts';
-
-// Combined theme object for convenience
-import { COLORS } from './colors.ts';
-import { TYPOGRAPHY, TEXT_STYLES } from './typography.ts';
-import { SPACING, RADIUS, LAYOUT, Z_INDEX, TRANSITIONS, SHADOWS } from './spacing.ts';
-
-export const theme = {
-  colors: COLORS,
-  typography: TYPOGRAPHY,
-  textStyles: TEXT_STYLES,
-  spacing: SPACING,
-  radius: RADIUS,
-  layout: LAYOUT,
-  zIndex: Z_INDEX,
-  transitions: TRANSITIONS,
-  shadows: SHADOWS,
-} as const;

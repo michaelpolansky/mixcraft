@@ -3,6 +3,7 @@
  */
 
 import { useState, useEffect, useMemo } from 'react';
+import { cn } from '../utils/cn.ts';
 import type { ScoreResult } from '../../core/sound-comparison.ts';
 import type { SynthParams, FMSynthParams, AdditiveSynthParams, Challenge } from '../../core/types.ts';
 import { generateSummary } from '../../core/sound-comparison.ts';
@@ -171,18 +172,7 @@ export function ResultsModal({
   ));
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0, 0, 0, 0.8)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000,
-        overflow: 'hidden',
-      }}
-    >
+    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[1000] overflow-hidden">
       {/* Confetti animation */}
       {result.passed && (
         <style>
@@ -218,81 +208,31 @@ export function ResultsModal({
         />
       ))}
 
-      <div
-        style={{
-          background: '#141414',
-          borderRadius: '16px',
-          padding: '32px',
-          maxWidth: '400px',
-          width: '90%',
-          border: '1px solid #2a2a2a',
-          position: 'relative',
-          zIndex: 1,
-        }}
-      >
+      <div className="bg-bg-secondary rounded-2xl p-8 max-w-[400px] w-[90%] border border-border-default relative z-[1]">
         {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+        <div className="text-center mb-6">
           {/* Stars */}
-          <div style={{ marginBottom: '16px' }}>{stars}</div>
+          <div className="mb-4">{stars}</div>
 
           {/* Score */}
-          <div
-            style={{
-              fontSize: '48px',
-              fontWeight: 'bold',
-              color: result.passed ? '#4ade80' : '#ef4444',
-              fontFamily: 'monospace',
-            }}
-          >
+          <div className={cn('text-5xl font-bold font-mono', result.passed ? 'text-success-light' : 'text-danger')}>
             {result.overall}%
           </div>
 
           {/* Pass/Fail */}
-          <div
-            style={{
-              fontSize: '14px',
-              color: result.passed ? '#4ade80' : '#ef4444',
-              marginTop: '8px',
-            }}
-          >
+          <div className={cn('text-md mt-2', result.passed ? 'text-success-light' : 'text-danger')}>
             {result.passed ? 'PASSED' : 'NOT QUITE'}
           </div>
         </div>
 
         {/* Summary */}
-        <div
-          style={{
-            textAlign: 'center',
-            color: '#888',
-            marginBottom: '24px',
-            fontSize: '14px',
-          }}
-        >
+        <div className="text-center text-text-muted mb-6 text-md">
           {summary}
         </div>
 
         {/* AI Feedback */}
-        <div
-          style={{
-            background: '#0a0a0a',
-            borderRadius: '8px',
-            padding: '16px',
-            marginBottom: '24px',
-            border: '1px solid #2a2a2a',
-          }}
-        >
-          <div
-            style={{
-              fontSize: '11px',
-              color: '#4ade80',
-              textTransform: 'uppercase',
-              letterSpacing: '1px',
-              marginBottom: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-            }}
-          >
+        <div className="bg-bg-primary rounded-lg p-4 mb-6 border border-border-default">
+          <div className="text-sm text-success uppercase tracking-wider mb-2 flex items-center gap-1.5">
             <span>✦</span> AI Mentor
           </div>
           <div
@@ -304,22 +244,14 @@ export function ResultsModal({
             }}
           >
             {feedbackLoading && 'Analyzing your sound...'}
-            {feedbackError && <span style={{ color: '#666' }}>{feedbackError}</span>}
+            {feedbackError && <span className="text-text-muted">{feedbackError}</span>}
             {aiFeedback}
           </div>
         </div>
 
         {/* Breakdown */}
-        <div style={{ marginBottom: '24px' }}>
-          <div
-            style={{
-              fontSize: '11px',
-              color: '#666',
-              textTransform: 'uppercase',
-              letterSpacing: '1px',
-              marginBottom: '12px',
-            }}
-          >
+        <div className="mb-6">
+          <div className="text-sm text-text-muted uppercase tracking-wider mb-3">
             Breakdown
           </div>
 
@@ -391,19 +323,10 @@ export function ResultsModal({
         </div>
 
         {/* Actions */}
-        <div style={{ display: 'flex', gap: '12px' }}>
+        <div className="flex gap-3">
           <button
             onClick={onRetry}
-            style={{
-              flex: 1,
-              padding: '12px 24px',
-              background: '#1a1a1a',
-              border: '1px solid #333',
-              borderRadius: '8px',
-              color: '#888',
-              cursor: 'pointer',
-              fontSize: '14px',
-            }}
+            className="flex-1 py-3 px-6 bg-bg-tertiary border border-border-medium rounded-lg text-text-muted cursor-pointer text-md"
           >
             Retry
           </button>
@@ -411,17 +334,7 @@ export function ResultsModal({
           {result.passed && hasNextChallenge && (
             <button
               onClick={onNext}
-              style={{
-                flex: 1,
-                padding: '12px 24px',
-                background: 'linear-gradient(145deg, #22c55e, #16a34a)',
-                border: 'none',
-                borderRadius: '8px',
-                color: '#fff',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: 600,
-              }}
+              className="flex-1 py-3 px-6 bg-gradient-to-br from-success to-[#16a34a] border-none rounded-lg text-white cursor-pointer text-md font-semibold"
             >
               Next Challenge
             </button>
@@ -430,17 +343,7 @@ export function ResultsModal({
           {!hasNextChallenge && result.passed && (
             <button
               onClick={onNext}
-              style={{
-                flex: 1,
-                padding: '12px 24px',
-                background: 'linear-gradient(145deg, #22c55e, #16a34a)',
-                border: 'none',
-                borderRadius: '8px',
-                color: '#fff',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: 600,
-              }}
+              className="flex-1 py-3 px-6 bg-gradient-to-br from-success to-[#16a34a] border-none rounded-lg text-white cursor-pointer text-md font-semibold"
             >
               Complete!
             </button>

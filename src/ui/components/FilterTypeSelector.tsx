@@ -3,6 +3,7 @@
  */
 
 import type { FilterType } from '../../core/types.ts';
+import { cn } from '../utils/cn.ts';
 
 interface FilterTypeSelectorProps {
   value: FilterType;
@@ -17,29 +18,18 @@ const FILTER_TYPES: { type: FilterType; label: string; description: string }[] =
 
 export function FilterTypeSelector({ value, onChange }: FilterTypeSelectorProps) {
   return (
-    <div
-      style={{
-        display: 'flex',
-        gap: '4px',
-      }}
-    >
+    <div className="flex gap-1">
       {FILTER_TYPES.map(({ type, label, description }) => (
         <button
           key={type}
           onClick={() => onChange(type)}
           title={description}
-          style={{
-            padding: '8px 16px',
-            background: value === type ? '#2a3a2a' : '#1a1a1a',
-            border: value === type ? '2px solid #4ade80' : '2px solid #333',
-            borderRadius: '4px',
-            color: value === type ? '#4ade80' : '#888',
-            cursor: 'pointer',
-            fontFamily: 'monospace',
-            fontSize: '12px',
-            fontWeight: value === type ? 'bold' : 'normal',
-            transition: 'all 0.15s ease',
-          }}
+          className={cn(
+            'py-2 px-4 rounded-sm font-mono text-md transition-all duration-150 border-2',
+            value === type
+              ? 'bg-[#2a3a2a] border-success-light text-success-light font-bold'
+              : 'bg-bg-tertiary border-border-medium text-text-tertiary font-normal'
+          )}
         >
           {label}
         </button>

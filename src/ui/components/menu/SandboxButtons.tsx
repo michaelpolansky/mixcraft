@@ -1,3 +1,4 @@
+import { cn } from '../../utils/cn.ts';
 import { CardButton } from '../Button.tsx';
 
 interface SandboxButtonsProps {
@@ -9,7 +10,7 @@ interface SandboxButtonsProps {
 
 export function SandboxButtons({ isMobile, continueChallenge, onContinue, onNavigate }: SandboxButtonsProps) {
   return (
-    <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: '16px', marginBottom: isMobile ? '32px' : '48px' }}>
+    <div className={cn('flex gap-4', isMobile ? 'flex-col mb-8' : 'flex-row mb-12')}>
       {continueChallenge && (
         <CardButton
           onClick={() => onContinue(continueChallenge.id)}

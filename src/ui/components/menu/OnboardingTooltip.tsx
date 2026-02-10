@@ -7,44 +7,24 @@ export function OnboardingTooltip({ visible, onDismiss }: OnboardingTooltipProps
   if (!visible) return null;
 
   return (
-    <div
-      style={{
-        background: 'linear-gradient(145deg, #1e3a2f, #14532d)',
-        border: '1px solid #22c55e',
-        borderRadius: '12px',
-        padding: '20px',
-        marginBottom: '16px',
-        position: 'relative',
-      }}
-    >
+    <div className="bg-gradient-to-br from-[#1e3a2f] to-[#14532d] border border-success rounded-lg p-5 mb-4 relative">
       <button
         onClick={onDismiss}
-        style={{
-          position: 'absolute',
-          top: '12px',
-          right: '12px',
-          background: 'none',
-          border: 'none',
-          color: '#4ade80',
-          cursor: 'pointer',
-          fontSize: '18px',
-          padding: '4px',
-          lineHeight: 1,
-        }}
+        className="absolute top-3 right-3 bg-none border-none text-success-light cursor-pointer text-3xl p-1 leading-none"
         aria-label="Dismiss"
       >
         ×
       </button>
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-        <span style={{ fontSize: '24px' }}>🎹</span>
+      <div className="flex items-start gap-3">
+        <span className="text-4xl">🎹</span>
         <div>
-          <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: 600, color: '#4ade80' }}>
+          <h3 className="m-0 mb-2 text-2xl font-semibold text-success-light">
             Welcome to MIXCRAFT!
           </h3>
-          <p style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#a7f3d0', lineHeight: 1.5 }}>
+          <p className="m-0 mb-3 text-xl text-[#a7f3d0] leading-relaxed">
             Learn sound design by ear. Each challenge plays a target sound - your goal is to recreate it using the synthesizer controls.
           </p>
-          <div style={{ fontSize: '13px', color: '#86efac' }}>
+          <div className="text-lg text-[#86efac]">
             <strong>How to play:</strong> Listen to the target → Adjust knobs → Compare → Match the sound!
           </div>
         </div>

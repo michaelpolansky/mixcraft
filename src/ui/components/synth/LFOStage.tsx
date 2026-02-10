@@ -3,6 +3,7 @@
  */
 
 import { Knob, WaveformSelector, LFOVisualizer, StageCard } from '../index.ts';
+import { cn } from '../../utils/cn.ts';
 import { formatPercent } from '../../utils/formatters.ts';
 import type { LFOWaveform, LFOSyncDivision } from '../../../core/types.ts';
 
@@ -26,23 +27,14 @@ interface LFOStageProps {
   onDepthChange: (v: number) => void;
   paramPrefix: string;
   modulatedRate?: number;
-  // LFO 1 sync options
   sync?: boolean;
   syncDivision?: LFOSyncDivision;
   onSyncChange?: (v: boolean) => void;
   onSyncDivisionChange?: (v: LFOSyncDivision) => void;
-  // LFO 2 enable toggle
   enabled?: boolean;
   onEnabledChange?: (v: boolean) => void;
-  /** For LFO 2 that dims visualizer when disabled */
   visualizerDepthOverride?: number;
 }
-
-const SIZES = {
-  visualizer: { width: 200, height: 100 },
-  gap: { sm: 8 },
-  margin: { section: 12 },
-};
 
 export function LFOStage({
   title,
@@ -69,33 +61,26 @@ export function LFOStage({
         waveform={waveform}
         rate={rate}
         depth={visualizerDepthOverride !== undefined ? visualizerDepthOverride : depth}
-        width={SIZES.visualizer.width}
-        height={SIZES.visualizer.height}
+        width={200}
+        height={100}
         accentColor={color}
         compact
       />
-      <div style={{ marginTop: SIZES.margin.section }}>
+      <div className="mt-3">
         <WaveformSelector value={waveform} onChange={onWaveformChange} accentColor={color} />
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm, marginTop: SIZES.margin.section }}>
+      <div className="flex flex-col gap-2 mt-3">
         {/* Rate knob or Division selector when synced */}
         {sync === undefined || !sync ? (
           <Knob label="Rate" value={rate} min={0.1} max={20} step={0.1} onChange={onRateChange} formatValue={(v) => `${v.toFixed(1)} Hz`} paramId={`${paramPrefix}.rate`} modulatedValue={modulatedRate} />
         ) : (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '10px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Division</span>
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-text-tertiary uppercase tracking-wide">Division</span>
             <select
               value={syncDivision}
               onChange={(e) => onSyncDivisionChange?.(e.target.value as LFOSyncDivision)}
-              style={{
-                padding: '4px 8px',
-                background: '#1a1a1a',
-                border: `1px solid ${color}`,
-                borderRadius: '4px',
-                color: '#fff',
-                fontSize: '11px',
-                cursor: 'pointer',
-              }}
+              className="py-1 px-2 bg-bg-tertiary rounded-sm text-text-primary text-base cursor-pointer"
+              style={{ border: `1px solid ${color}` }}
             >
               {LFO_SYNC_DIVISIONS.map((d) => (
                 <option key={d.value} value={d.value}>{d.label}</option>
@@ -108,19 +93,16 @@ export function LFOStage({
 
       {/* Sync toggle (LFO 1) */}
       {onSyncChange && (
-        <div style={{ marginTop: SIZES.margin.section, display: 'flex', justifyContent: 'center' }}>
+        <div className="mt-3 flex justify-center">
           <button
             onClick={() => onSyncChange(!sync)}
-            style={{
-              padding: '4px 12px',
-              background: sync ? color : '#222',
-              border: `1px solid ${sync ? color : '#444'}`,
-              borderRadius: '4px',
-              color: sync ? '#fff' : '#888',
-              fontSize: '10px',
-              cursor: 'pointer',
-              fontWeight: 600,
-            }}
+            className={cn(
+              'py-1 px-3 rounded-sm text-sm cursor-pointer font-semibold border',
+              sync
+                ? 'text-text-primary'
+                : 'bg-bg-quaternary border-border-bright text-text-tertiary'
+            )}
+            style={sync ? { background: color, borderColor: color } : undefined}
           >
             {sync ? 'SYNC ON' : 'SYNC OFF'}
           </button>
@@ -129,19 +111,16 @@ export function LFOStage({
 
       {/* Enable toggle (LFO 2) */}
       {onEnabledChange && (
-        <div style={{ marginTop: SIZES.margin.section, display: 'flex', justifyContent: 'center' }}>
+        <div className="mt-3 flex justify-center">
           <button
             onClick={() => onEnabledChange(!enabled)}
-            style={{
-              padding: '4px 12px',
-              background: enabled ? color : '#222',
-              border: `1px solid ${enabled ? color : '#444'}`,
-              borderRadius: '4px',
-              color: enabled ? '#fff' : '#888',
-              fontSize: '10px',
-              cursor: 'pointer',
-              fontWeight: 600,
-            }}
+            className={cn(
+              'py-1 px-3 rounded-sm text-sm cursor-pointer font-semibold border',
+              enabled
+                ? 'text-text-primary'
+                : 'bg-bg-quaternary border-border-bright text-text-tertiary'
+            )}
+            style={enabled ? { background: color, borderColor: color } : undefined}
           >
             {enabled ? 'ON' : 'OFF'}
           </button>

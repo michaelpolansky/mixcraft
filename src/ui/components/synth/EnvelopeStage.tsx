@@ -28,11 +28,6 @@ interface EnvelopeStageProps {
   visualizerHeight?: number;
 }
 
-const SIZES = {
-  visualizer: { width: 200, compactHeight: 60 },
-  gap: { sm: 8 },
-};
-
 export function EnvelopeStage({
   title,
   color,
@@ -52,8 +47,8 @@ export function EnvelopeStage({
   amountFormat = formatPercent,
   paramPrefix,
   isTriggered,
-  visualizerWidth = SIZES.visualizer.width,
-  visualizerHeight = SIZES.visualizer.compactHeight,
+  visualizerWidth = 200,
+  visualizerHeight = 60,
 }: EnvelopeStageProps) {
   return (
     <StageCard title={title} color={color}>
@@ -72,7 +67,7 @@ export function EnvelopeStage({
         compact
         isTriggered={isTriggered}
       />
-      <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm, marginTop: SIZES.gap.sm }}>
+      <div className="flex flex-col gap-2 mt-2">
         <Knob label="Attack" value={attack} min={0.001} max={2} step={0.001} onChange={onAttackChange} formatValue={formatMs} paramId={`${paramPrefix}.attack`} />
         <Knob label="Decay" value={decay} min={0.001} max={2} step={0.001} onChange={onDecayChange} formatValue={formatMs} paramId={`${paramPrefix}.decay`} />
         <Knob label="Sustain" value={sustain} min={0} max={1} step={0.01} onChange={onSustainChange} formatValue={formatPercent} paramId={`${paramPrefix}.sustain`} />

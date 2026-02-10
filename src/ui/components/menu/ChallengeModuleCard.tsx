@@ -1,3 +1,4 @@
+import { cn } from '../../utils/cn.ts';
 import { ChallengeButton } from './ChallengeButton.tsx';
 
 export interface ModuleProgress {
@@ -35,48 +36,25 @@ export function ChallengeModuleCard({
     : 0;
 
   return (
-    <div
-      style={{
-        background: '#141414',
-        borderRadius: '12px',
-        padding: '20px',
-        border: '1px solid #2a2a2a',
-        marginBottom: '16px',
-      }}
-    >
+    <div className="bg-[#141414] rounded-lg p-5 border border-border-default mb-4">
       {/* Module header */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '16px',
-        }}
-      >
-        <div style={{ flex: 1 }}>
-          <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>
-            {title}
-          </h3>
-          <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#666' }}>
-            {description}
-          </p>
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex-1">
+          <h3 className="m-0 text-2xl font-semibold">{title}</h3>
+          <p className="mt-1 mb-0 text-lg text-text-muted">{description}</p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ color: '#eab308', fontSize: '13px' }}>
+        <div className="flex items-center gap-3">
+          <div className="text-warning text-lg">
             {'★'.repeat(moduleProgress.stars)}
-            <span style={{ color: '#333' }}>
+            <span className="text-border-medium">
               {'★'.repeat(moduleProgress.total * 3 - moduleProgress.stars)}
             </span>
           </div>
           <div
-            style={{
-              padding: '4px 10px',
-              background: pct === 100 ? '#22c55e' : '#222',
-              borderRadius: '12px',
-              fontSize: '12px',
-              fontWeight: 500,
-              color: pct === 100 ? '#000' : '#888',
-            }}
+            className={cn(
+              'py-1 px-2.5 rounded-xl text-md font-medium',
+              pct === 100 ? 'bg-success text-bg-primary' : 'bg-bg-quaternary text-text-tertiary'
+            )}
           >
             {moduleProgress.completed}/{moduleProgress.total}
           </div>
@@ -84,7 +62,7 @@ export function ChallengeModuleCard({
       </div>
 
       {/* Challenge list */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <div className="flex flex-col gap-2">
         {challenges.map((challenge) => {
           const progress = getProgress(challenge.id);
           return (

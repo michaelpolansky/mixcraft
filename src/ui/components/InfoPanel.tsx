@@ -19,69 +19,27 @@ export function InfoPanel({ accentColor = '#4ade80' }: InfoPanelProps) {
 
   return (
     <div
-      style={{
-        background: '#0d0d0d',
-        borderTop: `1px solid ${accentColor}33`,
-        padding: '12px 16px',
-        minHeight: '72px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '4px',
-      }}
+      className="bg-[#0d0d0d] p-3 px-4 min-h-[72px] flex flex-col gap-1"
+      style={{ '--accent': accentColor, borderTop: `1px solid ${accentColor}33` } as React.CSSProperties}
     >
       {/* Parameter name */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-        }}
-      >
-        <span
-          style={{
-            color: accentColor,
-            fontSize: '10px',
-            fontWeight: 600,
-            textTransform: 'uppercase',
-            letterSpacing: '1px',
-          }}
-        >
+      <div className="flex items-center gap-2">
+        <span className="text-(--accent) text-sm font-semibold uppercase tracking-wider">
           {hoveredParam ? 'i' : '?'}
         </span>
-        <span
-          style={{
-            color: '#fff',
-            fontSize: '13px',
-            fontWeight: 600,
-          }}
-        >
+        <span className="text-text-primary text-lg font-semibold">
           {info.name}
         </span>
       </div>
 
       {/* Description */}
-      <p
-        style={{
-          color: '#999',
-          fontSize: '12px',
-          lineHeight: 1.4,
-          margin: 0,
-        }}
-      >
+      <p className="text-[#999] text-md leading-snug m-0">
         {info.description}
       </p>
 
       {/* Tips */}
       {info.tips && (
-        <p
-          style={{
-            color: '#666',
-            fontSize: '11px',
-            lineHeight: 1.4,
-            margin: 0,
-            fontStyle: 'italic',
-          }}
-        >
+        <p className="text-text-muted text-base leading-snug m-0 italic">
           {info.tips}
         </p>
       )}

@@ -20,12 +20,6 @@ interface FilterStageProps {
   color: string;
 }
 
-const SIZES = {
-  visualizer: { width: 200, height: 100 },
-  gap: { sm: 8 },
-  margin: { section: 12 },
-};
-
 export function FilterStage({
   type,
   cutoff,
@@ -46,16 +40,16 @@ export function FilterStage({
         resonance={resonance}
         onCutoffChange={onCutoffChange}
         onResonanceChange={onResonanceChange}
-        width={SIZES.visualizer.width}
-        height={SIZES.visualizer.height}
+        width={200}
+        height={100}
         accentColor={color}
         compact
         modulatedCutoff={modulatedCutoff}
       />
-      <div style={{ marginTop: SIZES.margin.section }}>
+      <div className="mt-3">
         <FilterTypeSelector value={type} onChange={onTypeChange} />
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm, marginTop: SIZES.margin.section }}>
+      <div className="flex flex-col gap-2 mt-3">
         <Knob label="Cutoff" value={cutoff} min={PARAM_RANGES.cutoff.min} max={PARAM_RANGES.cutoff.max} step={1} onChange={onCutoffChange} formatValue={formatHz} logarithmic paramId="filter.cutoff" modulatedValue={modulatedCutoff} />
         <Knob label="Resonance" value={resonance} min={0} max={20} step={0.1} onChange={onResonanceChange} formatValue={(v) => v.toFixed(1)} paramId="filter.resonance" />
         <Knob label="Key Tracking" value={keyTracking} min={0} max={1} step={0.01} onChange={onKeyTrackingChange} formatValue={formatPercent} paramId="filter.keyTracking" />

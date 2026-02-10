@@ -15,12 +15,6 @@ interface Osc2StageProps {
   color: string;
 }
 
-const SIZES = {
-  visualizer: { width: 200, height: 100 },
-  gap: { sm: 8 },
-  margin: { section: 12 },
-};
-
 export function Osc2Stage({
   type,
   octave,
@@ -36,19 +30,19 @@ export function Osc2Stage({
         waveform={type}
         octave={octave}
         detune={detune}
-        width={SIZES.visualizer.width}
-        height={SIZES.visualizer.height}
+        width={200}
+        height={100}
         accentColor={color}
         compact
       />
-      <div style={{ marginTop: SIZES.margin.section }}>
+      <div className="mt-3">
         <WaveformSelector
           value={type}
           onChange={(t: OscillatorType) => onTypeChange(t)}
           accentColor={color}
         />
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm, marginTop: SIZES.margin.section }}>
+      <div className="flex flex-col gap-2 mt-3">
         <Knob label="Octave" value={octave} min={-2} max={2} step={1} onChange={onOctaveChange} formatValue={(v) => v >= 0 ? `+${v}` : `${v}`} paramId="osc2.octave" />
         <Knob label="Detune" value={detune} min={-100} max={100} step={1} onChange={onDetuneChange} formatValue={(v) => `${v} ct`} paramId="osc2.detune" />
       </div>

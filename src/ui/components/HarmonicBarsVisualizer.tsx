@@ -204,12 +204,12 @@ const HarmonicBarsVisualizerComponent: React.FC<HarmonicBarsVisualizerProps> = (
   return (
     <canvas
       ref={canvasRef}
+      className="rounded-lg"
       style={{
         width,
         height,
         maxWidth: '100%',
         cursor: dragIndex !== null ? 'ns-resize' : hoverIndex !== null ? 'pointer' : 'default',
-        borderRadius: 8,
         border: `1px solid ${accentColor}40`,
       }}
       onMouseDown={handleMouseDown}

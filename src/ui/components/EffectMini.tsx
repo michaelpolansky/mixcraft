@@ -20,11 +20,11 @@ export interface EffectMiniProps {
 
 export function EffectMini({ name, color, knobs }: EffectMiniProps) {
   return (
-    <div className="overflow-hidden">
-      <div
-        className="text-[9px] font-semibold mb-1"
-        style={{ color }}
-      >
+    <div
+      className="overflow-hidden"
+      style={{ '--effect-color': color } as React.CSSProperties}
+    >
+      <div className="text-[9px] font-semibold mb-1 text-(--effect-color)">
         {name}
       </div>
       <div className="flex flex-col gap-1">

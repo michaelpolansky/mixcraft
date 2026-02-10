@@ -619,28 +619,14 @@ export function XYPad({
   return (
     <div
       ref={containerRef}
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '8px',
-        userSelect: 'none',
-      }}
+      className="flex flex-col gap-2 select-none"
     >
       {/* Top label (Y) */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          fontSize: '10px',
-          color: COLORS.text,
-          paddingLeft: '4px',
-          paddingRight: '4px',
-        }}
-      >
-        <span style={{ textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+      <div className="flex justify-between text-xs text-text-muted px-1">
+        <span className="uppercase tracking-wide">
           {yLabel}
         </span>
-        <span style={{ color: accentColor, fontFamily: 'monospace' }}>
+        <span style={{ color: accentColor }} className="font-mono">
           {yDisplayValue}
         </span>
       </div>
@@ -651,16 +637,14 @@ export function XYPad({
         tabIndex={0}
         width={size}
         height={size}
+        className="rounded-lg block outline-none"
         style={{
           width: size,
           height: size,
-          borderRadius: '8px',
           border: `2px solid ${isFocused ? COLORS.focus : accentColor}`,
           cursor: isDragging
             ? (isShiftHeld ? 'crosshair' : 'grabbing')
             : 'grab',
-          display: 'block',
-          outline: 'none',
           boxShadow: isFocused ? `0 0 0 2px ${COLORS.focus}40` : 'none',
         }}
         onMouseDown={handleMouseDown}
@@ -674,20 +658,11 @@ export function XYPad({
       />
 
       {/* Bottom label (X) */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          fontSize: '10px',
-          color: COLORS.text,
-          paddingLeft: '4px',
-          paddingRight: '4px',
-        }}
-      >
-        <span style={{ textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+      <div className="flex justify-between text-xs text-text-muted px-1">
+        <span className="uppercase tracking-wide">
           {xLabel}
         </span>
-        <span style={{ color: accentColor, fontFamily: 'monospace' }}>
+        <span style={{ color: accentColor }} className="font-mono">
           {xDisplayValue}
         </span>
       </div>

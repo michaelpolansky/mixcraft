@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { cn } from '../utils/cn.ts';
 import { AudioRecorder, createAudioRecorder } from '../../core/audio-recorder.ts';
 
 interface RecordingControlProps {
@@ -190,32 +191,20 @@ export function RecordingControl({
   if (compact) {
     return (
       <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '8px',
-          padding: '8px',
-          background: '#1a1a1a',
-          borderRadius: '6px',
-          border: '1px solid #333',
-        }}
+        className="flex flex-col items-center gap-2 p-2 bg-bg-tertiary rounded-md border border-border-medium"
+        style={{ '--accent': accentColor } as React.CSSProperties}
       >
         {/* Record/Stop Button */}
         {state === 'idle' && (
           <button
             onClick={handleStartRecording}
             disabled={isDisabled}
+            className={cn(
+              'flex items-center justify-center w-9 h-9 rounded-full border-none cursor-pointer',
+              isDisabled && 'cursor-not-allowed'
+            )}
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '36px',
-              height: '36px',
               background: isDisabled ? '#333' : accentColor,
-              border: 'none',
-              borderRadius: '50%',
-              cursor: isDisabled ? 'not-allowed' : 'pointer',
               boxShadow: isDisabled ? 'none' : `0 2px 8px ${accentColor}40`,
             }}
             title="Start Recording"
@@ -234,16 +223,9 @@ export function RecordingControl({
         {state === 'recording' && (
           <button
             onClick={handleStopRecording}
+            className="flex items-center justify-center w-9 h-9 rounded-full border-none cursor-pointer"
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '36px',
-              height: '36px',
               background: accentColor,
-              border: 'none',
-              borderRadius: '50%',
-              cursor: 'pointer',
               animation: 'pulse 1.5s ease-in-out infinite',
               boxShadow: `0 2px 12px ${accentColor}60`,
             }}
@@ -263,16 +245,10 @@ export function RecordingControl({
         {state === 'stopped' && (
           <button
             onClick={handleNewRecording}
+            className="flex items-center justify-center w-9 h-9 rounded-full cursor-pointer"
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '36px',
-              height: '36px',
               background: '#333',
               border: `2px solid ${accentColor}`,
-              borderRadius: '50%',
-              cursor: 'pointer',
             }}
             title="New Recording"
           >
@@ -289,31 +265,20 @@ export function RecordingControl({
 
         {/* Timer */}
         <div
-          style={{
-            fontFamily: 'monospace',
-            fontSize: '11px',
-            color: state === 'recording' ? accentColor : '#666',
-          }}
+          className={cn(
+            'font-mono text-xs text-center',
+            state === 'recording' ? 'text-[var(--accent)]' : 'text-text-muted'
+          )}
         >
           {formatTime(elapsedTime)}/{formatTime(maxTime)}
         </div>
 
         {/* Playback controls when stopped */}
         {state === 'stopped' && recordedBlob && (
-          <div style={{ display: 'flex', gap: '6px' }}>
+          <div className="flex gap-1.5">
             <button
               onClick={isPlaying ? handleStopPlayback : handlePlay}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '28px',
-                height: '28px',
-                background: '#333',
-                border: '1px solid #555',
-                borderRadius: '4px',
-                cursor: 'pointer',
-              }}
+              className="flex items-center justify-center w-7 h-7 bg-border-medium border border-border-bright rounded cursor-pointer hover:bg-bg-quaternary"
               title={isPlaying ? 'Stop' : 'Play'}
             >
               {isPlaying ? (
@@ -329,17 +294,7 @@ export function RecordingControl({
             </button>
             <button
               onClick={handleDownload}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '28px',
-                height: '28px',
-                background: '#4ade80',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-              }}
+              className="flex items-center justify-center w-7 h-7 bg-success-light border-none rounded cursor-pointer hover:bg-success active:scale-[0.98]"
               title="Download WAV"
             >
               <svg width="12" height="12" viewBox="0 0 14 14" fill="#000">
@@ -365,39 +320,21 @@ export function RecordingControl({
 
   return (
     <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '12px',
-        padding: '12px 16px',
-        background: '#1a1a1a',
-        borderRadius: '8px',
-        border: '1px solid #333',
-      }}
+      className="flex items-center gap-3 py-3 px-4 bg-bg-tertiary rounded-lg border border-border-medium"
+      style={{ '--accent': accentColor } as React.CSSProperties}
     >
       {/* Record/Stop Button */}
       {state === 'idle' && (
         <button
           onClick={handleStartRecording}
           disabled={isDisabled}
+          className={cn(
+            'flex items-center justify-center w-10 h-10 rounded-full border-none cursor-pointer transition-transform duration-100 active:scale-95',
+            isDisabled && 'cursor-not-allowed'
+          )}
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '40px',
-            height: '40px',
             background: isDisabled ? '#333' : accentColor,
-            border: 'none',
-            borderRadius: '50%',
-            cursor: isDisabled ? 'not-allowed' : 'pointer',
-            transition: 'transform 0.1s, box-shadow 0.1s',
             boxShadow: isDisabled ? 'none' : `0 2px 8px ${accentColor}40`,
-          }}
-          onMouseDown={(e) => {
-            if (!isDisabled) e.currentTarget.style.transform = 'scale(0.95)';
-          }}
-          onMouseUp={(e) => {
-            if (!isDisabled) e.currentTarget.style.transform = 'scale(1)';
           }}
           title="Start Recording"
         >
@@ -416,22 +353,12 @@ export function RecordingControl({
       {state === 'recording' && (
         <button
           onClick={handleStopRecording}
+          className="flex items-center justify-center w-10 h-10 rounded-full border-none cursor-pointer transition-transform duration-100 active:scale-95"
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '40px',
-            height: '40px',
             background: accentColor,
-            border: 'none',
-            borderRadius: '50%',
-            cursor: 'pointer',
-            transition: 'transform 0.1s',
             animation: 'pulse 1.5s ease-in-out infinite',
             boxShadow: `0 2px 12px ${accentColor}60`,
           }}
-          onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.95)')}
-          onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
           title="Stop Recording"
         >
           {/* Stop icon (square) */}
@@ -449,20 +376,11 @@ export function RecordingControl({
       {state === 'stopped' && (
         <button
           onClick={handleNewRecording}
+          className="flex items-center justify-center w-10 h-10 rounded-full cursor-pointer transition-transform duration-100 active:scale-95"
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '40px',
-            height: '40px',
             background: '#333',
             border: `2px solid ${accentColor}`,
-            borderRadius: '50%',
-            cursor: 'pointer',
-            transition: 'transform 0.1s',
           }}
-          onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.95)')}
-          onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
           title="New Recording"
         >
           {/* Record icon (outline circle) */}
@@ -479,28 +397,16 @@ export function RecordingControl({
 
       {/* Timer Display */}
       <div
-        style={{
-          fontFamily: 'monospace',
-          fontSize: '18px',
-          color: state === 'recording' ? accentColor : '#888',
-          minWidth: '70px',
-          textAlign: 'center',
-        }}
+        className={cn(
+          'font-mono text-lg min-w-[70px] text-center',
+          state === 'recording' ? 'text-[var(--accent)]' : 'text-text-muted'
+        )}
       >
         {formatTime(elapsedTime)}/{formatTime(maxTime)}
       </div>
 
       {/* Progress Bar */}
-      <div
-        style={{
-          flex: 1,
-          height: '6px',
-          background: '#333',
-          borderRadius: '3px',
-          overflow: 'hidden',
-          minWidth: '100px',
-        }}
-      >
+      <div className="flex-1 h-1.5 bg-border-medium rounded-full overflow-hidden min-w-[100px]">
         <div
           style={{
             width: `${Math.min((elapsedTime / maxTime) * 100, 100)}%`,
@@ -522,20 +428,7 @@ export function RecordingControl({
           {/* Play/Pause Button */}
           <button
             onClick={isPlaying ? handleStopPlayback : handlePlay}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '32px',
-              height: '32px',
-              background: '#333',
-              border: '1px solid #555',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              transition: 'background 0.1s',
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = '#444')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = '#333')}
+            className="flex items-center justify-center w-8 h-8 bg-border-medium border border-border-bright rounded cursor-pointer hover:bg-bg-quaternary"
             title={isPlaying ? 'Stop Playback' : 'Play Recording'}
           >
             {isPlaying ? (
@@ -555,25 +448,7 @@ export function RecordingControl({
           {/* Download Button */}
           <button
             onClick={handleDownload}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px',
-              padding: '6px 12px',
-              background: '#4ade80',
-              border: 'none',
-              borderRadius: '4px',
-              color: '#000',
-              fontSize: '12px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              transition: 'transform 0.1s, background 0.1s',
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = '#22c55e')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = '#4ade80')}
-            onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.98)')}
-            onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+            className="flex items-center justify-center gap-1.5 py-1.5 px-3 bg-success-light border-none rounded text-bg-primary text-sm font-semibold cursor-pointer hover:bg-success active:scale-[0.98]"
             title="Download WAV"
           >
             {/* Download icon */}

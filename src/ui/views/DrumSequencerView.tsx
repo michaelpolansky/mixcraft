@@ -7,47 +7,12 @@
 import { useEffect, useCallback } from 'react';
 import { useDrumSequencerStore } from '../stores/drum-sequencer-store.ts';
 import { Knob, StepGrid, VelocityLane } from '../components/index.ts';
+import { Section } from '../components/ModuleCard.tsx';
+import { BackButton } from '../components/Button.tsx';
+import { cn } from '../utils/cn.ts';
 
 interface DrumSequencerViewProps {
   onBack?: () => void;
-}
-
-/**
- * Section wrapper component for consistent styling
- */
-function Section({
-  title,
-  children,
-}: {
-  title?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div
-      style={{
-        background: '#141414',
-        borderRadius: '12px',
-        padding: '16px',
-        border: '1px solid #2a2a2a',
-      }}
-    >
-      {title && (
-        <h3
-          style={{
-            margin: '0 0 12px 0',
-            fontSize: '11px',
-            fontWeight: 600,
-            color: '#666',
-            textTransform: 'uppercase',
-            letterSpacing: '1px',
-          }}
-        >
-          {title}
-        </h3>
-      )}
-      {children}
-    </div>
-  );
 }
 
 /**
@@ -76,16 +41,10 @@ function HorizontalSlider({
   const percentage = ((value - min) / (max - min)) * 100;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}
-      >
-        <span style={{ fontSize: '11px', color: '#888' }}>{label}</span>
-        <span style={{ fontSize: '11px', color: '#fff', fontFamily: 'monospace' }}>
+    <div className="flex flex-col gap-1">
+      <div className="flex justify-between items-center">
+        <span className="text-base text-text-tertiary">{label}</span>
+        <span className="text-base text-text-primary font-mono">
           {displayValue}
         </span>
       </div>
@@ -96,13 +55,10 @@ function HorizontalSlider({
         step={step ?? 1}
         value={value}
         onChange={(e) => onChange(parseFloat(e.target.value))}
+        className="h-1.5 appearance-none rounded-sm cursor-pointer"
         style={{
           width,
-          height: '6px',
-          appearance: 'none',
           background: `linear-gradient(to right, #f97316 0%, #f97316 ${percentage}%, #333 ${percentage}%, #333 100%)`,
-          borderRadius: '3px',
-          cursor: 'pointer',
         }}
       />
     </div>
@@ -172,91 +128,42 @@ export function DrumSequencerView({ onBack }: DrumSequencerViewProps) {
 
   // Accent color for drum sequencer (orange theme)
   const accentColor = '#f97316';
+  const transportDisabled = !isInitialized || isLoading;
 
   // Get current selected track
   const currentSelectedTrack = pattern.tracks[selectedTrack];
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: '#0a0a0a',
-        color: '#fff',
-        fontFamily: 'system-ui, -apple-system, sans-serif',
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    >
-      <div style={{ padding: '24px', flex: 1 }}>
+    <div className="min-h-screen bg-bg-primary text-text-primary font-sans flex flex-col">
+      <div className="p-6 flex-1">
         {/* Header */}
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '24px',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            {onBack && (
-              <button
-                onClick={onBack}
-                style={{
-                  background: '#1a1a1a',
-                  border: '1px solid #333',
-                  borderRadius: '4px',
-                  color: '#888',
-                  cursor: 'pointer',
-                  padding: '8px 16px',
-                  fontSize: '13px',
-                }}
-              >
-                ← Menu
-              </button>
-            )}
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center gap-4">
+            {onBack && <BackButton onClick={onBack} />}
             <div>
               <h1
-                style={{
-                  fontSize: '24px',
-                  fontWeight: 300,
-                  margin: 0,
-                  color: accentColor,
-                }}
+                className="text-4xl font-light m-0"
+                style={{ color: accentColor }}
               >
                 MIXCRAFT
               </h1>
-              <span style={{ fontSize: '12px', color: '#666' }}>
+              <span className="text-md text-text-muted">
                 Drum Sequencer - {pattern.name || 'New Pattern'}
               </span>
             </div>
           </div>
 
           {isLoading && (
-            <span style={{ color: '#666', fontSize: '13px' }}>Loading...</span>
+            <span className="text-text-muted text-lg">Loading...</span>
           )}
         </div>
 
         {/* Main Layout */}
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '16px',
-            maxWidth: '900px',
-          }}
-        >
+        <div className="flex flex-col gap-4 max-w-[900px]">
           {/* Header Controls: Tempo | Swing | Volume | Play/Stop */}
-          <Section>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                flexWrap: 'wrap',
-                gap: '24px',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
+          <div className="bg-bg-secondary rounded-lg p-4 border border-border-default">
+            <div className="flex items-center justify-between flex-wrap gap-6">
+              <div className="flex items-center gap-8">
                 {/* Tempo Slider */}
                 <HorizontalSlider
                   label="Tempo"
@@ -297,27 +204,21 @@ export function DrumSequencerView({ onBack }: DrumSequencerViewProps) {
               {/* Transport Controls */}
               <button
                 onClick={handlePlayStop}
-                disabled={!isInitialized || isLoading}
+                disabled={transportDisabled}
+                className={cn(
+                  'py-3 px-8 border-none rounded-md text-text-primary text-xl font-semibold min-w-[100px] transition-all duration-100',
+                  transportDisabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+                )}
                 style={{
-                  padding: '12px 32px',
                   background: isPlaying
                     ? '#ef4444'
                     : `linear-gradient(145deg, ${accentColor}, #ea580c)`,
-                  border: 'none',
-                  borderRadius: '6px',
-                  color: '#fff',
-                  cursor: !isInitialized || isLoading ? 'not-allowed' : 'pointer',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  minWidth: '100px',
-                  opacity: !isInitialized || isLoading ? 0.5 : 1,
-                  transition: 'all 0.1s ease',
                 }}
               >
                 {isPlaying ? 'Stop' : 'Play'}
               </button>
             </div>
-          </Section>
+          </div>
 
           {/* StepGrid (Main Area) */}
           <Section title="Pattern">
@@ -349,73 +250,26 @@ export function DrumSequencerView({ onBack }: DrumSequencerViewProps) {
           )}
 
           {/* Footer: Clear Track | Clear All */}
-          <Section>
-            <div
-              style={{
-                display: 'flex',
-                gap: '12px',
-                justifyContent: 'flex-start',
-              }}
-            >
+          <div className="bg-bg-secondary rounded-lg p-4 border border-border-default">
+            <div className="flex gap-3 justify-start">
               <button
                 onClick={() => clearTrack(selectedTrack)}
-                style={{
-                  padding: '10px 20px',
-                  background: '#1a1a1a',
-                  border: '1px solid #333',
-                  borderRadius: '6px',
-                  color: '#888',
-                  cursor: 'pointer',
-                  fontSize: '13px',
-                  transition: 'all 0.1s ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = '#555';
-                  e.currentTarget.style.color = '#aaa';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = '#333';
-                  e.currentTarget.style.color = '#888';
-                }}
+                className="py-2.5 px-5 bg-bg-tertiary border border-border-medium rounded-md text-text-tertiary cursor-pointer text-lg transition-all duration-100 hover:border-border-bright hover:text-text-secondary"
               >
                 Clear Track
               </button>
 
               <button
                 onClick={clearAll}
-                style={{
-                  padding: '10px 20px',
-                  background: '#1a1a1a',
-                  border: '1px solid #333',
-                  borderRadius: '6px',
-                  color: '#888',
-                  cursor: 'pointer',
-                  fontSize: '13px',
-                  transition: 'all 0.1s ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = '#ef4444';
-                  e.currentTarget.style.color = '#ef4444';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = '#333';
-                  e.currentTarget.style.color = '#888';
-                }}
+                className="py-2.5 px-5 bg-bg-tertiary border border-border-medium rounded-md text-text-tertiary cursor-pointer text-lg transition-all duration-100 hover:border-danger hover:text-danger"
               >
                 Clear All
               </button>
             </div>
-          </Section>
+          </div>
 
           {/* Instructions */}
-          <div
-            style={{
-              padding: '16px',
-              color: '#555',
-              fontSize: '12px',
-              textAlign: 'center',
-            }}
-          >
+          <div className="p-4 text-text-disabled text-md text-center">
             Click cells to toggle steps | Click track names to select track |
             Shift+click active steps to drag velocity | Use velocity lane below
             for precise control

@@ -9,25 +9,9 @@ interface SectionProps {
 
 export function Section({ title, children }: SectionProps) {
   return (
-    <div
-      style={{
-        background: '#141414',
-        borderRadius: '12px',
-        padding: '16px',
-        border: '1px solid #2a2a2a',
-      }}
-    >
+    <div className="bg-[#141414] rounded-lg p-4 border border-border-default">
       {title && (
-        <h3
-          style={{
-            margin: '0 0 12px 0',
-            fontSize: '11px',
-            fontWeight: 600,
-            color: '#666',
-            textTransform: 'uppercase',
-            letterSpacing: '1px',
-          }}
-        >
+        <h3 className="m-0 mb-3 text-base font-semibold text-text-muted uppercase tracking-wider">
           {title}
         </h3>
       )}

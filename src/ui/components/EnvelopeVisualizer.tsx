@@ -462,14 +462,13 @@ const EnvelopeVisualizerComponent: React.FC<EnvelopeVisualizerProps> = ({
   return (
     <canvas
       ref={canvasRef}
+      className="rounded-lg transition-[border-color] duration-150"
       style={{
         width,
         height,
         maxWidth: '100%',
         cursor: dragTarget ? 'grabbing' : hoverTarget ? 'grab' : 'default',
-        borderRadius: 8,
         border: `1px solid ${isAnimating ? accentColor : `${accentColor}40`}`,
-        transition: 'border-color 0.15s',
       }}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
@@ -534,7 +533,7 @@ export function EnvelopeVisualizerReadOnly({
   const filterPath = filterEnvelope ? buildEnvelopePath(filterEnvelope, padding, baseY, graphWidth, graphHeight) : null;
 
   return (
-    <div style={{ background: '#141414', borderRadius: 8, overflow: 'hidden' }}>
+    <div className="bg-[#141414] rounded-lg overflow-hidden">
       <svg width={width} height={height}>
         <rect x={0} y={0} width={width} height={height} fill="#141414" />
 

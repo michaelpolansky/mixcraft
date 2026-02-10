@@ -141,13 +141,8 @@ export function EnvelopeDisplay({
 
   return (
     <div
-      style={{
-        background: '#1a1a1a',
-        borderRadius: '4px',
-        padding: '4px',
-        border: `1px solid ${isAnimating ? color : '#333'}`,
-        transition: 'border-color 0.15s',
-      }}
+      className="bg-bg-tertiary rounded-sm p-1 border transition-[border-color] duration-150"
+      style={{ borderColor: isAnimating ? color : '#333' }}
     >
       <svg width={width} height={height}>
         {/* Grid */}

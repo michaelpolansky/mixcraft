@@ -215,11 +215,11 @@ const LFOVisualizerComponent: React.FC<LFOVisualizerProps> = ({
   return (
     <canvas
       ref={canvasRef}
+      className="rounded-lg"
       style={{
         width,
         height,
         maxWidth: '100%',
-        borderRadius: 8,
         border: `1px solid ${accentColor}40`,
       }}
     />

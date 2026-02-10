@@ -30,6 +30,7 @@ import {
 } from '../components/index.ts';
 import { ADDITIVE_PRESETS } from '../../data/presets/additive-presets.ts';
 import { InfoPanelProvider } from '../context/InfoPanelContext.tsx';
+import { cn } from '../utils/cn.ts';
 import type {
   LFOWaveform,
   AdditiveLFODestination,
@@ -46,25 +47,6 @@ const COLORS = {
   amp: '#22c55e',
   output: '#f97316',
 };
-
-// Standardized sizes for consistent UI
-const SIZES = {
-  visualizer: {
-    width: 200,
-    height: 100,
-    compactHeight: 60,
-  },
-  gap: {
-    xs: 4,
-    sm: 8,
-    md: 12,
-    lg: 16,
-  },
-  margin: {
-    section: 12,
-  },
-};
-
 
 // Noise type options
 const NOISE_TYPES = [
@@ -199,14 +181,7 @@ export function AdditiveSynthView() {
 
   return (
     <InfoPanelProvider>
-      <div style={{
-        minHeight: '100vh',
-        background: '#0a0a0f',
-        color: '#fff',
-        fontFamily: 'system-ui, -apple-system, sans-serif',
-        display: 'flex',
-        flexDirection: 'column',
-      }}>
+      <div className="min-h-screen bg-[#0a0a0f] text-text-primary font-sans flex flex-col">
         {/* Header */}
         <SynthHeader
           title="MIXCRAFT"
@@ -219,20 +194,12 @@ export function AdditiveSynthView() {
         />
 
         {/* Spectrum Analyzer */}
-        <div style={{ padding: '12px 24px', background: '#050508' }}>
+        <div className="py-3 px-6 bg-[#050508]">
           <SpectrumAnalyzer getAnalyser={getAnalyser} width={window.innerWidth - 48} height={80} barCount={100} />
         </div>
 
         {/* Signal Flow - Horizontal flex wrap */}
-        <div style={{
-          flex: 1,
-          padding: '16px',
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '16px',
-          alignContent: 'flex-start',
-          overflow: 'auto',
-        }}>
+        <div className="flex-1 p-4 flex flex-wrap gap-4 content-start overflow-auto">
           {/* HARMONICS Stage - extra wide for the bars */}
           <StageCard title="HARMONICS" color={COLORS.harmonics} extraWide>
             <HarmonicBarsVisualizer
@@ -242,30 +209,14 @@ export function AdditiveSynthView() {
               height={140}
               accentColor={COLORS.harmonics}
             />
-            <div style={{ marginTop: '8px' }}>
-              <div style={{ fontSize: '9px', color: '#666', marginBottom: '4px' }}>PRESETS</div>
-              <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+            <div className="mt-2">
+              <div className="text-xs text-text-muted mb-1">PRESETS</div>
+              <div className="flex gap-1 flex-wrap">
                 {HARMONIC_PRESETS.map((preset) => (
                   <button
                     key={preset.key}
                     onClick={() => applyPreset(preset.key)}
-                    style={{
-                      padding: '4px 8px',
-                      background: '#1a1a1a',
-                      border: '1px solid #333',
-                      borderRadius: '4px',
-                      color: '#888',
-                      cursor: 'pointer',
-                      fontSize: '10px',
-                    }}
-                    onMouseOver={(e) => {
-                      e.currentTarget.style.borderColor = COLORS.harmonics;
-                      e.currentTarget.style.color = '#fff';
-                    }}
-                    onMouseOut={(e) => {
-                      e.currentTarget.style.borderColor = '#333';
-                      e.currentTarget.style.color = '#888';
-                    }}
+                    className="py-1 px-2 bg-bg-tertiary border border-border-medium rounded-sm text-text-tertiary cursor-pointer text-sm hover:border-[#06b6d4] hover:text-text-primary"
                   >
                     {preset.label}
                   </button>
@@ -289,19 +240,19 @@ export function AdditiveSynthView() {
               waveform={params.lfo.waveform}
               rate={params.lfo.rate}
               depth={params.lfo.depth}
-              width={SIZES.visualizer.width}
-              height={SIZES.visualizer.height}
+              width={200}
+              height={100}
               accentColor={COLORS.lfo}
               compact
             />
-            <div style={{ marginTop: SIZES.margin.section }}>
+            <div className="mt-3">
               <WaveformSelector
                 value={params.lfo.waveform}
                 onChange={(waveform: LFOWaveform) => setLFOWaveform(waveform)}
                 accentColor={COLORS.lfo}
               />
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm, marginTop: SIZES.margin.section }}>
+            <div className="flex flex-col gap-2 mt-3">
               <Knob
                 label="Rate"
                 value={params.lfo.rate}
@@ -324,29 +275,32 @@ export function AdditiveSynthView() {
               />
             </div>
             {/* Destination selector */}
-            <div style={{ marginTop: SIZES.margin.section }}>
-              <div style={{ fontSize: '9px', color: '#888', marginBottom: 4, textTransform: 'uppercase' }}>
+            <div className="mt-3">
+              <div className="text-xs text-text-tertiary mb-1 uppercase">
                 Destination
               </div>
-              <div style={{ display: 'flex', gap: 2 }}>
-                {ADDITIVE_LFO_DESTINATIONS.map((dest) => (
-                  <button
-                    key={dest.value}
-                    onClick={() => setLFODestination(dest.value)}
-                    style={{
-                      padding: '4px 8px',
-                      background: params.lfo.destination === dest.value ? COLORS.lfo : '#1a1a1a',
-                      border: `1px solid ${params.lfo.destination === dest.value ? COLORS.lfo : '#333'}`,
-                      borderRadius: '4px',
-                      color: params.lfo.destination === dest.value ? '#fff' : '#888',
-                      fontSize: '9px',
-                      cursor: 'pointer',
-                      fontWeight: 500,
-                    }}
-                  >
-                    {dest.label}
-                  </button>
-                ))}
+              <div className="flex gap-0.5">
+                {ADDITIVE_LFO_DESTINATIONS.map((dest) => {
+                  const isActive = params.lfo.destination === dest.value;
+                  return (
+                    <button
+                      key={dest.value}
+                      onClick={() => setLFODestination(dest.value)}
+                      className={cn(
+                        'py-1 px-2 rounded-sm cursor-pointer text-xs font-medium border',
+                        isActive
+                          ? 'text-text-primary'
+                          : 'bg-bg-tertiary border-border-medium text-text-tertiary'
+                      )}
+                      style={isActive ? {
+                        background: COLORS.lfo,
+                        borderColor: COLORS.lfo,
+                      } : undefined}
+                    >
+                      {dest.label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </StageCard>
@@ -356,32 +310,35 @@ export function AdditiveSynthView() {
             <NoiseVisualizer
               noiseType={params.noise.type}
               level={params.noise.level}
-              width={SIZES.visualizer.width}
-              height={SIZES.visualizer.height}
+              width={200}
+              height={100}
               accentColor={COLORS.noise}
               compact
             />
-            <div style={{ display: 'flex', gap: SIZES.gap.xs, marginTop: SIZES.margin.section }}>
-              {NOISE_TYPES.map((nt) => (
-                <button
-                  key={nt.value}
-                  onClick={() => setNoiseType(nt.value)}
-                  style={{
-                    padding: '6px 10px',
-                    background: params.noise.type === nt.value ? COLORS.noise : '#1a1a1a',
-                    border: `1px solid ${params.noise.type === nt.value ? COLORS.noise : '#333'}`,
-                    borderRadius: '4px',
-                    color: params.noise.type === nt.value ? '#fff' : '#888',
-                    fontSize: '10px',
-                    cursor: 'pointer',
-                    fontWeight: 500,
-                  }}
-                >
-                  {nt.label}
-                </button>
-              ))}
+            <div className="flex gap-1 mt-3">
+              {NOISE_TYPES.map((nt) => {
+                const isActive = params.noise.type === nt.value;
+                return (
+                  <button
+                    key={nt.value}
+                    onClick={() => setNoiseType(nt.value)}
+                    className={cn(
+                      'py-1.5 px-2.5 rounded-sm cursor-pointer text-sm font-medium border',
+                      isActive
+                        ? 'text-text-primary'
+                        : 'bg-bg-tertiary border-border-medium text-text-tertiary'
+                    )}
+                    style={isActive ? {
+                      background: COLORS.noise,
+                      borderColor: COLORS.noise,
+                    } : undefined}
+                  >
+                    {nt.label}
+                  </button>
+                );
+              })}
             </div>
-            <div style={{ marginTop: SIZES.margin.section }}>
+            <div className="mt-3">
               <Knob
                 label="Level"
                 value={params.noise.level}
@@ -440,7 +397,7 @@ export function AdditiveSynthView() {
               accentColor={COLORS.amp}
               compact
             />
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '12px' }}>
+            <div className="grid grid-cols-2 gap-2 mt-3">
               <MiniSlider label="A" value={params.amplitudeEnvelope.attack} min={0.001} max={2} onChange={setAmplitudeAttack} color={COLORS.amp} />
               <MiniSlider label="D" value={params.amplitudeEnvelope.decay} min={0.001} max={2} onChange={setAmplitudeDecay} color={COLORS.amp} />
               <MiniSlider label="S" value={params.amplitudeEnvelope.sustain} min={0} max={1} onChange={setAmplitudeSustain} color={COLORS.amp} />
@@ -450,7 +407,7 @@ export function AdditiveSynthView() {
 
           {/* FX Stage */}
           <StageCard title="FX" color="#8b5cf6" wide>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div className="grid grid-cols-2 gap-3">
               <EffectMini
                 name="DIST"
                 color="#ef4444"
@@ -490,12 +447,12 @@ export function AdditiveSynthView() {
 
           {/* OUTPUT Stage */}
           <StageCard title="OUTPUT" color={COLORS.output}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+            <div className="flex flex-col items-center gap-3">
               {/* Oscilloscope */}
               <Oscilloscope
                 getAnalyser={getAnalyser}
-                width={SIZES.visualizer.width}
-                height={SIZES.visualizer.compactHeight}
+                width={200}
+                height={60}
                 accentColor={COLORS.output}
               />
               <Knob
@@ -533,58 +490,38 @@ export function AdditiveSynthView() {
         </div>
 
         {/* Sequencer */}
-        <div style={{ padding: '12px 24px', borderTop: '1px solid #1a1a1a' }}>
+        <div className="py-3 px-6 border-t border-border-subtle">
           <Sequencer engine={engine} accentColor="#06b6d4" />
         </div>
 
         {/* Bottom Control Strip */}
-        <div style={{
-          borderTop: '1px solid #1a1a1a',
-          background: '#0d0d12',
-        }}>
+        <div className="border-t border-border-subtle bg-[#0d0d12]">
           {/* Tabs */}
-          <div style={{ display: 'flex', borderBottom: '1px solid #1a1a1a' }}>
+          <div className="flex border-b border-border-subtle">
             <button
               onClick={() => setBottomMode('xy')}
-              style={{
-                padding: '8px 16px',
-                background: bottomMode === 'xy' ? '#1a1a1a' : 'transparent',
-                border: 'none',
-                borderBottom: bottomMode === 'xy' ? `2px solid ${COLORS.harmonics}` : '2px solid transparent',
-                color: bottomMode === 'xy' ? '#fff' : '#666',
-                cursor: 'pointer',
-                fontSize: '11px',
-                fontWeight: 600,
-              }}
+              className={cn(
+                'py-2 px-4 border-none cursor-pointer text-base font-semibold',
+                bottomMode === 'xy' ? 'bg-bg-tertiary text-text-primary' : 'bg-transparent text-text-muted'
+              )}
+              style={{ borderBottom: bottomMode === 'xy' ? `2px solid ${COLORS.harmonics}` : '2px solid transparent' }}
             >
               XY
             </button>
             <button
               onClick={() => setBottomMode('keys')}
-              style={{
-                padding: '8px 16px',
-                background: bottomMode === 'keys' ? '#1a1a1a' : 'transparent',
-                border: 'none',
-                borderBottom: bottomMode === 'keys' ? `2px solid ${COLORS.harmonics}` : '2px solid transparent',
-                color: bottomMode === 'keys' ? '#fff' : '#666',
-                cursor: 'pointer',
-                fontSize: '11px',
-                fontWeight: 600,
-              }}
+              className={cn(
+                'py-2 px-4 border-none cursor-pointer text-base font-semibold',
+                bottomMode === 'keys' ? 'bg-bg-tertiary text-text-primary' : 'bg-transparent text-text-muted'
+              )}
+              style={{ borderBottom: bottomMode === 'keys' ? `2px solid ${COLORS.harmonics}` : '2px solid transparent' }}
             >
               KEYS
             </button>
-            <div style={{ flex: 1 }} />
+            <div className="flex-1" />
             <button
               onClick={() => setBottomExpanded(!bottomExpanded)}
-              style={{
-                padding: '8px 16px',
-                background: 'transparent',
-                border: 'none',
-                color: '#666',
-                cursor: 'pointer',
-                fontSize: '11px',
-              }}
+              className="py-2 px-4 bg-transparent border-none text-text-muted cursor-pointer text-base"
             >
               {bottomExpanded ? '\u25BC' : '\u25B2'}
             </button>
@@ -592,15 +529,8 @@ export function AdditiveSynthView() {
 
           {/* Content */}
           <div
-            style={{
-              height: bottomExpanded ? '140px' : '50px',
-              transition: 'height 0.2s ease',
-              overflow: 'hidden',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '8px 24px',
-            }}
+            className="transition-[height] duration-200 overflow-hidden flex items-center justify-center py-2 px-6"
+            style={{ height: bottomExpanded ? '140px' : '50px' }}
             onClick={() => !bottomExpanded && setBottomExpanded(true)}
           >
             {bottomMode === 'keys' ? (
@@ -639,4 +569,3 @@ export function AdditiveSynthView() {
     </InfoPanelProvider>
   );
 }
-

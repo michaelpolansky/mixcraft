@@ -4,10 +4,38 @@
  */
 
 import { useState, useEffect } from 'react';
+import { cn } from '../utils/cn.ts';
 import { useAuthStore } from '../stores/auth-store.ts';
-import { COLORS, SPACING, RADIUS, SHADOWS, Z_INDEX, TRANSITIONS, TYPOGRAPHY } from '../theme/index.ts';
 
 type Tab = 'signin' | 'signup' | 'forgot' | 'reset';
+
+function getTitle(tab: Tab): string {
+  switch (tab) {
+    case 'signin': return 'Sign In';
+    case 'signup': return 'Create Account';
+    case 'forgot': return 'Reset Password';
+    case 'reset': return 'Set New Password';
+  }
+}
+
+function getSubmitLabel(tab: Tab, isLoading: boolean): string {
+  if (isLoading) return 'Loading...';
+  switch (tab) {
+    case 'signin': return 'Sign In';
+    case 'signup': return 'Create Account';
+    case 'forgot': return 'Send Reset Link';
+    case 'reset': return 'Update Password';
+  }
+}
+
+function getFooterText(tab: Tab): string {
+  switch (tab) {
+    case 'signin': return 'Your progress syncs across devices when signed in.';
+    case 'signup': return 'Create an account to save your progress to the cloud.';
+    case 'forgot': return "We'll send a link to reset your password.";
+    case 'reset': return 'Choose a new password for your account.';
+  }
+}
 
 export function AuthModal() {
   const { showAuthModal, setShowAuthModal, signIn, signUp, resetPassword, updatePassword, isLoading, pendingPasswordReset } = useAuthStore();
@@ -102,96 +130,51 @@ export function AuthModal() {
     setShowAuthModal(false);
   };
 
+  const switchTab = (t: Tab) => {
+    setTab(t);
+    setError('');
+    setSuccess('');
+  };
+
+  const inputClassName = "w-full py-2 px-3 bg-bg-primary border border-border-default rounded-lg text-text-primary text-md outline-none box-border focus:border-success";
+
   return (
     <>
       {/* Backdrop */}
       <div
         onClick={handleClose}
-        style={{
-          position: 'fixed',
-          inset: 0,
-          background: 'rgba(0, 0, 0, 0.7)',
-          zIndex: Z_INDEX.modalBackdrop,
-        }}
+        className="fixed inset-0 bg-black/70 z-[40]"
       />
 
       {/* Modal */}
-      <div
-        style={{
-          position: 'fixed',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: 380,
-          maxWidth: 'calc(100vw - 32px)',
-          background: COLORS.bg.secondary,
-          border: `1px solid ${COLORS.border.default}`,
-          borderRadius: RADIUS.lg,
-          boxShadow: SHADOWS.xl,
-          zIndex: Z_INDEX.modal,
-          padding: SPACING.xl,
-        }}
-      >
+      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[380px] max-w-[calc(100vw-32px)] bg-bg-secondary border border-border-default rounded-xl shadow-xl z-[50] p-6">
         {/* Close button */}
         <button
           onClick={handleClose}
-          style={{
-            position: 'absolute',
-            top: SPACING.md,
-            right: SPACING.md,
-            background: 'none',
-            border: 'none',
-            color: COLORS.text.tertiary,
-            cursor: 'pointer',
-            fontSize: '20px',
-            lineHeight: 1,
-            padding: SPACING.xs,
-          }}
+          className="absolute top-3 right-3 bg-transparent border-none text-text-tertiary cursor-pointer text-xl leading-none p-1 hover:text-text-primary"
           aria-label="Close"
         >
           x
         </button>
 
         {/* Title */}
-        <h2
-          style={{
-            margin: `0 0 ${SPACING.lg}px 0`,
-            fontSize: TYPOGRAPHY.size.xl,
-            fontWeight: TYPOGRAPHY.weight.semibold,
-            color: COLORS.text.primary,
-          }}
-        >
-          {tab === 'signin' ? 'Sign In' : tab === 'signup' ? 'Create Account' : tab === 'forgot' ? 'Reset Password' : 'Set New Password'}
+        <h2 className="m-0 mb-4 text-xl font-semibold text-text-primary">
+          {getTitle(tab)}
         </h2>
 
-        {/* Tabs — only shown for signin/signup */}
+        {/* Tabs -- only shown for signin/signup */}
         {(tab === 'signin' || tab === 'signup') && (
-          <div
-            style={{
-              display: 'flex',
-              gap: SPACING.xs,
-              marginBottom: SPACING.lg,
-              background: COLORS.bg.primary,
-              borderRadius: RADIUS.md,
-              padding: 3,
-            }}
-          >
+          <div className="flex gap-1 mb-4 bg-bg-primary rounded-lg p-[3px]">
             {(['signin', 'signup'] as Tab[]).map((t) => (
               <button
                 key={t}
-                onClick={() => { setTab(t); setError(''); setSuccess(''); }}
-                style={{
-                  flex: 1,
-                  padding: `${SPACING.sm}px ${SPACING.md}px`,
-                  background: tab === t ? COLORS.bg.tertiary : 'transparent',
-                  border: 'none',
-                  borderRadius: RADIUS.sm,
-                  color: tab === t ? COLORS.text.primary : COLORS.text.tertiary,
-                  fontSize: TYPOGRAPHY.size.sm,
-                  fontWeight: TYPOGRAPHY.weight.medium,
-                  cursor: 'pointer',
-                  transition: `all ${TRANSITIONS.fast}`,
-                }}
+                onClick={() => switchTab(t)}
+                className={cn(
+                  'flex-1 py-2 px-3 border-none rounded-sm text-sm font-medium cursor-pointer transition-all duration-100',
+                  tab === t
+                    ? 'bg-bg-tertiary text-text-primary'
+                    : 'bg-transparent text-text-tertiary'
+                )}
               >
                 {t === 'signin' ? 'Sign In' : 'Sign Up'}
               </button>
@@ -201,17 +184,10 @@ export function AuthModal() {
 
         {/* Form */}
         <form onSubmit={handleSubmit}>
-          {/* Email — shown for signin, signup, forgot */}
+          {/* Email -- shown for signin, signup, forgot */}
           {tab !== 'reset' && (
-            <div style={{ marginBottom: SPACING.md }}>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: TYPOGRAPHY.size.sm,
-                  color: COLORS.text.tertiary,
-                  marginBottom: SPACING.xs,
-                }}
-              >
+            <div className="mb-3">
+              <label className="block text-sm text-text-tertiary mb-1">
                 Email
               </label>
               <input
@@ -219,34 +195,15 @@ export function AuthModal() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"
-                style={{
-                  width: '100%',
-                  padding: `${SPACING.sm}px ${SPACING.md}px`,
-                  background: COLORS.bg.primary,
-                  border: `1px solid ${COLORS.border.default}`,
-                  borderRadius: RADIUS.md,
-                  color: COLORS.text.primary,
-                  fontSize: TYPOGRAPHY.size.md,
-                  outline: 'none',
-                  boxSizing: 'border-box',
-                }}
-                onFocus={(e) => { e.currentTarget.style.borderColor = COLORS.accent.primary; }}
-                onBlur={(e) => { e.currentTarget.style.borderColor = COLORS.border.default; }}
+                className={inputClassName}
               />
             </div>
           )}
 
-          {/* Password — shown for signin, signup, reset */}
+          {/* Password -- shown for signin, signup, reset */}
           {tab !== 'forgot' && (
-            <div style={{ marginBottom: tab === 'reset' ? SPACING.md : SPACING.lg }}>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: TYPOGRAPHY.size.sm,
-                  color: COLORS.text.tertiary,
-                  marginBottom: SPACING.xs,
-                }}
-              >
+            <div className={tab === 'reset' ? 'mb-3' : 'mb-4'}>
+              <label className="block text-sm text-text-tertiary mb-1">
                 {tab === 'reset' ? 'New Password' : 'Password'}
               </label>
               <input
@@ -254,34 +211,15 @@ export function AuthModal() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete={tab === 'signin' ? 'current-password' : 'new-password'}
-                style={{
-                  width: '100%',
-                  padding: `${SPACING.sm}px ${SPACING.md}px`,
-                  background: COLORS.bg.primary,
-                  border: `1px solid ${COLORS.border.default}`,
-                  borderRadius: RADIUS.md,
-                  color: COLORS.text.primary,
-                  fontSize: TYPOGRAPHY.size.md,
-                  outline: 'none',
-                  boxSizing: 'border-box',
-                }}
-                onFocus={(e) => { e.currentTarget.style.borderColor = COLORS.accent.primary; }}
-                onBlur={(e) => { e.currentTarget.style.borderColor = COLORS.border.default; }}
+                className={inputClassName}
               />
             </div>
           )}
 
-          {/* Confirm password — only for reset */}
+          {/* Confirm password -- only for reset */}
           {tab === 'reset' && (
-            <div style={{ marginBottom: SPACING.lg }}>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: TYPOGRAPHY.size.sm,
-                  color: COLORS.text.tertiary,
-                  marginBottom: SPACING.xs,
-                }}
-              >
+            <div className="mb-4">
+              <label className="block text-sm text-text-tertiary mb-1">
                 Confirm Password
               </label>
               <input
@@ -289,53 +227,21 @@ export function AuthModal() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 autoComplete="new-password"
-                style={{
-                  width: '100%',
-                  padding: `${SPACING.sm}px ${SPACING.md}px`,
-                  background: COLORS.bg.primary,
-                  border: `1px solid ${COLORS.border.default}`,
-                  borderRadius: RADIUS.md,
-                  color: COLORS.text.primary,
-                  fontSize: TYPOGRAPHY.size.md,
-                  outline: 'none',
-                  boxSizing: 'border-box',
-                }}
-                onFocus={(e) => { e.currentTarget.style.borderColor = COLORS.accent.primary; }}
-                onBlur={(e) => { e.currentTarget.style.borderColor = COLORS.border.default; }}
+                className={inputClassName}
               />
             </div>
           )}
 
           {/* Error message */}
           {error && (
-            <div
-              style={{
-                padding: `${SPACING.sm}px ${SPACING.md}px`,
-                background: `${COLORS.danger}15`,
-                border: `1px solid ${COLORS.danger}`,
-                borderRadius: RADIUS.md,
-                color: COLORS.danger,
-                fontSize: TYPOGRAPHY.size.sm,
-                marginBottom: SPACING.md,
-              }}
-            >
+            <div className="py-2 px-3 bg-danger/10 border border-danger rounded-lg text-danger text-sm mb-3">
               {error}
             </div>
           )}
 
           {/* Success message */}
           {success && (
-            <div
-              style={{
-                padding: `${SPACING.sm}px ${SPACING.md}px`,
-                background: `${COLORS.accent.primary}15`,
-                border: `1px solid ${COLORS.accent.primary}`,
-                borderRadius: RADIUS.md,
-                color: COLORS.accent.primary,
-                fontSize: TYPOGRAPHY.size.sm,
-                marginBottom: SPACING.md,
-              }}
-            >
+            <div className="py-2 px-3 bg-success/10 border border-success rounded-lg text-success text-sm mb-3">
               {success}
             </div>
           )}
@@ -344,59 +250,33 @@ export function AuthModal() {
           <button
             type="submit"
             disabled={isLoading}
-            style={{
-              width: '100%',
-              padding: `${SPACING.md}px`,
-              background: isLoading ? COLORS.bg.tertiary : 'linear-gradient(145deg, #22c55e, #16a34a)',
-              border: 'none',
-              borderRadius: RADIUS.md,
-              color: isLoading ? COLORS.text.tertiary : '#fff',
-              fontSize: TYPOGRAPHY.size.md,
-              fontWeight: TYPOGRAPHY.weight.semibold,
-              cursor: isLoading ? 'not-allowed' : 'pointer',
-              transition: `all ${TRANSITIONS.normal}`,
-            }}
+            className={cn(
+              'w-full py-3 border-none rounded-lg text-md font-semibold cursor-pointer transition-all duration-200',
+              isLoading
+                ? 'bg-bg-tertiary text-text-tertiary cursor-not-allowed'
+                : 'bg-gradient-to-br from-success to-[#16a34a] text-white'
+            )}
           >
-            {isLoading ? 'Loading...' : tab === 'signin' ? 'Sign In' : tab === 'signup' ? 'Create Account' : tab === 'forgot' ? 'Send Reset Link' : 'Update Password'}
+            {getSubmitLabel(tab, isLoading)}
           </button>
 
-          {/* Forgot password link — shown on signin tab */}
+          {/* Forgot password link -- shown on signin tab */}
           {tab === 'signin' && (
             <button
               type="button"
-              onClick={() => { setTab('forgot'); setError(''); setSuccess(''); }}
-              style={{
-                display: 'block',
-                width: '100%',
-                marginTop: SPACING.md,
-                background: 'none',
-                border: 'none',
-                color: COLORS.text.tertiary,
-                fontSize: TYPOGRAPHY.size.sm,
-                cursor: 'pointer',
-                textAlign: 'center',
-              }}
+              onClick={() => switchTab('forgot')}
+              className="block w-full mt-3 bg-transparent border-none text-text-tertiary text-sm cursor-pointer text-center hover:text-text-secondary"
             >
               Forgot password?
             </button>
           )}
 
-          {/* Back to sign in — shown on forgot tab */}
+          {/* Back to sign in -- shown on forgot tab */}
           {tab === 'forgot' && (
             <button
               type="button"
-              onClick={() => { setTab('signin'); setError(''); setSuccess(''); }}
-              style={{
-                display: 'block',
-                width: '100%',
-                marginTop: SPACING.md,
-                background: 'none',
-                border: 'none',
-                color: COLORS.text.tertiary,
-                fontSize: TYPOGRAPHY.size.sm,
-                cursor: 'pointer',
-                textAlign: 'center',
-              }}
+              onClick={() => switchTab('signin')}
+              className="block w-full mt-3 bg-transparent border-none text-text-tertiary text-sm cursor-pointer text-center hover:text-text-secondary"
             >
               Back to sign in
             </button>
@@ -404,22 +284,8 @@ export function AuthModal() {
         </form>
 
         {/* Footer text */}
-        <p
-          style={{
-            textAlign: 'center',
-            fontSize: TYPOGRAPHY.size.xs,
-            color: COLORS.text.disabled,
-            marginTop: SPACING.lg,
-            marginBottom: 0,
-          }}
-        >
-          {tab === 'signin'
-            ? 'Your progress syncs across devices when signed in.'
-            : tab === 'signup'
-            ? 'Create an account to save your progress to the cloud.'
-            : tab === 'forgot'
-            ? 'We\'ll send a link to reset your password.'
-            : 'Choose a new password for your account.'}
+        <p className="text-center text-xs text-text-disabled mt-4 mb-0">
+          {getFooterText(tab)}
         </p>
       </div>
     </>

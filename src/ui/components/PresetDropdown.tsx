@@ -4,6 +4,7 @@
  */
 
 import { useState, useRef, useEffect } from 'react';
+import { cn } from '../utils/cn.ts';
 
 interface PresetDropdownProps<T> {
   presets: Array<{ name: string; params: T }>;
@@ -53,43 +54,15 @@ export function PresetDropdown<T>({
   return (
     <div
       ref={dropdownRef}
-      style={{
-        position: 'relative',
-        display: 'inline-block',
-      }}
+      className="relative inline-block"
+      style={{ '--dd-accent': accentColor } as React.CSSProperties}
     >
       {/* Dropdown Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          padding: '8px 12px',
-          background: '#1a1a1a',
-          border: '1px solid #333',
-          borderRadius: '6px',
-          color: '#fff',
-          cursor: 'pointer',
-          fontSize: '13px',
-          minWidth: '140px',
-          justifyContent: 'space-between',
-          transition: 'border-color 0.15s ease',
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.borderColor = accentColor;
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.borderColor = '#333';
-        }}
+        className="flex items-center gap-2 py-2 px-3 bg-bg-secondary border border-border-medium rounded-md text-text-primary cursor-pointer text-md min-w-[140px] justify-between transition-[border-color] duration-150 hover:border-(--dd-accent)"
       >
-        <span
-          style={{
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}
-        >
+        <span className="overflow-hidden text-ellipsis whitespace-nowrap">
           {currentPreset || 'Select Preset'}
         </span>
         <svg
@@ -97,11 +70,8 @@ export function PresetDropdown<T>({
           height="12"
           viewBox="0 0 12 12"
           fill="none"
-          style={{
-            transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-            transition: 'transform 0.15s ease',
-            flexShrink: 0,
-          }}
+          className="shrink-0 transition-transform duration-150"
+          style={{ transform: isOpen ? 'rotate(180deg)' : undefined }}
         >
           <path
             d="M2 4L6 8L10 4"
@@ -115,52 +85,24 @@ export function PresetDropdown<T>({
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 'calc(100% + 4px)',
-            left: 0,
-            minWidth: '100%',
-            background: '#141414',
-            border: '1px solid #2a2a2a',
-            borderRadius: '6px',
-            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)',
-            zIndex: 100,
-            overflow: 'hidden',
-          }}
-        >
-          {presets.map(({ name }) => (
-            <button
-              key={name}
-              onClick={() => handleSelect(name)}
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                background: currentPreset === name ? `${accentColor}20` : 'transparent',
-                border: 'none',
-                borderLeft: currentPreset === name ? `2px solid ${accentColor}` : '2px solid transparent',
-                color: currentPreset === name ? accentColor : '#ccc',
-                cursor: 'pointer',
-                fontSize: '13px',
-                textAlign: 'left',
-                transition: 'all 0.1s ease',
-              }}
-              onMouseEnter={(e) => {
-                if (currentPreset !== name) {
-                  e.currentTarget.style.background = '#1a1a1a';
-                  e.currentTarget.style.color = '#fff';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (currentPreset !== name) {
-                  e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.color = '#ccc';
-                }
-              }}
-            >
-              {name}
-            </button>
-          ))}
+        <div className="absolute top-[calc(100%+4px)] left-0 min-w-full bg-[#141414] border border-border-subtle rounded-md shadow-xl z-[var(--z-dropdown)] overflow-hidden">
+          {presets.map(({ name }) => {
+            const isActive = currentPreset === name;
+            return (
+              <button
+                key={name}
+                onClick={() => handleSelect(name)}
+                className={cn(
+                  'w-full py-2.5 px-3 border-none border-l-2 cursor-pointer text-md text-left transition-all duration-100',
+                  isActive
+                    ? 'bg-(--dd-accent)/10 border-l-(--dd-accent) text-(--dd-accent)'
+                    : 'bg-transparent border-l-transparent text-[#ccc] hover:bg-bg-secondary hover:text-text-primary'
+                )}
+              >
+                {name}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>

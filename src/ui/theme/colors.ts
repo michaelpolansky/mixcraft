@@ -46,14 +46,25 @@ export const COLORS = {
     tertiary: '#a855f7',    // Tertiary accent (purple)
   },
 
-  // Synth module stage colors (signal flow)
+  // Synth module stage colors (signal flow) — used by Canvas components
   synth: {
     oscillator: '#3b82f6',  // Blue - sound source
+    subOsc: '#1e40af',      // Dark blue - sub oscillator
+    osc2: '#60a5fa',        // Light blue - oscillator 2
+    noise: '#64748b',       // Slate - noise generator
     filter: '#06b6d4',      // Cyan - frequency shaping
     amp: '#22c55e',         // Green - amplitude/envelope
-    lfo: '#f59e0b',         // Amber - modulation
-    effects: '#a855f7',     // Purple - effects chain
-    output: '#10b981',      // Emerald - final output
+    filterEnv: '#eab308',   // Yellow - filter envelope
+    lfo: '#ef4444',         // Red - LFO
+    lfo2: '#dc2626',        // Dark red - LFO 2
+    velocity: '#fb923c',    // Orange - velocity
+    pitchEnv: '#f472b6',    // Pink - pitch envelope
+    modEnv: '#a855f7',      // Purple - mod envelope
+    pwmEnv: '#14b8a6',      // Teal - PWM envelope
+    effects: '#8b5cf6',     // Violet - effects chain
+    output: '#f97316',      // Orange - final output
+    modMatrix: '#a855f7',   // Purple - mod matrix
+    arp: '#f59e0b',         // Amber - arpeggiator
     mixer: '#10b981',       // Emerald - mixing stage
   },
 

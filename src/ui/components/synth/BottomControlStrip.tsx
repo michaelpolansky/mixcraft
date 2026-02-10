@@ -2,6 +2,7 @@
  * Bottom control strip — XY pad / Piano keyboard tabs
  */
 
+import { cn } from '../../utils/cn.ts';
 import { PianoKeyboard, XYPad } from '../index.ts';
 import { formatHz } from '../../utils/formatters.ts';
 import { PARAM_RANGES } from '../../../core/types.ts';
@@ -11,10 +12,8 @@ interface BottomControlStripProps {
   expanded: boolean;
   onModeChange: (mode: 'keys' | 'xy') => void;
   onExpandedChange: (expanded: boolean) => void;
-  // Keyboard props
   onNoteOn: (note: string) => void;
   onNoteOff: (note: string) => void;
-  // XY pad props
   filterCutoff: number;
   filterResonance: number;
   onFilterCutoffChange: (v: number) => void;
@@ -42,53 +41,36 @@ export function BottomControlStrip({
   filterColor,
 }: BottomControlStripProps) {
   return (
-    <div style={{
-      borderTop: '1px solid #1a1a1a',
-      background: '#0d0d12',
-    }}>
+    <div className="border-t border-border-subtle bg-[#0d0d12]">
       {/* Tabs */}
-      <div style={{ display: 'flex', borderBottom: '1px solid #1a1a1a' }}>
+      <div className="flex border-b border-border-subtle">
         <button
           onClick={() => onModeChange('xy')}
-          style={{
-            padding: '8px 16px',
-            background: mode === 'xy' ? '#1a1a1a' : 'transparent',
-            border: 'none',
-            borderBottom: mode === 'xy' ? `2px solid ${filterColor}` : '2px solid transparent',
-            color: mode === 'xy' ? '#fff' : '#666',
-            cursor: 'pointer',
-            fontSize: '11px',
-            fontWeight: 600,
-          }}
+          className={cn(
+            'py-2 px-4 border-none text-base font-semibold cursor-pointer border-b-2',
+            mode === 'xy'
+              ? 'bg-bg-tertiary text-text-primary'
+              : 'bg-transparent text-text-muted border-b-transparent'
+          )}
+          style={mode === 'xy' ? { borderBottomColor: filterColor } : undefined}
         >
           XY
         </button>
         <button
           onClick={() => onModeChange('keys')}
-          style={{
-            padding: '8px 16px',
-            background: mode === 'keys' ? '#1a1a1a' : 'transparent',
-            border: 'none',
-            borderBottom: mode === 'keys' ? `2px solid #4ade80` : '2px solid transparent',
-            color: mode === 'keys' ? '#fff' : '#666',
-            cursor: 'pointer',
-            fontSize: '11px',
-            fontWeight: 600,
-          }}
+          className={cn(
+            'py-2 px-4 border-none text-base font-semibold cursor-pointer border-b-2',
+            mode === 'keys'
+              ? 'bg-bg-tertiary text-text-primary border-b-success-light'
+              : 'bg-transparent text-text-muted border-b-transparent'
+          )}
         >
           KEYS
         </button>
-        <div style={{ flex: 1 }} />
+        <div className="flex-1" />
         <button
           onClick={() => onExpandedChange(!expanded)}
-          style={{
-            padding: '8px 16px',
-            background: 'transparent',
-            border: 'none',
-            color: '#666',
-            cursor: 'pointer',
-            fontSize: '11px',
-          }}
+          className="py-2 px-4 bg-transparent border-none text-text-muted cursor-pointer text-base"
         >
           {expanded ? '\u25BC' : '\u25B2'}
         </button>
@@ -96,15 +78,8 @@ export function BottomControlStrip({
 
       {/* Content */}
       <div
-        style={{
-          height: expanded ? '140px' : '50px',
-          transition: 'height 0.2s ease',
-          overflow: 'hidden',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '8px 24px',
-        }}
+        className="flex items-center justify-center overflow-hidden py-2 px-6 transition-[height] duration-200 ease-out"
+        style={{ height: expanded ? '140px' : '50px' }}
         onClick={() => !expanded && onExpandedChange(true)}
       >
         {mode === 'keys' ? (

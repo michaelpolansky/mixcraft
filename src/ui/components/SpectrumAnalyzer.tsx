@@ -203,22 +203,12 @@ const SpectrumAnalyzerComponent: React.FC<SpectrumAnalyzerProps> = ({
   }, [defaultEngine, getAnalyser, draw]);
 
   return (
-    <div
-      style={{
-        background: '#0a0a0a',
-        borderRadius: '8px',
-        padding: '8px',
-        border: '1px solid #222',
-      }}
-    >
+    <div className="bg-bg-primary rounded-lg p-2 border border-border-subtle">
       <canvas
         ref={canvasRef}
         width={width}
         height={height}
-        style={{
-          display: 'block',
-          borderRadius: '4px',
-        }}
+        className="block rounded-sm"
       />
     </div>
   );

@@ -4,7 +4,6 @@
 
 import { useRef, useCallback } from 'react';
 import { useInfoPanel } from '../context/InfoPanelContext.tsx';
-import { COLORS, TYPOGRAPHY, SPACING, RADIUS, TRANSITIONS } from '../theme/index.ts';
 
 interface SliderProps {
   value: number;
@@ -129,22 +128,9 @@ export function Slider({
     <div
       onMouseEnter={() => paramId && setHoveredParam(paramId)}
       onMouseLeave={() => setHoveredParam(null)}
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: SPACING.xs,
-        userSelect: 'none',
-      }}
+      className="flex flex-col items-center gap-1 select-none"
     >
-      <span
-        style={{
-          fontSize: TYPOGRAPHY.size.sm,
-          color: COLORS.text.tertiary,
-          textTransform: 'uppercase',
-          letterSpacing: TYPOGRAPHY.letterSpacing.wide,
-        }}
-      >
+      <span className="text-sm text-text-tertiary uppercase tracking-wide">
         {label}
       </span>
 
@@ -160,61 +146,29 @@ export function Slider({
         tabIndex={0}
         onMouseDown={handleMouseDown}
         onKeyDown={handleKeyDown}
-        style={{
-          width: 24,
-          height: height,
-          background: COLORS.bg.tertiary,
-          borderRadius: RADIUS.sm,
-          position: 'relative',
-          cursor: 'pointer',
-          overflow: 'hidden',
-          outline: 'none',
-        }}
-        onFocus={(e) => {
-          e.currentTarget.style.boxShadow = `0 0 0 2px ${COLORS.interactive.focus}`;
-        }}
-        onBlur={(e) => {
-          e.currentTarget.style.boxShadow = 'none';
-        }}
+        className="w-6 bg-bg-tertiary rounded-sm relative cursor-pointer overflow-hidden outline-none focus:ring-2 focus:ring-success-light"
+        style={{ height }}
       >
         {/* Fill */}
         <div
+          className="absolute bottom-0 left-0 right-0 rounded-sm transition-[height] duration-100"
           style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
             height: `${fillHeight}%`,
-            background: COLORS.gradients.successVertical,
-            borderRadius: RADIUS.sm,
-            transition: `height ${TRANSITIONS.fast}`,
+            background: 'linear-gradient(to top, #16a34a, #4ade80)',
           }}
         />
 
         {/* Handle */}
         <div
+          className="absolute left-1/2 w-5 h-2 bg-text-primary rounded-[2px] shadow-sm transition-[bottom] duration-100"
           style={{
-            position: 'absolute',
             bottom: `calc(${fillHeight}% - 4px)`,
-            left: '50%',
-            width: 20,
-            height: 8,
-            background: COLORS.text.primary,
-            borderRadius: 2,
             transform: 'translateX(-50%)',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
-            transition: `bottom ${TRANSITIONS.fast}`,
           }}
         />
       </div>
 
-      <span
-        style={{
-          fontSize: TYPOGRAPHY.size.sm,
-          fontFamily: TYPOGRAPHY.family.mono,
-          color: COLORS.accent.primary,
-        }}
-      >
+      <span className="text-sm font-mono text-success-light">
         {displayValue}
       </span>
     </div>

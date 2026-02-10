@@ -29,6 +29,7 @@ import {
 } from '../components/index.ts';
 import { FM_PRESETS } from '../../data/presets/fm-presets.ts';
 import { InfoPanelProvider } from '../context/InfoPanelContext.tsx';
+import { cn } from '../utils/cn.ts';
 import {
   FM_PARAM_RANGES,
   HARMONICITY_PRESETS,
@@ -54,25 +55,6 @@ const COLORS = {
   modMatrix: '#a855f7',
   output: '#ef4444',
 };
-
-// Standardized sizes for consistent UI
-const SIZES = {
-  visualizer: {
-    width: 200,
-    height: 100,
-    compactHeight: 60,
-  },
-  gap: {
-    xs: 4,
-    sm: 8,
-    md: 12,
-    lg: 16,
-  },
-  margin: {
-    section: 12,
-  },
-};
-
 
 // Noise type options
 const NOISE_TYPES = [
@@ -194,14 +176,7 @@ export function FMSynthView() {
 
   return (
     <InfoPanelProvider>
-      <div style={{
-        minHeight: '100vh',
-        background: '#0a0a0f',
-        color: '#fff',
-        fontFamily: 'system-ui, -apple-system, sans-serif',
-        display: 'flex',
-        flexDirection: 'column',
-      }}>
+      <div className="min-h-screen bg-[#0a0a0f] text-text-primary font-sans flex flex-col">
         {/* Header */}
         <SynthHeader
           title="MIXCRAFT"
@@ -214,20 +189,12 @@ export function FMSynthView() {
         />
 
         {/* Spectrum Analyzer */}
-        <div style={{ padding: '12px 24px', background: '#050508' }}>
+        <div className="py-3 px-6 bg-[#050508]">
           <SpectrumAnalyzer getAnalyser={getAnalyser} width={window.innerWidth - 48} height={80} barCount={100} />
         </div>
 
         {/* Signal Flow - Horizontal flex wrap */}
-        <div style={{
-          flex: 1,
-          padding: '16px',
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '16px',
-          alignContent: 'flex-start',
-          overflow: 'auto',
-        }}>
+        <div className="flex-1 p-4 flex flex-wrap gap-4 content-start overflow-auto">
           {/* FM Stage - wider for the visualizer */}
           <StageCard title="FM SYNTHESIS" color={COLORS.fm} wide>
             <FMVisualizer
@@ -242,20 +209,20 @@ export function FMSynthView() {
             />
 
             {/* Carrier & Modulator Waveforms */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '12px' }}>
+            <div className="grid grid-cols-2 gap-3 mt-3">
               <div>
-                <div style={{ fontSize: '9px', color: COLORS.fm, marginBottom: '4px', fontWeight: 600 }}>CARRIER</div>
+                <div className="text-xs font-semibold mb-1" style={{ color: COLORS.fm }}>CARRIER</div>
                 <WaveformSelector value={params.carrierType} onChange={setCarrierType} accentColor={COLORS.fm} size="compact" />
               </div>
               <div>
-                <div style={{ fontSize: '9px', color: '#666', marginBottom: '4px', fontWeight: 600 }}>MODULATOR</div>
+                <div className="text-xs font-semibold mb-1 text-text-muted">MODULATOR</div>
                 <WaveformSelector value={params.modulatorType} onChange={setModulatorType} accentColor={COLORS.fm} size="compact" />
               </div>
             </div>
 
             {/* FM Parameters */}
-            <div style={{ display: 'flex', gap: '12px', marginTop: '12px', justifyContent: 'center', alignItems: 'flex-start' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+            <div className="flex gap-3 mt-3 justify-center items-start">
+              <div className="flex flex-col items-center gap-1">
                 <Knob
                   label="Harm"
                   value={params.harmonicity}
@@ -267,24 +234,23 @@ export function FMSynthView() {
                   size={40}
                   paramId="fm.harmonicity"
                 />
-                <div style={{ display: 'flex', gap: '2px', flexWrap: 'wrap', justifyContent: 'center', maxWidth: '80px' }}>
-                  {HARMONICITY_PRESETS.slice(0, 4).map((value) => (
-                    <button
-                      key={value}
-                      onClick={() => setHarmonicity(value)}
-                      style={{
-                        padding: '2px 4px',
-                        background: Math.abs(params.harmonicity - value) < 0.01 ? COLORS.fm : '#1a1a1a',
-                        border: 'none',
-                        borderRadius: '2px',
-                        color: Math.abs(params.harmonicity - value) < 0.01 ? '#fff' : '#666',
-                        cursor: 'pointer',
-                        fontSize: '8px',
-                      }}
-                    >
-                      {value}
-                    </button>
-                  ))}
+                <div className="flex gap-0.5 flex-wrap justify-center max-w-[80px]">
+                  {HARMONICITY_PRESETS.slice(0, 4).map((value) => {
+                    const isActive = Math.abs(params.harmonicity - value) < 0.01;
+                    return (
+                      <button
+                        key={value}
+                        onClick={() => setHarmonicity(value)}
+                        className={cn(
+                          'py-0.5 px-1 border-none rounded-sm cursor-pointer text-[8px]',
+                          isActive ? 'text-text-primary' : 'bg-bg-tertiary text-text-muted'
+                        )}
+                        style={isActive ? { background: COLORS.fm } : undefined}
+                      >
+                        {value}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
               <Knob
@@ -327,19 +293,19 @@ export function FMSynthView() {
               waveform={params.lfo.waveform}
               rate={params.lfo.rate}
               depth={params.lfo.depth}
-              width={SIZES.visualizer.width}
-              height={SIZES.visualizer.height}
+              width={200}
+              height={100}
               accentColor={COLORS.lfo}
               compact
             />
-            <div style={{ marginTop: SIZES.margin.section }}>
+            <div className="mt-3">
               <WaveformSelector
                 value={params.lfo.waveform}
                 onChange={(waveform: LFOWaveform) => setLFOWaveform(waveform)}
                 accentColor={COLORS.lfo}
               />
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm, marginTop: SIZES.margin.section }}>
+            <div className="flex flex-col gap-2 mt-3">
               <Knob
                 label="Rate"
                 value={params.lfo.rate}
@@ -362,29 +328,32 @@ export function FMSynthView() {
               />
             </div>
             {/* Destination selector */}
-            <div style={{ marginTop: SIZES.margin.section }}>
-              <div style={{ fontSize: '9px', color: '#888', marginBottom: 4, textTransform: 'uppercase' }}>
+            <div className="mt-3">
+              <div className="text-xs text-text-tertiary mb-1 uppercase">
                 Destination
               </div>
-              <div style={{ display: 'flex', gap: 2 }}>
-                {FM_LFO_DESTINATIONS.map((dest) => (
-                  <button
-                    key={dest.value}
-                    onClick={() => setLFODestination(dest.value)}
-                    style={{
-                      padding: '4px 6px',
-                      background: params.lfo.destination === dest.value ? COLORS.lfo : '#1a1a1a',
-                      border: `1px solid ${params.lfo.destination === dest.value ? COLORS.lfo : '#333'}`,
-                      borderRadius: '4px',
-                      color: params.lfo.destination === dest.value ? '#fff' : '#888',
-                      fontSize: '9px',
-                      cursor: 'pointer',
-                      fontWeight: 500,
-                    }}
-                  >
-                    {dest.label}
-                  </button>
-                ))}
+              <div className="flex gap-0.5">
+                {FM_LFO_DESTINATIONS.map((dest) => {
+                  const isActive = params.lfo.destination === dest.value;
+                  return (
+                    <button
+                      key={dest.value}
+                      onClick={() => setLFODestination(dest.value)}
+                      className={cn(
+                        'py-1 px-1.5 rounded-sm cursor-pointer text-xs font-medium border',
+                        isActive
+                          ? 'text-text-primary'
+                          : 'bg-bg-tertiary border-border-medium text-text-tertiary'
+                      )}
+                      style={isActive ? {
+                        background: COLORS.lfo,
+                        borderColor: COLORS.lfo,
+                      } : undefined}
+                    >
+                      {dest.label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </StageCard>
@@ -394,32 +363,35 @@ export function FMSynthView() {
             <NoiseVisualizer
               noiseType={params.noise.type}
               level={params.noise.level}
-              width={SIZES.visualizer.width}
-              height={SIZES.visualizer.height}
+              width={200}
+              height={100}
               accentColor={COLORS.noise}
               compact
             />
-            <div style={{ display: 'flex', gap: SIZES.gap.xs, marginTop: SIZES.margin.section }}>
-              {NOISE_TYPES.map((nt) => (
-                <button
-                  key={nt.value}
-                  onClick={() => setNoiseType(nt.value)}
-                  style={{
-                    padding: '6px 10px',
-                    background: params.noise.type === nt.value ? COLORS.noise : '#1a1a1a',
-                    border: `1px solid ${params.noise.type === nt.value ? COLORS.noise : '#333'}`,
-                    borderRadius: '4px',
-                    color: params.noise.type === nt.value ? '#fff' : '#888',
-                    fontSize: '10px',
-                    cursor: 'pointer',
-                    fontWeight: 500,
-                  }}
-                >
-                  {nt.label}
-                </button>
-              ))}
+            <div className="flex gap-1 mt-3">
+              {NOISE_TYPES.map((nt) => {
+                const isActive = params.noise.type === nt.value;
+                return (
+                  <button
+                    key={nt.value}
+                    onClick={() => setNoiseType(nt.value)}
+                    className={cn(
+                      'py-1.5 px-2.5 rounded-sm cursor-pointer text-sm font-medium border',
+                      isActive
+                        ? 'text-text-primary'
+                        : 'bg-bg-tertiary border-border-medium text-text-tertiary'
+                    )}
+                    style={isActive ? {
+                      background: COLORS.noise,
+                      borderColor: COLORS.noise,
+                    } : undefined}
+                  >
+                    {nt.label}
+                  </button>
+                );
+              })}
             </div>
-            <div style={{ marginTop: SIZES.margin.section }}>
+            <div className="mt-3">
               <Knob
                 label="Level"
                 value={params.noise.level}
@@ -487,7 +459,7 @@ export function FMSynthView() {
               accentColor={COLORS.amp}
               compact
             />
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '12px' }}>
+            <div className="grid grid-cols-2 gap-2 mt-3">
               <MiniSlider label="A" value={params.amplitudeEnvelope.attack} min={0.001} max={2} onChange={setAmplitudeAttack} color={COLORS.amp} />
               <MiniSlider label="D" value={params.amplitudeEnvelope.decay} min={0.001} max={2} onChange={setAmplitudeDecay} color={COLORS.amp} />
               <MiniSlider label="S" value={params.amplitudeEnvelope.sustain} min={0} max={1} onChange={setAmplitudeSustain} color={COLORS.amp} />
@@ -497,12 +469,12 @@ export function FMSynthView() {
 
           {/* OUTPUT Stage */}
           <StageCard title="OUTPUT" color={COLORS.output}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+            <div className="flex flex-col items-center gap-3">
               {/* Oscilloscope */}
               <Oscilloscope
                 getAnalyser={getAnalyser}
-                width={SIZES.visualizer.width}
-                height={SIZES.visualizer.compactHeight}
+                width={200}
+                height={60}
                 accentColor={COLORS.output}
               />
               <Knob
@@ -540,74 +512,47 @@ export function FMSynthView() {
         </div>
 
         {/* Sequencer */}
-        <div style={{ padding: '12px 24px', borderTop: '1px solid #1a1a1a' }}>
+        <div className="py-3 px-6 border-t border-border-subtle">
           <Sequencer engine={engine} accentColor="#f97316" />
         </div>
 
         {/* Bottom Control Strip */}
-        <div style={{
-          borderTop: '1px solid #1a1a1a',
-          background: '#0d0d12',
-        }}>
+        <div className="border-t border-border-subtle bg-[#0d0d12]">
           {/* Tabs */}
-          <div style={{ display: 'flex', borderBottom: '1px solid #1a1a1a' }}>
+          <div className="flex border-b border-border-subtle">
             <button
               onClick={() => setBottomMode('xy')}
-              style={{
-                padding: '8px 16px',
-                background: bottomMode === 'xy' ? '#1a1a1a' : 'transparent',
-                border: 'none',
-                borderBottom: bottomMode === 'xy' ? `2px solid ${COLORS.fm}` : '2px solid transparent',
-                color: bottomMode === 'xy' ? '#fff' : '#666',
-                cursor: 'pointer',
-                fontSize: '11px',
-                fontWeight: 600,
-              }}
+              className={cn(
+                'py-2 px-4 border-none cursor-pointer text-base font-semibold',
+                bottomMode === 'xy' ? 'bg-bg-tertiary text-text-primary' : 'bg-transparent text-text-muted'
+              )}
+              style={{ borderBottom: bottomMode === 'xy' ? `2px solid ${COLORS.fm}` : '2px solid transparent' }}
             >
               XY
             </button>
             <button
               onClick={() => setBottomMode('keys')}
-              style={{
-                padding: '8px 16px',
-                background: bottomMode === 'keys' ? '#1a1a1a' : 'transparent',
-                border: 'none',
-                borderBottom: bottomMode === 'keys' ? `2px solid ${COLORS.fm}` : '2px solid transparent',
-                color: bottomMode === 'keys' ? '#fff' : '#666',
-                cursor: 'pointer',
-                fontSize: '11px',
-                fontWeight: 600,
-              }}
+              className={cn(
+                'py-2 px-4 border-none cursor-pointer text-base font-semibold',
+                bottomMode === 'keys' ? 'bg-bg-tertiary text-text-primary' : 'bg-transparent text-text-muted'
+              )}
+              style={{ borderBottom: bottomMode === 'keys' ? `2px solid ${COLORS.fm}` : '2px solid transparent' }}
             >
               KEYS
             </button>
-            <div style={{ flex: 1 }} />
+            <div className="flex-1" />
             <button
               onClick={() => setBottomExpanded(!bottomExpanded)}
-              style={{
-                padding: '8px 16px',
-                background: 'transparent',
-                border: 'none',
-                color: '#666',
-                cursor: 'pointer',
-                fontSize: '11px',
-              }}
+              className="py-2 px-4 bg-transparent border-none text-text-muted cursor-pointer text-base"
             >
-              {bottomExpanded ? '▼' : '▲'}
+              {bottomExpanded ? '\u25BC' : '\u25B2'}
             </button>
           </div>
 
           {/* Content */}
           <div
-            style={{
-              height: bottomExpanded ? '140px' : '50px',
-              transition: 'height 0.2s ease',
-              overflow: 'hidden',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '8px 24px',
-            }}
+            className="transition-[height] duration-200 overflow-hidden flex items-center justify-center py-2 px-6"
+            style={{ height: bottomExpanded ? '140px' : '50px' }}
             onClick={() => !bottomExpanded && setBottomExpanded(true)}
           >
             {bottomMode === 'keys' ? (
@@ -656,7 +601,7 @@ interface FMModMatrixUIProps {
 
 function FMModMatrixUI({ routes, onChange, accentColor }: FMModMatrixUIProps) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm }}>
+    <div className="flex flex-col gap-2">
       {routes.map((route, index) => (
         <FMModRouteRow
           key={index}
@@ -681,29 +626,24 @@ function FMModRouteRow({ index, route, onChange, accentColor }: FMModRouteRowPro
   const isActive = route.enabled && Math.abs(route.amount) > 0.01;
 
   return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: SIZES.gap.xs,
-      padding: '4px 6px',
-      background: isActive ? `${accentColor}15` : '#1a1a1a',
-      borderRadius: '4px',
-      border: `1px solid ${isActive ? accentColor : '#333'}`,
-    }}>
+    <div
+      className={cn(
+        'flex items-center gap-1 py-1 px-1.5 rounded-sm border',
+        isActive ? '' : 'bg-bg-tertiary border-border-medium'
+      )}
+      style={isActive ? {
+        background: `${accentColor}15`,
+        borderColor: accentColor,
+      } : undefined}
+    >
       {/* Enable toggle */}
       <button
         onClick={() => onChange(index, { enabled: !route.enabled })}
-        style={{
-          width: 20,
-          height: 20,
-          fontSize: '10px',
-          fontWeight: 700,
-          background: route.enabled ? accentColor : '#333',
-          border: 'none',
-          borderRadius: '3px',
-          color: route.enabled ? '#000' : '#888',
-          cursor: 'pointer',
-        }}
+        className={cn(
+          'w-5 h-5 text-sm font-bold border-none rounded-sm cursor-pointer',
+          route.enabled ? 'text-black' : 'bg-border-medium text-text-tertiary'
+        )}
+        style={route.enabled ? { background: accentColor } : undefined}
       >
         {index + 1}
       </button>
@@ -713,17 +653,10 @@ function FMModRouteRow({ index, route, onChange, accentColor }: FMModRouteRowPro
         value={route.source}
         onChange={(e) => onChange(index, { source: e.target.value as FMModSource })}
         disabled={!route.enabled}
-        style={{
-          padding: '2px 4px',
-          background: '#222',
-          border: '1px solid #444',
-          borderRadius: '3px',
-          color: route.enabled ? '#fff' : '#666',
-          fontSize: '9px',
-          cursor: route.enabled ? 'pointer' : 'not-allowed',
-          flex: 1,
-          minWidth: 0,
-        }}
+        className={cn(
+          'py-0.5 px-1 bg-bg-quaternary border border-border-bright rounded-sm text-xs flex-1 min-w-0',
+          route.enabled ? 'text-text-primary cursor-pointer' : 'text-text-muted cursor-not-allowed'
+        )}
       >
         {FM_MOD_SOURCES.map((src) => (
           <option key={src} value={src}>{FM_MOD_SOURCE_LABELS[src]}</option>
@@ -731,24 +664,22 @@ function FMModRouteRow({ index, route, onChange, accentColor }: FMModRouteRowPro
       </select>
 
       {/* Arrow */}
-      <span style={{ fontSize: '10px', color: route.enabled ? accentColor : '#666' }}>→</span>
+      <span
+        className="text-sm"
+        style={{ color: route.enabled ? accentColor : '#666' }}
+      >
+        →
+      </span>
 
       {/* Destination selector */}
       <select
         value={route.destination}
         onChange={(e) => onChange(index, { destination: e.target.value as FMModDestination })}
         disabled={!route.enabled}
-        style={{
-          padding: '2px 4px',
-          background: '#222',
-          border: '1px solid #444',
-          borderRadius: '3px',
-          color: route.enabled ? '#fff' : '#666',
-          fontSize: '9px',
-          cursor: route.enabled ? 'pointer' : 'not-allowed',
-          flex: 1,
-          minWidth: 0,
-        }}
+        className={cn(
+          'py-0.5 px-1 bg-bg-quaternary border border-border-bright rounded-sm text-xs flex-1 min-w-0',
+          route.enabled ? 'text-text-primary cursor-pointer' : 'text-text-muted cursor-not-allowed'
+        )}
       >
         {FM_MOD_DESTINATIONS.map((dest) => (
           <option key={dest} value={dest}>{FM_MOD_DEST_LABELS[dest]}</option>
@@ -757,15 +688,10 @@ function FMModRouteRow({ index, route, onChange, accentColor }: FMModRouteRowPro
 
       {/* Amount slider */}
       <div
-        style={{
-          width: 60,
-          height: 16,
-          background: '#222',
-          borderRadius: '3px',
-          cursor: route.enabled ? 'pointer' : 'not-allowed',
-          position: 'relative',
-          overflow: 'hidden',
-        }}
+        className={cn(
+          'w-[60px] h-4 bg-bg-quaternary rounded-sm relative overflow-hidden',
+          route.enabled ? 'cursor-pointer' : 'cursor-not-allowed'
+        )}
         onClick={(e) => {
           if (!route.enabled) return;
           const rect = e.currentTarget.getBoundingClientRect();
@@ -776,41 +702,28 @@ function FMModRouteRow({ index, route, onChange, accentColor }: FMModRouteRowPro
         }}
       >
         {/* Center line */}
-        <div style={{
-          position: 'absolute',
-          left: '50%',
-          top: 0,
-          bottom: 0,
-          width: 1,
-          background: '#444',
-        }} />
+        <div className="absolute left-1/2 top-0 bottom-0 w-px bg-border-bright" />
         {/* Fill */}
         {route.enabled && (
-          <div style={{
-            position: 'absolute',
-            top: 2,
-            bottom: 2,
-            left: route.amount >= 0 ? '50%' : `${(0.5 + route.amount / 2) * 100}%`,
-            width: `${Math.abs(route.amount) / 2 * 100}%`,
-            background: accentColor,
-            borderRadius: '2px',
-          }} />
+          <div
+            className="absolute top-0.5 bottom-0.5 rounded-sm"
+            style={{
+              left: route.amount >= 0 ? '50%' : `${(0.5 + route.amount / 2) * 100}%`,
+              width: `${Math.abs(route.amount) / 2 * 100}%`,
+              background: accentColor,
+            }}
+          />
         )}
         {/* Value label */}
-        <span style={{
-          position: 'absolute',
-          left: '50%',
-          top: '50%',
-          transform: 'translate(-50%, -50%)',
-          fontSize: '8px',
-          fontWeight: 600,
-          color: route.enabled ? '#fff' : '#666',
-          fontFamily: 'monospace',
-        }}>
+        <span
+          className={cn(
+            'absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[8px] font-semibold font-mono',
+            route.enabled ? 'text-text-primary' : 'text-text-muted'
+          )}
+        >
           {route.enabled ? `${route.amount >= 0 ? '+' : ''}${Math.round(route.amount * 100)}` : '---'}
         </span>
       </div>
     </div>
   );
 }
-

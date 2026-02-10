@@ -4,6 +4,7 @@
  */
 
 import type { ReactNode } from 'react';
+import { cn } from '../../utils/cn.ts';
 
 interface ChallengeResultsModalProps {
   passed: boolean;
@@ -35,74 +36,44 @@ export function ChallengeResultsModal({
   hasNext,
 }: ChallengeResultsModalProps) {
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0, 0, 0, 0.8)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000,
-      }}
-    >
-      <div
-        style={{
-          background: '#1a1a1a',
-          borderRadius: '16px',
-          padding: '32px',
-          maxWidth: '450px',
-          width: '90%',
-          border: '1px solid #333',
-        }}
-      >
+    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[var(--z-modal)]">
+      <div className="bg-bg-tertiary rounded-xl p-8 max-w-[450px] w-[90%] border border-border-medium">
         {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+        <div className="text-center mb-6">
           <div
-            style={{
-              fontSize: '48px',
-              marginBottom: '8px',
-              color: passed ? '#22c55e' : '#666',
-            }}
+            className={cn(
+              'text-[48px] mb-2',
+              passed ? 'text-success' : 'text-text-muted'
+            )}
           >
             {'★'.repeat(stars)}
             {'☆'.repeat(3 - stars)}
           </div>
-          <h2 style={{ margin: '0 0 8px 0', fontSize: '24px' }}>
+          <h2 className="m-0 mb-2 text-4xl">
             {passed ? successMessage : failMessage}
           </h2>
-          <div style={{ fontSize: '32px', fontWeight: 700, color: '#fff' }}>
+          <div className="text-[32px] font-bold text-text-primary">
             {overall}%
           </div>
         </div>
 
         {/* Breakdown */}
-        <div style={{ marginBottom: '16px' }}>
-          <div
-            style={{
-              fontSize: '11px',
-              color: '#666',
-              textTransform: 'uppercase',
-              marginBottom: '8px',
-            }}
-          >
+        <div className="mb-4">
+          <div className="text-base text-text-muted uppercase mb-2">
             Score Breakdown
           </div>
           {breakdown}
         </div>
 
         {/* Feedback */}
-        <div style={{ marginBottom: '16px' }}>
+        <div className="mb-4">
           {feedback.map((fb, i) => (
             <div
               key={i}
-              style={{
-                color: '#888',
-                fontSize: '12px',
-                marginBottom: '6px',
-                paddingLeft: '12px',
-                borderLeft: `2px solid ${passed ? '#22c55e44' : '#f59e0b44'}`,
-              }}
+              className={cn(
+                'text-text-tertiary text-md mb-1.5 pl-3',
+                passed ? 'border-l-2 border-success/25' : 'border-l-2 border-warning/25'
+              )}
             >
               {fb}
             </div>
@@ -110,27 +81,15 @@ export function ChallengeResultsModal({
         </div>
 
         {/* AI Feedback */}
-        <div style={{ marginTop: '16px', marginBottom: '24px' }}>
-          <div
-            style={{
-              fontSize: '11px',
-              color: '#666',
-              textTransform: 'uppercase',
-              marginBottom: '8px',
-            }}
-          >
+        <div className="mt-4 mb-6">
+          <div className="text-base text-text-muted uppercase mb-2">
             AI Mentor
           </div>
           <div
-            style={{
-              background: '#0f0f0f',
-              borderRadius: '8px',
-              padding: '12px',
-              fontSize: '13px',
-              color: '#ccc',
-              lineHeight: 1.5,
-              fontStyle: aiFeedbackLoading ? 'italic' : 'normal',
-            }}
+            className={cn(
+              'bg-bg-primary rounded-md p-3 text-lg text-[#ccc] leading-relaxed',
+              aiFeedbackLoading && 'italic'
+            )}
           >
             {aiFeedbackLoading && 'Analyzing your work...'}
             {!aiFeedbackLoading && aiFeedback}
@@ -139,20 +98,10 @@ export function ChallengeResultsModal({
         </div>
 
         {/* Actions */}
-        <div style={{ display: 'flex', gap: '12px' }}>
+        <div className="flex gap-3">
           <button
             onClick={onRetry}
-            style={{
-              flex: 1,
-              padding: '12px',
-              background: '#333',
-              border: 'none',
-              borderRadius: '8px',
-              color: '#fff',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: 600,
-            }}
+            className="flex-1 p-3 bg-border-medium border-none rounded-md text-text-primary cursor-pointer text-xl font-semibold"
           >
             Try Again
           </button>
@@ -160,17 +109,7 @@ export function ChallengeResultsModal({
           {passed && hasNext && onNext && (
             <button
               onClick={onNext}
-              style={{
-                flex: 1,
-                padding: '12px',
-                background: 'linear-gradient(145deg, #22c55e, #16a34a)',
-                border: 'none',
-                borderRadius: '8px',
-                color: '#fff',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: 600,
-              }}
+              className="flex-1 p-3 bg-gradient-to-br from-success to-[#16a34a] border-none rounded-md text-text-primary cursor-pointer text-xl font-semibold"
             >
               Next Challenge &rarr;
             </button>

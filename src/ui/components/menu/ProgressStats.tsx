@@ -1,3 +1,5 @@
+import { cn } from '../../utils/cn.ts';
+
 interface ProgressStatsProps {
   completed: number;
   total: number;
@@ -13,44 +15,32 @@ export function ProgressStats({ completed, total, stars, isMobile }: ProgressSta
 
   return (
     <div
-      style={{
-        display: 'flex',
-        flexDirection: isMobile ? 'column' : 'row',
-        alignItems: isMobile ? 'stretch' : 'center',
-        gap: isMobile ? '16px' : '24px',
-        padding: isMobile ? '16px' : '16px 20px',
-        background: '#141414',
-        borderRadius: '12px',
-        border: '1px solid #2a2a2a',
-        marginBottom: '32px',
-      }}
+      className={cn(
+        'flex gap-6 bg-[#141414] rounded-lg border border-border-default mb-8',
+        isMobile ? 'flex-col items-stretch gap-4 p-4' : 'flex-row items-center px-5 py-4'
+      )}
     >
       {/* Stars and Progress Row on Mobile */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '16px' : '24px', flex: isMobile ? undefined : 'none' }}>
+      <div className={cn('flex items-center', isMobile ? 'gap-4' : 'gap-6 shrink-0')}>
         {/* Stars */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ color: '#eab308', fontSize: '20px' }}>★</span>
+        <div className="flex items-center gap-2">
+          <span className="text-warning text-[20px]">★</span>
           <div>
-            <div style={{ fontSize: '18px', fontWeight: 600 }}>{stars}</div>
-            <div style={{ fontSize: '11px', color: '#666' }}>of {maxStars} stars</div>
+            <div className="text-3xl font-semibold">{stars}</div>
+            <div className="text-base text-text-muted">of {maxStars} stars</div>
           </div>
         </div>
 
         {/* Divider - hide on mobile */}
-        {!isMobile && <div style={{ width: '1px', height: '32px', background: '#333' }} />}
+        {!isMobile && <div className="w-px h-8 bg-border-medium" />}
 
         {/* Percentage badge - inline on mobile */}
         {isMobile && (
           <div
-            style={{
-              marginLeft: 'auto',
-              padding: '6px 12px',
-              background: percentage === 100 ? '#22c55e' : '#1a1a1a',
-              borderRadius: '16px',
-              fontSize: '14px',
-              fontWeight: 600,
-              color: percentage === 100 ? '#000' : '#fff',
-            }}
+            className={cn(
+              'ml-auto py-1.5 px-3 rounded-full text-xl font-semibold',
+              percentage === 100 ? 'bg-success text-bg-primary' : 'bg-bg-tertiary text-text-primary'
+            )}
           >
             {percentage}%
           </div>
@@ -58,27 +48,15 @@ export function ProgressStats({ completed, total, stars, isMobile }: ProgressSta
       </div>
 
       {/* Completion */}
-      <div style={{ flex: 1 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-          <span style={{ fontSize: '13px', color: '#888' }}>Progress</span>
-          <span style={{ fontSize: '13px', fontWeight: 500 }}>{completed}/{total} challenges</span>
+      <div className="flex-1">
+        <div className="flex justify-between mb-1.5">
+          <span className="text-lg text-text-tertiary">Progress</span>
+          <span className="text-lg font-medium">{completed}/{total} challenges</span>
         </div>
-        <div
-          style={{
-            height: '6px',
-            background: '#222',
-            borderRadius: '3px',
-            overflow: 'hidden',
-          }}
-        >
+        <div className="h-1.5 bg-bg-quaternary rounded-sm overflow-hidden">
           <div
-            style={{
-              width: `${percentage}%`,
-              height: '100%',
-              background: 'linear-gradient(90deg, #22c55e, #4ade80)',
-              borderRadius: '3px',
-              transition: 'width 0.3s ease',
-            }}
+            className="h-full bg-gradient-to-r from-success to-success-light rounded-sm transition-[width] duration-300 ease-out"
+            style={{ width: `${percentage}%` }}
           />
         </div>
       </div>
@@ -86,14 +64,10 @@ export function ProgressStats({ completed, total, stars, isMobile }: ProgressSta
       {/* Percentage badge - desktop only */}
       {!isMobile && (
         <div
-          style={{
-            padding: '6px 12px',
-            background: percentage === 100 ? '#22c55e' : '#1a1a1a',
-            borderRadius: '16px',
-            fontSize: '14px',
-            fontWeight: 600,
-            color: percentage === 100 ? '#000' : '#fff',
-          }}
+          className={cn(
+            'py-1.5 px-3 rounded-full text-xl font-semibold',
+            percentage === 100 ? 'bg-success text-bg-primary' : 'bg-bg-tertiary text-text-primary'
+          )}
         >
           {percentage}%
         </div>

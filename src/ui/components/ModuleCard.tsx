@@ -5,7 +5,8 @@
  */
 
 import { useState, type ReactNode } from 'react';
-import { COLORS, TYPOGRAPHY, SPACING, RADIUS, TRANSITIONS } from '../theme/index.ts';
+import { COLORS } from '../theme/index.ts';
+import { cn } from '../utils/cn.ts';
 
 interface ModuleCardProps {
   title: string;
@@ -54,70 +55,43 @@ export function ModuleCard({
     }
   };
 
-  // Create a subtle color with reduced opacity for the border
-  const borderColor = color;
-  const headerBg = `${color}15`; // 15% opacity for header background tint
-
   return (
     <div
+      className="bg-bg-secondary rounded-lg border overflow-hidden transition-[border-color] duration-200"
       style={{
-        background: COLORS.bg.secondary,
-        borderRadius: RADIUS.lg,
-        border: `1px solid ${borderColor}40`, // 40% opacity border
-        overflow: 'hidden',
-        transition: `border-color ${TRANSITIONS.normal}`,
-      }}
+        '--module-color': color,
+        borderColor: `${color}40`,
+      } as React.CSSProperties}
     >
       {/* Header with color accent */}
       <div
         onClick={onToggle ? handleToggle : undefined}
+        className={cn(
+          'flex items-center gap-2 py-3 px-4 select-none',
+          onToggle && 'cursor-pointer',
+          !isCollapsed && 'border-b'
+        )}
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: SPACING.sm,
-          padding: `${SPACING.md}px ${SPACING.lg}px`,
-          background: headerBg,
-          borderBottom: isCollapsed ? 'none' : `1px solid ${borderColor}20`,
-          cursor: onToggle ? 'pointer' : 'default',
-          userSelect: 'none',
+          background: `${color}15`,
+          borderBottomColor: isCollapsed ? 'transparent' : `${color}20`,
         }}
       >
         {/* Color accent bar */}
         <div
-          style={{
-            width: 3,
-            height: SPACING.lg,
-            background: color,
-            borderRadius: RADIUS.sm,
-            flexShrink: 0,
-          }}
+          className="w-[3px] h-4 rounded-sm shrink-0"
+          style={{ background: color }}
         />
 
         {/* Icon */}
         {icon && (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-            }}
-          >
+          <div className="flex items-center justify-center shrink-0">
             {icon}
           </div>
         )}
 
         {/* Title */}
         <h3
-          style={{
-            margin: 0,
-            fontSize: TYPOGRAPHY.size.base,
-            fontWeight: TYPOGRAPHY.weight.semibold,
-            color: color,
-            textTransform: 'uppercase',
-            letterSpacing: TYPOGRAPHY.letterSpacing.wider,
-            flex: 1,
-          }}
+          className="m-0 text-base font-semibold uppercase tracking-wider flex-1 text-(--module-color)"
         >
           {title}
         </h3>
@@ -125,12 +99,8 @@ export function ModuleCard({
         {/* Collapse indicator */}
         {onToggle && (
           <div
-            style={{
-              color: COLORS.text.muted,
-              fontSize: TYPOGRAPHY.size.sm,
-              transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)',
-              transition: `transform ${TRANSITIONS.normal}`,
-            }}
+            className="text-text-muted text-sm transition-transform duration-200"
+            style={{ transform: isCollapsed ? 'rotate(-90deg)' : undefined }}
           >
             ▼
           </div>
@@ -139,7 +109,7 @@ export function ModuleCard({
 
       {/* Content */}
       {!isCollapsed && (
-        <div style={{ padding: SPACING.lg }}>
+        <div className="p-4">
           {children}
         </div>
       )}
@@ -159,24 +129,8 @@ export function Section({
   children: ReactNode;
 }) {
   return (
-    <div
-      style={{
-        background: COLORS.bg.secondary,
-        borderRadius: RADIUS.lg,
-        padding: SPACING.lg,
-        border: `1px solid ${COLORS.border.default}`,
-      }}
-    >
-      <h3
-        style={{
-          margin: `0 0 ${SPACING.md}px 0`,
-          fontSize: TYPOGRAPHY.size.base,
-          fontWeight: TYPOGRAPHY.weight.semibold,
-          color: COLORS.text.muted,
-          textTransform: 'uppercase',
-          letterSpacing: TYPOGRAPHY.letterSpacing.wider,
-        }}
-      >
+    <div className="bg-bg-secondary rounded-lg p-4 border border-border-default">
+      <h3 className="m-0 mb-3 text-base font-semibold text-text-muted uppercase tracking-wider">
         {title}
       </h3>
       {children}

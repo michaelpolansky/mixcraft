@@ -5,7 +5,7 @@
 
 import { useRef, useCallback } from 'react';
 import { useInfoPanel } from '../context/InfoPanelContext.tsx';
-import { COLORS, TYPOGRAPHY, SPACING, RADIUS, TRANSITIONS, SHADOWS } from '../theme/index.ts';
+import { cn } from '../utils/cn.ts';
 
 interface KnobProps {
   value: number;
@@ -169,59 +169,27 @@ export function Knob({
       onMouseEnter={(e) => paramId && setHoveredParam(paramId, { x: e.clientX, y: e.clientY })}
       onMouseMove={handleMouseMove}
       onMouseLeave={() => setHoveredParam(null)}
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: SPACING.xs,
-        userSelect: 'none',
-        width: '100%',
-        padding: `${SPACING.xs}px ${SPACING.sm}px`,
-      }}
+      className="flex flex-col gap-1 select-none w-full px-2 py-1"
     >
       {/* Header row: Label left, Value right */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}
-      >
-        <span
-          style={{
-            fontSize: TYPOGRAPHY.size.sm,
-            color: COLORS.text.tertiary,
-            textTransform: 'uppercase',
-            letterSpacing: TYPOGRAPHY.letterSpacing.wide,
-          }}
-        >
+      <div className="flex justify-between items-center">
+        <span className="text-sm text-text-tertiary uppercase tracking-wide">
           {label}
         </span>
 
         {/* Value display */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: SPACING.xs,
-        }}>
+        <div className="flex items-center gap-1">
           <span
-            style={{
-              fontSize: TYPOGRAPHY.size.sm,
-              fontFamily: TYPOGRAPHY.family.mono,
-              color: isModulated ? COLORS.text.muted : COLORS.accent.primary,
-            }}
+            className={cn(
+              'text-sm font-mono',
+              isModulated ? 'text-text-muted' : 'text-success-light'
+            )}
           >
             {displayValue}
           </span>
           {/* Modulated value display */}
           {isModulated && modulatedDisplayValue && (
-            <span
-              style={{
-                fontSize: TYPOGRAPHY.size.sm,
-                fontFamily: TYPOGRAPHY.family.mono,
-                color: COLORS.accent.secondary,
-                fontWeight: TYPOGRAPHY.weight.medium,
-              }}
-            >
+            <span className="text-sm font-mono text-accent-secondary font-medium">
               → {modulatedDisplayValue}
             </span>
           )}
@@ -241,81 +209,40 @@ export function Knob({
         onMouseDown={handleMouseDown}
         onDoubleClick={handleDoubleClick}
         onKeyDown={handleKeyDown}
-        style={{
-          width: '100%',
-          height: sliderHeight,
-          background: COLORS.bg.tertiary,
-          borderRadius: RADIUS.full,
-          position: 'relative',
-          cursor: 'pointer',
-          overflow: 'visible',
-          outline: 'none',
-        }}
-        onFocus={(e) => {
-          e.currentTarget.style.boxShadow = `0 0 0 2px ${COLORS.interactive.focus}`;
-        }}
-        onBlur={(e) => {
-          e.currentTarget.style.boxShadow = 'none';
-        }}
+        className="w-full bg-bg-tertiary rounded-full relative cursor-pointer overflow-visible outline-none focus:ring-2 focus:ring-success-light"
+        style={{ height: sliderHeight }}
       >
         {/* Background track */}
-        <div
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: COLORS.border.medium,
-            borderRadius: RADIUS.full,
-          }}
-        />
+        <div className="absolute inset-0 bg-border-medium rounded-full" />
 
         {/* Base value fill */}
         <div
+          className="absolute top-0 left-0 bottom-0 rounded-full transition-[width] duration-100"
           style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            bottom: 0,
             width: `${fillWidth}%`,
-            background: COLORS.gradients.success,
-            borderRadius: RADIUS.full,
-            transition: `width ${TRANSITIONS.fast}`,
+            background: 'linear-gradient(90deg, #16a34a, #4ade80)',
           }}
         />
 
         {/* Modulated value indicator - shows as a moving line */}
         {isModulated && (
           <div
+            className="absolute -top-0.5 -bottom-0.5 w-[3px] rounded-sm"
             style={{
-              position: 'absolute',
-              top: -2,
-              bottom: -2,
               left: `${modulatedPosition}%`,
-              width: 3,
-              background: COLORS.accent.secondary,
-              borderRadius: RADIUS.sm,
+              background: '#60a5fa',
               transform: 'translateX(-50%)',
-              boxShadow: SHADOWS.glow(COLORS.accent.secondary),
+              boxShadow: '0 0 12px #60a5fa',
             }}
           />
         )}
 
         {/* Handle/thumb */}
         <div
+          className="absolute top-1/2 w-3 h-3 bg-text-primary rounded-full shadow-md border-2 border-success-light transition-[left] duration-100"
           style={{
-            position: 'absolute',
-            top: '50%',
             left: `${fillWidth}%`,
-            width: 12,
-            height: 12,
-            background: COLORS.text.primary,
-            borderRadius: RADIUS.full,
             transform: 'translate(-50%, -50%)',
-            boxShadow: SHADOWS.md,
-            border: `2px solid ${COLORS.accent.primary}`,
-            transition: `left ${TRANSITIONS.fast}`,
           }}
         />
       </div>

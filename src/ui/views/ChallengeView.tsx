@@ -32,6 +32,7 @@ import {
 } from '../components/index.ts';
 import { Section } from '../components/challenge/Section.tsx';
 import { InfoPanelProvider } from '../context/InfoPanelContext.tsx';
+import { cn } from '../utils/cn.ts';
 import { PARAM_RANGES, FM_PARAM_RANGES, HARMONICITY_PRESETS } from '../../core/types.ts';
 import type { SynthParams, FMSynthParams, AdditiveSynthParams } from '../../core/types.ts';
 import { SynthEngine, createSynthEngine } from '../../core/synth-engine.ts';
@@ -212,9 +213,9 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
 
   if (!currentChallenge) {
     return (
-      <div style={{ padding: '24px', color: '#888' }}>
+      <div className="p-6 text-text-muted">
         No challenge loaded.
-        <button onClick={onExit} style={{ marginLeft: '16px' }}>Back</button>
+        <button onClick={onExit} className="ml-4">Back</button>
       </div>
     );
   }
@@ -242,8 +243,8 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
 
   return (
     <InfoPanelProvider>
-    <div style={{ minHeight: '100vh', background: '#0a0a0a', color: '#fff', fontFamily: 'system-ui, -apple-system, sans-serif', display: 'flex', flexDirection: 'column' }}>
-    <div style={{ padding: '24px', flex: 1 }}>
+    <div className="min-h-screen bg-[#0a0a0a] text-text-primary font-sans flex flex-col">
+    <div className="p-6 flex-1">
       <ChallengeHeader
         title={currentChallenge.title}
         description={currentChallenge.description}
@@ -253,50 +254,62 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
       />
 
       {/* Target Player */}
-      <div style={{ marginBottom: '24px' }}>
+      <div className="mb-6">
         <TargetPlayer onPlayTarget={playTarget} onPlayYours={playYours} onCompare={playCompare} disabled={isScoring} />
       </div>
 
       {/* Main Layout */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', maxWidth: '1200px' }}>
+      <div className="grid grid-cols-2 gap-6 max-w-[1200px]">
         {/* Left Column - Controls */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div className="flex flex-col gap-4">
           {isFM ? (
             <>
               <Section title="Oscillators">
                 <CarrierModulatorViz carrierType={fmParams.carrierType} modulatorType={fmParams.modulatorType} harmonicity={fmParams.harmonicity} modulationIndex={fmParams.modulationIndex} />
-                <div style={{ display: 'flex', justifyContent: 'space-around', gap: '16px', marginTop: '16px' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '10px', color: '#00ff88', textTransform: 'uppercase' }}>Carrier</span>
+                <div className="flex justify-around gap-4 mt-4">
+                  <div className="flex flex-col items-center gap-2">
+                    <span className="text-sm text-[#00ff88] uppercase">Carrier</span>
                     <WaveformSelector value={fmParams.carrierType} onChange={setCarrierType} accentColor="#00ff88" size="compact" />
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '10px', color: '#ff8800', textTransform: 'uppercase' }}>Modulator</span>
+                  <div className="flex flex-col items-center gap-2">
+                    <span className="text-sm text-[#ff8800] uppercase">Modulator</span>
                     <WaveformSelector value={fmParams.modulatorType} onChange={setModulatorType} accentColor="#ff8800" size="compact" />
                   </div>
                 </div>
               </Section>
               <Section title="Modulation">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
+                <div className="flex items-center gap-4 mb-4">
                   <Knob value={fmParams.harmonicity} min={FM_PARAM_RANGES.harmonicity.min} max={FM_PARAM_RANGES.harmonicity.max} step={FM_PARAM_RANGES.harmonicity.step} label="Harmonicity" onChange={setHarmonicity} formatValue={(v) => `${v.toFixed(1)}x`} />
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <span style={{ fontSize: '9px', color: '#555', textTransform: 'uppercase' }}>Presets</span>
-                    <div style={{ display: 'flex', gap: '4px' }}>
-                      {HARMONICITY_PRESETS.map((preset) => (
-                        <button key={preset} onClick={() => setHarmonicityPreset(preset)} style={{ width: '28px', height: '28px', background: Math.abs(fmParams.harmonicity - preset) < 0.05 ? '#2a3a2a' : '#1a1a1a', border: Math.abs(fmParams.harmonicity - preset) < 0.05 ? '2px solid #4ade80' : '1px solid #333', borderRadius: '4px', color: Math.abs(fmParams.harmonicity - preset) < 0.05 ? '#4ade80' : '#888', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
-                          {preset}
-                        </button>
-                      ))}
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs text-text-disabled uppercase">Presets</span>
+                    <div className="flex gap-1">
+                      {HARMONICITY_PRESETS.map((preset) => {
+                        const isActive = Math.abs(fmParams.harmonicity - preset) < 0.05;
+                        return (
+                          <button
+                            key={preset}
+                            onClick={() => setHarmonicityPreset(preset)}
+                            className={cn(
+                              'w-7 h-7 rounded-sm text-md font-semibold cursor-pointer',
+                              isActive
+                                ? 'bg-[#2a3a2a] border-2 border-success-light text-success-light'
+                                : 'bg-bg-tertiary border border-border-medium text-text-tertiary'
+                            )}
+                          >
+                            {preset}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: '24px', justifyContent: 'center' }}>
+                <div className="flex gap-6 justify-center">
                   <Knob value={fmParams.modulationIndex} min={FM_PARAM_RANGES.modulationIndex.min} max={FM_PARAM_RANGES.modulationIndex.max} step={FM_PARAM_RANGES.modulationIndex.step} label="Mod Index" onChange={setModulationIndex} formatValue={(v) => v.toFixed(1)} />
                   <Knob value={fmParams.modulationEnvelopeAmount} min={FM_PARAM_RANGES.modulationEnvelopeAmount.min} max={FM_PARAM_RANGES.modulationEnvelopeAmount.max} step={FM_PARAM_RANGES.modulationEnvelopeAmount.step} label="Mod Env" onChange={setModulationEnvelopeAmount} formatValue={formatPercent} />
                 </div>
               </Section>
               <Section title="Envelope">
-                <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
+                <div className="flex gap-4 justify-center">
                   <Knob value={fmParams.amplitudeEnvelope.attack} min={PARAM_RANGES.attack.min} max={PARAM_RANGES.attack.max} label="Attack" onChange={setFMAttack} formatValue={formatMs} />
                   <Knob value={fmParams.amplitudeEnvelope.decay} min={PARAM_RANGES.decay.min} max={PARAM_RANGES.decay.max} label="Decay" onChange={setFMDecay} formatValue={formatMs} />
                   <Knob value={fmParams.amplitudeEnvelope.sustain} min={PARAM_RANGES.sustain.min} max={PARAM_RANGES.sustain.max} label="Sustain" onChange={setFMSustain} formatValue={formatPercent} />
@@ -316,7 +329,7 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
             <>
               <HarmonicDrawbars harmonics={additiveParams.harmonics} onChange={setAdditiveHarmonic} onPreset={applyAdditivePreset} />
               <Section title="Envelope">
-                <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
+                <div className="flex gap-4 justify-center">
                   <Knob value={additiveParams.amplitudeEnvelope.attack} min={PARAM_RANGES.attack.min} max={PARAM_RANGES.attack.max} label="Attack" onChange={setAdditiveAttack} formatValue={formatMs} />
                   <Knob value={additiveParams.amplitudeEnvelope.decay} min={PARAM_RANGES.decay.min} max={PARAM_RANGES.decay.max} label="Decay" onChange={setAdditiveDecay} formatValue={formatMs} />
                   <Knob value={additiveParams.amplitudeEnvelope.sustain} min={PARAM_RANGES.sustain.min} max={PARAM_RANGES.sustain.max} label="Sustain" onChange={setAdditiveSustain} formatValue={formatPercent} />
@@ -336,22 +349,22 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
             <>
               <Section title="Oscillator">
                 <WaveformSelector value={params.oscillator.type} onChange={setOscillatorType} accentColor="#3b82f6" />
-                <div style={{ display: 'flex', gap: '24px', marginTop: '16px' }}>
+                <div className="flex gap-6 mt-4">
                   <Knob label="Octave" value={params.oscillator.octave} min={PARAM_RANGES.octave.min} max={PARAM_RANGES.octave.max} step={PARAM_RANGES.octave.step} onChange={setOctave} formatValue={formatOctave} paramId="oscillator.octave" />
                   <Knob label="Detune" value={params.oscillator.detune} min={PARAM_RANGES.detune.min} max={PARAM_RANGES.detune.max} step={PARAM_RANGES.detune.step} onChange={setDetune} formatValue={formatCents} paramId="oscillator.detune" />
                 </div>
               </Section>
               <Section title="Filter">
                 <FilterTypeSelector value={params.filter.type} onChange={setFilterType} />
-                <div style={{ display: 'flex', gap: '24px', marginTop: '16px' }}>
+                <div className="flex gap-6 mt-4">
                   <Knob label="Cutoff" value={params.filter.cutoff} min={PARAM_RANGES.cutoff.min} max={PARAM_RANGES.cutoff.max} onChange={setFilterCutoff} formatValue={formatHz} logarithmic paramId="filter.cutoff" />
                   <Knob label="Resonance" value={params.filter.resonance} min={PARAM_RANGES.resonance.min} max={PARAM_RANGES.resonance.max} step={PARAM_RANGES.resonance.step} onChange={setFilterResonance} formatValue={(v) => v.toFixed(1)} paramId="filter.resonance" />
                 </div>
               </Section>
               <Section title="Amplitude Envelope">
-                <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+                <div className="flex gap-4 items-start">
                   <EnvelopeDisplay envelope={params.amplitudeEnvelope} width={120} height={60} />
-                  <div style={{ display: 'flex', gap: '12px' }}>
+                  <div className="flex gap-3">
                     <Slider label="A" value={params.amplitudeEnvelope.attack} min={PARAM_RANGES.attack.min} max={PARAM_RANGES.attack.max} onChange={setAmplitudeAttack} formatValue={formatMs} logarithmic height={80} paramId="amplitude.attack" />
                     <Slider label="D" value={params.amplitudeEnvelope.decay} min={PARAM_RANGES.decay.min} max={PARAM_RANGES.decay.max} onChange={setAmplitudeDecay} formatValue={formatMs} logarithmic height={80} paramId="amplitude.decay" />
                     <Slider label="S" value={params.amplitudeEnvelope.sustain} min={PARAM_RANGES.sustain.min} max={PARAM_RANGES.sustain.max} onChange={setAmplitudeSustain} formatValue={formatPercent} height={80} paramId="amplitude.sustain" />
@@ -360,14 +373,14 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
                 </div>
               </Section>
               <Section title="Filter Envelope">
-                <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+                <div className="flex gap-4 items-start">
                   <div>
                     <EnvelopeDisplay envelope={params.filterEnvelope} width={120} height={60} color="#3b82f6" />
-                    <div style={{ marginTop: '8px' }}>
+                    <div className="mt-2">
                       <Knob label="Amount" value={params.filterEnvelope.amount} min={PARAM_RANGES.filterEnvAmount.min} max={PARAM_RANGES.filterEnvAmount.max} step={PARAM_RANGES.filterEnvAmount.step} onChange={setFilterEnvelopeAmount} formatValue={(v) => `${v > 0 ? '+' : ''}${v.toFixed(1)}`} size={40} paramId="filterEnv.amount" />
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: '12px' }}>
+                  <div className="flex gap-3">
                     <Slider label="A" value={params.filterEnvelope.attack} min={PARAM_RANGES.attack.min} max={PARAM_RANGES.attack.max} onChange={setFilterEnvelopeAttack} formatValue={formatMs} logarithmic height={80} paramId="filterEnv.attack" />
                     <Slider label="D" value={params.filterEnvelope.decay} min={PARAM_RANGES.decay.min} max={PARAM_RANGES.decay.max} onChange={setFilterEnvelopeDecay} formatValue={formatMs} logarithmic height={80} paramId="filterEnv.decay" />
                     <Slider label="S" value={params.filterEnvelope.sustain} min={PARAM_RANGES.sustain.min} max={PARAM_RANGES.sustain.max} onChange={setFilterEnvelopeSustain} formatValue={formatPercent} height={80} paramId="filterEnv.sustain" />
@@ -377,13 +390,13 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
               </Section>
               <Section title="LFO (Filter Modulation)">
                 <LFOWaveformSelector value={params.lfo.waveform} onChange={setLFOWaveform} compact />
-                <div style={{ display: 'flex', gap: '24px', marginTop: '12px' }}>
+                <div className="flex gap-6 mt-3">
                   <Knob label="Rate" value={params.lfo.rate} min={PARAM_RANGES.lfoRate.min} max={PARAM_RANGES.lfoRate.max} step={PARAM_RANGES.lfoRate.step} onChange={setLFORate} formatValue={(v) => `${v.toFixed(1)}Hz`} paramId="lfo.rate" />
                   <Knob label="Depth" value={params.lfo.depth} min={PARAM_RANGES.lfoDepth.min} max={PARAM_RANGES.lfoDepth.max} step={PARAM_RANGES.lfoDepth.step} onChange={setLFODepth} formatValue={formatPercent} paramId="lfo.depth" />
                 </div>
               </Section>
               <Section title="Effects">
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div className="grid grid-cols-2 gap-4">
                   <EffectBlock label="Distortion" knobs={[
                     { label: 'Amt', value: params.effects.distortion.amount, range: PARAM_RANGES.distortionAmount, onChange: setDistortionAmount, format: formatPercent },
                     { label: 'Mix', value: params.effects.distortion.mix, range: PARAM_RANGES.distortionMix, onChange: setDistortionMix, format: formatPercent },
@@ -410,7 +423,7 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
         </div>
 
         {/* Right Column - Visualization & Actions */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div className="flex flex-col gap-4">
           {visualizationType === 'oscilloscope' && <Section title="Waveform"><Oscilloscope getAnalyser={getActiveAnalyser} width={450} height={120} accentColor="#4ade80" /></Section>}
           {visualizationType === 'filter' && <Section title="Filter Response"><FilterResponse filterType={params.filter.type} cutoff={params.filter.cutoff} resonance={params.filter.resonance} width={450} height={150} accentColor="#4ade80" /></Section>}
           {visualizationType === 'envelope' && <Section title="Envelope Shape"><EnvelopeVisualizerReadOnly amplitudeEnvelope={params.amplitudeEnvelope} filterEnvelope={params.filterEnvelope} width={450} height={150} /></Section>}
@@ -468,7 +481,7 @@ function FMAdditiveEffectsSection({ effects, volume, setDistortionAmount, setDis
   return (
     <>
       <Section title="Effects">
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+        <div className="grid grid-cols-2 gap-4">
           <EffectBlock label="Distortion" knobs={[
             { label: 'Amt', value: effects.distortion.amount, range: PARAM_RANGES.distortionAmount, onChange: setDistortionAmount, format: formatPercent },
             { label: 'Mix', value: effects.distortion.mix, range: PARAM_RANGES.distortionMix, onChange: setDistortionMix, format: formatPercent },
@@ -501,8 +514,8 @@ function EffectBlock({ label, knobs }: {
 }) {
   return (
     <div>
-      <div style={{ fontSize: '10px', color: '#666', marginBottom: '8px', textTransform: 'uppercase' }}>{label}</div>
-      <div style={{ display: 'flex', gap: '12px' }}>
+      <div className="text-sm text-text-muted mb-2 uppercase">{label}</div>
+      <div className="flex gap-3">
         {knobs.map((k) => (
           <Knob key={k.label} label={k.label} value={k.value} min={k.range.min} max={k.range.max} step={k.range.step} onChange={k.onChange} formatValue={k.format} size={36} />
         ))}

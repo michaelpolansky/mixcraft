@@ -16,17 +16,14 @@ export function HintsPanel({
   accentColor = '#333',
 }: HintsPanelProps) {
   return (
-    <div style={{ minHeight: '60px' }}>
+    <div
+      className="min-h-[60px]"
+      style={{ '--accent': accentColor } as React.CSSProperties}
+    >
       {hints.slice(0, hintsRevealed).map((hint, i) => (
         <div
           key={i}
-          style={{
-            color: '#888',
-            fontSize: '12px',
-            marginBottom: '8px',
-            paddingLeft: '12px',
-            borderLeft: `2px solid ${accentColor}44`,
-          }}
+          className="text-text-tertiary text-md mb-2 pl-3 border-l-2 border-(--accent)/25"
         >
           {hint}
         </div>
@@ -35,15 +32,7 @@ export function HintsPanel({
       {hintsRevealed < hints.length && (
         <button
           onClick={onRevealHint}
-          style={{
-            background: 'none',
-            border: '1px solid #333',
-            borderRadius: '4px',
-            color: '#666',
-            cursor: 'pointer',
-            fontSize: '11px',
-            padding: '6px 12px',
-          }}
+          className="bg-none border border-border-medium rounded-sm text-text-muted cursor-pointer text-base py-1.5 px-3"
         >
           Reveal Hint ({hintsRevealed + 1}/{hints.length})
         </button>

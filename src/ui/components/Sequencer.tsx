@@ -8,6 +8,7 @@ import type { SynthEngineInterface } from '../../core/synth-sequencer.ts';
 import { SynthSequencer, createSynthSequencer } from '../../core/synth-sequencer.ts';
 import type { NoteSequence } from '../../core/synth-sequencer.ts';
 import { NOTE_SEQUENCES } from '../../data/sequences/note-sequences.ts';
+import { cn } from '../utils/cn.ts';
 
 interface SequencerProps {
   /** The synth engine to play notes through */
@@ -112,89 +113,7 @@ export function Sequencer({
     sequencerRef.current.setDrumsEnabled(newState);
   }, [drumsEnabled]);
 
-  // Styles
-  const containerStyle: React.CSSProperties = {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '12px',
-    padding: '12px',
-    background: '#1a1a1a',
-    borderRadius: '8px',
-    border: '1px solid #333',
-  };
-
-  const rowStyle: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-  };
-
-  const labelStyle: React.CSSProperties = {
-    fontSize: '11px',
-    color: '#888',
-    textTransform: 'uppercase' as const,
-    letterSpacing: '0.5px',
-    minWidth: '60px',
-  };
-
-  const selectStyle: React.CSSProperties = {
-    flex: 1,
-    padding: '8px 12px',
-    background: '#0a0a0a',
-    border: '1px solid #333',
-    borderRadius: '4px',
-    color: '#fff',
-    fontSize: '13px',
-    cursor: 'pointer',
-  };
-
-  const playButtonStyle: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '40px',
-    height: '40px',
-    background: isPlaying ? '#ef4444' : accentColor,
-    border: 'none',
-    borderRadius: '50%',
-    cursor: isLoaded && engine ? 'pointer' : 'not-allowed',
-    opacity: isLoaded && engine ? 1 : 0.5,
-    transition: 'transform 0.1s, background 0.2s',
-  };
-
-  const toggleStyle: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    padding: '6px 12px',
-    background: drumsEnabled ? accentColor + '30' : '#0a0a0a',
-    border: `1px solid ${drumsEnabled ? accentColor : '#333'}`,
-    borderRadius: '4px',
-    color: drumsEnabled ? accentColor : '#666',
-    fontSize: '12px',
-    cursor: currentSequence.withDrums ? 'pointer' : 'not-allowed',
-    opacity: currentSequence.withDrums ? 1 : 0.4,
-    transition: 'all 0.2s',
-  };
-
-  const tempoStyle: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '4px',
-    padding: '6px 12px',
-    background: '#0a0a0a',
-    border: '1px solid #333',
-    borderRadius: '4px',
-    fontSize: '12px',
-    color: '#888',
-  };
-
-  const noteIndicatorStyle: React.CSSProperties = {
-    display: 'flex',
-    gap: '4px',
-    flexWrap: 'wrap',
-    marginTop: '4px',
-  };
+  const canPlay = isLoaded && !!engine;
 
   // Render play icon (triangle) or stop icon (square)
   const renderPlayIcon = () => {
@@ -215,14 +134,17 @@ export function Sequencer({
   };
 
   return (
-    <div style={containerStyle}>
+    <div
+      className="flex flex-col gap-3 p-3 bg-bg-secondary rounded-md border border-border-medium"
+      style={{ '--seq-accent': accentColor } as React.CSSProperties}
+    >
       {/* Row 1: Sequence selector and play button */}
-      <div style={rowStyle}>
-        <span style={labelStyle}>Sequence</span>
+      <div className="flex items-center gap-3">
+        <span className="text-base text-text-muted uppercase tracking-wide min-w-[60px]">Sequence</span>
         <select
           value={currentSequence.id}
           onChange={handleSequenceChange}
-          style={selectStyle}
+          className="flex-1 py-2 px-3 bg-bg-primary border border-border-medium rounded-sm text-text-primary text-md cursor-pointer"
         >
           {NOTE_SEQUENCES.map(seq => (
             <option key={seq.id} value={seq.id}>
@@ -232,25 +154,35 @@ export function Sequencer({
         </select>
         <button
           onClick={handlePlayStop}
-          style={playButtonStyle}
-          disabled={!isLoaded || !engine}
+          disabled={!canPlay}
           title={isPlaying ? 'Stop' : 'Play'}
+          className={cn(
+            'flex items-center justify-center w-10 h-10 border-none rounded-full cursor-pointer transition-all duration-100',
+            !canPlay && 'opacity-50 cursor-not-allowed'
+          )}
+          style={{ background: isPlaying ? '#ef4444' : accentColor }}
         >
           {renderPlayIcon()}
         </button>
       </div>
 
       {/* Row 2: Tempo and drums toggle */}
-      <div style={rowStyle}>
-        <div style={tempoStyle}>
-          <span style={{ color: '#666' }}>BPM:</span>
-          <span style={{ color: '#fff', fontWeight: 500 }}>{currentSequence.tempo}</span>
+      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1 py-1.5 px-3 bg-bg-primary border border-border-medium rounded-sm text-md">
+          <span className="text-text-muted">BPM:</span>
+          <span className="text-text-primary font-medium">{currentSequence.tempo}</span>
         </div>
         <button
           onClick={handleDrumsToggle}
-          style={toggleStyle}
           disabled={!currentSequence.withDrums}
           title={currentSequence.withDrums ? 'Toggle drums' : 'This sequence has no drums'}
+          className={cn(
+            'flex items-center gap-2 py-1.5 px-3 rounded-sm text-md cursor-pointer transition-all duration-200 border',
+            drumsEnabled
+              ? 'bg-(--seq-accent)/20 border-(--seq-accent) text-(--seq-accent)'
+              : 'bg-bg-primary border-border-medium text-text-muted',
+            !currentSequence.withDrums && 'opacity-40 cursor-not-allowed'
+          )}
         >
           <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
             <circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" strokeWidth="1.5" />
@@ -258,28 +190,22 @@ export function Sequencer({
           </svg>
           Drums {drumsEnabled ? 'ON' : 'OFF'}
         </button>
-        <div style={{ flex: 1 }} />
+        <div className="flex-1" />
       </div>
 
       {/* Note indicator - shows which notes are in the sequence */}
       {isPlaying && currentSequence.notes.length > 0 && (
-        <div style={noteIndicatorStyle}>
+        <div className="flex gap-1 flex-wrap mt-1">
           {currentSequence.notes.map((note, index) => (
             <div
               key={`${note.time}-${index}`}
-              style={{
-                width: '24px',
-                height: '24px',
-                borderRadius: '4px',
-                background: index === currentNoteIndex ? accentColor : '#333',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '9px',
-                fontWeight: 600,
-                color: index === currentNoteIndex ? '#000' : '#666',
-                transition: 'all 0.05s',
-              }}
+              className={cn(
+                'w-6 h-6 rounded-sm flex items-center justify-center text-[9px] font-semibold transition-all duration-[50ms]',
+                index === currentNoteIndex
+                  ? 'text-bg-primary'
+                  : 'bg-border-medium text-text-muted'
+              )}
+              style={index === currentNoteIndex ? { background: accentColor } : undefined}
             >
               {note.note.replace(/\d/, '')}
             </div>

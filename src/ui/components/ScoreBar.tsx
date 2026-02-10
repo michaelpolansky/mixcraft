@@ -2,6 +2,8 @@
  * Visual score indicator bar
  */
 
+import { cn } from '../utils/cn.ts';
+
 interface ScoreBarProps {
   score: number;
   label: string;
@@ -9,64 +11,30 @@ interface ScoreBarProps {
 }
 
 export function ScoreBar({ score, label, feedback }: ScoreBarProps) {
-  // Color based on score
-  const getColor = (s: number) => {
-    if (s >= 80) return '#22c55e'; // Green
-    if (s >= 60) return '#eab308'; // Yellow
-    return '#ef4444'; // Red
-  };
-
-  const color = getColor(score);
+  const colorClass =
+    score >= 80 ? 'text-success' : score >= 60 ? 'text-warning' : 'text-danger';
+  const barColorClass =
+    score >= 80 ? 'bg-success' : score >= 60 ? 'bg-warning' : 'bg-danger';
 
   return (
-    <div style={{ marginBottom: '12px' }}>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          marginBottom: '4px',
-        }}
-      >
-        <span style={{ fontSize: '12px', color: '#888', textTransform: 'capitalize' }}>
-          {label}
-        </span>
-        <span style={{ fontSize: '12px', color, fontFamily: 'monospace' }}>
-          {score}%
-        </span>
+    <div className="mb-3">
+      <div className="flex justify-between mb-1">
+        <span className="text-md text-text-tertiary capitalize">{label}</span>
+        <span className={cn('text-md font-mono', colorClass)}>{score}%</span>
       </div>
 
       {/* Bar background */}
-      <div
-        style={{
-          height: '8px',
-          background: '#1a1a1a',
-          borderRadius: '4px',
-          overflow: 'hidden',
-        }}
-      >
+      <div className="h-2 bg-bg-tertiary rounded-sm overflow-hidden">
         {/* Bar fill */}
         <div
-          style={{
-            height: '100%',
-            width: `${score}%`,
-            background: color,
-            borderRadius: '4px',
-            transition: 'width 0.5s ease-out',
-          }}
+          className={cn('h-full rounded-sm transition-[width] duration-500 ease-out', barColorClass)}
+          style={{ width: `${score}%` }}
         />
       </div>
 
       {/* Feedback text */}
       {feedback && (
-        <div
-          style={{
-            fontSize: '11px',
-            color: '#666',
-            marginTop: '4px',
-          }}
-        >
-          {feedback}
-        </div>
+        <div className="text-base text-text-muted mt-1">{feedback}</div>
       )}
     </div>
   );

@@ -3,6 +3,7 @@
  * Vertical sliders for Low, Mid, High bands
  */
 
+import { cn } from '../utils/cn.ts';
 import type { EQParams } from '../../core/mixing-effects.ts';
 import { EQ_RANGES } from '../../core/mixing-effects.ts';
 
@@ -30,37 +31,21 @@ function BandSlider({ label, value, color, onChange }: BandSliderProps) {
   const fillTop = value >= 0 ? centerPercent - fillHeight : centerPercent;
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '8px',
-      }}
-    >
+    <div className="flex flex-col items-center gap-2">
       {/* Value display */}
       <div
-        style={{
-          fontSize: '12px',
-          fontFamily: 'monospace',
-          color: value === 0 ? '#666' : color,
-          fontWeight: value === 0 ? 400 : 600,
-        }}
+        className={cn(
+          'text-xs font-mono',
+          value === 0 ? 'text-text-muted' : 'font-semibold'
+        )}
+        style={{ color: value === 0 ? undefined : color }}
       >
         {value > 0 ? '+' : ''}{value.toFixed(1)} dB
       </div>
 
       {/* Slider track */}
       <div
-        style={{
-          position: 'relative',
-          width: '40px',
-          height: '120px',
-          background: '#1a1a1a',
-          borderRadius: '4px',
-          border: '1px solid #333',
-          cursor: 'pointer',
-        }}
+        className="relative w-10 h-[120px] bg-bg-tertiary rounded-sm border border-border-medium cursor-pointer"
         onMouseDown={(e) => {
           const rect = e.currentTarget.getBoundingClientRect();
           const updateValue = (clientY: number) => {
@@ -129,14 +114,7 @@ function BandSlider({ label, value, color, onChange }: BandSliderProps) {
       </div>
 
       {/* Label */}
-      <div
-        style={{
-          fontSize: '11px',
-          fontWeight: 600,
-          color: '#888',
-          textTransform: 'uppercase',
-        }}
-      >
+      <div className="text-sm font-semibold text-text-muted uppercase">
         {label}
       </div>
     </div>
@@ -150,37 +128,14 @@ export function EQControl({
   onHighChange,
 }: EQControlProps) {
   return (
-    <div
-      style={{
-        background: '#141414',
-        borderRadius: '8px',
-        padding: '16px',
-        border: '1px solid #2a2a2a',
-      }}
-    >
+    <div className="bg-bg-secondary rounded-lg p-4 border border-border-default">
       {/* Header */}
-      <div
-        style={{
-          fontSize: '11px',
-          fontWeight: 600,
-          color: '#666',
-          textTransform: 'uppercase',
-          letterSpacing: '1px',
-          marginBottom: '16px',
-          textAlign: 'center',
-        }}
-      >
+      <div className="text-sm font-semibold text-text-muted uppercase tracking-wider mb-4 text-center">
         3-Band EQ
       </div>
 
       {/* Sliders */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          gap: '24px',
-        }}
-      >
+      <div className="flex justify-center gap-6">
         <BandSlider
           label="Low"
           value={params.low}
@@ -202,21 +157,14 @@ export function EQControl({
       </div>
 
       {/* Frequency labels */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          gap: '24px',
-          marginTop: '8px',
-        }}
-      >
-        <div style={{ width: '40px', textAlign: 'center', fontSize: '10px', color: '#555' }}>
+      <div className="flex justify-center gap-6 mt-2">
+        <div className="w-10 text-center text-xs text-text-disabled">
           &lt;400Hz
         </div>
-        <div style={{ width: '40px', textAlign: 'center', fontSize: '10px', color: '#555' }}>
+        <div className="w-10 text-center text-xs text-text-disabled">
           ~1kHz
         </div>
-        <div style={{ width: '40px', textAlign: 'center', fontSize: '10px', color: '#555' }}>
+        <div className="w-10 text-center text-xs text-text-disabled">
           &gt;2.5kHz
         </div>
       </div>

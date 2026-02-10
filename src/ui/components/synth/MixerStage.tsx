@@ -16,8 +16,6 @@ interface MixerStageProps {
   modulatedOsc2Mix?: number;
 }
 
-const SIZES = { gap: { sm: 8 } };
-
 export function MixerStage({
   osc1Level,
   osc2Level,
@@ -33,7 +31,7 @@ export function MixerStage({
 
   return (
     <StageCard title="MIXER" color="#10b981">
-      <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm }}>
+      <div className="flex flex-col gap-2">
         <Knob label="OSC 1" value={osc1Level} min={0} max={1} step={0.01} onChange={onOsc1LevelChange} formatValue={fmt} paramId="oscillator.level" />
         <Knob label="OSC 2" value={osc2Level} min={0} max={1} step={0.01} onChange={onOsc2LevelChange} formatValue={fmt} paramId="osc2.level" modulatedValue={modulatedOsc2Mix} />
         <Knob label="Sub Osc" value={subOscLevel} min={0} max={1} step={0.01} onChange={onSubOscLevelChange} formatValue={fmt} paramId="subOsc.level" />

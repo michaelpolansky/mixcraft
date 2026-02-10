@@ -15,6 +15,7 @@ import { allChallenges, modules, allSamplingChallenges, samplingModules, allDrum
 import { allMixingChallenges, mixingModules } from '../../data/challenges/mixing/index.ts';
 import { allProductionChallenges, productionModules } from '../../data/challenges/production/index.ts';
 import type { ChallengeItem } from '../components/menu/ChallengeModuleCard.tsx';
+import { cn } from '../utils/cn.ts';
 
 interface MenuViewProps {
   onNavigate: (view: string) => void;
@@ -104,31 +105,19 @@ export function MenuView({
   };
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: '#0a0a0a',
-        color: '#fff',
-        fontFamily: 'system-ui, -apple-system, sans-serif',
-        padding: isMobile ? '24px 16px' : '48px',
-      }}
-    >
-      <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+    <div className={cn(
+      'min-h-screen bg-bg-primary text-text-primary font-sans',
+      isMobile ? 'py-6 px-4' : 'p-12'
+    )}>
+      <div className="max-w-[800px] mx-auto">
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-          <h1
-            style={{
-              fontSize: '36px',
-              fontWeight: 300,
-              color: '#4ade80',
-              margin: 0,
-            }}
-          >
+        <div className="flex justify-between items-start mb-2">
+          <h1 className="text-5xl font-light text-success-light m-0">
             MIXCRAFT
           </h1>
           <AuthButton />
         </div>
-        <p style={{ color: '#666', marginBottom: '24px' }}>
+        <p className="text-text-muted mb-6">
           Learn Sound Design Through Play
         </p>
 

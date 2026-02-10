@@ -17,6 +17,7 @@ import {
   ChallengeResultsModal,
 } from '../components/index.ts';
 import { Section } from '../components/challenge/Section.tsx';
+import { cn } from '../utils/cn.ts';
 import { evaluateDrumSequencingChallenge } from '../../core/drum-sequencing-evaluation.ts';
 import { trpc } from '../api/trpc.ts';
 import { useAIFeedback } from '../hooks/useAIFeedback.ts';
@@ -62,10 +63,10 @@ function HorizontalSlider({
   const percentage = ((value - min) / (max - min)) * 100;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', opacity: disabled ? 0.5 : 1 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontSize: '11px', color: '#888' }}>{label}</span>
-        <span style={{ fontSize: '11px', color: '#fff', fontFamily: 'monospace' }}>{displayValue}</span>
+    <div className={cn('flex flex-col gap-1', disabled && 'opacity-50')}>
+      <div className="flex justify-between items-center">
+        <span className="text-base text-text-tertiary">{label}</span>
+        <span className="text-base text-text-primary font-mono">{displayValue}</span>
       </div>
       <input
         type="range"
@@ -212,8 +213,8 @@ export function DrumSequencerChallengeView({
   const canEditSwing = challenge.evaluationFocus.includes('swing');
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0a0a0a', color: '#fff', fontFamily: 'system-ui, -apple-system, sans-serif', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ padding: '24px', flex: 1 }}>
+    <div className="min-h-screen bg-[#0a0a0a] text-text-primary font-sans flex flex-col">
+      <div className="p-6 flex-1">
         <ChallengeHeader
           title={challenge.title}
           description={challenge.description}
@@ -223,26 +224,25 @@ export function DrumSequencerChallengeView({
         />
 
         {/* Main Layout */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', maxWidth: '1400px' }}>
+        <div className="grid grid-cols-2 gap-6 max-w-[1400px]">
           {/* Left Column - Your Pattern */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div className="flex flex-col gap-4">
             <Section title="Your Pattern">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '12px' }}>
+              <div className="flex items-center gap-4 mb-3">
                 <button
                   onClick={handlePlayStop}
                   disabled={!isInitialized || isLoading}
+                  className={cn(
+                    'py-2.5 px-6 border-none rounded-md text-text-primary text-xl font-semibold min-w-[100px]',
+                    (!isInitialized || isLoading) ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+                  )}
                   style={{
-                    padding: '10px 24px',
                     background: isPlaying ? '#ef4444' : `linear-gradient(145deg, ${accentColor}, #ea580c)`,
-                    border: 'none', borderRadius: '6px', color: '#fff',
-                    cursor: !isInitialized || isLoading ? 'not-allowed' : 'pointer',
-                    fontSize: '14px', fontWeight: 600, minWidth: '100px',
-                    opacity: !isInitialized || isLoading ? 0.5 : 1,
                   }}
                 >
                   {isPlaying ? 'Stop' : 'Play'}
                 </button>
-                {isLoading && <span style={{ color: '#666', fontSize: '13px' }}>Loading...</span>}
+                {isLoading && <span className="text-text-muted text-lg">Loading...</span>}
               </div>
               <StepGrid
                 pattern={pattern} currentStep={isPlaying ? currentStep : -1}
@@ -263,38 +263,47 @@ export function DrumSequencerChallengeView({
             )}
 
             <Section title="Controls">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '24px', flexWrap: 'wrap' }}>
+              <div className="flex items-center gap-6 flex-wrap">
                 <HorizontalSlider label="Tempo" value={pattern.tempo} min={60} max={200} step={1} onChange={setTempo} formatValue={formatBPM} width={120} disabled={!canEditTempo} />
                 <HorizontalSlider label="Swing" value={pattern.swing * 100} min={0} max={100} step={1} onChange={(val) => setSwing(val / 100)} formatValue={formatSwing} width={100} disabled={!canEditSwing} />
                 <Knob label="Volume" value={volume} min={-60} max={0} step={0.5} onChange={setVolume} formatValue={formatDb} size={48} />
-                <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
-                  <button onClick={() => clearTrack(selectedTrack)} style={{ padding: '8px 16px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '6px', color: '#888', cursor: 'pointer', fontSize: '12px' }}>Clear Track</button>
-                  <button onClick={clearAll} style={{ padding: '8px 16px', background: '#1a1a1a', border: '1px solid #333', borderRadius: '6px', color: '#888', cursor: 'pointer', fontSize: '12px' }}>Clear All</button>
+                <div className="ml-auto flex gap-2">
+                  <button
+                    onClick={() => clearTrack(selectedTrack)}
+                    className="py-2 px-4 bg-bg-tertiary border border-border-medium rounded-md text-text-muted cursor-pointer text-md"
+                  >
+                    Clear Track
+                  </button>
+                  <button
+                    onClick={clearAll}
+                    className="py-2 px-4 bg-bg-tertiary border border-border-medium rounded-md text-text-muted cursor-pointer text-md"
+                  >
+                    Clear All
+                  </button>
                 </div>
               </div>
             </Section>
           </div>
 
           {/* Right Column - Target Pattern & Info */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div className="flex flex-col gap-4">
             <Section title="Target Pattern">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '12px' }}>
+              <div className="flex items-center gap-4 mb-3">
                 <button
                   onClick={handlePlayStopTarget}
                   disabled={!targetEngineRef.current?.loaded}
+                  className={cn(
+                    'py-2.5 px-6 border-none rounded-md text-text-primary text-xl font-semibold min-w-[120px]',
+                    !targetEngineRef.current?.loaded ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+                  )}
                   style={{
-                    padding: '10px 24px',
                     background: isPlayingTarget ? '#ef4444' : 'linear-gradient(145deg, #a855f7, #9333ea)',
-                    border: 'none', borderRadius: '6px', color: '#fff',
-                    cursor: !targetEngineRef.current?.loaded ? 'not-allowed' : 'pointer',
-                    fontSize: '14px', fontWeight: 600, minWidth: '120px',
-                    opacity: !targetEngineRef.current?.loaded ? 0.5 : 1,
                   }}
                 >
                   {isPlayingTarget ? 'Stop Target' : 'Play Target'}
                 </button>
-                {challenge.evaluationFocus.includes('tempo') && <span style={{ color: '#666', fontSize: '12px' }}>Target: {challenge.targetPattern.tempo} BPM</span>}
-                {challenge.evaluationFocus.includes('swing') && <span style={{ color: '#666', fontSize: '12px' }}>Swing: {Math.round(challenge.targetPattern.swing * 100)}%</span>}
+                {challenge.evaluationFocus.includes('tempo') && <span className="text-text-muted text-md">Target: {challenge.targetPattern.tempo} BPM</span>}
+                {challenge.evaluationFocus.includes('swing') && <span className="text-text-muted text-md">Swing: {Math.round(challenge.targetPattern.swing * 100)}%</span>}
               </div>
               <StepGrid
                 pattern={challenge.targetPattern} currentStep={isPlayingTarget ? targetStep : -1}
@@ -308,9 +317,17 @@ export function DrumSequencerChallengeView({
             </Section>
 
             <Section title="What Matters">
-              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+              <div className="flex gap-3 flex-wrap">
                 {challenge.evaluationFocus.map((focus) => (
-                  <span key={focus} style={{ padding: '4px 12px', background: '#1a1a1a', borderRadius: '16px', fontSize: '12px', color: accentColor, border: `1px solid ${accentColor}44`, textTransform: 'capitalize' }}>
+                  <span
+                    key={focus}
+                    className="py-1 px-3 bg-bg-tertiary rounded-full text-md capitalize"
+                    style={{
+                      '--accent': accentColor,
+                      color: accentColor,
+                      border: `1px solid ${accentColor}44`,
+                    } as React.CSSProperties}
+                  >
                     {focus}
                   </span>
                 ))}

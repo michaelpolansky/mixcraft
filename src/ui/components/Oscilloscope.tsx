@@ -138,10 +138,7 @@ export function Oscilloscope({
       ref={canvasRef}
       width={width}
       height={height}
-      style={{
-        borderRadius: '8px',
-        display: 'block',
-      }}
+      className="rounded-lg block"
     />
   );
 }

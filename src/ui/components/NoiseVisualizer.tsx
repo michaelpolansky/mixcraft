@@ -148,10 +148,10 @@ function NoiseVisualizerComponent({
   return (
     <canvas
       ref={canvasRef}
+      className="rounded-md"
       style={{
         width,
         height,
-        borderRadius: 6,
         border: `1px solid ${accentColor}30`,
       }}
     />

@@ -4,6 +4,7 @@
  */
 
 import { Knob } from './Knob.tsx';
+import { cn } from '../utils/cn.ts';
 import type { ArpPattern, ArpDivision } from '../../core/types.ts';
 
 export interface ArpeggiatorControlsProps {
@@ -55,21 +56,20 @@ export function ArpeggiatorControls({
   accentColor,
 }: ArpeggiatorControlsProps) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+    <div
+      className="flex flex-col gap-2"
+      style={{ '--arp-accent': accentColor } as React.CSSProperties}
+    >
       {/* Enable toggle */}
       <button
         onClick={() => onEnabledChange(!enabled)}
-        style={{
-          padding: '6px 12px',
-          background: enabled ? accentColor : '#222',
-          border: `1px solid ${enabled ? accentColor : '#444'}`,
-          borderRadius: '4px',
-          color: enabled ? '#000' : '#888',
-          fontSize: '11px',
-          fontWeight: 700,
-          cursor: 'pointer',
-          alignSelf: 'flex-start',
-        }}
+        className={cn(
+          'py-1.5 px-3 rounded-sm text-base font-bold cursor-pointer self-start border',
+          enabled
+            ? 'text-bg-primary'
+            : 'bg-bg-tertiary border-border-bright text-text-muted'
+        )}
+        style={enabled ? { background: accentColor, borderColor: accentColor } : undefined}
       >
         {enabled ? 'ON' : 'OFF'}
       </button>
@@ -77,26 +77,20 @@ export function ArpeggiatorControls({
       {enabled && (
         <>
           {/* Pattern selector */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <span style={{ fontSize: '9px', color: '#888', textTransform: 'uppercase' }}>
+          <div className="flex flex-col gap-1">
+            <span className="text-xs text-text-muted uppercase">
               Pattern
             </span>
-            <div style={{ display: 'flex', gap: 2 }}>
+            <div className="flex gap-0.5">
               {PATTERN_OPTIONS.map(({ value, label }) => (
                 <button
                   key={value}
                   onClick={() => onPatternChange(value)}
-                  style={{
-                    width: 28,
-                    height: 28,
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    background: pattern === value ? accentColor : '#333',
-                    border: 'none',
-                    borderRadius: '4px',
-                    color: pattern === value ? '#000' : '#fff',
-                    cursor: 'pointer',
-                  }}
+                  className={cn(
+                    'w-7 h-7 text-xl font-semibold border-none rounded-sm cursor-pointer',
+                    pattern === value ? 'text-bg-primary' : 'bg-border-medium text-text-primary'
+                  )}
+                  style={pattern === value ? { background: accentColor } : undefined}
                 >
                   {label}
                 </button>
@@ -105,22 +99,14 @@ export function ArpeggiatorControls({
           </div>
 
           {/* Division selector */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <span style={{ fontSize: '9px', color: '#888', textTransform: 'uppercase' }}>
+          <div className="flex flex-col gap-1">
+            <span className="text-xs text-text-muted uppercase">
               Rate
             </span>
             <select
               value={division}
               onChange={(e) => onDivisionChange(e.target.value as ArpDivision)}
-              style={{
-                padding: '4px 8px',
-                background: '#222',
-                border: '1px solid #444',
-                borderRadius: '4px',
-                color: '#fff',
-                fontSize: '11px',
-                cursor: 'pointer',
-              }}
+              className="py-1 px-2 bg-bg-tertiary border border-border-bright rounded-sm text-text-primary text-base cursor-pointer"
             >
               {DIVISION_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -131,26 +117,20 @@ export function ArpeggiatorControls({
           </div>
 
           {/* Octaves selector */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <span style={{ fontSize: '9px', color: '#888', textTransform: 'uppercase' }}>
+          <div className="flex flex-col gap-1">
+            <span className="text-xs text-text-muted uppercase">
               Octaves
             </span>
-            <div style={{ display: 'flex', gap: 2 }}>
+            <div className="flex gap-0.5">
               {OCTAVE_OPTIONS.map((oct) => (
                 <button
                   key={oct}
                   onClick={() => onOctavesChange(oct)}
-                  style={{
-                    width: 24,
-                    height: 24,
-                    fontSize: '10px',
-                    fontWeight: 600,
-                    background: octaves === oct ? accentColor : '#333',
-                    border: 'none',
-                    borderRadius: '4px',
-                    color: octaves === oct ? '#000' : '#fff',
-                    cursor: 'pointer',
-                  }}
+                  className={cn(
+                    'w-6 h-6 text-sm font-semibold border-none rounded-sm cursor-pointer',
+                    octaves === oct ? 'text-bg-primary' : 'bg-border-medium text-text-primary'
+                  )}
+                  style={octaves === oct ? { background: accentColor } : undefined}
                 >
                   {oct}
                 </button>

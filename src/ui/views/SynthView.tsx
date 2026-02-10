@@ -33,6 +33,7 @@ import { SUBTRACTIVE_PRESETS } from '../../data/presets/subtractive-presets.ts';
 import { InfoPanelProvider, useInfoPanel } from '../context/InfoPanelContext.tsx';
 import { useToast } from '../components/Toast.tsx';
 import { formatPercent } from '../utils/formatters.ts';
+import { cn } from '../utils/cn.ts';
 
 // Stage colors following signal flow
 const COLORS = {
@@ -53,10 +54,6 @@ const COLORS = {
   output: '#f97316',
   modMatrix: '#a855f7',
   arp: '#f59e0b',
-};
-
-const SIZES = {
-  gap: { lg: 16, md: 12 },
 };
 
 export function SynthView() {
@@ -129,14 +126,7 @@ export function SynthView() {
 
   return (
     <InfoPanelProvider>
-      <div style={{
-        minHeight: '100vh',
-        background: '#0a0a0f',
-        color: '#fff',
-        fontFamily: 'system-ui, -apple-system, sans-serif',
-        display: 'flex',
-        flexDirection: 'column',
-      }}>
+      <div className="min-h-screen bg-[#0a0a0f] text-text-primary font-sans flex flex-col">
         <SynthHeader
           title="MIXCRAFT"
           subtitle="Subtractive Synthesizer"
@@ -151,20 +141,12 @@ export function SynthView() {
 
         <Tooltip accentColor="#4ade80" />
 
-        <div style={{ padding: '12px 24px', background: '#050508' }}>
+        <div className="py-3 px-6 bg-[#050508]">
           <SpectrumAnalyzer width={window.innerWidth - 48} height={80} barCount={100} />
         </div>
 
         {/* Signal Flow */}
-        <div style={{
-          flex: 1,
-          padding: '16px',
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: SIZES.gap.lg,
-          alignContent: 'flex-start',
-          overflow: 'auto',
-        }}>
+        <div className="flex-1 p-4 flex flex-wrap gap-4 content-start overflow-auto">
           <OscillatorStage
             params={params}
             setOscillatorType={setOscillatorType}
@@ -310,7 +292,7 @@ export function SynthView() {
 
           {/* FX */}
           <StageCard title="FX" color={COLORS.effects} wide>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: SIZES.gap.md }}>
+            <div className="grid grid-cols-2 gap-3">
               <EffectMini name="DIST" color="#ef4444" knobs={[
                 { label: 'Amt', value: params.effects.distortion.amount, onChange: setDistortionAmount, max: 1 },
                 { label: 'Mix', value: params.effects.distortion.mix, onChange: setDistortionMix, max: 1 },
@@ -363,7 +345,7 @@ export function SynthView() {
         </div>
 
         {/* Sequencer */}
-        <div style={{ padding: '12px 24px', borderTop: '1px solid #1a1a1a' }}>
+        <div className="py-3 px-6 border-t border-border-subtle">
           <Sequencer engine={engine} accentColor="#4ade80" />
         </div>
 
@@ -394,24 +376,15 @@ function HelpModeButton() {
   return (
     <button
       onClick={toggleHelpMode}
-      style={{
-        padding: '6px 12px',
-        background: helpMode
-          ? 'linear-gradient(145deg, #06b6d4, #0891b2)'
-          : '#1a1a1a',
-        border: helpMode ? 'none' : '1px solid #333',
-        borderRadius: '4px',
-        color: helpMode ? '#fff' : '#888',
-        cursor: 'pointer',
-        fontSize: '11px',
-        fontWeight: 600,
-        display: 'flex',
-        alignItems: 'center',
-        gap: 4,
-      }}
+      className={cn(
+        'py-1.5 px-3 rounded-sm cursor-pointer text-base font-semibold flex items-center gap-1',
+        helpMode
+          ? 'bg-gradient-to-br from-cyan-500 to-cyan-600 border-none text-white'
+          : 'bg-bg-secondary border border-border-medium text-text-muted'
+      )}
       title={helpMode ? 'Disable help tooltips' : 'Enable help tooltips'}
     >
-      <span style={{ fontSize: '14px' }}>?</span>
+      <span className="text-xl">?</span>
       {helpMode ? 'Help ON' : 'Help'}
     </button>
   );

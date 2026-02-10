@@ -31,9 +31,9 @@ export function MiniSlider({
 
   return (
     <div className="flex items-center gap-1.5">
-      <span className="text-[10px] text-[#666] w-3">{label}</span>
+      <span className="text-sm text-text-muted w-3">{label}</span>
       <div
-        className="flex-1 h-1 bg-[#222] rounded-sm cursor-pointer relative"
+        className="flex-1 h-1 bg-bg-tertiary rounded-sm cursor-pointer relative"
         onClick={handleClick}
       >
         <div

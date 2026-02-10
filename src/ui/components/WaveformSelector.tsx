@@ -6,53 +6,31 @@
  */
 
 import type { OscillatorType, LFOWaveform } from '../../core/types.ts';
-import { COLORS, RADIUS, TRANSITIONS } from '../theme/index.ts';
+import { cn } from '../utils/cn.ts';
+import { COLORS } from '../theme/index.ts';
 
-// Waveform can be either oscillator or LFO type
 type WaveformType = OscillatorType | LFOWaveform;
 
 interface WaveformSelectorProps<T extends WaveformType> {
   value: T;
   onChange: (type: T) => void;
-  /** Accent color for selected state */
   accentColor?: string;
-  /** Size variant */
   size?: 'compact' | 'normal' | 'large';
-  /** Layout direction */
   direction?: 'row' | 'column';
-  /** Filter to show only specific waveforms (defaults to all) */
   waveforms?: T[];
 }
 
-// Shared waveform definitions
 const WAVEFORMS: { type: WaveformType; label: string; path: string }[] = [
-  {
-    type: 'sine',
-    label: 'Sine',
-    path: 'M 0 20 Q 10 0, 20 20 Q 30 40, 40 20',
-  },
-  {
-    type: 'triangle',
-    label: 'Triangle',
-    path: 'M 0 20 L 10 0 L 30 40 L 40 20',
-  },
-  {
-    type: 'sawtooth',
-    label: 'Saw',
-    path: 'M 0 40 L 20 0 L 20 40 L 40 0',
-  },
-  {
-    type: 'square',
-    label: 'Square',
-    path: 'M 0 40 L 0 0 L 20 0 L 20 40 L 40 40 L 40 0',
-  },
+  { type: 'sine', label: 'Sine', path: 'M 0 20 Q 10 0, 20 20 Q 30 40, 40 20' },
+  { type: 'triangle', label: 'Triangle', path: 'M 0 20 L 10 0 L 30 40 L 40 20' },
+  { type: 'sawtooth', label: 'Saw', path: 'M 0 40 L 20 0 L 20 40 L 40 0' },
+  { type: 'square', label: 'Square', path: 'M 0 40 L 0 0 L 20 0 L 20 40 L 40 40 L 40 0' },
 ];
 
-// Size configurations
 const SIZES = {
-  compact: { button: 32, svg: 24, gap: 4, radius: RADIUS.sm },
-  normal: { button: 40, svg: 32, gap: 6, radius: RADIUS.md },
-  large: { button: 48, svg: 40, gap: 8, radius: RADIUS.md },
+  compact: { button: 32, svg: 24, gap: 'gap-1', radius: 'rounded-sm' },
+  normal: { button: 40, svg: 32, gap: 'gap-1.5', radius: 'rounded-md' },
+  large: { button: 48, svg: 40, gap: 'gap-2', radius: 'rounded-md' },
 };
 
 export function WaveformSelector<T extends WaveformType>({
@@ -65,21 +43,14 @@ export function WaveformSelector<T extends WaveformType>({
 }: WaveformSelectorProps<T>) {
   const sizeConfig = SIZES[size];
 
-  // Calculate selected background with color tint
-  const selectedBg = `${accentColor}20`;
-
-  // Filter waveforms if specified
   const displayWaveforms = waveforms
     ? WAVEFORMS.filter(w => waveforms.includes(w.type as T))
     : WAVEFORMS;
 
   return (
     <div
-      style={{
-        display: 'flex',
-        flexDirection: direction,
-        gap: sizeConfig.gap,
-      }}
+      className={cn('flex', sizeConfig.gap, direction === 'column' && 'flex-col')}
+      style={{ '--wf-accent': accentColor } as React.CSSProperties}
     >
       {displayWaveforms.map(({ type, label, path }) => {
         const isSelected = value === type;
@@ -91,18 +62,17 @@ export function WaveformSelector<T extends WaveformType>({
             title={label}
             aria-label={`${label} waveform`}
             aria-pressed={isSelected}
+            className={cn(
+              'flex items-center justify-center cursor-pointer transition-all duration-100 p-0 border-2',
+              sizeConfig.radius,
+              isSelected
+                ? 'border-(--wf-accent)'
+                : 'bg-bg-tertiary border-border-medium'
+            )}
             style={{
               width: sizeConfig.button,
               height: sizeConfig.button,
-              background: isSelected ? selectedBg : COLORS.bg.tertiary,
-              border: `2px solid ${isSelected ? accentColor : COLORS.border.medium}`,
-              borderRadius: sizeConfig.radius,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: `all ${TRANSITIONS.fast}`,
-              padding: 0,
+              ...(isSelected ? { background: `${accentColor}20` } : {}),
             }}
           >
             <svg
@@ -114,7 +84,7 @@ export function WaveformSelector<T extends WaveformType>({
               <path
                 d={path}
                 fill="none"
-                stroke={isSelected ? accentColor : COLORS.text.muted}
+                stroke={isSelected ? accentColor : '#666'}
                 strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -129,7 +99,6 @@ export function WaveformSelector<T extends WaveformType>({
 
 /**
  * Convenience wrapper for LFO waveform selection
- * Pre-configured with LFO color
  */
 export function LFOWaveformSelector({
   value,

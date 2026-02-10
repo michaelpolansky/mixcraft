@@ -2,6 +2,8 @@
  * Full-width gradient submit button with loading state
  */
 
+import { cn } from '../../utils/cn.ts';
+
 interface SubmitButtonProps {
   onClick: () => void;
   disabled?: boolean;
@@ -24,23 +26,19 @@ export function SubmitButton({
   const isDisabled = disabled || isScoring;
 
   return (
-    <div style={{ marginTop: 'auto' }}>
+    <div className="mt-auto">
       <button
         onClick={onClick}
         disabled={isDisabled}
-        style={{
-          width: '100%',
-          padding: '16px 32px',
-          background: isDisabled
-            ? '#333'
-            : `linear-gradient(145deg, ${accentColor}, ${accentColorDark})`,
-          border: 'none',
-          borderRadius: '8px',
-          color: '#fff',
-          cursor: isDisabled ? 'wait' : 'pointer',
-          fontSize: '16px',
-          fontWeight: 600,
-        }}
+        className={cn(
+          'w-full py-4 px-8 border-none rounded-md text-text-primary text-2xl font-semibold',
+          isDisabled ? 'bg-border-medium cursor-wait' : 'cursor-pointer'
+        )}
+        style={
+          !isDisabled
+            ? { background: `linear-gradient(145deg, ${accentColor}, ${accentColorDark})` }
+            : undefined
+        }
       >
         {isScoring ? scoringLabel : label}
       </button>
