@@ -3,6 +3,7 @@
  */
 
 import { useCallback, useMemo, useRef } from 'react';
+import { usePointerDrag } from '../hooks/usePointerDrag.ts';
 import { ADDITIVE_PRESETS, type AdditivePreset } from '../../core/types.ts';
 
 interface HarmonicDrawbarsProps {
@@ -43,33 +44,17 @@ function Drawbar({ index, value, onChange }: DrawbarProps) {
   const trackRef = useRef<HTMLDivElement>(null);
   const height = 120;
 
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    const track = trackRef.current;
-    if (!track) return;
-
-    const updateValue = (clientY: number) => {
+  const { onPointerDown } = usePointerDrag({
+    onMove: useCallback((_clientX: number, clientY: number) => {
+      const track = trackRef.current;
+      if (!track) return;
       const rect = track.getBoundingClientRect();
       // Invert Y so dragging up increases value
       const position = 1 - (clientY - rect.top) / rect.height;
       const clamped = Math.max(0, Math.min(1, position));
       onChange(clamped);
-    };
-
-    updateValue(e.clientY);
-
-    const handleMouseMove = (moveEvent: MouseEvent) => {
-      updateValue(moveEvent.clientY);
-    };
-
-    const handleMouseUp = () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  }, [onChange]);
+    }, [onChange]),
+  });
 
   const fillHeight = value * 100;
 
@@ -85,7 +70,8 @@ function Drawbar({ index, value, onChange }: DrawbarProps) {
     >
       <div
         ref={trackRef}
-        onMouseDown={handleMouseDown}
+        onMouseDown={onPointerDown}
+        onTouchStart={onPointerDown}
         style={{
           width: '20px',
           height: height,

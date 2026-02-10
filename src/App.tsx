@@ -23,9 +23,6 @@ import { useNavigation } from './ui/hooks/useNavigation.ts';
 import { BackButton } from './ui/components/Button.tsx';
 import { ToastProvider } from './ui/components/Toast.tsx';
 import { MenuView } from './ui/views/MenuView.tsx';
-import { getNextMixingChallenge } from './data/challenges/mixing/index.ts';
-import { getNextProductionChallenge } from './data/challenges/production/index.ts';
-import { getNextSamplingChallenge, getNextDrumSequencingChallenge } from './data/challenges/index.ts';
 
 function LoadingFallback() {
   return (
@@ -125,7 +122,7 @@ function AppContent() {
   }
 
   if (nav.view === 'mixing-challenge' && nav.currentMixingChallenge) {
-    const hasNext = !!getNextMixingChallenge(nav.currentMixingChallenge.id);
+    const hasNext = nav.hasNextMixingChallenge;
     const isMultiTrack = !!nav.currentMixingChallenge.tracks && nav.currentMixingChallenge.tracks.length > 0;
     return (
       <Suspense fallback={<LoadingFallback />}>
@@ -149,7 +146,7 @@ function AppContent() {
   }
 
   if (nav.view === 'production-challenge' && nav.currentProductionChallenge) {
-    const hasNext = !!getNextProductionChallenge(nav.currentProductionChallenge.id);
+    const hasNext = nav.hasNextProductionChallenge;
     return (
       <Suspense fallback={<LoadingFallback />}>
         <ProductionChallengeView
@@ -163,7 +160,7 @@ function AppContent() {
   }
 
   if (nav.view === 'sampling-challenge' && nav.currentSamplingChallenge) {
-    const hasNext = !!getNextSamplingChallenge(nav.currentSamplingChallenge.id);
+    const hasNext = nav.hasNextSamplingChallenge;
     return (
       <Suspense fallback={<LoadingFallback />}>
         <SamplerChallengeView
@@ -177,7 +174,7 @@ function AppContent() {
   }
 
   if (nav.view === 'drum-sequencer-challenge' && nav.currentDrumSequencingChallenge) {
-    const hasNext = !!getNextDrumSequencingChallenge(nav.currentDrumSequencingChallenge.id);
+    const hasNext = nav.hasNextDrumSequencingChallenge;
     return (
       <Suspense fallback={<LoadingFallback />}>
         <DrumSequencerChallengeView

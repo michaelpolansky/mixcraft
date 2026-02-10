@@ -370,16 +370,20 @@ export function StepGrid({
     }
   }, []);
 
-  // Handle global mouseup to stop dragging when mouse is released outside canvas
+  // Handle global mouseup/touchend to stop dragging when pointer is released outside canvas
   useEffect(() => {
     if (isDragging) {
-      const handleGlobalMouseUp = () => {
+      const handleGlobalEnd = () => {
         setIsDragging(false);
         setDragTrack(null);
         setVelocityDragStep(null);
       };
-      window.addEventListener('mouseup', handleGlobalMouseUp);
-      return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
+      window.addEventListener('mouseup', handleGlobalEnd);
+      window.addEventListener('touchend', handleGlobalEnd);
+      return () => {
+        window.removeEventListener('mouseup', handleGlobalEnd);
+        window.removeEventListener('touchend', handleGlobalEnd);
+      };
     }
   }, [isDragging]);
 
@@ -393,6 +397,18 @@ export function StepGrid({
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseLeave}
+      onTouchStart={(e) => {
+        e.preventDefault();
+        const t = e.touches[0];
+        if (t) handleMouseDown({ clientX: t.clientX, clientY: t.clientY, shiftKey: false, preventDefault: () => {} } as unknown as React.MouseEvent<HTMLCanvasElement>);
+      }}
+      onTouchMove={(e) => {
+        e.preventDefault();
+        const t = e.touches[0];
+        if (t) handleMouseMove({ clientX: t.clientX, clientY: t.clientY } as React.MouseEvent<HTMLCanvasElement>);
+      }}
+      onTouchEnd={handleMouseUp}
+      onTouchCancel={handleMouseLeave}
     />
   );
 }

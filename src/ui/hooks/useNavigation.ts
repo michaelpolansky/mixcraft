@@ -1,8 +1,5 @@
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useChallengeStore } from '../stores/challenge-store.ts';
-import { getMixingChallenge, getNextMixingChallenge } from '../../data/challenges/mixing/index.ts';
-import { getProductionChallenge, getNextProductionChallenge } from '../../data/challenges/production/index.ts';
-import { getSamplingChallenge, getNextSamplingChallenge, getDrumSequencingChallenge, getNextDrumSequencingChallenge } from '../../data/challenges/index.ts';
 import type { MixingChallenge, ProductionChallenge, SamplingChallenge, DrumSequencingChallenge } from '../../core/types.ts';
 
 export type View =
@@ -18,6 +15,40 @@ export type View =
   | 'sampling-challenge'
   | 'drum-sequencer-challenge';
 
+/**
+ * Lazy-loaded challenge data modules.
+ * These are loaded on first challenge navigation, not on page load.
+ * This keeps ~300KB of challenge data out of the initial bundle.
+ */
+type MixingModule = typeof import('../../data/challenges/mixing/index.ts');
+type ProductionModule = typeof import('../../data/challenges/production/index.ts');
+type MainModule = typeof import('../../data/challenges/index.ts');
+
+let mixingModule: MixingModule | null = null;
+let productionModule: ProductionModule | null = null;
+let mainModule: MainModule | null = null;
+
+async function getMixingModule(): Promise<MixingModule> {
+  if (!mixingModule) {
+    mixingModule = await import('../../data/challenges/mixing/index.ts');
+  }
+  return mixingModule;
+}
+
+async function getProductionModule(): Promise<ProductionModule> {
+  if (!productionModule) {
+    productionModule = await import('../../data/challenges/production/index.ts');
+  }
+  return productionModule;
+}
+
+async function getMainModule(): Promise<MainModule> {
+  if (!mainModule) {
+    mainModule = await import('../../data/challenges/index.ts');
+  }
+  return mainModule;
+}
+
 export function useNavigation() {
   const [view, setView] = useState<View>('menu');
   const { loadChallenge, currentChallenge, exitChallenge } = useChallengeStore();
@@ -26,22 +57,31 @@ export function useNavigation() {
   const [currentSamplingChallenge, setCurrentSamplingChallenge] = useState<SamplingChallenge | null>(null);
   const [currentDrumSequencingChallenge, setCurrentDrumSequencingChallenge] = useState<DrumSequencingChallenge | null>(null);
 
-  const handleStartChallenge = (challengeId: string) => {
+  // Cache module references after first load for synchronous hasNext checks
+  const mixingModRef = useRef<MixingModule | null>(mixingModule);
+  const productionModRef = useRef<ProductionModule | null>(productionModule);
+  const mainModRef = useRef<MainModule | null>(mainModule);
+
+  const handleStartChallenge = useCallback((challengeId: string) => {
     loadChallenge(challengeId);
     setView('challenge');
-  };
+  }, [loadChallenge]);
 
-  const handleStartMixingChallenge = (challengeId: string) => {
-    const challenge = getMixingChallenge(challengeId);
+  const handleStartMixingChallenge = useCallback(async (challengeId: string) => {
+    const mod = await getMixingModule();
+    mixingModRef.current = mod;
+    const challenge = mod.getMixingChallenge(challengeId);
     if (challenge) {
       setCurrentMixingChallenge(challenge);
       setView('mixing-challenge');
     }
-  };
+  }, []);
 
-  const handleNextMixingChallenge = () => {
+  const handleNextMixingChallenge = useCallback(async () => {
     if (currentMixingChallenge) {
-      const next = getNextMixingChallenge(currentMixingChallenge.id);
+      const mod = await getMixingModule();
+      mixingModRef.current = mod;
+      const next = mod.getNextMixingChallenge(currentMixingChallenge.id);
       if (next) {
         setCurrentMixingChallenge(next);
       } else {
@@ -49,19 +89,23 @@ export function useNavigation() {
         setView('menu');
       }
     }
-  };
+  }, [currentMixingChallenge]);
 
-  const handleStartProductionChallenge = (challengeId: string) => {
-    const challenge = getProductionChallenge(challengeId);
+  const handleStartProductionChallenge = useCallback(async (challengeId: string) => {
+    const mod = await getProductionModule();
+    productionModRef.current = mod;
+    const challenge = mod.getProductionChallenge(challengeId);
     if (challenge) {
       setCurrentProductionChallenge(challenge);
       setView('production-challenge');
     }
-  };
+  }, []);
 
-  const handleNextProductionChallenge = () => {
+  const handleNextProductionChallenge = useCallback(async () => {
     if (currentProductionChallenge) {
-      const next = getNextProductionChallenge(currentProductionChallenge.id);
+      const mod = await getProductionModule();
+      productionModRef.current = mod;
+      const next = mod.getNextProductionChallenge(currentProductionChallenge.id);
       if (next) {
         setCurrentProductionChallenge(next);
       } else {
@@ -69,19 +113,23 @@ export function useNavigation() {
         setView('menu');
       }
     }
-  };
+  }, [currentProductionChallenge]);
 
-  const handleStartSamplingChallenge = (challengeId: string) => {
-    const challenge = getSamplingChallenge(challengeId);
+  const handleStartSamplingChallenge = useCallback(async (challengeId: string) => {
+    const mod = await getMainModule();
+    mainModRef.current = mod;
+    const challenge = mod.getSamplingChallenge(challengeId);
     if (challenge) {
       setCurrentSamplingChallenge(challenge);
       setView('sampling-challenge');
     }
-  };
+  }, []);
 
-  const handleNextSamplingChallenge = () => {
+  const handleNextSamplingChallenge = useCallback(async () => {
     if (currentSamplingChallenge) {
-      const next = getNextSamplingChallenge(currentSamplingChallenge.id);
+      const mod = await getMainModule();
+      mainModRef.current = mod;
+      const next = mod.getNextSamplingChallenge(currentSamplingChallenge.id);
       if (next) {
         setCurrentSamplingChallenge(next);
       } else {
@@ -89,19 +137,23 @@ export function useNavigation() {
         setView('menu');
       }
     }
-  };
+  }, [currentSamplingChallenge]);
 
-  const handleStartDrumSequencingChallenge = (challengeId: string) => {
-    const challenge = getDrumSequencingChallenge(challengeId);
+  const handleStartDrumSequencingChallenge = useCallback(async (challengeId: string) => {
+    const mod = await getMainModule();
+    mainModRef.current = mod;
+    const challenge = mod.getDrumSequencingChallenge(challengeId);
     if (challenge) {
       setCurrentDrumSequencingChallenge(challenge);
       setView('drum-sequencer-challenge');
     }
-  };
+  }, []);
 
-  const handleNextDrumSequencingChallenge = () => {
+  const handleNextDrumSequencingChallenge = useCallback(async () => {
     if (currentDrumSequencingChallenge) {
-      const next = getNextDrumSequencingChallenge(currentDrumSequencingChallenge.id);
+      const mod = await getMainModule();
+      mainModRef.current = mod;
+      const next = mod.getNextDrumSequencingChallenge(currentDrumSequencingChallenge.id);
       if (next) {
         setCurrentDrumSequencingChallenge(next);
       } else {
@@ -109,16 +161,30 @@ export function useNavigation() {
         setView('menu');
       }
     }
-  };
+  }, [currentDrumSequencingChallenge]);
 
-  const handleExitChallenge = () => {
+  const handleExitChallenge = useCallback(() => {
     exitChallenge();
     setCurrentMixingChallenge(null);
     setCurrentProductionChallenge(null);
     setCurrentSamplingChallenge(null);
     setCurrentDrumSequencingChallenge(null);
     setView('menu');
-  };
+  }, [exitChallenge]);
+
+  // hasNext flags — use cached module refs (available after first challenge load)
+  const hasNextMixingChallenge = currentMixingChallenge && mixingModRef.current
+    ? !!mixingModRef.current.getNextMixingChallenge(currentMixingChallenge.id)
+    : false;
+  const hasNextProductionChallenge = currentProductionChallenge && productionModRef.current
+    ? !!productionModRef.current.getNextProductionChallenge(currentProductionChallenge.id)
+    : false;
+  const hasNextSamplingChallenge = currentSamplingChallenge && mainModRef.current
+    ? !!mainModRef.current.getNextSamplingChallenge(currentSamplingChallenge.id)
+    : false;
+  const hasNextDrumSequencingChallenge = currentDrumSequencingChallenge && mainModRef.current
+    ? !!mainModRef.current.getNextDrumSequencingChallenge(currentDrumSequencingChallenge.id)
+    : false;
 
   return {
     view,
@@ -131,12 +197,16 @@ export function useNavigation() {
     handleStartChallenge,
     handleStartMixingChallenge,
     handleNextMixingChallenge,
+    hasNextMixingChallenge,
     handleStartProductionChallenge,
     handleNextProductionChallenge,
+    hasNextProductionChallenge,
     handleStartSamplingChallenge,
     handleNextSamplingChallenge,
+    hasNextSamplingChallenge,
     handleStartDrumSequencingChallenge,
     handleNextDrumSequencingChallenge,
+    hasNextDrumSequencingChallenge,
     handleExitChallenge,
   };
 }

@@ -7,6 +7,7 @@
  */
 
 import { useCallback, useRef } from 'react';
+import { usePointerDrag } from '../hooks/usePointerDrag.ts';
 import {
   MOD_SOURCES,
   MOD_DESTINATIONS,
@@ -114,7 +115,6 @@ function MatrixCell({
   accentColor,
 }: MatrixCellProps) {
   const cellRef = useRef<HTMLDivElement>(null);
-  const isDragging = useRef(false);
   const startY = useRef(0);
   const startAmount = useRef(0);
 
@@ -131,33 +131,21 @@ function MatrixCell({
   // Border color
   const borderColor = isActive ? accentColor : COLORS.border.subtle;
 
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    isDragging.current = true;
-    startY.current = e.clientY;
-    startAmount.current = amount;
-
-    const handleMouseMove = (moveEvent: MouseEvent) => {
-      if (!isDragging.current) return;
-
-      const deltaY = startY.current - moveEvent.clientY;
+  const { onPointerDown } = usePointerDrag({
+    onStart: useCallback((_clientX: number, clientY: number) => {
+      startY.current = clientY;
+      startAmount.current = amount;
+    }, [amount]),
+    onMove: useCallback((_clientX: number, clientY: number) => {
+      const deltaY = startY.current - clientY;
       const deltaAmount = deltaY / 100; // 100px = full range
       const newAmount = Math.max(-1, Math.min(1, startAmount.current + deltaAmount));
 
       // Snap to 0 when close
       const snapped = Math.abs(newAmount) < 0.05 ? 0 : newAmount;
       onChange(source, destination, Math.round(snapped * 100) / 100);
-    };
-
-    const handleMouseUp = () => {
-      isDragging.current = false;
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  }, [amount, source, destination, onChange]);
+    }, [source, destination, onChange]),
+  });
 
   // Double-click to reset to 0
   const handleDoubleClick = useCallback(() => {
@@ -172,7 +160,8 @@ function MatrixCell({
   return (
     <div
       ref={cellRef}
-      onMouseDown={handleMouseDown}
+      onMouseDown={onPointerDown}
+      onTouchStart={onPointerDown}
       onDoubleClick={handleDoubleClick}
       title={`${MOD_SOURCE_LABELS[source]} → ${MOD_DEST_LABELS[destination]}: ${Math.round(amount * 100)}%`}
       style={{

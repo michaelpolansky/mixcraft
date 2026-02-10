@@ -216,6 +216,18 @@ const HarmonicBarsVisualizerComponent: React.FC<HarmonicBarsVisualizerProps> = (
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseLeave}
+      onTouchStart={(e) => {
+        e.preventDefault();
+        const t = e.touches[0];
+        if (t) handleMouseDown({ clientX: t.clientX, clientY: t.clientY } as React.MouseEvent<HTMLCanvasElement>);
+      }}
+      onTouchMove={(e) => {
+        e.preventDefault();
+        const t = e.touches[0];
+        if (t) handleMouseMove({ clientX: t.clientX, clientY: t.clientY } as React.MouseEvent<HTMLCanvasElement>);
+      }}
+      onTouchEnd={handleMouseUp}
+      onTouchCancel={handleMouseLeave}
     />
   );
 };

@@ -121,12 +121,15 @@ export function PianoKeyboard({
           stroke="#333"
           strokeWidth="1"
           rx="4"
-          style={{ cursor: 'pointer' }}
+          style={{ cursor: 'pointer', touchAction: 'none' }}
           onMouseDown={() => handleKeyDown(fullNote)}
           onMouseUp={() => handleKeyUp(fullNote)}
           onMouseLeave={() => {
             if (heldNotes.has(fullNote)) handleKeyUp(fullNote);
           }}
+          onTouchStart={(e) => { e.preventDefault(); handleKeyDown(fullNote); }}
+          onTouchEnd={() => handleKeyUp(fullNote)}
+          onTouchCancel={() => handleKeyUp(fullNote)}
         />
       );
     });
@@ -149,12 +152,15 @@ export function PianoKeyboard({
           stroke="#000"
           strokeWidth="1"
           rx="2"
-          style={{ cursor: 'pointer' }}
+          style={{ cursor: 'pointer', touchAction: 'none' }}
           onMouseDown={() => handleKeyDown(fullNote)}
           onMouseUp={() => handleKeyUp(fullNote)}
           onMouseLeave={() => {
             if (heldNotes.has(fullNote)) handleKeyUp(fullNote);
           }}
+          onTouchStart={(e) => { e.preventDefault(); handleKeyDown(fullNote); }}
+          onTouchEnd={() => handleKeyUp(fullNote)}
+          onTouchCancel={() => handleKeyUp(fullNote)}
         />
       );
     });

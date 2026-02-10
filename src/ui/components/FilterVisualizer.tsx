@@ -399,6 +399,19 @@ const FilterVisualizerComponent: React.FC<FilterVisualizerProps> = ({
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseLeave}
+      onTouchStart={(e) => {
+        e.preventDefault();
+        handleMouseDown({} as React.MouseEvent<HTMLCanvasElement>);
+        const t = e.touches[0];
+        if (t) handleMouseMove({ clientX: t.clientX, clientY: t.clientY } as React.MouseEvent<HTMLCanvasElement>);
+      }}
+      onTouchMove={(e) => {
+        e.preventDefault();
+        const t = e.touches[0];
+        if (t) handleMouseMove({ clientX: t.clientX, clientY: t.clientY } as React.MouseEvent<HTMLCanvasElement>);
+      }}
+      onTouchEnd={handleMouseUp}
+      onTouchCancel={() => { handleMouseUp(); handleMouseLeave(); }}
     />
   );
 };

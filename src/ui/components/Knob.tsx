@@ -5,6 +5,7 @@
 
 import { useRef, useCallback } from 'react';
 import { useInfoPanel } from '../context/InfoPanelContext.tsx';
+import { usePointerDrag } from '../hooks/usePointerDrag.ts';
 import { cn } from '../utils/cn.ts';
 
 interface KnobProps {
@@ -65,34 +66,18 @@ export function Knob({
     return min + clamped * (max - min);
   }, [min, max, logarithmic]);
 
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    const track = trackRef.current;
-    if (!track) return;
-
-    const updateValue = (clientX: number) => {
+  const { onPointerDown } = usePointerDrag({
+    onMove: useCallback((clientX: number) => {
+      const track = trackRef.current;
+      if (!track) return;
       const rect = track.getBoundingClientRect();
       const position = (clientX - rect.left) / rect.width;
       const newValue = positionToValue(position);
       const quantized = Math.round(newValue / step) * step;
       const clamped = Math.max(min, Math.min(max, quantized));
       onChange(clamped);
-    };
-
-    updateValue(e.clientX);
-
-    const handleMouseMove = (moveEvent: MouseEvent) => {
-      updateValue(moveEvent.clientX);
-    };
-
-    const handleMouseUp = () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  }, [min, max, step, onChange, positionToValue]);
+    }, [min, max, step, onChange, positionToValue]),
+  });
 
   // Keyboard navigation for accessibility
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
@@ -206,7 +191,8 @@ export function Knob({
         aria-valuemax={max}
         aria-valuetext={displayValue}
         tabIndex={0}
-        onMouseDown={handleMouseDown}
+        onMouseDown={onPointerDown}
+        onTouchStart={onPointerDown}
         onDoubleClick={handleDoubleClick}
         onKeyDown={handleKeyDown}
         className="w-full bg-bg-tertiary rounded-full relative cursor-pointer overflow-visible outline-none focus:ring-2 focus:ring-success-light"

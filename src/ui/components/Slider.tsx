@@ -4,6 +4,7 @@
 
 import { useRef, useCallback } from 'react';
 import { useInfoPanel } from '../context/InfoPanelContext.tsx';
+import { usePointerDrag } from '../hooks/usePointerDrag.ts';
 
 interface SliderProps {
   value: number;
@@ -56,12 +57,10 @@ export function Slider({
     return min + clamped * (max - min);
   }, [min, max, logarithmic]);
 
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    const track = trackRef.current;
-    if (!track) return;
-
-    const updateValue = (clientY: number) => {
+  const { onPointerDown } = usePointerDrag({
+    onMove: useCallback((_clientX: number, clientY: number) => {
+      const track = trackRef.current;
+      if (!track) return;
       const rect = track.getBoundingClientRect();
       // Invert Y so dragging up increases value
       const position = 1 - (clientY - rect.top) / rect.height;
@@ -69,22 +68,8 @@ export function Slider({
       const quantized = Math.round(newValue / step) * step;
       const clamped = Math.max(min, Math.min(max, quantized));
       onChange(clamped);
-    };
-
-    updateValue(e.clientY);
-
-    const handleMouseMove = (moveEvent: MouseEvent) => {
-      updateValue(moveEvent.clientY);
-    };
-
-    const handleMouseUp = () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  }, [min, max, step, onChange, positionToValue]);
+    }, [min, max, step, onChange, positionToValue]),
+  });
 
   // Keyboard navigation for accessibility
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
@@ -144,7 +129,8 @@ export function Slider({
         aria-valuetext={displayValue}
         aria-orientation="vertical"
         tabIndex={0}
-        onMouseDown={handleMouseDown}
+        onMouseDown={onPointerDown}
+        onTouchStart={onPointerDown}
         onKeyDown={handleKeyDown}
         className="w-6 bg-bg-tertiary rounded-sm relative cursor-pointer overflow-hidden outline-none focus:ring-2 focus:ring-success-light"
         style={{ height }}

@@ -7,7 +7,21 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Challenge, ChallengeProgress } from '../../core/types.ts';
 import type { ScoreResult } from '../../core/sound-comparison.ts';
-import { getChallenge, getNextChallenge, allChallenges } from '../../data/challenges/index.ts';
+import { sdMenuChallenges } from '../../data/challenges/menu-metadata.ts';
+
+/**
+ * Lazy-loaded SD challenge data module.
+ * Only loads when a challenge is actually started (not on menu page load).
+ */
+type ChallengeModule = typeof import('../../data/challenges/index.ts');
+let challengeModule: ChallengeModule | null = null;
+
+async function getChallengeModule(): Promise<ChallengeModule> {
+  if (!challengeModule) {
+    challengeModule = await import('../../data/challenges/index.ts');
+  }
+  return challengeModule;
+}
 
 interface ChallengeStore {
   // Current challenge state
@@ -54,23 +68,25 @@ export const useChallengeStore = create<ChallengeStore>()(
       lastResult: null,
       progress: {},
 
-      // Load a challenge by ID
+      // Load a challenge by ID (lazy-loads full challenge data on first call)
       loadChallenge: (challengeId: string) => {
-        const challenge = getChallenge(challengeId);
-        if (!challenge) {
-          console.error(`Challenge not found: ${challengeId}`);
-          return;
-        }
+        getChallengeModule().then(mod => {
+          const challenge = mod.getChallenge(challengeId);
+          if (!challenge) {
+            console.error(`Challenge not found: ${challengeId}`);
+            return;
+          }
 
-        const existingProgress = get().progress[challengeId];
-        const attempts = existingProgress?.attempts ?? 0;
+          const existingProgress = get().progress[challengeId];
+          const attempts = existingProgress?.attempts ?? 0;
 
-        set({
-          currentChallenge: challenge,
-          currentAttempt: attempts + 1,
-          hintsRevealed: 0,
-          isScoring: false,
-          lastResult: null,
+          set({
+            currentChallenge: challenge,
+            currentAttempt: attempts + 1,
+            hintsRevealed: 0,
+            isScoring: false,
+            lastResult: null,
+          });
         });
       },
 
@@ -128,18 +144,20 @@ export const useChallengeStore = create<ChallengeStore>()(
         });
       },
 
-      // Move to next challenge
+      // Move to next challenge (lazy-loads challenge data)
       nextChallenge: () => {
         const { currentChallenge } = get();
         if (!currentChallenge) return;
 
-        const next = getNextChallenge(currentChallenge.id);
-        if (next) {
-          get().loadChallenge(next.id);
-        } else {
-          // No more challenges, exit to menu
-          get().exitChallenge();
-        }
+        getChallengeModule().then(mod => {
+          const next = mod.getNextChallenge(currentChallenge.id);
+          if (next) {
+            get().loadChallenge(next.id);
+          } else {
+            // No more challenges, exit to menu
+            get().exitChallenge();
+          }
+        });
       },
 
       // Retry current challenge
@@ -160,10 +178,10 @@ export const useChallengeStore = create<ChallengeStore>()(
         return get().progress[challengeId];
       },
 
-      // Get progress for a module
+      // Get progress for a module (uses lightweight metadata, not full challenge data)
       getModuleProgress: (moduleId: string) => {
         const { progress } = get();
-        const moduleChallenges = allChallenges.filter(c => c.module === moduleId);
+        const moduleChallenges = sdMenuChallenges.filter(c => c.module === moduleId);
 
         let completed = 0;
         let stars = 0;
@@ -181,14 +199,14 @@ export const useChallengeStore = create<ChallengeStore>()(
         };
       },
 
-      // Get total progress across all challenges
+      // Get total progress across all challenges (uses lightweight metadata)
       getTotalProgress: () => {
         const { progress } = get();
 
         let completed = 0;
         let stars = 0;
 
-        for (const challenge of allChallenges) {
+        for (const challenge of sdMenuChallenges) {
           const p = progress[challenge.id];
           if (p?.completed) completed++;
           stars += p?.stars ?? 0;
@@ -196,7 +214,7 @@ export const useChallengeStore = create<ChallengeStore>()(
 
         return {
           completed,
-          total: allChallenges.length,
+          total: sdMenuChallenges.length,
           stars,
         };
       },

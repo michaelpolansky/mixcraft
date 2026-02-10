@@ -3,7 +3,9 @@
  * Vertical sliders for Low, Mid, High bands
  */
 
+import { useCallback, useRef } from 'react';
 import { cn } from '../utils/cn.ts';
+import { usePointerDrag } from '../hooks/usePointerDrag.ts';
 import type { EQParams } from '../../core/mixing-effects.ts';
 import { EQ_RANGES } from '../../core/mixing-effects.ts';
 
@@ -22,7 +24,20 @@ interface BandSliderProps {
 }
 
 function BandSlider({ label, value, color, onChange }: BandSliderProps) {
+  const trackRef = useRef<HTMLDivElement>(null);
   const { min, max } = EQ_RANGES.low; // Same range for all bands
+
+  const { onPointerDown } = usePointerDrag({
+    onMove: useCallback((_clientX: number, clientY: number) => {
+      const track = trackRef.current;
+      if (!track) return;
+      const rect = track.getBoundingClientRect();
+      const y = clientY - rect.top;
+      const percent = 1 - y / rect.height;
+      const newValue = min + percent * (max - min);
+      onChange(Math.round(newValue * 10) / 10);
+    }, [min, max, onChange]),
+  });
 
   // Calculate fill height (0 at center, fills up or down)
   const centerPercent = 50;
@@ -45,30 +60,10 @@ function BandSlider({ label, value, color, onChange }: BandSliderProps) {
 
       {/* Slider track */}
       <div
+        ref={trackRef}
         className="relative w-10 h-[120px] bg-bg-tertiary rounded-sm border border-border-medium cursor-pointer"
-        onMouseDown={(e) => {
-          const rect = e.currentTarget.getBoundingClientRect();
-          const updateValue = (clientY: number) => {
-            const y = clientY - rect.top;
-            const percent = 1 - y / rect.height;
-            const newValue = min + percent * (max - min);
-            onChange(Math.round(newValue * 10) / 10);
-          };
-
-          updateValue(e.clientY);
-
-          const handleMove = (moveEvent: MouseEvent) => {
-            updateValue(moveEvent.clientY);
-          };
-
-          const handleUp = () => {
-            window.removeEventListener('mousemove', handleMove);
-            window.removeEventListener('mouseup', handleUp);
-          };
-
-          window.addEventListener('mousemove', handleMove);
-          window.addEventListener('mouseup', handleUp);
-        }}
+        onMouseDown={onPointerDown}
+        onTouchStart={onPointerDown}
       >
         {/* Center line (0 dB) */}
         <div

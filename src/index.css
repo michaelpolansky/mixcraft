@@ -166,6 +166,12 @@ button {
   -webkit-user-select: none;
 }
 
+/* Prevent browser gestures (scroll, zoom) on interactive controls */
+[role="slider"],
+canvas {
+  touch-action: none;
+}
+
 /* ============================================
    Animations
    ============================================ */

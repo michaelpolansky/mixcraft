@@ -11,10 +11,23 @@ import { ProgressStats } from '../components/menu/ProgressStats.tsx';
 import { SandboxButtons } from '../components/menu/SandboxButtons.tsx';
 import { OnboardingTooltip } from '../components/menu/OnboardingTooltip.tsx';
 import { TrackSection } from '../components/menu/TrackSection.tsx';
-import { allChallenges, modules, allSamplingChallenges, samplingModules, allDrumSequencingChallenges, drumSequencingModules } from '../../data/challenges/index.ts';
-import { allMixingChallenges, mixingModules } from '../../data/challenges/mixing/index.ts';
-import { allProductionChallenges, productionModules } from '../../data/challenges/production/index.ts';
-import type { ChallengeItem } from '../components/menu/ChallengeModuleCard.tsx';
+import {
+  sdMenuChallenges,
+  mixingMenuChallenges,
+  productionMenuChallenges,
+  samplingMenuChallenges,
+  drumSequencingMenuChallenges,
+} from '../../data/challenges/menu-metadata.ts';
+import {
+  sdModules,
+  mixingFundamentalsModules,
+  mixingIntermediateModules,
+  mixingAdvancedModules,
+  mixingMasteryModules,
+  productionModules as prodModules,
+  samplingModules as smModules,
+  drumSequencingModules as dsModules,
+} from '../../data/challenges/menu-modules.ts';
 import { cn } from '../utils/cn.ts';
 
 interface MenuViewProps {
@@ -25,23 +38,6 @@ interface MenuViewProps {
   onStartSamplingChallenge: (id: string) => void;
   onStartDrumSequencingChallenge: (id: string) => void;
 }
-
-// Static module definitions — converted from the `as const` module objects to arrays
-const sdModules = Object.values(modules);
-const mixFundamentalsModules = (['F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8'] as const).map(id => mixingModules[id]);
-const mixIntermediateModules = (['I1', 'I2', 'I3', 'I4', 'I5', 'I6'] as const).map(id => mixingModules[id]);
-const mixAdvancedModules = (['A1', 'A2', 'A3', 'A4', 'A5'] as const).map(id => mixingModules[id]);
-const mixMasteryModules = (['M1', 'M2', 'M3', 'M4'] as const).map(id => mixingModules[id]);
-const smModules = Object.values(samplingModules);
-const dsModules = Object.values(drumSequencingModules);
-const prodModules = Object.values(productionModules);
-
-// Cast challenge arrays to ChallengeItem (they all have id, title, difficulty, module)
-const sdChallenges = allChallenges as unknown as ChallengeItem[];
-const mixChallenges = allMixingChallenges as unknown as ChallengeItem[];
-const smChallenges = allSamplingChallenges as unknown as ChallengeItem[];
-const dsChallenges = allDrumSequencingChallenges as unknown as ChallengeItem[];
-const prodChallenges = allProductionChallenges as unknown as ChallengeItem[];
 
 export function MenuView({
   onNavigate,
@@ -74,10 +70,10 @@ export function MenuView({
   // Total progress for stats + continue button
   const totalProgress = getTotalProgress();
 
-  // Continue challenge logic
+  // Continue challenge logic — uses lightweight metadata, no full challenge data needed
   const continueChallenge = (() => {
     if (totalProgress.completed === 0 || totalProgress.completed === totalProgress.total) return null;
-    const next = allChallenges.find(c => !getChallengeProgress(c.id)?.completed);
+    const next = sdMenuChallenges.find(c => !getChallengeProgress(c.id)?.completed);
     if (!next) return null;
     return { id: next.id, title: next.title };
   })();
@@ -103,6 +99,16 @@ export function MenuView({
     const p = getDrumSequencingProgress(id);
     return p ? { stars: p.stars, completed: p.completed } : undefined;
   };
+
+  // Cast metadata arrays for store getModuleProgress (stores only use .id and .module)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mixChallengesForProgress = mixingMenuChallenges as any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const prodChallengesForProgress = productionMenuChallenges as any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const smChallengesForProgress = samplingMenuChallenges as any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const dsChallengesForProgress = drumSequencingMenuChallenges as any;
 
   return (
     <div className={cn(
@@ -142,7 +148,7 @@ export function MenuView({
           title="Challenges"
           color="#666"
           modules={sdModules}
-          allChallenges={sdChallenges}
+          allChallenges={sdMenuChallenges}
           getModuleProgress={getModuleProgress}
           getChallengeProgress={sdProgress}
           onStartChallenge={onStartChallenge}
@@ -154,9 +160,9 @@ export function MenuView({
         <TrackSection
           title="Mixing Fundamentals"
           color="#3b82f6"
-          modules={mixFundamentalsModules}
-          allChallenges={mixChallenges}
-          getModuleProgress={(moduleId) => getMixingModuleProgress(moduleId, allMixingChallenges)}
+          modules={mixingFundamentalsModules}
+          allChallenges={mixingMenuChallenges}
+          getModuleProgress={(moduleId) => getMixingModuleProgress(moduleId, mixChallengesForProgress)}
           getChallengeProgress={mixProgress}
           onStartChallenge={onStartMixingChallenge}
         />
@@ -165,9 +171,9 @@ export function MenuView({
         <TrackSection
           title="Mixing Intermediate"
           color="#3b82f6"
-          modules={mixIntermediateModules}
-          allChallenges={mixChallenges}
-          getModuleProgress={(moduleId) => getMixingModuleProgress(moduleId, allMixingChallenges)}
+          modules={mixingIntermediateModules}
+          allChallenges={mixingMenuChallenges}
+          getModuleProgress={(moduleId) => getMixingModuleProgress(moduleId, mixChallengesForProgress)}
           getChallengeProgress={mixProgress}
           onStartChallenge={onStartMixingChallenge}
         />
@@ -176,9 +182,9 @@ export function MenuView({
         <TrackSection
           title="Mixing Advanced"
           color="#3b82f6"
-          modules={mixAdvancedModules}
-          allChallenges={mixChallenges}
-          getModuleProgress={(moduleId) => getMixingModuleProgress(moduleId, allMixingChallenges)}
+          modules={mixingAdvancedModules}
+          allChallenges={mixingMenuChallenges}
+          getModuleProgress={(moduleId) => getMixingModuleProgress(moduleId, mixChallengesForProgress)}
           getChallengeProgress={mixProgress}
           onStartChallenge={onStartMixingChallenge}
         />
@@ -187,9 +193,9 @@ export function MenuView({
         <TrackSection
           title="Mixing Mastery"
           color="#3b82f6"
-          modules={mixMasteryModules}
-          allChallenges={mixChallenges}
-          getModuleProgress={(moduleId) => getMixingModuleProgress(moduleId, allMixingChallenges)}
+          modules={mixingMasteryModules}
+          allChallenges={mixingMenuChallenges}
+          getModuleProgress={(moduleId) => getMixingModuleProgress(moduleId, mixChallengesForProgress)}
           getChallengeProgress={mixProgress}
           onStartChallenge={onStartMixingChallenge}
         />
@@ -199,8 +205,8 @@ export function MenuView({
           title="Sampling"
           color="#d946ef"
           modules={smModules}
-          allChallenges={smChallenges}
-          getModuleProgress={(moduleId) => getSamplingModuleProgress(moduleId, allSamplingChallenges)}
+          allChallenges={samplingMenuChallenges}
+          getModuleProgress={(moduleId) => getSamplingModuleProgress(moduleId, smChallengesForProgress)}
           getChallengeProgress={smProgress}
           onStartChallenge={onStartSamplingChallenge}
         />
@@ -210,8 +216,8 @@ export function MenuView({
           title="Drum Sequencing"
           color="#f97316"
           modules={dsModules}
-          allChallenges={dsChallenges}
-          getModuleProgress={(moduleId) => getDrumSequencingModuleProgress(moduleId, allDrumSequencingChallenges)}
+          allChallenges={drumSequencingMenuChallenges}
+          getModuleProgress={(moduleId) => getDrumSequencingModuleProgress(moduleId, dsChallengesForProgress)}
           getChallengeProgress={dsProgress}
           onStartChallenge={onStartDrumSequencingChallenge}
         />
@@ -221,8 +227,8 @@ export function MenuView({
           title="Production"
           color="#a855f7"
           modules={prodModules}
-          allChallenges={prodChallenges}
-          getModuleProgress={(moduleId) => getProductionModuleProgress(moduleId, allProductionChallenges)}
+          allChallenges={productionMenuChallenges}
+          getModuleProgress={(moduleId) => getProductionModuleProgress(moduleId, prodChallengesForProgress)}
           getChallengeProgress={prodProgress}
           onStartChallenge={onStartProductionChallenge}
         />
