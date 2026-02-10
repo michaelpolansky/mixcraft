@@ -196,7 +196,11 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
       writeProgressToStores(merged);
 
       // 5. Push merged progress to cloud
-      const progressArray = Object.values(merged);
+      // Cast breakdown from ScoreBreakdownData to Record<string, number> for tRPC schema compatibility
+      const progressArray = Object.values(merged).map(p => ({
+        ...p,
+        breakdown: p.breakdown as Record<string, number> | undefined,
+      }));
       if (progressArray.length > 0) {
         await trpc.progress.bulkUpsert.mutate(progressArray);
       }
@@ -214,7 +218,8 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
 
     // Fire-and-forget — don't block the UI
     getTRPC().then(trpc => {
-      trpc.progress.upsert.mutate(progress).catch((error) => {
+      const payload = { ...progress, breakdown: progress.breakdown as Record<string, number> | undefined };
+      trpc.progress.upsert.mutate(payload).catch((error) => {
         console.error(`Failed to push progress for ${id}:`, error);
       });
     });

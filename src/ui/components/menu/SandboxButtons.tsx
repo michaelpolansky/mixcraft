@@ -53,6 +53,13 @@ export function SandboxButtons({ isMobile, continueChallenge, onContinue, onNavi
         description="Compose rhythms and patterns"
         accentColor="#f97316"
       />
+
+      <CardButton
+        onClick={() => onNavigate('concepts')}
+        title="Concept Library"
+        description="Learn music production concepts"
+        accentColor="#facc15"
+      />
     </div>
   );
 }

@@ -11,6 +11,8 @@ import { ProgressStats } from '../components/menu/ProgressStats.tsx';
 import { SandboxButtons } from '../components/menu/SandboxButtons.tsx';
 import { OnboardingTooltip } from '../components/menu/OnboardingTooltip.tsx';
 import { TrackSection } from '../components/menu/TrackSection.tsx';
+import { RecommendedChallenges } from '../components/menu/RecommendedChallenges.tsx';
+import { usePlayerModel } from '../hooks/usePlayerModel.ts';
 import {
   sdMenuChallenges,
   mixingMenuChallenges,
@@ -55,6 +57,9 @@ export function MenuView({
   const { getChallengeProgress: getProductionProgress, getModuleProgress: getProductionModuleProgress } = useProductionStore();
   const { getChallengeProgress: getSamplingProgress, getModuleProgress: getSamplingModuleProgress } = useSamplerStore();
   const { getChallengeProgress: getDrumSequencingProgress, getModuleProgress: getDrumSequencingModuleProgress } = useDrumSequencerStore();
+
+  // Adaptive curriculum
+  const { recommendations, totalAttempted } = usePlayerModel();
 
   // Onboarding state
   const [showOnboarding, setShowOnboarding] = useState(() => {
@@ -141,6 +146,16 @@ export function MenuView({
           continueChallenge={continueChallenge}
           onContinue={onStartChallenge}
           onNavigate={onNavigate}
+        />
+
+        <RecommendedChallenges
+          recommendations={recommendations}
+          totalAttempted={totalAttempted}
+          onStartChallenge={onStartChallenge}
+          onStartMixingChallenge={onStartMixingChallenge}
+          onStartProductionChallenge={onStartProductionChallenge}
+          onStartSamplingChallenge={onStartSamplingChallenge}
+          onStartDrumSequencingChallenge={onStartDrumSequencingChallenge}
         />
 
         {/* Sound Design Track */}

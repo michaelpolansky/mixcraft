@@ -5,8 +5,9 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Challenge, ChallengeProgress } from '../../core/types.ts';
+import type { Challenge, ChallengeProgress, ScoreBreakdownData } from '../../core/types.ts';
 import type { ScoreResult } from '../../core/sound-comparison.ts';
+import { extractSDBreakdown, extractFMBreakdown, extractAdditiveBreakdown } from '../../core/player-model.ts';
 import { sdMenuChallenges } from '../../data/challenges/menu-metadata.ts';
 
 /**
@@ -125,6 +126,19 @@ export const useChallengeStore = create<ChallengeStore>()(
         const challengeId = currentChallenge.id;
         const existing = progress[challengeId] ?? { ...initialProgress, challengeId };
 
+        // Extract breakdown based on synthesis type
+        let breakdown: ScoreBreakdownData;
+        const synthType = currentChallenge.synthesisType;
+        if (synthType === 'fm') {
+          breakdown = extractFMBreakdown(result);
+        } else if (synthType === 'additive') {
+          breakdown = extractAdditiveBreakdown(result);
+        } else {
+          breakdown = extractSDBreakdown(result);
+        }
+
+        const isBestScore = result.overall >= existing.bestScore;
+
         // Update progress if this is a better score
         const newProgress: ChallengeProgress = {
           challengeId,
@@ -132,6 +146,7 @@ export const useChallengeStore = create<ChallengeStore>()(
           stars: Math.max(existing.stars, result.passed ? result.stars : 0) as 0 | 1 | 2 | 3,
           attempts: existing.attempts + 1,
           completed: existing.completed || result.passed,
+          breakdown: isBestScore ? breakdown : existing.breakdown,
         };
 
         set({

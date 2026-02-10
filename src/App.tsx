@@ -16,6 +16,7 @@ const SamplerView = lazy(() => import('./ui/views/SamplerView.tsx').then(m => ({
 const SamplerChallengeView = lazy(() => import('./ui/views/SamplerChallengeView.tsx').then(m => ({ default: m.SamplerChallengeView })));
 const DrumSequencerView = lazy(() => import('./ui/views/DrumSequencerView.tsx').then(m => ({ default: m.DrumSequencerView })));
 const DrumSequencerChallengeView = lazy(() => import('./ui/views/DrumSequencerChallengeView.tsx').then(m => ({ default: m.DrumSequencerChallengeView })));
+const ConceptLibraryView = lazy(() => import('./ui/views/ConceptLibraryView.tsx').then(m => ({ default: m.ConceptLibraryView })));
 import { useSynthStore } from './ui/stores/synth-store.ts';
 import { useAuthStore } from './ui/stores/auth-store.ts';
 import { useProgressSync } from './ui/hooks/useProgressSync.ts';
@@ -23,6 +24,8 @@ import { useNavigation } from './ui/hooks/useNavigation.ts';
 import { BackButton } from './ui/components/Button.tsx';
 import { ToastProvider } from './ui/components/Toast.tsx';
 import { ErrorBoundary } from './ui/components/ErrorBoundary.tsx';
+import { ConceptModalProvider } from './ui/context/ConceptModalContext.tsx';
+import { ConceptDetailModal } from './ui/components/concepts/ConceptDetailModal.tsx';
 import { MenuView } from './ui/views/MenuView.tsx';
 
 function LoadingFallback() {
@@ -248,6 +251,21 @@ function AppContent() {
     );
   }
 
+  // Concept Library
+  if (nav.view === 'concepts') {
+    return (
+      <ErrorBoundary onReset={() => nav.setView('menu')}>
+        <Suspense fallback={<LoadingFallback />}>
+          <ConceptLibraryView
+            onBack={() => nav.setView('menu')}
+            initialConceptId={nav.conceptId}
+            onStartChallenge={nav.handleStartChallenge}
+          />
+        </Suspense>
+      </ErrorBoundary>
+    );
+  }
+
   // Sandbox views
   if (nav.view === 'sandbox') {
     return (
@@ -330,9 +348,12 @@ function AppContent() {
 export function App() {
   return (
     <ToastProvider>
-      <ErrorBoundary fallback={<AppErrorFallback />}>
-        <AppContent />
-      </ErrorBoundary>
+      <ConceptModalProvider>
+        <ErrorBoundary fallback={<AppErrorFallback />}>
+          <AppContent />
+          <ConceptDetailModal />
+        </ErrorBoundary>
+      </ConceptModalProvider>
     </ToastProvider>
   );
 }

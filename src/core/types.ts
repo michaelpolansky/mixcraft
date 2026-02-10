@@ -1088,6 +1088,73 @@ export interface ChallengeProgress {
   attempts: number;
   /** Whether challenge is completed (passed at least once) */
   completed: boolean;
+  /** Detailed score breakdown for adaptive curriculum (optional for backward compat) */
+  breakdown?: ScoreBreakdownData;
+}
+
+/**
+ * Normalized score breakdown for adaptive curriculum.
+ * Each field is 0-100. Only fields relevant to the track are populated.
+ */
+export interface ScoreBreakdownData {
+  // Sound Design (subtractive)
+  brightness?: number;
+  attack?: number;
+  filter?: number;
+  envelope?: number;
+  // FM Synthesis
+  harmonicity?: number;
+  modulationIndex?: number;
+  // Mixing
+  eqLow?: number;
+  eqMid?: number;
+  eqHigh?: number;
+  compressor?: number;
+  conditions?: number;
+  // Sampling
+  pitch?: number;
+  slice?: number;
+  timing?: number;
+  creativity?: number;
+  // Drum Sequencing
+  pattern?: number;
+  velocity?: number;
+  swing?: number;
+  tempo?: number;
+}
+
+// ============================================
+// Concept Library Types
+// ============================================
+
+export type ConceptTrack = 'sound-design' | 'mixing' | 'production' | 'sampling' | 'drum-sequencing' | 'general';
+
+export interface Concept {
+  /** Slug identifier, e.g. "filter-cutoff" */
+  id: string;
+  /** Human-readable title, e.g. "Filter Cutoff" */
+  title: string;
+  /** Which curriculum track this concept belongs to */
+  track: ConceptTrack;
+  /** One-sentence summary for card display */
+  summary: string;
+  /** Multi-paragraph explanation (array of paragraphs) */
+  explanation: string[];
+  /** IDs of related concepts */
+  relatedConcepts: string[];
+  /** IDs of related challenges */
+  relatedChallenges: string[];
+  /** Search tags */
+  tags: string[];
+}
+
+export interface GlossaryEntry {
+  /** The term being defined */
+  term: string;
+  /** Short definition */
+  definition: string;
+  /** Link to full concept (null if none) */
+  relatedConcept: string | null;
 }
 
 // ============================================

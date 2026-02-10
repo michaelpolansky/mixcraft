@@ -9,6 +9,7 @@ import type { SamplerParams, SamplingChallenge, ChallengeProgress } from '../../
 import { DEFAULT_SAMPLER_PARAMS } from '../../core/types.ts';
 import { SamplerEngine, createSamplerEngine } from '../../core/sampler-engine.ts';
 import type { SamplingScoreResult } from '../../core/sampling-evaluation.ts';
+import { extractSamplingBreakdown } from '../../core/player-model.ts';
 
 interface SamplerStore {
   // State
@@ -319,6 +320,7 @@ export const useSamplerStore = create<SamplerStore>()(
         set((state) => {
           const existing = state.progress[challengeId];
           const isNewBest = !existing || score > existing.bestScore;
+          const breakdown = state.lastResult ? extractSamplingBreakdown(state.lastResult) : undefined;
 
           return {
             progress: {
@@ -329,6 +331,7 @@ export const useSamplerStore = create<SamplerStore>()(
                 stars: isNewBest ? stars : Math.max(existing.stars, stars),
                 completed: true,
                 attempts: (existing?.attempts ?? 0) + 1,
+                breakdown: isNewBest ? breakdown : existing?.breakdown,
               },
             },
           } as Partial<SamplerStore>;

@@ -9,6 +9,7 @@ import type { ProductionChallenge, ChallengeProgress } from '../../core/types.ts
 import type { LayerState } from '../../core/production-source.ts';
 import { LAYER_RANGES } from '../../core/production-source.ts';
 import type { ProductionScoreResult } from '../../core/production-evaluation.ts';
+import { extractProductionBreakdown } from '../../core/player-model.ts';
 
 interface ProductionStore {
   // Current challenge state
@@ -136,6 +137,8 @@ export const useProductionStore = create<ProductionStore>()(
 
         const challengeId = currentChallenge.id;
         const existing = progress[challengeId] ?? { ...initialProgress, challengeId };
+        const isBestScore = result.overall >= existing.bestScore;
+        const breakdown = extractProductionBreakdown(result);
 
         // Update progress if this is a better score
         const newProgress: ChallengeProgress = {
@@ -144,6 +147,7 @@ export const useProductionStore = create<ProductionStore>()(
           stars: Math.max(existing.stars, result.passed ? result.stars : 0) as 0 | 1 | 2 | 3,
           attempts: existing.attempts + 1,
           completed: existing.completed || result.passed,
+          breakdown: isBestScore ? breakdown : existing.breakdown,
         };
 
         set({

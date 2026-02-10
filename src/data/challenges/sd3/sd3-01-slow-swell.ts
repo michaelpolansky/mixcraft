@@ -16,9 +16,9 @@ export const challenge: Challenge = {
   module: 'SD3',
   testNote: 'C4',
   hints: [
-    'Attack controls how long it takes for the sound to reach full volume.',
+    '[[amplitude-envelope|Attack]] controls how long it takes for the sound to reach full volume.',
     'A long attack time (over 0.5 seconds) creates that gradual fade-in.',
-    'Pads often use triangle or sine waves for a smooth character.',
+    'Pads often use triangle or sine [[waveform|waves]] for a smooth character.',
   ],
   targetParams: {
     oscillator: {

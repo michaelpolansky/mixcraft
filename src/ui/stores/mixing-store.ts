@@ -7,6 +7,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { MixingChallenge, ChallengeProgress, EQParams, CompressorFullParams } from '../../core/types.ts';
 import { DEFAULT_EQ, DEFAULT_COMPRESSOR } from '../../core/mixing-effects.ts';
+import { extractMixingBreakdown } from '../../core/player-model.ts';
 
 /** Per-track EQ parameters */
 export interface TrackEQParams {
@@ -186,6 +187,8 @@ export const useMixingStore = create<MixingStore>()(
 
         const challengeId = currentChallenge.id;
         const existing = progress[challengeId] ?? { ...initialProgress, challengeId };
+        const isBestScore = result.overall >= existing.bestScore;
+        const breakdown = extractMixingBreakdown(result);
 
         // Update progress if this is a better score
         const newProgress: ChallengeProgress = {
@@ -194,6 +197,7 @@ export const useMixingStore = create<MixingStore>()(
           stars: Math.max(existing.stars, result.passed ? result.stars : 0) as 0 | 1 | 2 | 3,
           attempts: existing.attempts + 1,
           completed: existing.completed || result.passed,
+          breakdown: isBestScore ? breakdown : existing.breakdown,
         };
 
         set({

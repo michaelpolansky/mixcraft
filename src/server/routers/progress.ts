@@ -29,6 +29,7 @@ const progressSchema = z.object({
   stars: z.union([z.literal(0), z.literal(1), z.literal(2), z.literal(3)]),
   attempts: z.number().int().min(0),
   completed: z.boolean(),
+  breakdown: z.record(z.string(), z.number()).optional(),
 });
 
 export const progressRouter = router({
@@ -40,7 +41,7 @@ export const progressRouter = router({
 
     const { data, error } = await supabase
       .from('user_progress')
-      .select('challenge_id, best_score, stars, attempts, completed')
+      .select('challenge_id, best_score, stars, attempts, completed, breakdown')
       .eq('user_id', ctx.user.id);
 
     if (error) {
@@ -54,6 +55,7 @@ export const progressRouter = router({
       stars: 0 | 1 | 2 | 3;
       attempts: number;
       completed: boolean;
+      breakdown?: Record<string, number>;
     }> = {};
 
     for (const row of data ?? []) {
@@ -63,6 +65,7 @@ export const progressRouter = router({
         stars: row.stars as 0 | 1 | 2 | 3,
         attempts: row.attempts,
         completed: row.completed,
+        breakdown: row.breakdown as Record<string, number> | undefined,
       };
     }
 
@@ -88,6 +91,7 @@ export const progressRouter = router({
             stars: input.stars,
             attempts: input.attempts,
             completed: input.completed,
+            breakdown: input.breakdown ?? null,
             updated_at: new Date().toISOString(),
           },
           { onConflict: 'user_id,challenge_id' }
@@ -118,6 +122,7 @@ export const progressRouter = router({
         stars: p.stars,
         attempts: p.attempts,
         completed: p.completed,
+        breakdown: p.breakdown ?? null,
         updated_at: new Date().toISOString(),
       }));
 

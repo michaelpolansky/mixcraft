@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useChallengeStore } from '../stores/challenge-store.ts';
 import type { MixingChallenge, ProductionChallenge, SamplingChallenge, DrumSequencingChallenge } from '../../core/types.ts';
-import { parseHash, buildHash, getTrackFromId, type View } from './hash-routing.ts';
+import { parseHash, buildHash, getTrackFromId, type View, type ParsedRoute } from './hash-routing.ts';
 
 export type { View } from './hash-routing.ts';
 
@@ -50,6 +50,7 @@ export function useNavigation() {
   const [currentProductionChallenge, setCurrentProductionChallenge] = useState<ProductionChallenge | null>(null);
   const [currentSamplingChallenge, setCurrentSamplingChallenge] = useState<SamplingChallenge | null>(null);
   const [currentDrumSequencingChallenge, setCurrentDrumSequencingChallenge] = useState<DrumSequencingChallenge | null>(null);
+  const [conceptId, setConceptId] = useState<string | undefined>(undefined);
 
   // Cache module references after first load for synchronous hasNext checks
   const mixingModRef = useRef<MixingModule | null>(mixingModule);
@@ -288,6 +289,9 @@ export function useNavigation() {
           case 'sampling': h._loadSamplingChallenge(route.challengeId); break;
           case 'drum-sequencing': h._loadDrumSequencingChallenge(route.challengeId); break;
         }
+      } else if (route.view === 'concepts') {
+        setConceptId(route.conceptId);
+        setView('concepts');
       } else if (route.view === 'menu') {
         h._exitToMenu();
       } else {
@@ -313,6 +317,7 @@ export function useNavigation() {
   return {
     view,
     setView: navigate,
+    conceptId,
     currentChallenge,
     currentMixingChallenge,
     currentProductionChallenge,

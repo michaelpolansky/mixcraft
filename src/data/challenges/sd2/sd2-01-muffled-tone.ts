@@ -17,8 +17,8 @@ export const challenge: Challenge = {
   testNote: 'C4',
   hints: [
     'A sawtooth wave has lots of high frequencies to work with.',
-    'Lowpass filters let low frequencies through and cut the highs.',
-    'A very low cutoff frequency will make the sound dark and muffled.',
+    '[[filter-types|Lowpass filters]] let low frequencies through and cut the highs.',
+    'A very low [[filter-cutoff|cutoff frequency]] will make the sound dark and muffled.',
   ],
   targetParams: {
     oscillator: {

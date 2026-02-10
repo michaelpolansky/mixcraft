@@ -9,8 +9,8 @@ export const challenge: Challenge = {
   module: 'SD1',
   testNote: 'C4',
   hints: [
-    'A pure tone has only one frequency - no overtones or harmonics.',
-    'Which waveform produces only the fundamental frequency?',
+    'A pure tone has only one frequency - no overtones or [[harmonics|harmonics]].',
+    'Which [[waveform|waveform]] produces only the fundamental frequency?',
     'The sine wave is the simplest waveform - it has no harmonics.',
   ],
   targetParams: {

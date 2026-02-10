@@ -11,18 +11,20 @@ export type View =
   | 'additive-sandbox'
   | 'sampler'
   | 'drum-sequencer'
+  | 'concepts'
   | 'challenge'
   | 'mixing-challenge'
   | 'production-challenge'
   | 'sampling-challenge'
   | 'drum-sequencer-challenge';
 
-export type SandboxView = 'sandbox' | 'fm-sandbox' | 'additive-sandbox' | 'sampler' | 'drum-sequencer';
+export type SandboxView = 'sandbox' | 'fm-sandbox' | 'additive-sandbox' | 'sampler' | 'drum-sequencer' | 'concepts';
 export type ChallengeTrack = 'sd' | 'mixing' | 'production' | 'sampling' | 'drum-sequencing';
 
 export interface ParsedRoute {
   view: View;
   challengeId?: string;
+  conceptId?: string;
 }
 
 export const SANDBOX_HASHES: Record<SandboxView, string> = {
@@ -31,6 +33,7 @@ export const SANDBOX_HASHES: Record<SandboxView, string> = {
   'additive-sandbox': '#/additive-sandbox',
   'sampler': '#/sampler',
   'drum-sequencer': '#/drum-sequencer',
+  'concepts': '#/concepts',
 };
 
 export const HASH_TO_SANDBOX: Record<string, SandboxView> = {
@@ -39,6 +42,7 @@ export const HASH_TO_SANDBOX: Record<string, SandboxView> = {
   '/additive-sandbox': 'additive-sandbox',
   '/sampler': 'sampler',
   '/drum-sequencer': 'drum-sequencer',
+  '/concepts': 'concepts',
 };
 
 /** Determine which track a challenge ID belongs to. Order matters: sm before m. */
@@ -58,7 +62,13 @@ export function parseHash(hash: string): ParsedRoute {
 
   if (!path || path === '/') return { view: 'menu' };
 
-  // Sandbox views
+  // Concepts deep-link: #/concepts/{conceptId}
+  const conceptMatch = path.match(/^\/concepts\/(.+)$/);
+  if (conceptMatch) {
+    return { view: 'concepts', conceptId: conceptMatch[1]! };
+  }
+
+  // Sandbox views (includes #/concepts without deep-link)
   const sandbox = HASH_TO_SANDBOX[path];
   if (sandbox) return { view: sandbox };
 
@@ -80,8 +90,9 @@ export function parseHash(hash: string): ParsedRoute {
   return { view: 'menu' };
 }
 
-export function buildHash(view: View, challengeId?: string): string {
+export function buildHash(view: View, challengeId?: string, conceptId?: string): string {
   if (view === 'menu') return '#/';
+  if (view === 'concepts' && conceptId) return `#/concepts/${conceptId}`;
   if (view in SANDBOX_HASHES) return SANDBOX_HASHES[view as SandboxView];
   if (challengeId) return `#/challenge/${challengeId}`;
   return '#/';

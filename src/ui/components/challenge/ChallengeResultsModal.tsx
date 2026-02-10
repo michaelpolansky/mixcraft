@@ -4,6 +4,7 @@
  */
 
 import type { ReactNode } from 'react';
+import type { Recommendation } from '../../../core/player-model.ts';
 import { cn } from '../../utils/cn.ts';
 
 interface ChallengeResultsModalProps {
@@ -19,6 +20,9 @@ interface ChallengeResultsModalProps {
   onRetry: () => void;
   onNext?: () => void;
   hasNext?: boolean;
+  /** Optional practice suggestions for weak areas */
+  suggestions?: Recommendation[];
+  onSuggestionClick?: (challengeId: string) => void;
 }
 
 export function ChallengeResultsModal({
@@ -34,6 +38,8 @@ export function ChallengeResultsModal({
   onRetry,
   onNext,
   hasNext,
+  suggestions,
+  onSuggestionClick,
 }: ChallengeResultsModalProps) {
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[var(--z-modal)]">
@@ -96,6 +102,30 @@ export function ChallengeResultsModal({
             {!aiFeedbackLoading && !aiFeedback && 'AI feedback unavailable'}
           </div>
         </div>
+
+        {/* Practice Suggestions */}
+        {passed && suggestions && suggestions.length > 0 && onSuggestionClick && (
+          <div className="mb-4">
+            <div className="text-base text-text-muted uppercase mb-2">
+              Practice More
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {suggestions.map((s) => (
+                <button
+                  key={s.challengeId}
+                  onClick={() => onSuggestionClick(s.challengeId)}
+                  className={cn(
+                    'text-sm px-3 py-1.5 rounded-full bg-bg-primary border border-border-medium',
+                    'cursor-pointer text-text-secondary hover:text-text-primary hover:border-border-bright',
+                    'transition-colors'
+                  )}
+                >
+                  {s.title} &middot; <span className="text-text-muted">{s.reason}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Actions */}
         <div className="flex gap-3">

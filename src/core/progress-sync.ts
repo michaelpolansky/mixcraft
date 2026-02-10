@@ -34,12 +34,15 @@ export function mergeProgress(
     } else if (!l && c) {
       merged[id] = c;
     } else if (l && c) {
+      // Keep breakdown from whichever side had the higher bestScore
+      const bestBreakdown = l.bestScore >= c.bestScore ? l.breakdown : c.breakdown;
       merged[id] = {
         challengeId: id,
         bestScore: Math.max(l.bestScore, c.bestScore),
         stars: Math.max(l.stars, c.stars) as 0 | 1 | 2 | 3,
         attempts: Math.max(l.attempts, c.attempts),
         completed: l.completed || c.completed,
+        breakdown: bestBreakdown,
       };
     }
   }

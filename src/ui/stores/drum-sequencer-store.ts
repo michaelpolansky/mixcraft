@@ -15,6 +15,7 @@ import {
   DrumSequencerEngine,
   createDrumSequencerEngine,
 } from '../../core/drum-sequencer-engine.ts';
+import { extractDrumBreakdown } from '../../core/player-model.ts';
 
 /**
  * Score result for drum sequencing challenges
@@ -409,6 +410,7 @@ export const useDrumSequencerStore = create<DrumSequencerStore>()(
         set((state) => {
           const existing = state.progress[challengeId];
           const isNewBest = !existing || score > existing.bestScore;
+          const breakdown = state.lastResult ? extractDrumBreakdown(state.lastResult) : undefined;
 
           return {
             progress: {
@@ -419,6 +421,7 @@ export const useDrumSequencerStore = create<DrumSequencerStore>()(
                 stars: isNewBest ? stars : Math.max(existing.stars, stars) as 0 | 1 | 2 | 3,
                 completed: true,
                 attempts: (existing?.attempts ?? 0) + 1,
+                breakdown: isNewBest ? breakdown : existing?.breakdown,
               },
             },
           } as Partial<DrumSequencerStore>;

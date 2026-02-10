@@ -34,17 +34,21 @@ src/
     drum-sequencing-evaluation.ts
     mixing-evaluation.ts
     production-evaluation.ts
+    player-model.ts   # Adaptive curriculum: skill scoring, weakness detection, recommendations
   ui/             # React components. Imports from core/ only.
     components/   # Reusable UI (Knob, Slider, XYPad, ModuleCard, ErrorBoundary, etc.)
       challenge/  # Challenge-specific components (Section, Header, HintsPanel, SubmitButton, ResultsModal)
       synth/      # Synth stage components (OscillatorStage, FilterStage, LFOStage, OutputStage, etc.)
-      menu/       # Menu components (ChallengeButton, ChallengeModuleCard, ProgressStats, TrackSection)
-    views/        # Full-screen views (SynthView, FMSynthView, AdditiveSynthView, ChallengeView, etc.)
+      menu/       # Menu components (ChallengeButton, ChallengeModuleCard, ProgressStats, TrackSection, RecommendedChallenges)
+      concepts/   # Concept Library components (ConceptCard, ConceptDetailPanel, GlossaryList, ConceptLink, ConceptDetailModal)
+    views/        # Full-screen views (SynthView, FMSynthView, AdditiveSynthView, ChallengeView, ConceptLibraryView, etc.)
     stores/       # Zustand stores (synth-store.ts, fm-synth-store.ts, additive-synth-store.ts, etc.)
-    hooks/        # Custom hooks (useNavigation, useAIFeedback, useProgressSync, usePointerDrag, etc.)
+    hooks/        # Custom hooks (useNavigation, useAIFeedback, useProgressSync, usePlayerModel, usePointerDrag, etc.)
+    context/      # React contexts (ConceptModalContext, InfoPanelContext)
     theme/        # Design system (COLORS constant for Canvas components)
   data/           # Static data files
     challenges/   # Challenge definitions by track (sd1-sd17/, sm1-sm6/, ds1-ds6/, etc.)
+    concepts/     # Concept library data (concepts.ts, glossary.ts, concept-metadata.ts)
     presets/      # Synth presets (subtractive, FM, additive)
     sequences/    # Note sequences for synth sequencer
   server/         # tRPC backend
@@ -153,8 +157,19 @@ Sound design is the entry point. It teaches concepts that make mixing and produc
 - Mobile responsive menu layout
 - First-time user onboarding tooltip
 
+### Concept Library & Adaptive Curriculum
+- **Concept Library:** Searchable reference of ~50 music production concepts and ~100 glossary terms
+- **Standalone view:** `#/concepts` with search, track filtering, two tabs (Concepts grid + Glossary list)
+- **Deep links:** `#/concepts/{conceptId}` for direct navigation to specific concepts
+- **Concept modal:** `ConceptModalContext` enables opening concept details from anywhere (hints, results)
+- **Concept link markers:** `[[concept-id|display text]]` in hint strings renders inline clickable links
+- **Adaptive curriculum:** Player model analyzes score breakdowns to identify weaknesses and recommend challenges
+- **Score breakdowns:** Each challenge result persists dimension-level scores (e.g., filter: 70, envelope: 85)
+- **Recommended challenges:** Menu shows 3-5 personalized recommendations after 5+ attempted challenges
+- **Practice suggestions:** Results modal shows "Practice More" chips for weak areas when player passes
+
 ### Testing
-- 471 unit tests for evaluation logic, engines, and routing
+- 527 unit tests for evaluation logic, engines, routing, player model, and concept links
 - All pure function tests, no audio context dependencies
 
 ## Session Log
@@ -192,3 +207,4 @@ Sound design is the entry point. It teaches concepts that make mixing and produc
 | 28 | 2026-02-09 | Decompose App.tsx (3,968 → 268 lines) - extracted ChallengeButton, ChallengeModuleCard, ProgressStats, SandboxButtons, OnboardingTooltip, TrackSection, useNavigation hook, MenuView. 32 duplicate module blocks replaced by data-driven TrackSection pattern |
 | 29 | 2026-02-09 | Decompose 4 largest views (4,157 → 1,739 lines) - extracted 18 shared components: challenge (Section, ChallengeHeader, HintsPanel, SubmitButton, ScoreBreakdownRow, ChallengeResultsModal), synth stages (EnvelopeStage, OscillatorStage, Osc2Stage, SubOscStage, NoiseStage, MixerStage, FilterStage, LFOStage, OutputStage, BottomControlStrip), useAIFeedback hook, shared formatters |
 | 30 | 2026-02-10 | Error boundaries + hash routing tests (58 new tests) - ErrorBoundary component with two-tier recovery (app-level reload, view-level menu nav), extracted hash-routing.ts pure functions from useNavigation for testability |
+| 31 | 2026-02-10 | Concept Library + Adaptive Curriculum - Concept Library with ~50 concepts and ~100 glossary terms (search, filter, deep links, modal context), player model for skill scoring/weakness detection/recommendations, score breakdown persistence in all 5 stores, practice suggestions in results modal, concept link markers in hints (56 new tests) |
