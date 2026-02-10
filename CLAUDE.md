@@ -141,7 +141,7 @@ Sound design is the entry point. It teaches concepts that make mixing and produc
 - First-time user onboarding tooltip
 
 ### Testing
-- 395 unit tests for evaluation logic and engines
+- 471 unit tests for evaluation logic, engines, and routing
 - All pure function tests, no audio context dependencies
 
 ## Session Log
@@ -178,3 +178,4 @@ Sound design is the entry point. It teaches concepts that make mixing and produc
 | 27 | 2026-02-08 | Forgot password and password reset flow |
 | 28 | 2026-02-09 | Decompose App.tsx (3,968 → 268 lines) - extracted ChallengeButton, ChallengeModuleCard, ProgressStats, SandboxButtons, OnboardingTooltip, TrackSection, useNavigation hook, MenuView. 32 duplicate module blocks replaced by data-driven TrackSection pattern |
 | 29 | 2026-02-09 | Decompose 4 largest views (4,157 → 1,739 lines) - extracted 18 shared components: challenge (Section, ChallengeHeader, HintsPanel, SubmitButton, ScoreBreakdownRow, ChallengeResultsModal), synth stages (EnvelopeStage, OscillatorStage, Osc2Stage, SubOscStage, NoiseStage, MixerStage, FilterStage, LFOStage, OutputStage, BottomControlStrip), useAIFeedback hook, shared formatters |
+| 30 | 2026-02-10 | Error boundaries + hash routing tests (58 new tests) - ErrorBoundary component with two-tier recovery (app-level reload, view-level menu nav), extracted hash-routing.ts pure functions from useNavigation for testability |
