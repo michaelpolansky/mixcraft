@@ -35,9 +35,14 @@ src/
     mixing-evaluation.ts
     production-evaluation.ts
   ui/             # React components. Imports from core/ only.
-    components/   # Reusable UI (Knob, Slider, XYPad, ModuleCard, Sequencer, RecordingControl, etc.)
+    components/   # Reusable UI (Knob, Slider, XYPad, ModuleCard, ErrorBoundary, etc.)
+      challenge/  # Challenge-specific components (Section, Header, HintsPanel, SubmitButton, ResultsModal)
+      synth/      # Synth stage components (OscillatorStage, FilterStage, LFOStage, OutputStage, etc.)
+      menu/       # Menu components (ChallengeButton, ChallengeModuleCard, ProgressStats, TrackSection)
     views/        # Full-screen views (SynthView, FMSynthView, AdditiveSynthView, ChallengeView, etc.)
     stores/       # Zustand stores (synth-store.ts, fm-synth-store.ts, additive-synth-store.ts, etc.)
+    hooks/        # Custom hooks (useNavigation, useAIFeedback, useProgressSync, usePointerDrag, etc.)
+    theme/        # Design system (COLORS constant for Canvas components)
   data/           # Static data files
     challenges/   # Challenge definitions by track (sd1-sd17/, sm1-sm6/, ds1-ds6/, etc.)
     presets/      # Synth presets (subtractive, FM, additive)
@@ -131,8 +136,16 @@ Sound design is the entry point. It teaches concepts that make mixing and produc
 - **Pan Control:** Stereo positioning with real-time modulation support
 - **Real-Time Modulation Display:** Knobs show modulated values oscillating in real-time via requestAnimationFrame polling
 
-### Polish
-- Progress persistence (localStorage via Zustand)
+### Infrastructure & Polish
+- User accounts with cloud progress sync (Supabase auth, PostgreSQL, "best wins" merge)
+- Forgot password and password reset flow
+- Error boundaries: two-tier (app-level reload, view-level menu recovery)
+- Hash routing with lazy-loaded Supabase/tRPC (557→355KB initial bundle)
+- Lazy-loaded view components via React.lazy + Suspense code splitting
+- Touch support on 12 interactive components (Knob, Slider, XYPad, etc.)
+- Tailwind CSS v4 migration (793 → 183 inline styles)
+- Component decomposition: App.tsx (3,968 → 268 lines), 4 largest views (4,157 → 1,739 lines)
+- Progress persistence (localStorage via Zustand + cloud sync)
 - Progress display in menu header (stars, completion %)
 - Module progress bars with star counts
 - "Continue" button to resume from last incomplete challenge
