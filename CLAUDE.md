@@ -174,3 +174,6 @@ Sound design is the entry point. It teaches concepts that make mixing and produc
 | 23 | 2026-02-06 | Modulation envelopes - separate LFO/Filter Env modules, add Pitch/Mod/PWM envelopes with full ADSR + Amount controls, fix WaveformSelector overflow |
 | 24 | 2026-02-07 | Subtractive synth quick wins - Noise generator (white/pink/brown + level), Portamento/Glide (toggle + time), LFO Sync (tempo divisions), Oscilloscope display |
 | 25 | 2026-02-08 | Advanced subtractive synthesis - SD10-SD17 (48 challenges): Arpeggiator, Unison/Supersaw, Oscillator 2, Sub Oscillator, Noise Shaping, Glide, Velocity, Combined Techniques. LFO2, Mod Matrix, Pan control, real-time modulation display |
+| 26 | 2026-02-08 | User accounts with cloud progress sync - Supabase auth (email/password), user_progress table with RLS, "best wins" merge strategy, theme system |
+| 27 | 2026-02-08 | Forgot password and password reset flow |
+| 28 | 2026-02-09 | Decompose App.tsx (3,968 → 268 lines) - extracted ChallengeButton, ChallengeModuleCard, ProgressStats, SandboxButtons, OnboardingTooltip, TrackSection, useNavigation hook, MenuView. 32 duplicate module blocks replaced by data-driven TrackSection pattern |
