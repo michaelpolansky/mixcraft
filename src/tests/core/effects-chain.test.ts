@@ -4,43 +4,47 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
-// Mock Tone.js before importing EffectsChain
-const mockGain = vi.fn(() => ({
-  connect: vi.fn(),
-  disconnect: vi.fn(),
-  dispose: vi.fn(),
-  gain: { value: 1 },
-}));
-
-const mockDistortion = vi.fn(() => ({
-  connect: vi.fn(),
-  disconnect: vi.fn(),
-  dispose: vi.fn(),
-  distortion: 0,
-}));
-
-const mockFeedbackDelay = vi.fn(() => ({
-  connect: vi.fn(),
-  disconnect: vi.fn(),
-  dispose: vi.fn(),
-  delayTime: { value: 0.25 },
-  feedback: { value: 0.3 },
-}));
-
-const mockChorus = vi.fn(() => ({
-  connect: vi.fn(),
-  disconnect: vi.fn(),
-  dispose: vi.fn(),
-  start: vi.fn().mockReturnThis(),
-  frequency: { value: 1.5 },
-  depth: 0.5,
-}));
-
-const mockReverb = vi.fn(() => ({
-  connect: vi.fn(),
-  disconnect: vi.fn(),
-  dispose: vi.fn(),
-  decay: 1.5,
+// vi.hoisted runs before vi.mock, avoiding TDZ issues with const declarations
+const {
+  mockGain,
+  mockDistortion,
+  mockFeedbackDelay,
+  mockChorus,
+  mockReverb,
+} = vi.hoisted(() => ({
+  mockGain: vi.fn(function() { return {
+    connect: vi.fn(),
+    disconnect: vi.fn(),
+    dispose: vi.fn(),
+    gain: { value: 1 },
+  }; }),
+  mockDistortion: vi.fn(function() { return {
+    connect: vi.fn(),
+    disconnect: vi.fn(),
+    dispose: vi.fn(),
+    distortion: 0,
+  }; }),
+  mockFeedbackDelay: vi.fn(function() { return {
+    connect: vi.fn(),
+    disconnect: vi.fn(),
+    dispose: vi.fn(),
+    delayTime: { value: 0.25 },
+    feedback: { value: 0.3 },
+  }; }),
+  mockChorus: vi.fn(function() { return {
+    connect: vi.fn(),
+    disconnect: vi.fn(),
+    dispose: vi.fn(),
+    start: vi.fn().mockReturnThis(),
+    frequency: { value: 1.5 },
+    depth: 0.5,
+  }; }),
+  mockReverb: vi.fn(function() { return {
+    connect: vi.fn(),
+    disconnect: vi.fn(),
+    dispose: vi.fn(),
+    decay: 1.5,
+  }; }),
 }));
 
 vi.mock('tone', () => ({
@@ -53,7 +57,6 @@ vi.mock('tone', () => ({
 
 // Import after mocking
 import { EffectsChain } from '../../core/effects-chain.ts';
-import { DEFAULT_EFFECTS } from '../../core/types.ts';
 
 describe('EffectsChain', () => {
   let chain: EffectsChain;

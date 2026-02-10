@@ -4,132 +4,140 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
-// Mock Tone.js before importing AdditiveSynthEngine
-const mockOscillator = vi.fn(() => ({
-  connect: vi.fn(),
-  disconnect: vi.fn(),
-  dispose: vi.fn(),
-  start: vi.fn(),
-  stop: vi.fn(),
-  frequency: { value: 440 },
-}));
+// vi.hoisted runs before vi.mock, avoiding TDZ issues with const declarations
+const {
+  mockOscillator,
+  mockGain,
+  mockAmplitudeEnvelope,
+  mockDistortion,
+  mockFeedbackDelay,
+  mockChorus,
+  mockReverb,
+  mockLFO,
+  mockNoise,
+  mockFilter,
+  mockPanner,
+  mockSequence,
+  mockTransport,
+  mockAnalyserNode,
+  mockContext,
+} = vi.hoisted(() => {
+  const mockAnalyserNode = {
+    fftSize: 2048,
+    smoothingTimeConstant: 0.8,
+    minDecibels: -90,
+    maxDecibels: -10,
+    frequencyBinCount: 1024,
+    getByteFrequencyData: vi.fn(),
+    getByteTimeDomainData: vi.fn(),
+  };
 
-const mockGain = vi.fn(() => ({
-  connect: vi.fn(),
-  disconnect: vi.fn(),
-  dispose: vi.fn(),
-  gain: { value: 1 },
-}));
-
-const mockAmplitudeEnvelope = vi.fn(() => ({
-  connect: vi.fn(),
-  disconnect: vi.fn(),
-  dispose: vi.fn(),
-  triggerAttack: vi.fn(),
-  triggerRelease: vi.fn(),
-  triggerAttackRelease: vi.fn(),
-  attack: 0.01,
-  decay: 0.2,
-  sustain: 0.7,
-  release: 0.3,
-}));
-
-const mockDistortion = vi.fn(() => ({
-  connect: vi.fn(),
-  disconnect: vi.fn(),
-  dispose: vi.fn(),
-  distortion: 0,
-}));
-
-const mockFeedbackDelay = vi.fn(() => ({
-  connect: vi.fn(),
-  disconnect: vi.fn(),
-  dispose: vi.fn(),
-  delayTime: { value: 0.25 },
-  feedback: { value: 0.3 },
-}));
-
-const mockChorus = vi.fn(() => ({
-  connect: vi.fn(),
-  disconnect: vi.fn(),
-  dispose: vi.fn(),
-  start: vi.fn().mockReturnThis(),
-  frequency: { value: 1.5 },
-  depth: 0.5,
-}));
-
-const mockReverb = vi.fn(() => ({
-  connect: vi.fn(),
-  disconnect: vi.fn(),
-  dispose: vi.fn(),
-  decay: 1.5,
-}));
-
-const mockLFO = vi.fn(() => ({
-  connect: vi.fn().mockReturnThis(),
-  disconnect: vi.fn(),
-  dispose: vi.fn(),
-  start: vi.fn(),
-  stop: vi.fn(),
-  frequency: { value: 1 },
-  min: -1,
-  max: 1,
-  type: 'sine',
-}));
-
-const mockNoise = vi.fn(() => ({
-  connect: vi.fn().mockReturnThis(),
-  disconnect: vi.fn(),
-  dispose: vi.fn(),
-  start: vi.fn(),
-  stop: vi.fn(),
-  type: 'white',
-}));
-
-const mockFilter = vi.fn(() => ({
-  connect: vi.fn().mockReturnThis(),
-  disconnect: vi.fn(),
-  dispose: vi.fn(),
-  frequency: { value: 1000 },
-  Q: { value: 1 },
-  type: 'lowpass',
-}));
-
-const mockPanner = vi.fn(() => ({
-  connect: vi.fn().mockReturnThis(),
-  disconnect: vi.fn(),
-  dispose: vi.fn(),
-  pan: { value: 0 },
-}));
-
-const mockSequence = vi.fn(() => ({
-  start: vi.fn(),
-  stop: vi.fn(),
-  dispose: vi.fn(),
-}));
-
-const mockTransport = {
-  bpm: { value: 120 },
-  start: vi.fn(),
-  stop: vi.fn(),
-  pause: vi.fn(),
-  cancel: vi.fn(),
-};
-
-const mockAnalyserNode = {
-  fftSize: 2048,
-  smoothingTimeConstant: 0.8,
-  minDecibels: -90,
-  maxDecibels: -10,
-  frequencyBinCount: 1024,
-  getByteFrequencyData: vi.fn(),
-  getByteTimeDomainData: vi.fn(),
-};
-
-const mockContext = {
-  createAnalyser: vi.fn(() => mockAnalyserNode),
-  now: vi.fn(() => 0),
-};
+  return {
+    mockOscillator: vi.fn(function() { return {
+      connect: vi.fn(),
+      disconnect: vi.fn(),
+      dispose: vi.fn(),
+      start: vi.fn(),
+      stop: vi.fn(),
+      frequency: { value: 440 },
+    }; }),
+    mockGain: vi.fn(function() { return {
+      connect: vi.fn(),
+      disconnect: vi.fn(),
+      dispose: vi.fn(),
+      gain: { value: 1 },
+    }; }),
+    mockAmplitudeEnvelope: vi.fn(function() { return {
+      connect: vi.fn(),
+      disconnect: vi.fn(),
+      dispose: vi.fn(),
+      triggerAttack: vi.fn(),
+      triggerRelease: vi.fn(),
+      triggerAttackRelease: vi.fn(),
+      attack: 0.01,
+      decay: 0.2,
+      sustain: 0.7,
+      release: 0.3,
+    }; }),
+    mockDistortion: vi.fn(function() { return {
+      connect: vi.fn(),
+      disconnect: vi.fn(),
+      dispose: vi.fn(),
+      distortion: 0,
+    }; }),
+    mockFeedbackDelay: vi.fn(function() { return {
+      connect: vi.fn(),
+      disconnect: vi.fn(),
+      dispose: vi.fn(),
+      delayTime: { value: 0.25 },
+      feedback: { value: 0.3 },
+    }; }),
+    mockChorus: vi.fn(function() { return {
+      connect: vi.fn(),
+      disconnect: vi.fn(),
+      dispose: vi.fn(),
+      start: vi.fn().mockReturnThis(),
+      frequency: { value: 1.5 },
+      depth: 0.5,
+    }; }),
+    mockReverb: vi.fn(function() { return {
+      connect: vi.fn(),
+      disconnect: vi.fn(),
+      dispose: vi.fn(),
+      decay: 1.5,
+    }; }),
+    mockLFO: vi.fn(function() { return {
+      connect: vi.fn().mockReturnThis(),
+      disconnect: vi.fn(),
+      dispose: vi.fn(),
+      start: vi.fn(),
+      stop: vi.fn(),
+      frequency: { value: 1 },
+      min: -1,
+      max: 1,
+      type: 'sine',
+    }; }),
+    mockNoise: vi.fn(function() { return {
+      connect: vi.fn().mockReturnThis(),
+      disconnect: vi.fn(),
+      dispose: vi.fn(),
+      start: vi.fn(),
+      stop: vi.fn(),
+      type: 'white',
+    }; }),
+    mockFilter: vi.fn(function() { return {
+      connect: vi.fn().mockReturnThis(),
+      disconnect: vi.fn(),
+      dispose: vi.fn(),
+      frequency: { value: 1000 },
+      Q: { value: 1 },
+      type: 'lowpass',
+    }; }),
+    mockPanner: vi.fn(function() { return {
+      connect: vi.fn().mockReturnThis(),
+      disconnect: vi.fn(),
+      dispose: vi.fn(),
+      pan: { value: 0 },
+    }; }),
+    mockSequence: vi.fn(function() { return {
+      start: vi.fn(),
+      stop: vi.fn(),
+      dispose: vi.fn(),
+    }; }),
+    mockTransport: {
+      bpm: { value: 120 },
+      start: vi.fn(),
+      stop: vi.fn(),
+      pause: vi.fn(),
+      cancel: vi.fn(),
+    },
+    mockAnalyserNode,
+    mockContext: {
+      createAnalyser: vi.fn(() => mockAnalyserNode),
+      now: vi.fn(() => 0),
+    },
+  };
+});
 
 vi.mock('tone', () => ({
   Oscillator: mockOscillator,
