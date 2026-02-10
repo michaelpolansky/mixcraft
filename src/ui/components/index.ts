@@ -66,3 +66,23 @@ export { NoiseControls } from './NoiseControls.tsx';
 export type { NoiseControlsProps } from './NoiseControls.tsx';
 export { VelocityControls } from './VelocityControls.tsx';
 export type { VelocityControlsProps } from './VelocityControls.tsx';
+
+// Challenge shared components
+export { Section as ChallengeSection } from './challenge/Section.tsx';
+export { ChallengeHeader } from './challenge/ChallengeHeader.tsx';
+export { HintsPanel } from './challenge/HintsPanel.tsx';
+export { SubmitButton } from './challenge/SubmitButton.tsx';
+export { ScoreBreakdownRow } from './challenge/ScoreBreakdownRow.tsx';
+export { ChallengeResultsModal } from './challenge/ChallengeResultsModal.tsx';
+
+// Synth stage components
+export { EnvelopeStage } from './synth/EnvelopeStage.tsx';
+export { OscillatorStage } from './synth/OscillatorStage.tsx';
+export { Osc2Stage } from './synth/Osc2Stage.tsx';
+export { SubOscStage } from './synth/SubOscStage.tsx';
+export { NoiseStage } from './synth/NoiseStage.tsx';
+export { MixerStage } from './synth/MixerStage.tsx';
+export { FilterStage } from './synth/FilterStage.tsx';
+export { LFOStage } from './synth/LFOStage.tsx';
+export { OutputStage } from './synth/OutputStage.tsx';
+export { BottomControlStrip } from './synth/BottomControlStrip.tsx';

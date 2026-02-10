@@ -7,21 +7,9 @@ import { useEffect, useCallback, useState } from 'react';
 import { useSynthStore } from '../stores/synth-store.ts';
 import { useModulatedValues } from '../hooks/useModulatedValues.ts';
 import {
-  Knob,
-  WaveformSelector,
-  FilterTypeSelector,
   SpectrumAnalyzer,
-  PianoKeyboard,
   InfoPanel,
   Sequencer,
-  RecordingControl,
-  OscillatorVisualizer,
-  FilterVisualizer,
-  EnvelopeVisualizer,
-  LFOVisualizer,
-  NoiseVisualizer,
-  XYPad,
-  Oscilloscope,
   Tooltip,
   ModMatrixGrid,
   ArpeggiatorControls,
@@ -29,73 +17,47 @@ import {
   EffectMini,
   AudioInitScreen,
   SynthHeader,
-  GlideControls,
   VelocityControls,
+  OscillatorStage,
+  Osc2Stage,
+  SubOscStage,
+  NoiseStage,
+  MixerStage,
+  FilterStage,
+  EnvelopeStage,
+  LFOStage,
+  OutputStage,
+  BottomControlStrip,
 } from '../components/index.ts';
-import type { LFOSyncDivision, LFOWaveform, NoiseType, OscillatorType, ModSource, ModDestination } from '../../core/types.ts';
 import { SUBTRACTIVE_PRESETS } from '../../data/presets/subtractive-presets.ts';
 import { InfoPanelProvider, useInfoPanel } from '../context/InfoPanelContext.tsx';
-import { PARAM_RANGES } from '../../core/types.ts';
 import { useToast } from '../components/Toast.tsx';
+import { formatPercent } from '../utils/formatters.ts';
 
 // Stage colors following signal flow
 const COLORS = {
   oscillator: '#3b82f6',
-  subOsc: '#1e40af',   // Darker blue for sub oscillator
-  osc2: '#60a5fa',     // Lighter blue for oscillator 2
-  noise: '#64748b',    // Slate gray for noise
+  subOsc: '#1e40af',
+  osc2: '#60a5fa',
+  noise: '#64748b',
   filter: '#06b6d4',
   amp: '#22c55e',
   filterEnv: '#eab308',
   lfo: '#ef4444',
-  lfo2: '#dc2626',     // Deeper red for LFO 2
-  velocity: '#fb923c', // Orange for velocity
-  pitchEnv: '#f472b6', // Pink for pitch envelope
-  modEnv: '#a855f7',   // Purple for mod envelope
-  pwmEnv: '#14b8a6',   // Teal for PWM envelope
+  lfo2: '#dc2626',
+  velocity: '#fb923c',
+  pitchEnv: '#f472b6',
+  modEnv: '#a855f7',
+  pwmEnv: '#14b8a6',
   effects: '#8b5cf6',
   output: '#f97316',
-  modMatrix: '#a855f7', // Purple for mod matrix
-  arp: '#f59e0b',       // Amber for arpeggiator
+  modMatrix: '#a855f7',
+  arp: '#f59e0b',
 };
 
-// Standardized sizes for consistent UI
 const SIZES = {
-  // Visualizer dimensions
-  visualizer: {
-    width: 200,
-    height: 100,        // Standard height for all visualizers
-    compactHeight: 60,  // Height for stacked/secondary visualizers
-  },
-  // Gaps between elements
-  gap: {
-    xs: 4,   // Minimal spacing
-    sm: 8,   // Between sliders in a group
-    md: 12,  // Between sections within a module
-    lg: 16,  // Between modules
-  },
-  // Standard margins
-  margin: {
-    section: 12,  // Top margin for new sections
-  },
+  gap: { lg: 16, md: 12 },
 };
-
-// LFO sync division options
-const LFO_SYNC_DIVISIONS = [
-  { value: '1n' as const, label: '1' },
-  { value: '2n' as const, label: '1/2' },
-  { value: '4n' as const, label: '1/4' },
-  { value: '8n' as const, label: '1/8' },
-  { value: '16n' as const, label: '1/16' },
-  { value: '32n' as const, label: '1/32' },
-];
-
-// Noise type options
-const NOISE_TYPES = [
-  { value: 'white' as const, label: 'White' },
-  { value: 'pink' as const, label: 'Pink' },
-  { value: 'brown' as const, label: 'Brown' },
-];
 
 export function SynthView() {
   const {
@@ -107,148 +69,51 @@ export function SynthView() {
     isPlaying,
     initEngine,
     startAudio,
-    playNote,
-    stopNote,
-    setOscillatorType,
-    setOctave,
-    setDetune,
-    setFilterType,
-    setFilterCutoff,
-    setFilterResonance,
-    setAmplitudeAttack,
-    setAmplitudeDecay,
-    setAmplitudeSustain,
-    setAmplitudeRelease,
-    setFilterEnvelopeAttack,
-    setFilterEnvelopeDecay,
-    setFilterEnvelopeSustain,
-    setFilterEnvelopeRelease,
-    setFilterEnvelopeAmount,
-    setLFORate,
-    setLFODepth,
-    setLFOWaveform,
-    setPitchEnvelopeAttack,
-    setPitchEnvelopeDecay,
-    setPitchEnvelopeSustain,
-    setPitchEnvelopeRelease,
-    setPitchEnvelopeAmount,
-    setModEnvelopeAttack,
-    setModEnvelopeDecay,
-    setModEnvelopeSustain,
-    setModEnvelopeRelease,
-    setModEnvelopeAmount,
-    setPWMEnvelopeAttack,
-    setPWMEnvelopeDecay,
-    setPWMEnvelopeSustain,
-    setPWMEnvelopeRelease,
-    setPWMEnvelopeAmount,
-    setDistortionAmount,
-    setDistortionMix,
-    setDelayTime,
-    setDelayFeedback,
-    setDelayMix,
-    setReverbDecay,
-    setReverbMix,
-    setChorusRate,
-    setChorusDepth,
-    setChorusMix,
-    setVolume,
-    resetToDefaults,
-    currentPreset,
-    loadPreset,
-    setNoiseType,
-    setNoiseLevel,
-    setGlideEnabled,
-    setGlideTime,
-    setLFOSync,
-    setLFOSyncDivision,
-    setPulseWidth,
-    setFilterKeyTracking,
-    setVelocityAmpAmount,
-    setVelocityFilterAmount,
+    setOscillatorType, setOctave, setDetune, setPulseWidth,
+    setFilterType, setFilterCutoff, setFilterResonance, setFilterKeyTracking,
+    setAmplitudeAttack, setAmplitudeDecay, setAmplitudeSustain, setAmplitudeRelease,
+    setFilterEnvelopeAttack, setFilterEnvelopeDecay, setFilterEnvelopeSustain, setFilterEnvelopeRelease, setFilterEnvelopeAmount,
+    setLFORate, setLFODepth, setLFOWaveform, setLFOSync, setLFOSyncDivision,
+    setPitchEnvelopeAttack, setPitchEnvelopeDecay, setPitchEnvelopeSustain, setPitchEnvelopeRelease, setPitchEnvelopeAmount,
+    setModEnvelopeAttack, setModEnvelopeDecay, setModEnvelopeSustain, setModEnvelopeRelease, setModEnvelopeAmount,
+    setPWMEnvelopeAttack, setPWMEnvelopeDecay, setPWMEnvelopeSustain, setPWMEnvelopeRelease, setPWMEnvelopeAmount,
+    setDistortionAmount, setDistortionMix,
+    setDelayTime, setDelayFeedback, setDelayMix,
+    setReverbDecay, setReverbMix,
+    setChorusRate, setChorusDepth, setChorusMix,
+    setVolume, resetToDefaults, currentPreset, loadPreset,
+    setNoiseType, setNoiseLevel,
+    setGlideEnabled, setGlideTime,
+    setVelocityAmpAmount, setVelocityFilterAmount,
     randomize,
-    setSubOscEnabled,
-    setSubOscType,
-    setSubOscOctave,
-    setSubOscLevel,
-    setOsc2Enabled,
-    setOsc2Type,
-    setOsc2Octave,
-    setOsc2Detune,
-    setOsc2Level,
-    setUnisonEnabled,
-    setUnisonVoices,
-    setUnisonDetune,
-    setUnisonSpread,
-    setArpEnabled,
-    setArpPattern,
-    setArpDivision,
-    setArpOctaves,
-    setArpGate,
-    arpNoteOn,
-    arpNoteOff,
+    setSubOscType, setSubOscOctave, setSubOscLevel,
+    setOsc2Type, setOsc2Octave, setOsc2Detune, setOsc2Level,
+    setUnisonEnabled, setUnisonVoices, setUnisonDetune, setUnisonSpread,
+    setArpEnabled, setArpPattern, setArpDivision, setArpOctaves, setArpGate,
+    arpNoteOn, arpNoteOff,
     setOsc1Level,
-    setLfo2Rate,
-    setLfo2Depth,
-    setLfo2Type,
-    setLfo2Enabled,
+    setLfo2Rate, setLfo2Depth, setLfo2Type, setLfo2Enabled,
     setPan,
-    setModRouteSource,
-    setModRouteDestination,
-    setModRouteAmount,
-    setModRouteEnabled,
     setMatrixAmount,
   } = useSynthStore();
 
-  // Bottom strip state: 'keys' or 'xy'
   const [bottomMode, setBottomMode] = useState<'keys' | 'xy'>('keys');
   const [bottomExpanded, setBottomExpanded] = useState(false);
-
-  // Real-time modulated values for UI display
   const modulatedValues = useModulatedValues();
 
-  // Initialize engine on mount
-  useEffect(() => {
-    initEngine();
-  }, [initEngine]);
+  useEffect(() => { initEngine(); }, [initEngine]);
 
-  // Handle audio context start
-  const handleStartAudio = useCallback(async () => {
-    await startAudio();
-  }, [startAudio]);
+  const handleStartAudio = useCallback(async () => { await startAudio(); }, [startAudio]);
 
-  // Toast notifications
   const { toast } = useToast();
-
-  // Handle preset loading with toast feedback
   const handleLoadPreset = useCallback((presetName: string) => {
     loadPreset(presetName);
     toast.success(`Loaded preset: ${presetName}`);
   }, [loadPreset, toast]);
 
-  // Arp-aware note handlers for keyboard
-  const handleNoteOn = useCallback((note: string) => {
-    arpNoteOn(note);
-  }, [arpNoteOn]);
+  const handleNoteOn = useCallback((note: string) => { arpNoteOn(note); }, [arpNoteOn]);
+  const handleNoteOff = useCallback((note: string) => { arpNoteOff(note); }, [arpNoteOff]);
 
-  const handleNoteOff = useCallback((note: string) => {
-    arpNoteOff(note);
-  }, [arpNoteOff]);
-
-  // Format helpers
-  const formatHz = (value: number) => value >= 1000 ? `${(value / 1000).toFixed(1)}k` : `${Math.round(value)}`;
-  const formatMs = (value: number) => value >= 1 ? `${value.toFixed(2)}s` : `${Math.round(value * 1000)}ms`;
-  const formatDb = (value: number) => `${value.toFixed(1)}dB`;
-  const formatPercent = (value: number) => `${Math.round(value * 100)}%`;
-
-  // XY Pad handlers - maps to Filter Cutoff (X) and Resonance (Y)
-  const xRange: [number, number] = [PARAM_RANGES.cutoff.min, PARAM_RANGES.cutoff.max];
-  const yRange: [number, number] = [PARAM_RANGES.resonance.min, PARAM_RANGES.resonance.max];
-
-  const normalizeValue = (value: number, min: number, max: number) => (value - min) / (max - min);
-  const denormalizeValue = (normalized: number, min: number, max: number) => min + normalized * (max - min);
-
-  // Not initialized - show start button
   if (!isInitialized) {
     return (
       <AudioInitScreen
@@ -272,7 +137,6 @@ export function SynthView() {
         display: 'flex',
         flexDirection: 'column',
       }}>
-        {/* Header */}
         <SynthHeader
           title="MIXCRAFT"
           subtitle="Subtractive Synthesizer"
@@ -285,15 +149,13 @@ export function SynthView() {
           helpButton={<HelpModeButton />}
         />
 
-        {/* Floating tooltip (shows when Help Mode is ON) */}
         <Tooltip accentColor="#4ade80" />
 
-        {/* Spectrum Analyzer */}
         <div style={{ padding: '12px 24px', background: '#050508' }}>
           <SpectrumAnalyzer width={window.innerWidth - 48} height={80} barCount={100} />
         </div>
 
-        {/* Signal Flow - Horizontal flex wrap with stacked modules */}
+        {/* Signal Flow */}
         <div style={{
           flex: 1,
           padding: '16px',
@@ -303,468 +165,121 @@ export function SynthView() {
           alignContent: 'flex-start',
           overflow: 'auto',
         }}>
-          {/* OSC */}
-          <StageCard title="OSC" color={COLORS.oscillator}>
-            <OscillatorVisualizer
-              waveform={params.oscillator.type}
-              octave={params.oscillator.octave}
-              detune={params.oscillator.detune}
-              width={SIZES.visualizer.width}
-              height={SIZES.visualizer.height}
-              accentColor={COLORS.oscillator}
-              compact
-            />
-            <div style={{ marginTop: SIZES.margin.section }}>
-              <WaveformSelector value={params.oscillator.type} onChange={setOscillatorType} accentColor={COLORS.oscillator} />
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm, marginTop: SIZES.margin.section }}>
-              <Knob label="Octave" value={params.oscillator.octave} min={-2} max={2} step={1} onChange={setOctave} formatValue={(v) => v >= 0 ? `+${v}` : `${v}`} paramId="oscillator.octave" />
-              <Knob label="Detune" value={params.oscillator.detune} min={-100} max={100} step={1} onChange={setDetune} formatValue={(v) => `${v} ct`} paramId="oscillator.detune" modulatedValue={modulatedValues?.pitch} />
-              {params.oscillator.type === 'square' && (
-                <Knob label="Pulse Width" value={params.oscillator.pulseWidth} min={0.1} max={0.9} step={0.01} onChange={setPulseWidth} formatValue={(v) => `${Math.round(v * 100)}%`} paramId="oscillator.pulseWidth" />
-              )}
-            </div>
-            {/* Glide controls */}
-            <GlideControls
-              enabled={params.glide.enabled}
-              time={params.glide.time}
-              onEnabledChange={setGlideEnabled}
-              onTimeChange={setGlideTime}
-              color={COLORS.oscillator}
-            />
+          <OscillatorStage
+            params={params}
+            setOscillatorType={setOscillatorType}
+            setOctave={setOctave}
+            setDetune={setDetune}
+            setPulseWidth={setPulseWidth}
+            setGlideEnabled={setGlideEnabled}
+            setGlideTime={setGlideTime}
+            setUnisonEnabled={setUnisonEnabled}
+            setUnisonVoices={setUnisonVoices}
+            setUnisonDetune={setUnisonDetune}
+            setUnisonSpread={setUnisonSpread}
+            modulatedPitch={modulatedValues?.pitch}
+            color={COLORS.oscillator}
+          />
 
-            {/* Unison controls */}
-            <div style={{ marginTop: SIZES.gap.md, paddingTop: SIZES.gap.md, borderTop: '1px solid #222' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: SIZES.gap.sm, marginBottom: params.unison.enabled ? SIZES.gap.sm : 0 }}>
-                <button
-                  onClick={() => setUnisonEnabled(!params.unison.enabled)}
-                  style={{
-                    padding: '4px 8px',
-                    background: params.unison.enabled ? COLORS.oscillator : '#222',
-                    border: `1px solid ${params.unison.enabled ? COLORS.oscillator : '#444'}`,
-                    borderRadius: '4px',
-                    color: params.unison.enabled ? '#fff' : '#888',
-                    fontSize: '10px',
-                    cursor: 'pointer',
-                    fontWeight: 600,
-                  }}
-                >
-                  UNISON
-                </button>
-              </div>
-              {params.unison.enabled && (
-                <div style={{ display: 'flex', gap: SIZES.gap.sm, alignItems: 'flex-start' }}>
-                  {/* Voice count selector */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    <span style={{ fontSize: '9px', color: '#888', textTransform: 'uppercase' }}>
-                      Voices
-                    </span>
-                    <div style={{ display: 'flex', gap: 2 }}>
-                      {([2, 4, 8] as const).map((v) => (
-                        <button
-                          key={v}
-                          onClick={() => setUnisonVoices(v)}
-                          style={{
-                            width: 24,
-                            height: 24,
-                            fontSize: '10px',
-                            fontWeight: 600,
-                            background: params.unison.voices === v ? COLORS.oscillator : '#333',
-                            border: 'none',
-                            borderRadius: '4px',
-                            color: '#fff',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          {v}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <Knob
-                    label="Detune"
-                    value={params.unison.detune}
-                    min={0}
-                    max={100}
-                    step={1}
-                    onChange={setUnisonDetune}
-                    formatValue={(v) => `${v} ct`}
-                    paramId="unison.detune"
-                  />
-                  <Knob
-                    label="Spread"
-                    value={params.unison.spread}
-                    min={0}
-                    max={1}
-                    step={0.01}
-                    onChange={setUnisonSpread}
-                    formatValue={(v) => `${Math.round(v * 100)}%`}
-                    paramId="unison.spread"
-                  />
-                </div>
-              )}
-            </div>
-          </StageCard>
+          <EnvelopeStage
+            title="PITCH ENV" color={COLORS.pitchEnv} paramPrefix="pitchEnv"
+            attack={params.pitchEnvelope.attack} decay={params.pitchEnvelope.decay}
+            sustain={params.pitchEnvelope.sustain} release={params.pitchEnvelope.release}
+            onAttackChange={setPitchEnvelopeAttack} onDecayChange={setPitchEnvelopeDecay}
+            onSustainChange={setPitchEnvelopeSustain} onReleaseChange={setPitchEnvelopeRelease}
+            amount={params.pitchEnvelope.amount} onAmountChange={setPitchEnvelopeAmount}
+            amountMin={-24} amountMax={24} amountStep={1}
+            amountFormat={(v) => `${v > 0 ? '+' : ''}${v} st`}
+            isTriggered={isPlaying}
+          />
 
-          {/* PITCH ENV */}
-          <StageCard title="PITCH ENV" color={COLORS.pitchEnv}>
-            <EnvelopeVisualizer
-              attack={params.pitchEnvelope.attack}
-              decay={params.pitchEnvelope.decay}
-              sustain={params.pitchEnvelope.sustain}
-              release={params.pitchEnvelope.release}
-              onAttackChange={setPitchEnvelopeAttack}
-              onDecayChange={setPitchEnvelopeDecay}
-              onSustainChange={setPitchEnvelopeSustain}
-              onReleaseChange={setPitchEnvelopeRelease}
-              width={SIZES.visualizer.width}
-              height={SIZES.visualizer.compactHeight}
-              accentColor={COLORS.pitchEnv}
-              compact
-              isTriggered={isPlaying}
-            />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm, marginTop: SIZES.gap.sm }}>
-              <Knob label="Attack" value={params.pitchEnvelope.attack} min={0.001} max={2} step={0.001} onChange={setPitchEnvelopeAttack} formatValue={formatMs} paramId="pitchEnv.attack" />
-              <Knob label="Decay" value={params.pitchEnvelope.decay} min={0.001} max={2} step={0.001} onChange={setPitchEnvelopeDecay} formatValue={formatMs} paramId="pitchEnv.decay" />
-              <Knob label="Sustain" value={params.pitchEnvelope.sustain} min={0} max={1} step={0.01} onChange={setPitchEnvelopeSustain} formatValue={formatPercent} paramId="pitchEnv.sustain" />
-              <Knob label="Release" value={params.pitchEnvelope.release} min={0.001} max={4} step={0.001} onChange={setPitchEnvelopeRelease} formatValue={formatMs} paramId="pitchEnv.release" />
-              <Knob label="Amount" value={params.pitchEnvelope.amount} min={-24} max={24} step={1} onChange={setPitchEnvelopeAmount} formatValue={(v) => `${v > 0 ? '+' : ''}${v} st`} paramId="pitchEnv.amount" />
-            </div>
-          </StageCard>
+          <EnvelopeStage
+            title="PWM ENV" color={COLORS.pwmEnv} paramPrefix="pwmEnv"
+            attack={params.pwmEnvelope.attack} decay={params.pwmEnvelope.decay}
+            sustain={params.pwmEnvelope.sustain} release={params.pwmEnvelope.release}
+            onAttackChange={setPWMEnvelopeAttack} onDecayChange={setPWMEnvelopeDecay}
+            onSustainChange={setPWMEnvelopeSustain} onReleaseChange={setPWMEnvelopeRelease}
+            amount={params.pwmEnvelope.amount} onAmountChange={setPWMEnvelopeAmount}
+            amountFormat={formatPercent}
+            isTriggered={isPlaying}
+          />
 
-          {/* PWM ENV */}
-          <StageCard title="PWM ENV" color={COLORS.pwmEnv}>
-            <EnvelopeVisualizer
-              attack={params.pwmEnvelope.attack}
-              decay={params.pwmEnvelope.decay}
-              sustain={params.pwmEnvelope.sustain}
-              release={params.pwmEnvelope.release}
-              onAttackChange={setPWMEnvelopeAttack}
-              onDecayChange={setPWMEnvelopeDecay}
-              onSustainChange={setPWMEnvelopeSustain}
-              onReleaseChange={setPWMEnvelopeRelease}
-              width={SIZES.visualizer.width}
-              height={SIZES.visualizer.compactHeight}
-              accentColor={COLORS.pwmEnv}
-              compact
-              isTriggered={isPlaying}
-            />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm, marginTop: SIZES.gap.sm }}>
-              <Knob label="Attack" value={params.pwmEnvelope.attack} min={0.001} max={2} step={0.001} onChange={setPWMEnvelopeAttack} formatValue={formatMs} paramId="pwmEnv.attack" />
-              <Knob label="Decay" value={params.pwmEnvelope.decay} min={0.001} max={2} step={0.001} onChange={setPWMEnvelopeDecay} formatValue={formatMs} paramId="pwmEnv.decay" />
-              <Knob label="Sustain" value={params.pwmEnvelope.sustain} min={0} max={1} step={0.01} onChange={setPWMEnvelopeSustain} formatValue={formatPercent} paramId="pwmEnv.sustain" />
-              <Knob label="Release" value={params.pwmEnvelope.release} min={0.001} max={4} step={0.001} onChange={setPWMEnvelopeRelease} formatValue={formatMs} paramId="pwmEnv.release" />
-              <Knob label="Amount" value={params.pwmEnvelope.amount} min={0} max={1} step={0.01} onChange={setPWMEnvelopeAmount} formatValue={formatPercent} paramId="pwmEnv.amount" />
-            </div>
-          </StageCard>
+          <Osc2Stage
+            type={params.oscillator2.type} octave={params.oscillator2.octave} detune={params.oscillator2.detune}
+            onTypeChange={setOsc2Type} onOctaveChange={setOsc2Octave} onDetuneChange={setOsc2Detune}
+            color={COLORS.osc2}
+          />
 
-          {/* OSC 2 Stage */}
-          <StageCard title="OSC 2" color={COLORS.osc2}>
-            <OscillatorVisualizer
-              waveform={params.oscillator2.type}
-              octave={params.oscillator2.octave}
-              detune={params.oscillator2.detune}
-              width={SIZES.visualizer.width}
-              height={SIZES.visualizer.height}
-              accentColor={COLORS.osc2}
-              compact
-            />
-            <div style={{ marginTop: SIZES.margin.section }}>
-              <WaveformSelector
-                value={params.oscillator2.type}
-                onChange={(t: OscillatorType) => setOsc2Type(t)}
-                accentColor={COLORS.osc2}
-              />
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm, marginTop: SIZES.margin.section }}>
-              <Knob
-                label="Octave"
-                value={params.oscillator2.octave}
-                min={-2}
-                max={2}
-                step={1}
-                onChange={setOsc2Octave}
-                formatValue={(v) => v >= 0 ? `+${v}` : `${v}`}
-                paramId="osc2.octave"
-              />
-              <Knob
-                label="Detune"
-                value={params.oscillator2.detune}
-                min={-100}
-                max={100}
-                step={1}
-                onChange={setOsc2Detune}
-                formatValue={(v) => `${v} ct`}
-                paramId="osc2.detune"
-              />
-            </div>
-          </StageCard>
+          <SubOscStage
+            type={params.subOsc.type} octave={params.subOsc.octave as -1 | -2}
+            onTypeChange={setSubOscType} onOctaveChange={setSubOscOctave}
+            color={COLORS.subOsc}
+          />
 
-          {/* SUB OSC Stage */}
-          <StageCard title="SUB OSC" color={COLORS.subOsc}>
-            <OscillatorVisualizer
-              waveform={params.subOsc.type}
-              octave={params.subOsc.octave}
-              detune={0}
-              width={SIZES.visualizer.width}
-              height={SIZES.visualizer.height}
-              accentColor={COLORS.subOsc}
-              compact
-            />
-            <div style={{ marginTop: SIZES.margin.section }}>
-              <WaveformSelector
-                value={params.subOsc.type}
-                onChange={setSubOscType}
-                accentColor={COLORS.subOsc}
-                size="compact"
-                waveforms={['sine', 'square']}
-              />
-            </div>
-            <div style={{ display: 'flex', gap: SIZES.gap.xs, marginTop: SIZES.gap.sm }}>
-              {([-1, -2] as const).map((oct) => (
-                <button
-                  key={oct}
-                  onClick={() => setSubOscOctave(oct)}
-                  style={{
-                    padding: '6px 12px',
-                    background: params.subOsc.octave === oct ? COLORS.subOsc : '#1a1a1a',
-                    border: `1px solid ${params.subOsc.octave === oct ? COLORS.subOsc : '#333'}`,
-                    borderRadius: '4px',
-                    color: params.subOsc.octave === oct ? '#fff' : '#888',
-                    fontSize: '10px',
-                    cursor: 'pointer',
-                    fontWeight: 500,
-                  }}
-                >
-                  {oct} Oct
-                </button>
-              ))}
-            </div>
-          </StageCard>
+          <NoiseStage
+            type={params.noise.type} level={params.noise.level}
+            onTypeChange={setNoiseType}
+            color={COLORS.noise}
+          />
 
-          {/* NOISE Stage */}
-          <StageCard title="NOISE" color={COLORS.noise}>
-            <NoiseVisualizer
-              noiseType={params.noise.type}
-              level={params.noise.level}
-              width={SIZES.visualizer.width}
-              height={SIZES.visualizer.height}
-              accentColor={COLORS.noise}
-              compact
-            />
+          <MixerStage
+            osc1Level={params.oscillator.level} osc2Level={params.oscillator2.level}
+            subOscLevel={params.subOsc.level} noiseLevel={params.noise.level}
+            onOsc1LevelChange={setOsc1Level} onOsc2LevelChange={setOsc2Level}
+            onSubOscLevelChange={setSubOscLevel} onNoiseLevelChange={setNoiseLevel}
+            modulatedOsc2Mix={modulatedValues?.osc2Mix}
+          />
 
-            <div style={{ display: 'flex', gap: SIZES.gap.xs, marginTop: SIZES.margin.section }}>
-              {NOISE_TYPES.map((nt) => (
-                <button
-                  key={nt.value}
-                  onClick={() => setNoiseType(nt.value)}
-                  style={{
-                    padding: '6px 10px',
-                    background: params.noise.type === nt.value ? COLORS.noise : '#1a1a1a',
-                    border: `1px solid ${params.noise.type === nt.value ? COLORS.noise : '#333'}`,
-                    borderRadius: '4px',
-                    color: params.noise.type === nt.value ? '#fff' : '#888',
-                    fontSize: '10px',
-                    cursor: 'pointer',
-                    fontWeight: 500,
-                  }}
-                >
-                  {nt.label}
-                </button>
-              ))}
-            </div>
-          </StageCard>
+          <FilterStage
+            type={params.filter.type} cutoff={params.filter.cutoff}
+            resonance={params.filter.resonance} keyTracking={params.filter.keyTracking}
+            onTypeChange={setFilterType} onCutoffChange={setFilterCutoff}
+            onResonanceChange={setFilterResonance} onKeyTrackingChange={setFilterKeyTracking}
+            modulatedCutoff={modulatedValues?.filterCutoff}
+            color={COLORS.filter}
+          />
 
-          {/* MIXER Stage */}
-          <StageCard title="MIXER" color="#10b981">
-            <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm }}>
-              <Knob label="OSC 1" value={params.oscillator.level} min={0} max={1} step={0.01} onChange={setOsc1Level} formatValue={(v) => `${Math.round(v * 100)}%`} paramId="oscillator.level" />
-              <Knob label="OSC 2" value={params.oscillator2.level} min={0} max={1} step={0.01} onChange={setOsc2Level} formatValue={(v) => `${Math.round(v * 100)}%`} paramId="osc2.level" modulatedValue={modulatedValues?.osc2Mix} />
-              <Knob label="Sub Osc" value={params.subOsc.level} min={0} max={1} step={0.01} onChange={setSubOscLevel} formatValue={(v) => `${Math.round(v * 100)}%`} paramId="subOsc.level" />
-              <Knob label="Noise" value={params.noise.level} min={0} max={1} step={0.01} onChange={setNoiseLevel} formatValue={(v) => `${Math.round(v * 100)}%`} paramId="noise.level" />
-            </div>
-          </StageCard>
+          <EnvelopeStage
+            title="FILTER ENV" color={COLORS.filterEnv} paramPrefix="filterEnv"
+            attack={params.filterEnvelope.attack} decay={params.filterEnvelope.decay}
+            sustain={params.filterEnvelope.sustain} release={params.filterEnvelope.release}
+            onAttackChange={setFilterEnvelopeAttack} onDecayChange={setFilterEnvelopeDecay}
+            onSustainChange={setFilterEnvelopeSustain} onReleaseChange={setFilterEnvelopeRelease}
+            amount={params.filterEnvelope.amount} onAmountChange={setFilterEnvelopeAmount}
+            amountMin={-4} amountMax={4} amountStep={0.1}
+            amountFormat={(v) => `${v > 0 ? '+' : ''}${v.toFixed(1)}`}
+            isTriggered={isPlaying}
+          />
 
-          {/* FILTER */}
-          <StageCard title="FILTER" color={COLORS.filter}>
-            <FilterVisualizer
-              filterType={params.filter.type}
-              cutoff={params.filter.cutoff}
-              resonance={params.filter.resonance}
-              onCutoffChange={setFilterCutoff}
-              onResonanceChange={setFilterResonance}
-              width={SIZES.visualizer.width}
-              height={SIZES.visualizer.height}
-              accentColor={COLORS.filter}
-              compact
-              modulatedCutoff={modulatedValues?.filterCutoff}
-            />
-            <div style={{ marginTop: SIZES.margin.section }}>
-              <FilterTypeSelector value={params.filter.type} onChange={setFilterType} />
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm, marginTop: SIZES.margin.section }}>
-              <Knob label="Cutoff" value={params.filter.cutoff} min={PARAM_RANGES.cutoff.min} max={PARAM_RANGES.cutoff.max} step={1} onChange={setFilterCutoff} formatValue={formatHz} logarithmic paramId="filter.cutoff" modulatedValue={modulatedValues?.filterCutoff} />
-              <Knob label="Resonance" value={params.filter.resonance} min={0} max={20} step={0.1} onChange={setFilterResonance} formatValue={(v) => v.toFixed(1)} paramId="filter.resonance" />
-              <Knob label="Key Tracking" value={params.filter.keyTracking} min={0} max={1} step={0.01} onChange={setFilterKeyTracking} formatValue={formatPercent} paramId="filter.keyTracking" />
-            </div>
-          </StageCard>
+          <EnvelopeStage
+            title="AMP" color={COLORS.amp} paramPrefix="amp"
+            attack={params.amplitudeEnvelope.attack} decay={params.amplitudeEnvelope.decay}
+            sustain={params.amplitudeEnvelope.sustain} release={params.amplitudeEnvelope.release}
+            onAttackChange={setAmplitudeAttack} onDecayChange={setAmplitudeDecay}
+            onSustainChange={setAmplitudeSustain} onReleaseChange={setAmplitudeRelease}
+            isTriggered={isPlaying}
+            visualizerHeight={100}
+          />
 
-          {/* FILTER ENV */}
-          <StageCard title="FILTER ENV" color={COLORS.filterEnv}>
-            <EnvelopeVisualizer
-              attack={params.filterEnvelope.attack}
-              decay={params.filterEnvelope.decay}
-              sustain={params.filterEnvelope.sustain}
-              release={params.filterEnvelope.release}
-              onAttackChange={setFilterEnvelopeAttack}
-              onDecayChange={setFilterEnvelopeDecay}
-              onSustainChange={setFilterEnvelopeSustain}
-              onReleaseChange={setFilterEnvelopeRelease}
-              width={SIZES.visualizer.width}
-              height={SIZES.visualizer.compactHeight}
-              accentColor={COLORS.filterEnv}
-              compact
-              isTriggered={isPlaying}
-            />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm, marginTop: SIZES.gap.sm }}>
-              <Knob label="Attack" value={params.filterEnvelope.attack} min={0.001} max={2} step={0.001} onChange={setFilterEnvelopeAttack} formatValue={formatMs} paramId="filterEnv.attack" />
-              <Knob label="Decay" value={params.filterEnvelope.decay} min={0.001} max={2} step={0.001} onChange={setFilterEnvelopeDecay} formatValue={formatMs} paramId="filterEnv.decay" />
-              <Knob label="Sustain" value={params.filterEnvelope.sustain} min={0} max={1} step={0.01} onChange={setFilterEnvelopeSustain} formatValue={formatPercent} paramId="filterEnv.sustain" />
-              <Knob label="Release" value={params.filterEnvelope.release} min={0.001} max={4} step={0.001} onChange={setFilterEnvelopeRelease} formatValue={formatMs} paramId="filterEnv.release" />
-              <Knob label="Amount" value={params.filterEnvelope.amount} min={-4} max={4} step={0.1} onChange={setFilterEnvelopeAmount} formatValue={(v) => `${v > 0 ? '+' : ''}${v.toFixed(1)}`} paramId="filterEnv.amount" />
-            </div>
-          </StageCard>
+          <LFOStage
+            title="LFO" color={COLORS.lfo} paramPrefix="lfo"
+            waveform={params.lfo.waveform} rate={params.lfo.rate} depth={params.lfo.depth}
+            onWaveformChange={setLFOWaveform} onRateChange={setLFORate} onDepthChange={setLFODepth}
+            modulatedRate={modulatedValues?.lfo1Rate}
+            sync={params.lfo.sync} syncDivision={params.lfo.syncDivision}
+            onSyncChange={setLFOSync} onSyncDivisionChange={setLFOSyncDivision}
+          />
 
-          {/* AMP Stage */}
-          <StageCard title="AMP" color={COLORS.amp}>
-            <EnvelopeVisualizer
-              attack={params.amplitudeEnvelope.attack}
-              decay={params.amplitudeEnvelope.decay}
-              sustain={params.amplitudeEnvelope.sustain}
-              release={params.amplitudeEnvelope.release}
-              onAttackChange={setAmplitudeAttack}
-              onDecayChange={setAmplitudeDecay}
-              onSustainChange={setAmplitudeSustain}
-              onReleaseChange={setAmplitudeRelease}
-              width={SIZES.visualizer.width}
-              height={SIZES.visualizer.height}
-              accentColor={COLORS.amp}
-              compact
-              isTriggered={isPlaying}
-            />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm, marginTop: SIZES.margin.section }}>
-              <Knob label="Attack" value={params.amplitudeEnvelope.attack} min={0.001} max={2} step={0.001} onChange={setAmplitudeAttack} formatValue={formatMs} paramId="amp.attack" />
-              <Knob label="Decay" value={params.amplitudeEnvelope.decay} min={0.001} max={2} step={0.001} onChange={setAmplitudeDecay} formatValue={formatMs} paramId="amp.decay" />
-              <Knob label="Sustain" value={params.amplitudeEnvelope.sustain} min={0} max={1} step={0.01} onChange={setAmplitudeSustain} formatValue={formatPercent} paramId="amp.sustain" />
-              <Knob label="Release" value={params.amplitudeEnvelope.release} min={0.001} max={4} step={0.001} onChange={setAmplitudeRelease} formatValue={formatMs} paramId="amp.release" />
-            </div>
-          </StageCard>
+          <LFOStage
+            title="LFO 2" color={COLORS.lfo2} paramPrefix="lfo2"
+            waveform={params.lfo2.type} rate={params.lfo2.rate} depth={params.lfo2.depth}
+            onWaveformChange={setLfo2Type} onRateChange={setLfo2Rate} onDepthChange={setLfo2Depth}
+            modulatedRate={modulatedValues?.lfo2Rate}
+            enabled={params.lfo2.enabled} onEnabledChange={setLfo2Enabled}
+            visualizerDepthOverride={params.lfo2.enabled ? params.lfo2.depth : 0}
+          />
 
-          {/* LFO Stage */}
-          <StageCard title="LFO" color={COLORS.lfo}>
-            <LFOVisualizer
-              waveform={params.lfo.waveform}
-              rate={params.lfo.rate}
-              depth={params.lfo.depth}
-              width={SIZES.visualizer.width}
-              height={SIZES.visualizer.height}
-              accentColor={COLORS.lfo}
-              compact
-            />
-            <div style={{ marginTop: SIZES.margin.section }}>
-              <WaveformSelector value={params.lfo.waveform} onChange={setLFOWaveform} accentColor={COLORS.lfo} />
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm, marginTop: SIZES.margin.section }}>
-              {/* Show Rate knob when not synced, Division selector when synced */}
-              {!params.lfo.sync ? (
-                <Knob label="Rate" value={params.lfo.rate} min={0.1} max={20} step={0.1} onChange={setLFORate} formatValue={(v) => `${v.toFixed(1)} Hz`} paramId="lfo.rate" modulatedValue={modulatedValues?.lfo1Rate} />
-              ) : (
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '10px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Division</span>
-                  <select
-                    value={params.lfo.syncDivision}
-                    onChange={(e) => setLFOSyncDivision(e.target.value as LFOSyncDivision)}
-                    style={{
-                      padding: '4px 8px',
-                      background: '#1a1a1a',
-                      border: `1px solid ${COLORS.lfo}`,
-                      borderRadius: '4px',
-                      color: '#fff',
-                      fontSize: '11px',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {LFO_SYNC_DIVISIONS.map((d) => (
-                      <option key={d.value} value={d.value}>{d.label}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-              <Knob label="Depth" value={params.lfo.depth} min={0} max={1} step={0.01} onChange={setLFODepth} formatValue={formatPercent} paramId="lfo.depth" />
-            </div>
-            {/* Sync toggle */}
-            <div style={{ marginTop: SIZES.margin.section, display: 'flex', justifyContent: 'center' }}>
-              <button
-                onClick={() => setLFOSync(!params.lfo.sync)}
-                style={{
-                  padding: '4px 12px',
-                  background: params.lfo.sync ? COLORS.lfo : '#222',
-                  border: `1px solid ${params.lfo.sync ? COLORS.lfo : '#444'}`,
-                  borderRadius: '4px',
-                  color: params.lfo.sync ? '#fff' : '#888',
-                  fontSize: '10px',
-                  cursor: 'pointer',
-                  fontWeight: 600,
-                }}
-              >
-                {params.lfo.sync ? 'SYNC ON' : 'SYNC OFF'}
-              </button>
-            </div>
-          </StageCard>
-
-          {/* LFO 2 Stage */}
-          <StageCard title="LFO 2" color={COLORS.lfo2}>
-            <LFOVisualizer
-              waveform={params.lfo2.type}
-              rate={params.lfo2.rate}
-              depth={params.lfo2.enabled ? params.lfo2.depth : 0}
-              width={SIZES.visualizer.width}
-              height={SIZES.visualizer.height}
-              accentColor={COLORS.lfo2}
-              compact
-            />
-            <div style={{ marginTop: SIZES.margin.section }}>
-              <WaveformSelector
-                value={params.lfo2.type}
-                onChange={(waveform: LFOWaveform) => setLfo2Type(waveform)}
-                accentColor={COLORS.lfo2}
-              />
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm, marginTop: SIZES.margin.section }}>
-              <Knob label="Rate" value={params.lfo2.rate} min={0.1} max={20} step={0.1} onChange={setLfo2Rate} formatValue={(v) => `${v.toFixed(1)} Hz`} paramId="lfo2.rate" modulatedValue={modulatedValues?.lfo2Rate} />
-              <Knob label="Depth" value={params.lfo2.depth} min={0} max={1} step={0.01} onChange={setLfo2Depth} formatValue={formatPercent} paramId="lfo2.depth" />
-            </div>
-            {/* Enable toggle */}
-            <div style={{ marginTop: SIZES.margin.section, display: 'flex', justifyContent: 'center' }}>
-              <button
-                onClick={() => setLfo2Enabled(!params.lfo2.enabled)}
-                style={{
-                  padding: '4px 12px',
-                  background: params.lfo2.enabled ? COLORS.lfo2 : '#222',
-                  border: `1px solid ${params.lfo2.enabled ? COLORS.lfo2 : '#444'}`,
-                  borderRadius: '4px',
-                  color: params.lfo2.enabled ? '#fff' : '#888',
-                  fontSize: '10px',
-                  cursor: 'pointer',
-                  fontWeight: 600,
-                }}
-              >
-                {params.lfo2.enabled ? 'ON' : 'OFF'}
-              </button>
-            </div>
-          </StageCard>
-
-          {/* ARP Stage */}
+          {/* ARP */}
           <StageCard title="ARP" color={COLORS.arp}>
             <ArpeggiatorControls
               enabled={params.arpeggiator.enabled}
@@ -781,7 +296,7 @@ export function SynthView() {
             />
           </StageCard>
 
-          {/* VELOCITY Stage */}
+          {/* VELOCITY */}
           <StageCard title="VELOCITY" color={COLORS.velocity}>
             <VelocityControls
               ampAmount={params.velocity.ampAmount}
@@ -793,43 +308,27 @@ export function SynthView() {
             />
           </StageCard>
 
-          {/* FX Stage */}
+          {/* FX */}
           <StageCard title="FX" color={COLORS.effects} wide>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: SIZES.gap.md }}>
-              <EffectMini
-                name="DIST"
-                color="#ef4444"
-                knobs={[
-                  { label: 'Amt', value: params.effects.distortion.amount, onChange: setDistortionAmount, max: 1 },
-                  { label: 'Mix', value: params.effects.distortion.mix, onChange: setDistortionMix, max: 1 },
-                ]}
-              />
-              <EffectMini
-                name="DELAY"
-                color="#3b82f6"
-                knobs={[
-                  { label: 'Time', value: params.effects.delay.time, onChange: setDelayTime, max: 1 },
-                  { label: 'FB', value: params.effects.delay.feedback, onChange: setDelayFeedback, max: 0.9 },
-                  { label: 'Mix', value: params.effects.delay.mix, onChange: setDelayMix, max: 1 },
-                ]}
-              />
-              <EffectMini
-                name="REVERB"
-                color="#8b5cf6"
-                knobs={[
-                  { label: 'Decay', value: params.effects.reverb.decay, onChange: setReverbDecay, max: 10 },
-                  { label: 'Mix', value: params.effects.reverb.mix, onChange: setReverbMix, max: 1 },
-                ]}
-              />
-              <EffectMini
-                name="CHORUS"
-                color="#06b6d4"
-                knobs={[
-                  { label: 'Rate', value: params.effects.chorus.rate, onChange: setChorusRate, max: 10 },
-                  { label: 'Depth', value: params.effects.chorus.depth, onChange: setChorusDepth, max: 1 },
-                  { label: 'Mix', value: params.effects.chorus.mix, onChange: setChorusMix, max: 1 },
-                ]}
-              />
+              <EffectMini name="DIST" color="#ef4444" knobs={[
+                { label: 'Amt', value: params.effects.distortion.amount, onChange: setDistortionAmount, max: 1 },
+                { label: 'Mix', value: params.effects.distortion.mix, onChange: setDistortionMix, max: 1 },
+              ]} />
+              <EffectMini name="DELAY" color="#3b82f6" knobs={[
+                { label: 'Time', value: params.effects.delay.time, onChange: setDelayTime, max: 1 },
+                { label: 'FB', value: params.effects.delay.feedback, onChange: setDelayFeedback, max: 0.9 },
+                { label: 'Mix', value: params.effects.delay.mix, onChange: setDelayMix, max: 1 },
+              ]} />
+              <EffectMini name="REVERB" color="#8b5cf6" knobs={[
+                { label: 'Decay', value: params.effects.reverb.decay, onChange: setReverbDecay, max: 10 },
+                { label: 'Mix', value: params.effects.reverb.mix, onChange: setReverbMix, max: 1 },
+              ]} />
+              <EffectMini name="CHORUS" color="#06b6d4" knobs={[
+                { label: 'Rate', value: params.effects.chorus.rate, onChange: setChorusRate, max: 10 },
+                { label: 'Depth', value: params.effects.chorus.depth, onChange: setChorusDepth, max: 1 },
+                { label: 'Mix', value: params.effects.chorus.mix, onChange: setChorusMix, max: 1 },
+              ]} />
             </div>
           </StageCard>
 
@@ -842,80 +341,25 @@ export function SynthView() {
             />
           </StageCard>
 
-          {/* MOD ENV */}
-          <StageCard title="MOD ENV" color={COLORS.modEnv}>
-            <EnvelopeVisualizer
-              attack={params.modEnvelope.attack}
-              decay={params.modEnvelope.decay}
-              sustain={params.modEnvelope.sustain}
-              release={params.modEnvelope.release}
-              onAttackChange={setModEnvelopeAttack}
-              onDecayChange={setModEnvelopeDecay}
-              onSustainChange={setModEnvelopeSustain}
-              onReleaseChange={setModEnvelopeRelease}
-              width={SIZES.visualizer.width}
-              height={SIZES.visualizer.compactHeight}
-              accentColor={COLORS.modEnv}
-              compact
-              isTriggered={isPlaying}
-            />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm, marginTop: SIZES.gap.sm }}>
-              <Knob label="Attack" value={params.modEnvelope.attack} min={0.001} max={2} step={0.001} onChange={setModEnvelopeAttack} formatValue={formatMs} paramId="modEnv.attack" />
-              <Knob label="Decay" value={params.modEnvelope.decay} min={0.001} max={2} step={0.001} onChange={setModEnvelopeDecay} formatValue={formatMs} paramId="modEnv.decay" />
-              <Knob label="Sustain" value={params.modEnvelope.sustain} min={0} max={1} step={0.01} onChange={setModEnvelopeSustain} formatValue={formatPercent} paramId="modEnv.sustain" />
-              <Knob label="Release" value={params.modEnvelope.release} min={0.001} max={4} step={0.001} onChange={setModEnvelopeRelease} formatValue={formatMs} paramId="modEnv.release" />
-              <Knob label="Amount" value={params.modEnvelope.amount} min={0} max={1} step={0.01} onChange={setModEnvelopeAmount} formatValue={formatPercent} paramId="modEnv.amount" />
-            </div>
-          </StageCard>
+          <EnvelopeStage
+            title="MOD ENV" color={COLORS.modEnv} paramPrefix="modEnv"
+            attack={params.modEnvelope.attack} decay={params.modEnvelope.decay}
+            sustain={params.modEnvelope.sustain} release={params.modEnvelope.release}
+            onAttackChange={setModEnvelopeAttack} onDecayChange={setModEnvelopeDecay}
+            onSustainChange={setModEnvelopeSustain} onReleaseChange={setModEnvelopeRelease}
+            amount={params.modEnvelope.amount} onAmountChange={setModEnvelopeAmount}
+            amountFormat={formatPercent}
+            isTriggered={isPlaying}
+          />
 
-          {/* OUTPUT Stage */}
-          <StageCard title="OUTPUT" color={COLORS.output}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.md }}>
-              {/* Oscilloscope */}
-              <Oscilloscope
-                getAnalyser={() => engine?.getAnalyser() ?? null}
-                width={SIZES.visualizer.width}
-                height={SIZES.visualizer.compactHeight}
-                accentColor={COLORS.output}
-              />
-              {/* Volume and Pan sliders */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: SIZES.gap.sm }}>
-                <Knob
-                  label="Volume"
-                  value={params.volume}
-                  min={-40}
-                  max={0}
-                  step={0.5}
-                  onChange={setVolume}
-                  formatValue={formatDb}
-                  paramId="volume"
-                  modulatedValue={modulatedValues?.amplitude !== undefined
-                    ? 20 * Math.log10(Math.max(0.0001, modulatedValues.amplitude))
-                    : undefined}
-                />
-                <Knob
-                  label="Pan"
-                  value={params.pan}
-                  min={-1}
-                  max={1}
-                  step={0.01}
-                  onChange={setPan}
-                  formatValue={(v) => {
-                    if (Math.abs(v) < 0.05) return 'Center';
-                    if (v < 0) return `${Math.round(Math.abs(v) * 100)}% L`;
-                    return `${Math.round(v * 100)}% R`;
-                  }}
-                  paramId="pan"
-                  modulatedValue={modulatedValues?.pan}
-                />
-              </div>
-              <RecordingControl
-                sourceNode={engine?.getOutputNode() ?? null}
-                accentColor={COLORS.output}
-                compact
-              />
-            </div>
-          </StageCard>
+          <OutputStage
+            volume={params.volume} pan={params.pan}
+            onVolumeChange={setVolume} onPanChange={setPan}
+            engine={engine}
+            modulatedAmplitude={modulatedValues?.amplitude}
+            modulatedPan={modulatedValues?.pan}
+            color={COLORS.output}
+          />
         </div>
 
         {/* Sequencer */}
@@ -923,97 +367,19 @@ export function SynthView() {
           <Sequencer engine={engine} accentColor="#4ade80" />
         </div>
 
-        {/* Bottom Control Strip */}
-        <div style={{
-          borderTop: '1px solid #1a1a1a',
-          background: '#0d0d12',
-        }}>
-          {/* Tabs */}
-          <div style={{ display: 'flex', borderBottom: '1px solid #1a1a1a' }}>
-            <button
-              onClick={() => setBottomMode('xy')}
-              style={{
-                padding: '8px 16px',
-                background: bottomMode === 'xy' ? '#1a1a1a' : 'transparent',
-                border: 'none',
-                borderBottom: bottomMode === 'xy' ? `2px solid ${COLORS.filter}` : '2px solid transparent',
-                color: bottomMode === 'xy' ? '#fff' : '#666',
-                cursor: 'pointer',
-                fontSize: '11px',
-                fontWeight: 600,
-              }}
-            >
-              XY
-            </button>
-            <button
-              onClick={() => setBottomMode('keys')}
-              style={{
-                padding: '8px 16px',
-                background: bottomMode === 'keys' ? '#1a1a1a' : 'transparent',
-                border: 'none',
-                borderBottom: bottomMode === 'keys' ? `2px solid #4ade80` : '2px solid transparent',
-                color: bottomMode === 'keys' ? '#fff' : '#666',
-                cursor: 'pointer',
-                fontSize: '11px',
-                fontWeight: 600,
-              }}
-            >
-              KEYS
-            </button>
-            <div style={{ flex: 1 }} />
-            <button
-              onClick={() => setBottomExpanded(!bottomExpanded)}
-              style={{
-                padding: '8px 16px',
-                background: 'transparent',
-                border: 'none',
-                color: '#666',
-                cursor: 'pointer',
-                fontSize: '11px',
-              }}
-            >
-              {bottomExpanded ? '▼' : '▲'}
-            </button>
-          </div>
-
-          {/* Content */}
-          <div
-            style={{
-              height: bottomExpanded ? '140px' : '50px',
-              transition: 'height 0.2s ease',
-              overflow: 'hidden',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '8px 24px',
-            }}
-            onClick={() => !bottomExpanded && setBottomExpanded(true)}
-          >
-            {bottomMode === 'keys' ? (
-              <PianoKeyboard
-                onNoteOn={handleNoteOn}
-                onNoteOff={handleNoteOff}
-                octave={4}
-                octaves={bottomExpanded ? 3 : 1}
-              />
-            ) : (
-              <XYPad
-                xValue={normalizeValue(params.filter.cutoff, xRange[0], xRange[1])}
-                yValue={normalizeValue(params.filter.resonance, yRange[0], yRange[1])}
-                xLabel="Cutoff"
-                yLabel="Resonance"
-                xRange={xRange}
-                yRange={yRange}
-                onXChange={(v) => setFilterCutoff(denormalizeValue(v, xRange[0], xRange[1]))}
-                onYChange={(v) => setFilterResonance(denormalizeValue(v, yRange[0], yRange[1]))}
-                size={bottomExpanded ? 120 : 40}
-                accentColor={COLORS.filter}
-                formatXValue={formatHz}
-                formatYValue={(v) => v.toFixed(1)}
-              />
-            )}
-          </div>
-        </div>
+        <BottomControlStrip
+          mode={bottomMode}
+          expanded={bottomExpanded}
+          onModeChange={setBottomMode}
+          onExpandedChange={setBottomExpanded}
+          onNoteOn={handleNoteOn}
+          onNoteOff={handleNoteOff}
+          filterCutoff={params.filter.cutoff}
+          filterResonance={params.filter.resonance}
+          onFilterCutoffChange={setFilterCutoff}
+          onFilterResonanceChange={setFilterResonance}
+          filterColor={COLORS.filter}
+        />
 
         <InfoPanel />
       </div>
@@ -1041,7 +407,7 @@ function HelpModeButton() {
         fontWeight: 600,
         display: 'flex',
         alignItems: 'center',
-        gap: SIZES.gap.xs,
+        gap: 4,
       }}
       title={helpMode ? 'Disable help tooltips' : 'Enable help tooltips'}
     >
@@ -1050,4 +416,3 @@ function HelpModeButton() {
     </button>
   );
 }
-
