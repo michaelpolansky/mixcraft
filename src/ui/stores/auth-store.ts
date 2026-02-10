@@ -8,7 +8,7 @@ import { create } from 'zustand';
 import type { User, Session } from '@supabase/supabase-js';
 import { getSupabaseClient } from '../../core/supabase.ts';
 import { mergeProgress, getAllLocalProgress, writeProgressToStores } from '../../core/progress-sync.ts';
-import { trpc } from '../api/trpc.ts';
+import { getTRPC } from '../api/trpc.ts';
 import type { ChallengeProgress } from '../../core/types.ts';
 
 type SyncStatus = 'idle' | 'syncing' | 'synced' | 'error';
@@ -46,52 +46,53 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
   pendingPasswordReset: false,
 
   initialize: () => {
-    const supabase = getSupabaseClient();
-    if (!supabase) {
-      set({ isLoading: false, isInitialized: true });
-      return;
-    }
-
-    // Listen for auth state changes
-    supabase.auth.onAuthStateChange((event, session) => {
-      const prevUser = get().user;
-      set({
-        user: session?.user ?? null,
-        session,
-        isLoading: false,
-        isInitialized: true,
-      });
-
-      // Handle password recovery link click
-      if (event === 'PASSWORD_RECOVERY') {
-        set({ pendingPasswordReset: true, showAuthModal: true });
+    getSupabaseClient().then(supabase => {
+      if (!supabase) {
+        set({ isLoading: false, isInitialized: true });
         return;
       }
 
-      // Sync on sign-in (when transitioning from no user to user)
-      if (session?.user && !prevUser) {
-        get().syncProgress();
-      }
-    });
+      // Listen for auth state changes
+      supabase.auth.onAuthStateChange((event, session) => {
+        const prevUser = get().user;
+        set({
+          user: session?.user ?? null,
+          session,
+          isLoading: false,
+          isInitialized: true,
+        });
 
-    // Check existing session
-    supabase.auth.getSession().then(({ data }) => {
-      set({
-        user: data.session?.user ?? null,
-        session: data.session,
-        isLoading: false,
-        isInitialized: true,
+        // Handle password recovery link click
+        if (event === 'PASSWORD_RECOVERY') {
+          set({ pendingPasswordReset: true, showAuthModal: true });
+          return;
+        }
+
+        // Sync on sign-in (when transitioning from no user to user)
+        if (session?.user && !prevUser) {
+          get().syncProgress();
+        }
       });
 
-      // Sync if already signed in
-      if (data.session?.user) {
-        get().syncProgress();
-      }
+      // Check existing session
+      supabase.auth.getSession().then(({ data }) => {
+        set({
+          user: data.session?.user ?? null,
+          session: data.session,
+          isLoading: false,
+          isInitialized: true,
+        });
+
+        // Sync if already signed in
+        if (data.session?.user) {
+          get().syncProgress();
+        }
+      });
     });
   },
 
   signIn: async (email, password) => {
-    const supabase = getSupabaseClient();
+    const supabase = await getSupabaseClient();
     if (!supabase) return { error: 'Auth not configured' };
 
     set({ isLoading: true });
@@ -108,7 +109,7 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
   },
 
   signUp: async (email, password) => {
-    const supabase = getSupabaseClient();
+    const supabase = await getSupabaseClient();
     if (!supabase) return { error: 'Auth not configured' };
 
     set({ isLoading: true });
@@ -125,7 +126,7 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
   },
 
   signOut: async () => {
-    const supabase = getSupabaseClient();
+    const supabase = await getSupabaseClient();
     if (!supabase) return;
 
     await supabase.auth.signOut();
@@ -137,7 +138,7 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
   },
 
   resetPassword: async (email) => {
-    const supabase = getSupabaseClient();
+    const supabase = await getSupabaseClient();
     if (!supabase) return { error: 'Auth not configured' };
 
     set({ isLoading: true });
@@ -156,7 +157,7 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
   },
 
   updatePassword: async (newPassword) => {
-    const supabase = getSupabaseClient();
+    const supabase = await getSupabaseClient();
     if (!supabase) return { error: 'Auth not configured' };
 
     set({ isLoading: true });
@@ -180,6 +181,8 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
     set({ syncStatus: 'syncing' });
 
     try {
+      const trpc = await getTRPC();
+
       // 1. Pull cloud progress
       const cloudProgress = await trpc.progress.getAll.query();
 
@@ -210,8 +213,10 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
     if (!session) return;
 
     // Fire-and-forget — don't block the UI
-    trpc.progress.upsert.mutate(progress).catch((error) => {
-      console.error(`Failed to push progress for ${id}:`, error);
+    getTRPC().then(trpc => {
+      trpc.progress.upsert.mutate(progress).catch((error) => {
+        console.error(`Failed to push progress for ${id}:`, error);
+      });
     });
   },
 }));

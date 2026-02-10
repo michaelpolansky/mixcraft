@@ -19,7 +19,7 @@ import {
 import { Section } from '../components/challenge/Section.tsx';
 import { cn } from '../utils/cn.ts';
 import { evaluateDrumSequencingChallenge } from '../../core/drum-sequencing-evaluation.ts';
-import { trpc } from '../api/trpc.ts';
+import { getTRPC } from '../api/trpc.ts';
 import { useAIFeedback } from '../hooks/useAIFeedback.ts';
 import {
   DrumSequencerEngine,
@@ -388,7 +388,7 @@ function DrumSequencingResults({
   hasNext?: boolean;
 }) {
   const { feedback: aiFeedback, loading: aiFeedbackLoading } = useAIFeedback(
-    () => trpc.feedback.generateDrumSequencing.mutate({
+    async () => { const trpc = await getTRPC(); return trpc.feedback.generateDrumSequencing.mutate({
       result,
       patternSummary: {
         tempo: pattern.tempo,
@@ -406,7 +406,7 @@ function DrumSequencingResults({
         evaluationFocus: challenge.evaluationFocus,
       },
       attemptNumber,
-    }),
+    }); },
     [result, challenge, pattern, attemptNumber]
   );
 

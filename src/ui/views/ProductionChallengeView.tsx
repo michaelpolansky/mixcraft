@@ -11,7 +11,7 @@ import { Section } from '../components/challenge/Section.tsx';
 import { cn } from '../utils/cn.ts';
 import { createProductionSource, ProductionSource, type LayerState } from '../../core/production-source.ts';
 import { evaluateProductionChallenge } from '../../core/production-evaluation.ts';
-import { trpc } from '../api/trpc.ts';
+import { getTRPC } from '../api/trpc.ts';
 import type { ProductionChallenge, ProductionGoalTarget, ProductionReferenceTarget } from '../../core/types.ts';
 
 type PlaybackMode = 'yours' | 'reference';
@@ -447,6 +447,7 @@ function ProductionResultsModal({
           ? (challenge.target as ProductionGoalTarget).description
           : undefined;
 
+        const trpc = await getTRPC();
         const response = await trpc.feedback.generateProduction.mutate({
           result,
           layerStates: layerStates.map((s) => ({

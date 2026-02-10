@@ -12,7 +12,7 @@ import { cn } from '../utils/cn.ts';
 import { createAudioSource, type AudioSource } from '../../core/audio-source.ts';
 import { MixingEQ, MixingCompressor, MixingReverb } from '../../core/mixing-effects.ts';
 import { evaluateMixingChallenge } from '../../core/mixing-evaluation.ts';
-import { trpc } from '../api/trpc.ts';
+import { getTRPC } from '../api/trpc.ts';
 import type { MixingChallenge, MixingTrack, EQParams } from '../../core/types.ts';
 
 interface MultiTrackMixingViewProps {
@@ -172,6 +172,7 @@ export function MultiTrackMixingView({
     async function fetchFeedback() {
       if (!lastResult) return;
       try {
+        const trpc = await getTRPC();
         const response = await trpc.feedback.generateMixing.mutate({
           result: lastResult,
           trackParams: Object.fromEntries(

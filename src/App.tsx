@@ -113,15 +113,21 @@ function AppContent() {
   }
 
   // Challenge views
-  if (nav.view === 'challenge' && nav.currentChallenge) {
+  if (nav.view === 'challenge') {
+    if (!nav.currentChallenge) return <LoadingFallback />;
     return (
       <Suspense fallback={<LoadingFallback />}>
-        <ChallengeView onExit={nav.handleExitChallenge} />
+        <ChallengeView
+          onExit={nav.handleExitChallenge}
+          onNext={nav.handleNextSDChallenge}
+          hasNext={nav.hasNextSDChallenge}
+        />
       </Suspense>
     );
   }
 
-  if (nav.view === 'mixing-challenge' && nav.currentMixingChallenge) {
+  if (nav.view === 'mixing-challenge') {
+    if (!nav.currentMixingChallenge) return <LoadingFallback />;
     const hasNext = nav.hasNextMixingChallenge;
     const isMultiTrack = !!nav.currentMixingChallenge.tracks && nav.currentMixingChallenge.tracks.length > 0;
     return (
@@ -145,7 +151,8 @@ function AppContent() {
     );
   }
 
-  if (nav.view === 'production-challenge' && nav.currentProductionChallenge) {
+  if (nav.view === 'production-challenge') {
+    if (!nav.currentProductionChallenge) return <LoadingFallback />;
     const hasNext = nav.hasNextProductionChallenge;
     return (
       <Suspense fallback={<LoadingFallback />}>
@@ -159,7 +166,8 @@ function AppContent() {
     );
   }
 
-  if (nav.view === 'sampling-challenge' && nav.currentSamplingChallenge) {
+  if (nav.view === 'sampling-challenge') {
+    if (!nav.currentSamplingChallenge) return <LoadingFallback />;
     const hasNext = nav.hasNextSamplingChallenge;
     return (
       <Suspense fallback={<LoadingFallback />}>
@@ -173,7 +181,8 @@ function AppContent() {
     );
   }
 
-  if (nav.view === 'drum-sequencer-challenge' && nav.currentDrumSequencingChallenge) {
+  if (nav.view === 'drum-sequencer-challenge') {
+    if (!nav.currentDrumSequencingChallenge) return <LoadingFallback />;
     const hasNext = nav.hasNextDrumSequencingChallenge;
     return (
       <Suspense fallback={<LoadingFallback />}>

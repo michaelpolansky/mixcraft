@@ -20,7 +20,7 @@ import { Section } from '../components/challenge/Section.tsx';
 import { InfoPanelProvider } from '../context/InfoPanelContext.tsx';
 import { cn } from '../utils/cn.ts';
 import { evaluateSamplingChallenge } from '../../core/sampling-evaluation.ts';
-import { trpc } from '../api/trpc.ts';
+import { getTRPC } from '../api/trpc.ts';
 import { useAIFeedback } from '../hooks/useAIFeedback.ts';
 import { formatDb, formatPercent } from '../utils/formatters.ts';
 import type { SamplingChallenge } from '../../core/types.ts';
@@ -343,7 +343,7 @@ function SamplingResults({
   hasNext?: boolean;
 }) {
   const { feedback: aiFeedback, loading: aiFeedbackLoading } = useAIFeedback(
-    () => trpc.feedback.generateSampling.mutate({
+    async () => { const trpc = await getTRPC(); return trpc.feedback.generateSampling.mutate({
       result,
       playerParams: {
         pitch: playerParams.pitch,
@@ -363,7 +363,7 @@ function SamplingResults({
         challengeType: challenge.challengeType,
       },
       attemptNumber,
-    }),
+    }); },
     [result, challenge, playerParams, attemptNumber]
   );
 

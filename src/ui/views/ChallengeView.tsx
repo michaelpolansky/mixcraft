@@ -40,14 +40,15 @@ import { FMSynthEngine, createFMSynthEngine } from '../../core/fm-synth-engine.t
 import { AdditiveSynthEngine, createAdditiveSynthEngine } from '../../core/additive-synth-engine.ts';
 import { captureAndAnalyze, initMeyda } from '../../core/sound-analysis.ts';
 import { compareSounds, compareFMParams, compareAdditiveParams } from '../../core/sound-comparison.ts';
-import { getNextChallenge } from '../../data/challenges/index.ts';
 import { formatHz, formatMs, formatPercent, formatDb } from '../utils/formatters.ts';
 
 interface ChallengeViewProps {
   onExit: () => void;
+  onNext: () => void;
+  hasNext: boolean;
 }
 
-export function ChallengeView({ onExit }: ChallengeViewProps) {
+export function ChallengeView({ onExit, onNext, hasNext }: ChallengeViewProps) {
   // Synth store for player's subtractive sound
   const {
     params, engine, isInitialized,
@@ -95,7 +96,7 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
   // Challenge store
   const {
     currentChallenge, currentAttempt, hintsRevealed, isScoring, lastResult,
-    revealHint, startScoring, submitResult, nextChallenge, retry,
+    revealHint, startScoring, submitResult, retry,
   } = useChallengeStore();
 
   // Reference synths for playing target sounds
@@ -219,8 +220,6 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
       </div>
     );
   }
-
-  const hasNext = !!getNextChallenge(currentChallenge.id);
 
   const getVisualizationType = (): 'oscilloscope' | 'filter' | 'envelope' | 'lfo' | 'effects' | 'none' => {
     if (isFM || isAdditive) return 'none';
@@ -457,7 +456,7 @@ export function ChallengeView({ onExit }: ChallengeViewProps) {
           attemptNumber={currentAttempt}
           synthesisType={synthesisType}
           onRetry={retry}
-          onNext={nextChallenge}
+          onNext={onNext}
           hasNextChallenge={hasNext}
         />
       )}

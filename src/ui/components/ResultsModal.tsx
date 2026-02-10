@@ -8,7 +8,7 @@ import type { ScoreResult } from '../../core/sound-comparison.ts';
 import type { SynthParams, FMSynthParams, AdditiveSynthParams, Challenge } from '../../core/types.ts';
 import { generateSummary } from '../../core/sound-comparison.ts';
 import { ScoreBar } from './ScoreBar.tsx';
-import { trpc } from '../api/trpc.ts';
+import { getTRPC } from '../api/trpc.ts';
 
 // Confetti colors
 const CONFETTI_COLORS = ['#22c55e', '#eab308', '#3b82f6', '#ec4899', '#8b5cf6', '#f97316'];
@@ -68,6 +68,7 @@ export function ResultsModal({
 
     async function fetchFeedback() {
       try {
+        const trpc = await getTRPC();
         let response: { feedback: string };
 
         if (synthesisType === 'fm') {
