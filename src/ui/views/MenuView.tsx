@@ -28,6 +28,9 @@ interface MenuViewProps {
 // Static module definitions — converted from the `as const` module objects to arrays
 const sdModules = Object.values(modules);
 const mixFundamentalsModules = (['F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8'] as const).map(id => mixingModules[id]);
+const mixIntermediateModules = (['I1', 'I2', 'I3', 'I4', 'I5', 'I6'] as const).map(id => mixingModules[id]);
+const mixAdvancedModules = (['A1', 'A2', 'A3', 'A4', 'A5'] as const).map(id => mixingModules[id]);
+const mixMasteryModules = (['M1', 'M2', 'M3', 'M4'] as const).map(id => mixingModules[id]);
 const smModules = Object.values(samplingModules);
 const dsModules = Object.values(drumSequencingModules);
 const prodModules = Object.values(productionModules);
@@ -163,6 +166,39 @@ export function MenuView({
           title="Mixing Fundamentals"
           color="#3b82f6"
           modules={mixFundamentalsModules}
+          allChallenges={mixChallenges}
+          getModuleProgress={(moduleId) => getMixingModuleProgress(moduleId, allMixingChallenges)}
+          getChallengeProgress={mixProgress}
+          onStartChallenge={onStartMixingChallenge}
+        />
+
+        {/* Mixing Intermediate Track */}
+        <TrackSection
+          title="Mixing Intermediate"
+          color="#3b82f6"
+          modules={mixIntermediateModules}
+          allChallenges={mixChallenges}
+          getModuleProgress={(moduleId) => getMixingModuleProgress(moduleId, allMixingChallenges)}
+          getChallengeProgress={mixProgress}
+          onStartChallenge={onStartMixingChallenge}
+        />
+
+        {/* Mixing Advanced Track */}
+        <TrackSection
+          title="Mixing Advanced"
+          color="#3b82f6"
+          modules={mixAdvancedModules}
+          allChallenges={mixChallenges}
+          getModuleProgress={(moduleId) => getMixingModuleProgress(moduleId, allMixingChallenges)}
+          getChallengeProgress={mixProgress}
+          onStartChallenge={onStartMixingChallenge}
+        />
+
+        {/* Mixing Mastery Track */}
+        <TrackSection
+          title="Mixing Mastery"
+          color="#3b82f6"
+          modules={mixMasteryModules}
           allChallenges={mixChallenges}
           getModuleProgress={(moduleId) => getMixingModuleProgress(moduleId, allMixingChallenges)}
           getChallengeProgress={mixProgress}
