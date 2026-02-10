@@ -22,6 +22,7 @@ import { useProgressSync } from './ui/hooks/useProgressSync.ts';
 import { useNavigation } from './ui/hooks/useNavigation.ts';
 import { BackButton } from './ui/components/Button.tsx';
 import { ToastProvider } from './ui/components/Toast.tsx';
+import { ErrorBoundary } from './ui/components/ErrorBoundary.tsx';
 import { MenuView } from './ui/views/MenuView.tsx';
 
 function LoadingFallback() {
@@ -52,6 +53,47 @@ function LoadingFallback() {
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         <p style={{ color: '#666', fontSize: '14px' }}>Loading...</p>
       </div>
+    </div>
+  );
+}
+
+function AppErrorFallback() {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '100vh',
+        background: '#0a0a0a',
+        fontFamily: 'system-ui, -apple-system, sans-serif',
+        textAlign: 'center',
+        padding: '32px',
+      }}
+    >
+      <div style={{ fontSize: '48px', marginBottom: '16px' }}>!</div>
+      <h1 style={{ color: '#ffffff', fontSize: '24px', fontWeight: 600, margin: '0 0 8px' }}>
+        Something went wrong
+      </h1>
+      <p style={{ color: '#888888', fontSize: '14px', margin: '0 0 24px', lineHeight: 1.5 }}>
+        An unexpected error occurred. Your progress has been saved.
+      </p>
+      <button
+        onClick={() => window.location.reload()}
+        style={{
+          padding: '12px 32px',
+          fontSize: '16px',
+          background: 'linear-gradient(145deg, #22c55e, #16a34a)',
+          border: 'none',
+          borderRadius: '8px',
+          color: '#ffffff',
+          cursor: 'pointer',
+          fontWeight: 600,
+        }}
+      >
+        Reload
+      </button>
     </div>
   );
 }
@@ -116,13 +158,15 @@ function AppContent() {
   if (nav.view === 'challenge') {
     if (!nav.currentChallenge) return <LoadingFallback />;
     return (
-      <Suspense fallback={<LoadingFallback />}>
-        <ChallengeView
-          onExit={nav.handleExitChallenge}
-          onNext={nav.handleNextSDChallenge}
-          hasNext={nav.hasNextSDChallenge}
-        />
-      </Suspense>
+      <ErrorBoundary onReset={() => nav.setView('menu')}>
+        <Suspense fallback={<LoadingFallback />}>
+          <ChallengeView
+            onExit={nav.handleExitChallenge}
+            onNext={nav.handleNextSDChallenge}
+            hasNext={nav.hasNextSDChallenge}
+          />
+        </Suspense>
+      </ErrorBoundary>
     );
   }
 
@@ -131,23 +175,25 @@ function AppContent() {
     const hasNext = nav.hasNextMixingChallenge;
     const isMultiTrack = !!nav.currentMixingChallenge.tracks && nav.currentMixingChallenge.tracks.length > 0;
     return (
-      <Suspense fallback={<LoadingFallback />}>
-        {isMultiTrack ? (
-          <MultiTrackMixingView
-            challenge={nav.currentMixingChallenge}
-            onExit={nav.handleExitChallenge}
-            onNext={nav.handleNextMixingChallenge}
-            hasNext={hasNext}
-          />
-        ) : (
-          <MixingChallengeView
-            challenge={nav.currentMixingChallenge}
-            onExit={nav.handleExitChallenge}
-            onNext={nav.handleNextMixingChallenge}
-            hasNext={hasNext}
-          />
-        )}
-      </Suspense>
+      <ErrorBoundary onReset={() => nav.setView('menu')}>
+        <Suspense fallback={<LoadingFallback />}>
+          {isMultiTrack ? (
+            <MultiTrackMixingView
+              challenge={nav.currentMixingChallenge}
+              onExit={nav.handleExitChallenge}
+              onNext={nav.handleNextMixingChallenge}
+              hasNext={hasNext}
+            />
+          ) : (
+            <MixingChallengeView
+              challenge={nav.currentMixingChallenge}
+              onExit={nav.handleExitChallenge}
+              onNext={nav.handleNextMixingChallenge}
+              hasNext={hasNext}
+            />
+          )}
+        </Suspense>
+      </ErrorBoundary>
     );
   }
 
@@ -155,14 +201,16 @@ function AppContent() {
     if (!nav.currentProductionChallenge) return <LoadingFallback />;
     const hasNext = nav.hasNextProductionChallenge;
     return (
-      <Suspense fallback={<LoadingFallback />}>
-        <ProductionChallengeView
-          challenge={nav.currentProductionChallenge}
-          onExit={nav.handleExitChallenge}
-          onNext={nav.handleNextProductionChallenge}
-          hasNext={hasNext}
-        />
-      </Suspense>
+      <ErrorBoundary onReset={() => nav.setView('menu')}>
+        <Suspense fallback={<LoadingFallback />}>
+          <ProductionChallengeView
+            challenge={nav.currentProductionChallenge}
+            onExit={nav.handleExitChallenge}
+            onNext={nav.handleNextProductionChallenge}
+            hasNext={hasNext}
+          />
+        </Suspense>
+      </ErrorBoundary>
     );
   }
 
@@ -170,14 +218,16 @@ function AppContent() {
     if (!nav.currentSamplingChallenge) return <LoadingFallback />;
     const hasNext = nav.hasNextSamplingChallenge;
     return (
-      <Suspense fallback={<LoadingFallback />}>
-        <SamplerChallengeView
-          challenge={nav.currentSamplingChallenge}
-          onExit={nav.handleExitChallenge}
-          onNext={nav.handleNextSamplingChallenge}
-          hasNext={hasNext}
-        />
-      </Suspense>
+      <ErrorBoundary onReset={() => nav.setView('menu')}>
+        <Suspense fallback={<LoadingFallback />}>
+          <SamplerChallengeView
+            challenge={nav.currentSamplingChallenge}
+            onExit={nav.handleExitChallenge}
+            onNext={nav.handleNextSamplingChallenge}
+            hasNext={hasNext}
+          />
+        </Suspense>
+      </ErrorBoundary>
     );
   }
 
@@ -185,70 +235,82 @@ function AppContent() {
     if (!nav.currentDrumSequencingChallenge) return <LoadingFallback />;
     const hasNext = nav.hasNextDrumSequencingChallenge;
     return (
-      <Suspense fallback={<LoadingFallback />}>
-        <DrumSequencerChallengeView
-          challenge={nav.currentDrumSequencingChallenge}
-          onExit={nav.handleExitChallenge}
-          onNext={nav.handleNextDrumSequencingChallenge}
-          hasNext={hasNext}
-        />
-      </Suspense>
+      <ErrorBoundary onReset={() => nav.setView('menu')}>
+        <Suspense fallback={<LoadingFallback />}>
+          <DrumSequencerChallengeView
+            challenge={nav.currentDrumSequencingChallenge}
+            onExit={nav.handleExitChallenge}
+            onNext={nav.handleNextDrumSequencingChallenge}
+            hasNext={hasNext}
+          />
+        </Suspense>
+      </ErrorBoundary>
     );
   }
 
   // Sandbox views
   if (nav.view === 'sandbox') {
     return (
-      <Suspense fallback={<LoadingFallback />}>
-        <div>
-          <div style={{ position: 'fixed', top: '16px', left: '16px', zIndex: 100 }}>
-            <BackButton onClick={() => nav.setView('menu')} />
+      <ErrorBoundary onReset={() => nav.setView('menu')}>
+        <Suspense fallback={<LoadingFallback />}>
+          <div>
+            <div style={{ position: 'fixed', top: '16px', left: '16px', zIndex: 100 }}>
+              <BackButton onClick={() => nav.setView('menu')} />
+            </div>
+            <SynthView />
           </div>
-          <SynthView />
-        </div>
-      </Suspense>
+        </Suspense>
+      </ErrorBoundary>
     );
   }
 
   if (nav.view === 'fm-sandbox') {
     return (
-      <Suspense fallback={<LoadingFallback />}>
-        <div>
-          <div style={{ position: 'fixed', top: '16px', left: '16px', zIndex: 100 }}>
-            <BackButton onClick={() => nav.setView('menu')} />
+      <ErrorBoundary onReset={() => nav.setView('menu')}>
+        <Suspense fallback={<LoadingFallback />}>
+          <div>
+            <div style={{ position: 'fixed', top: '16px', left: '16px', zIndex: 100 }}>
+              <BackButton onClick={() => nav.setView('menu')} />
+            </div>
+            <FMSynthView />
           </div>
-          <FMSynthView />
-        </div>
-      </Suspense>
+        </Suspense>
+      </ErrorBoundary>
     );
   }
 
   if (nav.view === 'additive-sandbox') {
     return (
-      <Suspense fallback={<LoadingFallback />}>
-        <div>
-          <div style={{ position: 'fixed', top: '16px', left: '16px', zIndex: 100 }}>
-            <BackButton onClick={() => nav.setView('menu')} />
+      <ErrorBoundary onReset={() => nav.setView('menu')}>
+        <Suspense fallback={<LoadingFallback />}>
+          <div>
+            <div style={{ position: 'fixed', top: '16px', left: '16px', zIndex: 100 }}>
+              <BackButton onClick={() => nav.setView('menu')} />
+            </div>
+            <AdditiveSynthView />
           </div>
-          <AdditiveSynthView />
-        </div>
-      </Suspense>
+        </Suspense>
+      </ErrorBoundary>
     );
   }
 
   if (nav.view === 'sampler') {
     return (
-      <Suspense fallback={<LoadingFallback />}>
-        <SamplerView onBack={() => nav.setView('menu')} />
-      </Suspense>
+      <ErrorBoundary onReset={() => nav.setView('menu')}>
+        <Suspense fallback={<LoadingFallback />}>
+          <SamplerView onBack={() => nav.setView('menu')} />
+        </Suspense>
+      </ErrorBoundary>
     );
   }
 
   if (nav.view === 'drum-sequencer') {
     return (
-      <Suspense fallback={<LoadingFallback />}>
-        <DrumSequencerView onBack={() => nav.setView('menu')} />
-      </Suspense>
+      <ErrorBoundary onReset={() => nav.setView('menu')}>
+        <Suspense fallback={<LoadingFallback />}>
+          <DrumSequencerView onBack={() => nav.setView('menu')} />
+        </Suspense>
+      </ErrorBoundary>
     );
   }
 
@@ -268,7 +330,9 @@ function AppContent() {
 export function App() {
   return (
     <ToastProvider>
-      <AppContent />
+      <ErrorBoundary fallback={<AppErrorFallback />}>
+        <AppContent />
+      </ErrorBoundary>
     </ToastProvider>
   );
 }
