@@ -15,6 +15,11 @@ export const challenge: Challenge = {
   difficulty: 1,
   module: 'SD4',
   testNote: 'C4',
+  availableControls: {
+    filter: { cutoff: true, resonance: true },
+    lfo: { rate: true, depth: true, waveform: true },
+    output: true,
+  },
   hints: [
     'Faster LFO rates create quicker oscillations - try 4-8 Hz for warbling.',
     'A moderate depth keeps the effect musical without being overwhelming.',

@@ -15,6 +15,12 @@ export const challenge: Challenge = {
   difficulty: 2,
   module: 'SD4',
   testNote: 'C2',
+  availableControls: {
+    oscillator: { octave: true },
+    filter: { resonance: true },
+    lfo: { rate: true, depth: true, waveform: true },
+    output: true,
+  },
   hints: [
     'High resonance makes the filter "sing" as it sweeps.',
     'A medium-fast LFO rate (4-8 Hz) creates that aggressive growl.',

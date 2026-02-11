@@ -15,6 +15,11 @@ export const challenge: Challenge = {
   difficulty: 1,
   module: 'SD2',
   testNote: 'C4',
+  availableControls: {
+    oscillator: { waveform: true },
+    filter: { type: true, cutoff: true },
+    output: true,
+  },
   hints: [
     'A sawtooth wave has lots of high frequencies to work with.',
     '[[filter-types|Lowpass filters]] let low frequencies through and cut the highs.',

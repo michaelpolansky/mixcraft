@@ -15,6 +15,11 @@ export const challenge: Challenge = {
   difficulty: 2,
   module: 'SD4',
   testNote: 'C3',
+  availableControls: {
+    filter: { cutoff: true, resonance: true },
+    lfo: { rate: true, depth: true, waveform: true },
+    output: true,
+  },
   hints: [
     'A square wave LFO jumps instantly between high and low values.',
     'This creates a sharp on/off effect rather than a smooth sweep.',

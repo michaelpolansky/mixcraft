@@ -49,7 +49,7 @@ export const challenge: MixingChallenge = {
     ],
   },
   controls: {
-    eq: true,
+    eq: 'parametric',
     compressor: 'simple',
     volume: true,
   },

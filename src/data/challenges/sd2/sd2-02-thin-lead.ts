@@ -15,6 +15,11 @@ export const challenge: Challenge = {
   difficulty: 1,
   module: 'SD2',
   testNote: 'C5',
+  availableControls: {
+    oscillator: { waveform: true },
+    filter: { type: true, cutoff: true, resonance: true },
+    output: true,
+  },
   hints: [
     'A square wave has a hollow, cutting quality.',
     'Highpass filters remove the low frequencies, leaving only the highs.',

@@ -61,7 +61,7 @@ export const challenge: MixingChallenge = {
     ],
   },
   controls: {
-    eq: true,
+    eq: 'parametric',
     compressor: false,
     volume: true,
     pan: true,

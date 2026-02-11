@@ -11,6 +11,7 @@ import type {
   MultiTrackEQTarget,
   MultiTrackGoalTarget,
   MultiTrackCondition,
+  ParametricEQParams,
 } from './types.ts';
 import type { MixingScoreResult, TrackEQParams } from '../ui/stores/mixing-store.ts';
 
@@ -541,6 +542,61 @@ function evaluateMultiTrackGoal(
   }
 
   return { conditionResults, total, feedback };
+}
+
+/**
+ * Convert parametric EQ settings to approximate 3-band (low/mid/high) gains.
+ *
+ * Uses the 3-band crossover frequencies as measurement points:
+ *   low = response at 200Hz (center of low band)
+ *   mid = response at 1000Hz (center of mid band)
+ *   high = response at 5000Hz (center of high band)
+ *
+ * Each parametric band contributes to each measurement point based on
+ * the distance in octaves between the band's center frequency and
+ * the measurement point, weighted by the band's Q (wider Q = wider influence).
+ */
+export function parametricToEffective3Band(params: ParametricEQParams): EQParams {
+  const measurePoints = [200, 1000, 5000]; // Hz: low, mid, high centers
+
+  const gains = measurePoints.map((measureFreq) => {
+    let totalGain = 0;
+
+    for (const band of params.bands) {
+      if (band.gain === 0) continue;
+
+      // Distance in octaves between band center and measurement point
+      const octaveDist = Math.abs(Math.log2(measureFreq / band.frequency));
+
+      // Bandwidth in octaves determined by Q (lower Q = wider bandwidth)
+      // For peaking filters, BW ≈ 1/Q octaves (simplified)
+      // For shelves, influence extends from the shelf frequency outward
+      let influence: number;
+
+      if (band.type === 'lowshelf') {
+        // Low shelf: full influence below frequency, decaying above
+        influence = measureFreq <= band.frequency ? 1 : Math.max(0, 1 - octaveDist * 0.5);
+      } else if (band.type === 'highshelf') {
+        // High shelf: full influence above frequency, decaying below
+        influence = measureFreq >= band.frequency ? 1 : Math.max(0, 1 - octaveDist * 0.5);
+      } else {
+        // Peaking: bell curve with width determined by Q
+        const bandwidth = 1 / band.Q;
+        influence = Math.max(0, 1 - octaveDist / bandwidth);
+      }
+
+      totalGain += band.gain * influence;
+    }
+
+    // Clamp to EQ range
+    return Math.max(-12, Math.min(12, Math.round(totalGain * 10) / 10));
+  });
+
+  return {
+    low: gains[0]!,
+    mid: gains[1]!,
+    high: gains[2]!,
+  };
 }
 
 /**

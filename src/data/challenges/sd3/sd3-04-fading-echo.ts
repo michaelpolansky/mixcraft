@@ -15,6 +15,12 @@ export const challenge: Challenge = {
   difficulty: 2,
   module: 'SD3',
   testNote: 'C4',
+  availableControls: {
+    oscillator: { waveform: true },
+    amplitudeEnvelope: { release: true },
+    filterEnvelope: { release: true, amount: true },
+    output: true,
+  },
   hints: [
     'Release controls how long the sound takes to fade after you let go.',
     'A long release (1-2 seconds) creates that lingering, ambient tail.',

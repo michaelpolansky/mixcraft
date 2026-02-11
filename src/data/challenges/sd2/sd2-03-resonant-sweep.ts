@@ -15,6 +15,12 @@ export const challenge: Challenge = {
   difficulty: 2,
   module: 'SD2',
   testNote: 'C3',
+  availableControls: {
+    oscillator: { waveform: true },
+    filter: { cutoff: true, resonance: true },
+    filterEnvelope: { amount: true },
+    output: true,
+  },
   hints: [
     'Resonance boosts the frequencies right at the filter cutoff.',
     'Higher resonance = more "squelch" and character.',

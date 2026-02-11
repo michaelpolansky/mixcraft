@@ -38,6 +38,40 @@ export interface ReverbParams {
   size: number;     // 0 to 100 (room size, maps to decay)
 }
 
+// ============================================
+// Parametric EQ Types
+// ============================================
+
+export type ParametricBandType = 'peaking' | 'lowshelf' | 'highshelf';
+
+export interface ParametricBand {
+  frequency: number;  // 20-20000 Hz (log scale)
+  gain: number;       // -12 to +12 dB
+  Q: number;          // 0.3 to 12
+  type: ParametricBandType;
+}
+
+export interface ParametricEQParams {
+  bands: [ParametricBand, ParametricBand, ParametricBand, ParametricBand];
+}
+
+export const PARAMETRIC_EQ_RANGES = {
+  frequency: { min: 20, max: 20000 },
+  gain: { min: -12, max: 12 },
+  Q: { min: 0.3, max: 12 },
+} as const;
+
+export const DEFAULT_PARAMETRIC_BANDS: [ParametricBand, ParametricBand, ParametricBand, ParametricBand] = [
+  { frequency: 200, gain: 0, Q: 0.7, type: 'lowshelf' },
+  { frequency: 800, gain: 0, Q: 1.0, type: 'peaking' },
+  { frequency: 3000, gain: 0, Q: 1.0, type: 'peaking' },
+  { frequency: 8000, gain: 0, Q: 0.7, type: 'highshelf' },
+];
+
+export const DEFAULT_PARAMETRIC_EQ: ParametricEQParams = {
+  bands: [...DEFAULT_PARAMETRIC_BANDS],
+};
+
 /**
  * EQ parameter ranges
  */
@@ -357,6 +391,98 @@ export class MixingReverb {
     this.reverb.dispose();
     this.dryGain.dispose();
     this.wetGain.dispose();
+    this.inputGain.dispose();
+    this.outputGain.dispose();
+  }
+}
+
+/**
+ * 4-Band Parametric EQ using chained Tone.BiquadFilter nodes.
+ * Band layout: Low Shelf, Peak 1, Peak 2, High Shelf
+ */
+export class MixingParametricEQ {
+  private filters: [BiquadFilterNode, BiquadFilterNode, BiquadFilterNode, BiquadFilterNode];
+  private inputGain: Tone.Gain;
+  private outputGain: Tone.Gain;
+  private _params: ParametricEQParams;
+
+  constructor() {
+    this._params = { bands: DEFAULT_PARAMETRIC_BANDS.map(b => ({ ...b })) as [ParametricBand, ParametricBand, ParametricBand, ParametricBand] };
+
+    this.inputGain = new Tone.Gain(1);
+    this.outputGain = new Tone.Gain(1);
+
+    // Create 4 BiquadFilter nodes
+    const toBiquadType = (t: ParametricBandType): BiquadFilterType =>
+      t === 'lowshelf' ? 'lowshelf' : t === 'highshelf' ? 'highshelf' : 'peaking';
+
+    this.filters = DEFAULT_PARAMETRIC_BANDS.map((band) => {
+      const ctx = Tone.getContext().rawContext;
+      const filter = ctx.createBiquadFilter();
+      filter.type = toBiquadType(band.type);
+      filter.frequency.value = band.frequency;
+      filter.gain.value = band.gain;
+      filter.Q.value = band.Q;
+      return filter;
+    }) as [BiquadFilterNode, BiquadFilterNode, BiquadFilterNode, BiquadFilterNode];
+
+    // Chain: input -> filter0 -> filter1 -> filter2 -> filter3 -> output
+    this.inputGain.connect(this.filters[0] as unknown as Tone.InputNode);
+    for (let i = 0; i < 3; i++) {
+      this.filters[i]!.connect(this.filters[i + 1]!);
+    }
+    this.filters[3]!.connect(this.outputGain.input as unknown as AudioNode);
+  }
+
+  get input(): Tone.InputNode {
+    return this.inputGain;
+  }
+
+  get output(): Tone.OutputNode {
+    return this.outputGain;
+  }
+
+  get params(): ParametricEQParams {
+    return {
+      bands: this._params.bands.map(b => ({ ...b })) as [ParametricBand, ParametricBand, ParametricBand, ParametricBand],
+    };
+  }
+
+  setBand(index: number, params: Partial<ParametricBand>): void {
+    if (index < 0 || index > 3) return;
+    const band = this._params.bands[index]!;
+    const filter = this.filters[index]!;
+
+    if (params.frequency !== undefined) {
+      band.frequency = Math.max(PARAMETRIC_EQ_RANGES.frequency.min, Math.min(PARAMETRIC_EQ_RANGES.frequency.max, params.frequency));
+      filter.frequency.value = band.frequency;
+    }
+    if (params.gain !== undefined) {
+      band.gain = Math.max(PARAMETRIC_EQ_RANGES.gain.min, Math.min(PARAMETRIC_EQ_RANGES.gain.max, params.gain));
+      filter.gain.value = band.gain;
+    }
+    if (params.Q !== undefined) {
+      band.Q = Math.max(PARAMETRIC_EQ_RANGES.Q.min, Math.min(PARAMETRIC_EQ_RANGES.Q.max, params.Q));
+      filter.Q.value = band.Q;
+    }
+  }
+
+  reset(): void {
+    DEFAULT_PARAMETRIC_BANDS.forEach((band, i) => {
+      this.setBand(i, { ...band });
+    });
+  }
+
+  connect(destination: Tone.InputNode): void {
+    this.outputGain.connect(destination);
+  }
+
+  disconnect(): void {
+    this.outputGain.disconnect();
+  }
+
+  dispose(): void {
+    this.filters.forEach(f => f.disconnect());
     this.inputGain.dispose();
     this.outputGain.dispose();
   }

@@ -15,6 +15,11 @@ export const challenge: Challenge = {
   difficulty: 1,
   module: 'SD3',
   testNote: 'C4',
+  availableControls: {
+    oscillator: { waveform: true },
+    amplitudeEnvelope: { attack: true, sustain: true },
+    output: true,
+  },
   hints: [
     '[[amplitude-envelope|Attack]] controls how long it takes for the sound to reach full volume.',
     'A long attack time (over 0.5 seconds) creates that gradual fade-in.',

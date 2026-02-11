@@ -15,6 +15,11 @@ export const challenge: Challenge = {
   difficulty: 1,
   module: 'SD3',
   testNote: 'C4',
+  availableControls: {
+    oscillator: { waveform: true },
+    amplitudeEnvelope: { attack: true, sustain: true, release: true },
+    output: true,
+  },
   hints: [
     'Organs have virtually instant attack - the sound is there immediately.',
     'Sustain at 100% means the sound stays at full volume while held.',

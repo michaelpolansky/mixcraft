@@ -15,6 +15,11 @@ export const challenge: Challenge = {
   difficulty: 2,
   module: 'SD2',
   testNote: 'C4',
+  availableControls: {
+    oscillator: { waveform: true },
+    filter: { type: true, cutoff: true, resonance: true },
+    output: true,
+  },
   hints: [
     'Bandpass filters cut BOTH the lows and the highs.',
     'The cutoff frequency becomes the center of the band that passes through.',

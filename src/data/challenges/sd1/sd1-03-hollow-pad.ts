@@ -8,6 +8,13 @@ export const challenge: Challenge = {
   difficulty: 2,
   module: 'SD1',
   testNote: 'C4',
+  availableControls: {
+    oscillator: { waveform: true },
+    amplitudeEnvelope: { attack: true },
+    filterEnvelope: { amount: true },
+    output: true,
+    visualizations: ['spectrum', 'oscilloscope', 'envelope'],
+  },
   hints: [
     'Pads typically have slow attacks - they fade in rather than hit hard.',
     'Triangle waves have a hollow, flute-like quality.',

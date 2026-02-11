@@ -6,12 +6,12 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import * as Tone from 'tone';
 import { useMixingStore } from '../stores/mixing-store.ts';
-import { EQControl, CompressorControl, SpectrumAnalyzer } from '../components/index.ts';
+import { EQControl, ParametricEQControl, CompressorControl, SpectrumAnalyzer } from '../components/index.ts';
 import { Section } from '../components/challenge/Section.tsx';
 import { cn } from '../utils/cn.ts';
 import { createAudioSource, type AudioSource } from '../../core/audio-source.ts';
-import { MixingEQ, MixingCompressor } from '../../core/mixing-effects.ts';
-import { evaluateMixingChallenge } from '../../core/mixing-evaluation.ts';
+import { MixingEQ, MixingCompressor, MixingParametricEQ } from '../../core/mixing-effects.ts';
+import { evaluateMixingChallenge, parametricToEffective3Band } from '../../core/mixing-evaluation.ts';
 import type { MixingChallenge } from '../../core/types.ts';
 
 interface MixingChallengeViewProps {
@@ -34,6 +34,7 @@ export function MixingChallengeView({
     lastResult,
     eqParams,
     compressorParams,
+    parametricEQ,
     loadChallenge,
     revealHint,
     startScoring,
@@ -42,6 +43,7 @@ export function MixingChallengeView({
     setEQLow,
     setEQMid,
     setEQHigh,
+    setParametricBand,
     setCompressorThreshold,
     setCompressorAmount,
     setCompressorAttack,
@@ -51,6 +53,7 @@ export function MixingChallengeView({
   // Audio references
   const audioSourceRef = useRef<AudioSource | null>(null);
   const eqRef = useRef<MixingEQ | null>(null);
+  const parametricEQRef = useRef<MixingParametricEQ | null>(null);
   const compressorRef = useRef<MixingCompressor | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [gainReduction, setGainReduction] = useState(0);
@@ -71,13 +74,18 @@ export function MixingChallengeView({
     // Create audio source
     audioSourceRef.current = createAudioSource(challenge.sourceConfig);
 
-    // Create effects
-    eqRef.current = new MixingEQ();
+    // Create effects — use parametric or simple EQ based on challenge controls
     compressorRef.current = new MixingCompressor();
 
-    // Connect chain: source -> EQ -> compressor -> destination
-    audioSourceRef.current.connect(eqRef.current.input);
-    eqRef.current.connect(compressorRef.current.input);
+    if (challenge.controls.eq === 'parametric') {
+      parametricEQRef.current = new MixingParametricEQ();
+      audioSourceRef.current.connect(parametricEQRef.current.input);
+      parametricEQRef.current.connect(compressorRef.current.input);
+    } else {
+      eqRef.current = new MixingEQ();
+      audioSourceRef.current.connect(eqRef.current.input);
+      eqRef.current.connect(compressorRef.current.input);
+    }
     compressorRef.current.connect(Tone.getDestination());
 
     // Poll gain reduction for UI
@@ -95,6 +103,7 @@ export function MixingChallengeView({
         audioSourceRef.current.dispose();
       }
       eqRef.current?.dispose();
+      parametricEQRef.current?.dispose();
       compressorRef.current?.dispose();
     };
   }, [challenge, isMultiTrack]);
@@ -106,12 +115,27 @@ export function MixingChallengeView({
     }
   }, [eqParams]);
 
+  // Sync parametric EQ params to audio
+  useEffect(() => {
+    if (parametricEQRef.current) {
+      parametricEQ.bands.forEach((band, i) => {
+        parametricEQRef.current!.setBand(i, band);
+      });
+    }
+  }, [parametricEQ]);
+
   // Sync compressor params to audio
   useEffect(() => {
     if (compressorRef.current) {
       compressorRef.current.setParams(compressorParams);
     }
   }, [compressorParams]);
+
+  // Determine which controls to show
+  const eqMode = challenge.controls.eq === 'parametric' ? 'parametric'
+    : challenge.controls.eq ? 'simple' : false;
+  const showCompressor = challenge.controls.compressor !== false;
+  const compressorMode = challenge.controls.compressor === 'full' ? 'full' : 'simple';
 
   // Play/Stop toggle
   const togglePlayback = useCallback(async () => {
@@ -129,10 +153,14 @@ export function MixingChallengeView({
   const handleSubmit = useCallback(() => {
     startScoring();
 
-    // Evaluate current settings
-    const result = evaluateMixingChallenge(challenge, eqParams, compressorParams);
+    // Convert parametric EQ to 3-band for evaluation if needed
+    const effectiveEQ = eqMode === 'parametric'
+      ? parametricToEffective3Band(parametricEQ)
+      : eqParams;
+
+    const result = evaluateMixingChallenge(challenge, effectiveEQ, compressorParams);
     submitResult(result);
-  }, [challenge, eqParams, compressorParams, startScoring, submitResult]);
+  }, [challenge, eqParams, parametricEQ, eqMode, compressorParams, startScoring, submitResult]);
 
   // Handle retry
   const handleRetry = useCallback(() => {
@@ -147,11 +175,6 @@ export function MixingChallengeView({
     setIsPlaying(false);
     onExit();
   }, [onExit]);
-
-  // Determine which controls to show
-  const showEQ = challenge.controls.eq;
-  const showCompressor = challenge.controls.compressor !== false;
-  const compressorMode = challenge.controls.compressor === 'full' ? 'full' : 'simple';
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-text-primary font-sans p-6">
@@ -201,12 +224,18 @@ export function MixingChallengeView({
           </Section>
 
           {/* EQ Control */}
-          {showEQ && (
+          {eqMode === 'simple' && (
             <EQControl
               params={eqParams}
               onLowChange={setEQLow}
               onMidChange={setEQMid}
               onHighChange={setEQHigh}
+            />
+          )}
+          {eqMode === 'parametric' && (
+            <ParametricEQControl
+              bands={parametricEQ.bands}
+              onBandChange={setParametricBand}
             />
           )}
 

@@ -5,8 +5,8 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { MixingChallenge, ChallengeProgress, EQParams, CompressorFullParams } from '../../core/types.ts';
-import { DEFAULT_EQ, DEFAULT_COMPRESSOR } from '../../core/mixing-effects.ts';
+import type { MixingChallenge, ChallengeProgress, EQParams, CompressorFullParams, ParametricEQParams, ParametricBand } from '../../core/types.ts';
+import { DEFAULT_EQ, DEFAULT_COMPRESSOR, DEFAULT_PARAMETRIC_BANDS } from '../../core/mixing-effects.ts';
 import { extractMixingBreakdown } from '../../core/player-model.ts';
 
 /** Per-track EQ parameters */
@@ -50,6 +50,11 @@ interface MixingStore {
   // Player's current settings (multi-track)
   trackParams: Record<string, TrackEQParams>;
 
+  // Parametric EQ settings (single-track, for I-module challenges)
+  parametricEQ: ParametricEQParams;
+  // Parametric EQ settings (multi-track)
+  trackParametricEQ: Record<string, ParametricEQParams>;
+
   // Bus-level settings (master bus processing)
   busEQParams: EQParams;
 
@@ -79,6 +84,11 @@ interface MixingStore {
   setTrackReverbMix: (trackId: string, value: number) => void;
   setTrackReverbSize: (trackId: string, value: number) => void;
   resetTrackEQ: (trackId: string) => void;
+
+  // Actions - Parametric EQ (single-track)
+  setParametricBand: (index: number, params: Partial<ParametricBand>) => void;
+  // Actions - Parametric EQ (multi-track)
+  setTrackParametricBand: (trackId: string, index: number, params: Partial<ParametricBand>) => void;
 
   // Actions - Compressor (bus)
   setCompressorThreshold: (value: number) => void;
@@ -120,6 +130,8 @@ export const useMixingStore = create<MixingStore>()(
       eqParams: { ...DEFAULT_EQ },
       compressorParams: { ...DEFAULT_COMPRESSOR },
       trackParams: {},
+      parametricEQ: { bands: DEFAULT_PARAMETRIC_BANDS.map(b => ({ ...b })) as [ParametricBand, ParametricBand, ParametricBand, ParametricBand] },
+      trackParametricEQ: {},
       busEQParams: { ...DEFAULT_EQ },
       progress: {},
 
@@ -140,6 +152,16 @@ export const useMixingStore = create<MixingStore>()(
           }
         }
 
+        // Initialize parametric EQ per-track if needed
+        const trackParametricEQ: Record<string, ParametricEQParams> = {};
+        if (challenge.tracks && challenge.controls.eq === 'parametric') {
+          for (const track of challenge.tracks) {
+            trackParametricEQ[track.id] = {
+              bands: DEFAULT_PARAMETRIC_BANDS.map(b => ({ ...b })) as [ParametricBand, ParametricBand, ParametricBand, ParametricBand],
+            };
+          }
+        }
+
         set({
           currentChallenge: challenge,
           currentAttempt: attempts + 1,
@@ -149,6 +171,8 @@ export const useMixingStore = create<MixingStore>()(
           eqParams: { ...DEFAULT_EQ },
           compressorParams: { ...DEFAULT_COMPRESSOR },
           trackParams,
+          parametricEQ: { bands: DEFAULT_PARAMETRIC_BANDS.map(b => ({ ...b })) as [ParametricBand, ParametricBand, ParametricBand, ParametricBand] },
+          trackParametricEQ,
           busEQParams: { ...DEFAULT_EQ },
         });
       },
@@ -227,6 +251,16 @@ export const useMixingStore = create<MixingStore>()(
           }
         }
 
+        // Reset parametric EQ per-track if needed
+        const trackParametricEQ: Record<string, ParametricEQParams> = {};
+        if (currentChallenge.tracks && currentChallenge.controls.eq === 'parametric') {
+          for (const track of currentChallenge.tracks) {
+            trackParametricEQ[track.id] = {
+              bands: DEFAULT_PARAMETRIC_BANDS.map(b => ({ ...b })) as [ParametricBand, ParametricBand, ParametricBand, ParametricBand],
+            };
+          }
+        }
+
         set({
           currentAttempt: get().currentAttempt + 1,
           hintsRevealed: 0,
@@ -235,6 +269,8 @@ export const useMixingStore = create<MixingStore>()(
           eqParams: { ...DEFAULT_EQ },
           compressorParams: { ...DEFAULT_COMPRESSOR },
           trackParams,
+          parametricEQ: { bands: DEFAULT_PARAMETRIC_BANDS.map(b => ({ ...b })) as [ParametricBand, ParametricBand, ParametricBand, ParametricBand] },
+          trackParametricEQ,
           busEQParams: { ...DEFAULT_EQ },
         });
       },
@@ -353,6 +389,31 @@ export const useMixingStore = create<MixingStore>()(
             },
           },
         }));
+      },
+
+      // Parametric EQ Actions (single-track)
+      setParametricBand: (index: number, params: Partial<ParametricBand>) => {
+        const { parametricEQ } = get();
+        const newBands = parametricEQ.bands.map((b, i) =>
+          i === index ? { ...b, ...params } : { ...b }
+        ) as [ParametricBand, ParametricBand, ParametricBand, ParametricBand];
+        set({ parametricEQ: { bands: newBands } });
+      },
+
+      // Parametric EQ Actions (multi-track)
+      setTrackParametricBand: (trackId: string, index: number, params: Partial<ParametricBand>) => {
+        const { trackParametricEQ } = get();
+        const existing = trackParametricEQ[trackId];
+        if (!existing) return;
+        const newBands = existing.bands.map((b, i) =>
+          i === index ? { ...b, ...params } : { ...b }
+        ) as [ParametricBand, ParametricBand, ParametricBand, ParametricBand];
+        set({
+          trackParametricEQ: {
+            ...trackParametricEQ,
+            [trackId]: { bands: newBands },
+          },
+        });
       },
 
       // Compressor Actions

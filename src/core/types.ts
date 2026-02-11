@@ -1053,6 +1053,46 @@ export const DEFAULT_ANALYSER_CONFIG: AnalyserConfig = {
 };
 
 // ============================================
+// Sound Design Progressive Controls
+// ============================================
+
+/** Per-control visibility within the Oscillator section */
+export interface OscillatorControls { waveform?: boolean; octave?: boolean; detune?: boolean; }
+/** Per-control visibility within the Filter section */
+export interface FilterControls { type?: boolean; cutoff?: boolean; resonance?: boolean; }
+/** Per-control visibility within the Amplitude Envelope section */
+export interface AmpEnvelopeControls { attack?: boolean; decay?: boolean; sustain?: boolean; release?: boolean; }
+/** Per-control visibility within the Filter Envelope section */
+export interface FilterEnvelopeControls { attack?: boolean; decay?: boolean; sustain?: boolean; release?: boolean; amount?: boolean; }
+/** Per-control visibility within the LFO section */
+export interface LFOControls { waveform?: boolean; rate?: boolean; depth?: boolean; }
+/** Per-control visibility within the Effects section (per effect block, not per knob) */
+export interface EffectsControls { distortion?: boolean; delay?: boolean; reverb?: boolean; chorus?: boolean; }
+
+/** Which visualization panels to show for a challenge */
+export type ChallengeVisualization = 'spectrum' | 'oscilloscope' | 'filter' | 'envelope' | 'lfo' | 'effects';
+
+/**
+ * Which synth sections/controls are visible in a challenge view.
+ *
+ * Each section accepts:
+ * - `true`: show all controls in section (backward compat)
+ * - Object with per-control booleans: show only specified controls, section auto-shows
+ * - `undefined`/absent: section hidden
+ */
+export interface SynthAvailableControls {
+  oscillator?: boolean | OscillatorControls;
+  filter?: boolean | FilterControls;
+  amplitudeEnvelope?: boolean | AmpEnvelopeControls;
+  filterEnvelope?: boolean | FilterEnvelopeControls;
+  lfo?: boolean | LFOControls;
+  effects?: boolean | EffectsControls;
+  output?: boolean;
+  /** Override module-default visualization panels */
+  visualizations?: ChallengeVisualization[];
+}
+
+// ============================================
 // Challenge Types
 // ============================================
 
@@ -1075,6 +1115,8 @@ export interface Challenge {
   module: string;
   /** Note to play for comparison (e.g., "C4") */
   testNote: string;
+  /** Override module-default control visibility for this challenge */
+  availableControls?: SynthAvailableControls;
 }
 
 export interface ChallengeProgress {
@@ -1166,6 +1208,8 @@ export type {
   EQParams,
   CompressorSimpleParams,
   CompressorFullParams,
+  ParametricBand,
+  ParametricEQParams,
 } from './mixing-effects.ts';
 
 export type { AudioSourceConfig, AudioSource } from './audio-source.ts';
@@ -1295,7 +1339,7 @@ export interface MixingChallenge {
   module: string;
   /** Available controls for this challenge */
   controls: {
-    eq: boolean;
+    eq: boolean | 'simple' | 'parametric';
     compressor: boolean | 'simple' | 'full';
     /** Per-track volume faders (for multi-track) */
     volume?: boolean;

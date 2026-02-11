@@ -1,6 +1,6 @@
 # MIXCRAFT — Product Specification
 
-**Version 1.0 | January 2026**
+**Version 2.0 | February 2026**
 
 *Learn Sound Design, Production, and Mixing Through Play.*
 
@@ -83,9 +83,9 @@ Make music production learnable through play. Give everyone access to the kind o
 
 The gameplay follows a six-phase loop: CHALLENGE (receive audio with specific problems or a target to match), LISTEN (hear the audio and see visualizations), ADJUST (apply synthesis parameters, EQ, compression, or effects), FEEDBACK (AI analyzes your work and explains what it hears), LEARN (understand why your choices worked or did not), ADVANCE (progress to harder challenges and unlock new tools).
 
-### 3.2 Three-Track Structure
+### 3.2 Five-Track Structure
 
-MIXCRAFT teaches three interconnected disciplines that build on each other. Sound Design teaches synthesis, filters, envelopes, and modulation, answering the question "what does this sound like?" Production teaches layering, arrangement, frequency stacking, and space, answering "how do sounds work together?" Mixing teaches EQ, compression, reverb, stereo imaging, and levels, answering "how do I make this sound good?" Players can enter at any point but the curriculum flows naturally left to right.
+MIXCRAFT teaches five interconnected disciplines that build on each other. Sound Design teaches synthesis, filters, envelopes, and modulation, answering "what does this sound like?" Production teaches layering, arrangement, frequency stacking, and space, answering "how do sounds work together?" Mixing teaches EQ, compression, reverb, stereo imaging, and levels, answering "how do I make this sound good?" Sampling teaches sample manipulation, chopping, pitch/time shifting, and creative reuse, answering "how do I transform existing sounds?" Drum Sequencing teaches step sequencing, groove, velocity, and genre patterns, answering "how do I build rhythms?" Players can enter at any point but the curriculum flows naturally from sound design through to mixing.
 
 ### 3.3 Design Pillars
 
@@ -95,7 +95,7 @@ MIXCRAFT teaches three interconnected disciplines that build on each other. Soun
 
 **Intelligent Feedback:** AI does not just grade pass/fail. It explains what you did, what happened sonically, and how to improve. Like a mentor in the room.
 
-**Progressive Mastery:** Start with one knob. End with full mixing sessions. Skills build on each other. Tool complexity unlocks as understanding develops.
+**Progressive Mastery:** Start with one knob. End with full mixing sessions. Skills build on each other. Tool complexity unlocks as understanding develops. Each challenge exposes exactly the controls relevant to its lesson — early challenges show only waveform selection, later ones progressively add filter, envelope, LFO, and effects controls. Visualizations are also per-challenge: a filter lesson shows the filter response curve alongside the spectrum analyzer.
 
 ---
 
@@ -133,16 +133,41 @@ All synth parameters are exposed to the UI and automatable. Players interact wit
 
 ### 4.4 Sound Design Curriculum
 
+#### Subtractive Synthesis (SD1-SD17, 86 challenges)
+
 | Module | Concept | Challenges | Key Skills |
 |---|---|---|---|
-| SD1 | Oscillator Fundamentals | 4 | Waveform recognition, harmonic content, detuning |
+| SD1 | Oscillator Fundamentals | 4 | Waveform recognition, harmonic content, per-control granularity (only relevant knobs visible) |
 | SD2 | Filter Basics | 4 | Filter types, cutoff, resonance, tone shaping |
 | SD3 | Envelopes | 4 | ADSR on amplitude, percussive vs sustained, filter envelope |
 | SD4 | Modulation | 4 | LFOs, vibrato, tremolo, filter modulation |
 | SD5 | Effects in Sound Design | 4 | Distortion for harmonics, chorus for width, reverb for character |
-| SD6 | Synthesis Techniques | 6 | Subtractive classics, FM bells/basses, sampling manipulation |
-| SD7 | Genre Sound Design | 6 | EDM basses, hip-hop drums, ambient textures, rock amp sim |
-| **Total** | | **32** | |
+| SD6 | Synthesis Techniques | 6 | Subtractive classics, combined techniques |
+| SD7 | Genre Sound Design | 6 | EDM basses, hip-hop, ambient textures, rock amp sim |
+| SD10 | Arpeggiator | 6 | Pattern-based sequencing, up/down/random modes, tempo sync |
+| SD11 | Unison & Supersaw | 6 | Voice stacking, detuning, stereo spread |
+| SD12 | Oscillator 2 | 6 | Dual-oscillator layering, detuning, mix balance |
+| SD13 | Sub Oscillator | 6 | Sub bass reinforcement, octave selection |
+| SD14 | Noise Shaping | 6 | White/pink/brown noise, transient design, texture |
+| SD15 | Glide & Portamento | 6 | Pitch sliding, legato, glide time |
+| SD16 | Velocity Sensitivity | 6 | Dynamic expression, velocity-to-filter mapping |
+| SD17 | Combined Techniques | 6 | Multi-concept challenges using all synthesis tools |
+
+#### FM Synthesis (SD8, 12 challenges)
+
+| Module | Concept | Challenges | Key Skills |
+|---|---|---|---|
+| SD8 | FM Synthesis | 12 | Harmonicity ratios, modulation index, carrier/modulator waveforms, FM bells and basses |
+
+#### Additive Synthesis (SD9, 12 challenges)
+
+| Module | Concept | Challenges | Key Skills |
+|---|---|---|---|
+| SD9 | Additive Synthesis | 12 | Harmonic drawbars, Fourier synthesis, organ timbres, spectral shaping |
+
+| **Total** | | **110** | |
+
+SD1-SD4 challenges use per-control visibility — each challenge specifies exactly which knobs are available, with per-challenge visualization arrays showing relevant viz panels (oscilloscope, filter response, envelope shape, etc.).
 
 ---
 
@@ -160,6 +185,42 @@ The production module bridges sound design and mixing. Players learn how individ
 | P4 | Rhythm and Groove | 4 | Timing relationships; swing and feel; percussion layering |
 | P5 | Space and Depth | 4 | Front to back placement; reverb as arrangement tool; mono vs stereo |
 | **Total** | | **20** | |
+
+---
+
+## 5a. Sampling Module
+
+The sampling module teaches sample manipulation, chopping, pitch/time shifting, and creative reuse. Players work with a waveform editor to slice, tune, and transform audio samples.
+
+### 5a.1 Sampling Curriculum
+
+| Module | Concept | Challenges | Key Skills |
+|---|---|---|---|
+| SM1 | Sample Basics | 4 | Start/end points, fade in/out, basic editing |
+| SM2 | Chopping | 4 | Slice markers, chop-challenge workflow |
+| SM3 | Pitch Shifting | 4 | Tuning samples, pitch shifting, tune-to-track |
+| SM4 | Time Stretch | 4 | Time stretching, tempo matching |
+| SM5 | Creative Flipping | 4 | Flip-this challenges, creative reuse |
+| SM6 | Sample Cleaning | 4 | Clean-sample challenges, noise removal |
+| **Total** | | **24** | |
+
+---
+
+## 5b. Drum Sequencing Module
+
+The drum sequencing module teaches step sequencing, groove, velocity dynamics, and genre-specific patterns. Players work with a step grid and velocity lanes to build drum patterns.
+
+### 5b.1 Drum Sequencing Curriculum
+
+| Module | Concept | Challenges | Key Skills |
+|---|---|---|---|
+| DS1 | Grid Basics | 4 | 16-step sequencing, kick/snare placement |
+| DS2 | Hi-hats | 4 | Open/closed hat patterns, offbeat rhythms |
+| DS3 | Groove & Swing | 4 | Swing amount, humanization, feel |
+| DS4 | Velocity | 4 | Per-step dynamics, accent patterns |
+| DS5 | Genre Patterns | 4 | Hip-hop, house, drum & bass, trap patterns |
+| DS6 | Loop Construction | 4 | Full kit patterns, fills, transitions |
+| **Total** | | **24** | |
 
 ---
 
@@ -216,26 +277,26 @@ Effects use progressive complexity. Beginner versions expose 2-3 parameters. Adv
 | I5 | Depth and space (reverb/delay) | 6 |
 | I6 | Balance and level relationships | 6 |
 
-#### Advanced (Levels 3-4): 40 Challenges
+#### Advanced (Levels 3-4): 36 Challenges
 
 | Module | Concept | Challenges |
 |---|---|---|
-| A1 | Full drum mix | 8 |
-| A2 | Full vocal chain | 8 |
-| A3 | Instrument balance | 8 |
-| A4 | Mix bus processing | 8 |
-| A5 | Genre-specific mixing | 8 |
+| A1 | Frequency mastery | 8 |
+| A2 | Stereo mastery | 8 |
+| A3 | Depth and space | 8 |
+| A4 | Advanced dynamics | 4 |
+| A5 | Integration | 8 |
 
-#### Mastery (Levels 4-5): 28 Challenges
+#### Mastery (Levels 4-5): 32 Challenges
 
 | Module | Concept | Challenges |
 |---|---|---|
-| M1 | Complete song mixing | 10 |
-| M2 | Mastering basics | 6 |
-| M3 | Reference matching | 6 |
-| M4 | Troubleshooting | 6 |
+| M1 | Full mix | 8 |
+| M2 | Genre mixing | 8 |
+| M3 | Automation concepts | 8 |
+| M4 | Troubleshooting | 8 |
 
-Total hand-crafted challenges across all three tracks: **188** (32 sound design + 20 production + 136 mixing). AI-generated challenges provide unlimited additional practice.
+Total hand-crafted challenges across all five tracks: **314** (110 sound design + 20 production + 136 mixing + 24 sampling + 24 drum sequencing). AI-generated challenges provide unlimited additional practice.
 
 ---
 
@@ -294,7 +355,9 @@ Input level, output level, gain reduction meter, attack/release timing visualiza
 
 ### 8.4 Synth Visualization
 
-For the sound design module: waveform shape display, filter response curve, envelope shape visualization, LFO waveform display, and real-time spectrum of the synthesized sound. Players see how each parameter change affects the sound visually.
+For the sound design module: waveform shape display (oscilloscope), filter response curve, envelope shape visualization, LFO waveform display, effects chain visualization, and real-time spectrum of the synthesized sound. Players see how each parameter change affects the sound visually.
+
+Each challenge specifies which visualization panels to show via a `ChallengeVisualization` array. For example, a filter lesson shows the filter response curve alongside the spectrum analyzer, while an oscillator lesson shows the oscilloscope. This per-challenge approach ensures students see the visualizations most relevant to the concept being taught. When no per-challenge override is set, visualizations fall back to module-based defaults (SD1=oscilloscope, SD2=filter, SD3=envelope, SD4=LFO, SD5=effects).
 
 ### 8.5 A/B Comparison
 
@@ -391,7 +454,11 @@ The interface looks like professional audio software, not a cartoon. Dark backgr
 
 ### 11.2 Progressive Tool Interfaces
 
-Tool complexity increases as skills develop. Beginner EQ shows three fixed bands (Low, Mid, High) with simple gain sliders. Intermediate EQ shows four parametric bands with frequency, gain, and Q controls plus an Add Band button. Advanced EQ shows a full visual EQ curve with draggable points, a comprehensive parameter table, dynamic EQ option, and mid/side processing mode.
+Tool complexity increases as skills develop at both the module level and the individual challenge level.
+
+**Sound Design:** Each synth section (Oscillator, Filter, Envelope, LFO, Effects, Output) accepts either `true` (show all controls) or a per-control object (e.g., `{ waveform: true, octave: true }`) specifying exactly which knobs to display. Module defaults progressively add sections (SD1=Oscillator+Output, SD2 adds Filter, SD3 adds Envelopes, SD4 adds LFO, SD5+ shows all), while individual challenges can override to show a cross-section of controls from any section. For example, sd1-02 "Buzzy Bass" is an SD1 challenge but shows filter cutoff and resonance alongside the oscillator controls.
+
+**Mixing EQ:** Beginner EQ (Fundamentals) shows three fixed bands (Low, Mid, High) with simple gain sliders. Intermediate EQ shows four parametric bands (lowshelf, 2x peak, highshelf) with frequency, gain, and Q controls per band. Advanced challenges use the same parametric EQ. A backward-compatible conversion function translates parametric settings to equivalent 3-band values for evaluation.
 
 ### 11.3 Main Views
 
@@ -424,7 +491,7 @@ High contrast mode. Colorblind-safe color palettes. Full keyboard navigation for
 | Visualization | Canvas 2D | Sufficient for spectrums, waveforms, meters |
 | ML (client) | TensorFlow.js | Browser-native inference for problem detection |
 | Feature extraction | Meyda.js | Audio feature extraction for sound evaluation |
-| Build | Vite | Fast development cycle |
+| Build | Vite | Fast development cycle; lazy-loaded views via React.lazy + Suspense |
 | Backend | Node.js | Same language as frontend |
 | API | tRPC | End-to-end type safety |
 | Database | PostgreSQL (Supabase) | Managed; accounts, progress, leaderboards |
@@ -480,39 +547,37 @@ Sound design challenges require minimal external audio because synthesis generat
 
 ### 13.4 Challenge Authoring
 
-188 hand-crafted challenges (32 sound design + 20 production + 136 mixing). Each requires title, description, audio assignment, problem injection parameters, goal and evaluation criteria, three progressive hints, and concept tags. Approximately 50 additional templates for AI challenge generation. Estimated authoring time: 30 minutes per challenge, approximately 100 hours total.
+314 hand-crafted challenges (110 sound design + 20 production + 136 mixing + 24 sampling + 24 drum sequencing). Each requires title, description, target parameters or audio assignment, goal and evaluation criteria, three progressive hints, and concept tags. Sound design challenges additionally specify per-control visibility and visualization panel overrides. Approximately 50 additional templates for AI challenge generation.
 
 ### 13.5 Educational Content
 
-Approximately 50 concept explanations (EQ, compression, synthesis, etc.), 15 tool tutorials, 10 workflow guides, and 100 glossary entries for production terminology. Total estimated writing: 30-40 hours.
+Approximately 50 concept explanations (EQ, compression, synthesis, etc.) in a searchable Concept Library with standalone view (`#/concepts`), deep links, and inline concept link markers (`[[concept-id|display text]]`) in challenge hints. 100 glossary entries for production terminology. Concept modal accessible from anywhere in the app. Adaptive curriculum uses player model to analyze score breakdowns, identify weaknesses, and recommend challenges.
 
 ---
 
 ## 14. Development Roadmap
 
-Total estimated development time: 10 months from start to public release. Sound design ships first as standalone value, followed by mixing, then production.
+**Actual development:** All 314 challenges, five tracks, AI feedback, user accounts, and progressive tool complexity were built in 33 sessions over 8 days (Feb 4-11, 2026). The original 10-month roadmap was dramatically compressed through rapid iteration.
 
-| Phase | Month | Deliverable | Details |
+| Phase | Sessions | Deliverable | Details |
 |---|---|---|---|
-| Synth Engine | 1 | Synth playable in browser | Tone.js integration, subtractive synth UI, waveform/spectrum visualization, note triggering |
-| Sound Design Challenges | 2 | First 8 challenges playable | Sound comparison system, feature extraction, oscillator/filter challenges, basic AI evaluation |
-| Complete Sound Design | 3 | 32 sound design challenges | Remaining SD modules, FM synthesis, sampling, polished synth interface |
-| Mixing Foundation | 4-5 | 32 fundamentals challenges | Audio effects chain, EQ/compressor/reverb, mixing challenges, reference comparison, AI feedback |
-| Production Track | 6 | 20 production challenges | Multi-track environment, layering tools, arrangement visualization |
-| Advanced Mixing + AI | 7-8 | 104 mixing challenges + full AI | Intermediate/Advanced/Mastery modules, intent interpretation, adaptive curriculum, challenge generation |
-| Sandbox + Polish | 9 | Full feature set | Sandbox mode, import own audio, UI polish, onboarding, performance optimization |
-| Launch Prep | 10 | Public release | Beta testing, bug fixes, marketing materials, launch |
+| Synth Engine | 1-2 | Synth + first challenges | Tone.js integration, subtractive synth UI, waveform/spectrum viz, sound analysis (Meyda.js), SD1 (4 challenges) |
+| Sound Design Core | 3-4 | 32 sound design challenges | SD2-SD7, AI feedback (tRPC + Claude), filter/envelope/LFO/effects modules |
+| Mixing Track | 6-9 | 136 mixing challenges | F1-F8, I1-I6, A1-A5, M1-M4 across four difficulty tiers |
+| Production + Sampling + Drums | 10-15 | 68 more challenges | Production (P1-P5), Sampling (SM1-SM6), Drum Sequencing (DS1-DS6), 16 synthesized drum samples |
+| Advanced Synthesis | 16-25 | 78 more SD challenges | FM/Additive AI feedback, SD10-SD17, arpeggiator, unison, mod matrix, LFO2, pan |
+| Infrastructure | 26-30 | Auth, routing, errors | Supabase auth, cloud sync, error boundaries, hash routing, component decomposition |
+| Curriculum + Polish | 31-33 | Concept Library + adaptive | Concept Library, player model, progressive tool complexity, per-control visibility, per-challenge visualizations |
 
-### 14.1 Phased AI Development
+### 14.1 AI Development Status
 
-| Phase | Feature | When | Rationale |
+| Phase | Feature | Status | Details |
 |---|---|---|---|
-| 1 | Ship without AI (rule-based feedback) | Months 1-3 | Prove core loop works with sound design |
-| 2 | Audio analysis AI (problem detection) | Month 4 | Client-side ML models for instant feedback |
-| 3 | Explanation AI (LLM feedback) | Month 5 | Natural language feedback via Claude API |
-| 4 | Intent understanding (NL input) | Month 7 | Natural language sonic goals |
-| 5 | Adaptive curriculum (player modeling) | Month 8 | Personalized learning paths |
-| 6 | Challenge generation | Month 8 | Infinite practice material |
+| 1 | Rule-based evaluation | Complete | Deterministic scoring for all 5 tracks (spectral, parameter, goal-based) |
+| 2 | LLM feedback (Claude API) | Complete | Separate endpoints for subtractive, FM, additive, mixing, production, sampling, drum sequencing |
+| 3 | Adaptive curriculum | Complete | Player model with skill scoring, weakness detection, personalized recommendations |
+| 4 | Intent understanding | Future | Natural language sonic goals |
+| 5 | Challenge generation | Future | AI-generated challenges for unlimited practice |
 
 ---
 

@@ -8,6 +8,13 @@ export const challenge: Challenge = {
   difficulty: 2,
   module: 'SD1',
   testNote: 'C4',
+  availableControls: {
+    oscillator: { waveform: true },
+    amplitudeEnvelope: { attack: true, decay: true, sustain: true },
+    filterEnvelope: { attack: true, amount: true },
+    output: true,
+    visualizations: ['spectrum', 'envelope'],
+  },
   hints: [
     'Plucky sounds have very fast attacks and short decays.',
     'Square waves have a hollow but full character - good for plucks.',

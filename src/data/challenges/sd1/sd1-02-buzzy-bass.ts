@@ -8,6 +8,12 @@ export const challenge: Challenge = {
   difficulty: 1,
   module: 'SD1',
   testNote: 'C3',
+  availableControls: {
+    oscillator: { waveform: true, octave: true },
+    filter: { cutoff: true, resonance: true },
+    output: true,
+    visualizations: ['spectrum', 'oscilloscope', 'filter'],
+  },
   hints: [
     'Bass sounds live in the lower octaves.',
     'A sawtooth wave is rich in harmonics - perfect for thick sounds.',

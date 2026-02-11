@@ -8,6 +8,10 @@ export const challenge: Challenge = {
   difficulty: 1,
   module: 'SD1',
   testNote: 'C4',
+  availableControls: {
+    oscillator: { waveform: true },
+    output: true,
+  },
   hints: [
     'A pure tone has only one frequency - no overtones or [[harmonics|harmonics]].',
     'Which [[waveform|waveform]] produces only the fundamental frequency?',

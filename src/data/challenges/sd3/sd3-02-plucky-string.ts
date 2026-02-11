@@ -15,6 +15,11 @@ export const challenge: Challenge = {
   difficulty: 1,
   module: 'SD3',
   testNote: 'C4',
+  availableControls: {
+    oscillator: { waveform: true },
+    amplitudeEnvelope: { attack: true, decay: true, sustain: true },
+    output: true,
+  },
   hints: [
     'Plucked sounds need an instant attack - as fast as possible.',
     'Decay controls how quickly the sound fades after the initial hit.',

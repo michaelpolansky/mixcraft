@@ -13,6 +13,7 @@ export { ScoreBar } from './ScoreBar.tsx';
 export { ResultsModal } from './ResultsModal.tsx';
 export { TargetPlayer } from './TargetPlayer.tsx';
 export { EQControl } from './EQControl.tsx';
+export { ParametricEQControl } from './ParametricEQControl.tsx';
 export { CompressorControl } from './CompressorControl.tsx';
 export { LayerStrip } from './LayerStrip.tsx';
 export { ProductionMixer } from './ProductionMixer.tsx';

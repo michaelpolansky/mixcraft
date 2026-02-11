@@ -15,6 +15,11 @@ export const challenge: Challenge = {
   difficulty: 1,
   module: 'SD4',
   testNote: 'C3',
+  availableControls: {
+    filter: { cutoff: true, resonance: true },
+    lfo: { rate: true, depth: true, waveform: true },
+    output: true,
+  },
   hints: [
     'An LFO (Low Frequency Oscillator) creates periodic movement in your sound.',
     'The LFO Rate controls how fast the wobble cycles - slow it down for a gentle sweep.',

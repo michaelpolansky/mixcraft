@@ -7,11 +7,11 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import * as Tone from 'tone';
 import { useMixingStore, type TrackEQParams } from '../stores/mixing-store.ts';
-import { EQControl, SpectrumAnalyzer, Slider } from '../components/index.ts';
+import { EQControl, ParametricEQControl, SpectrumAnalyzer, Slider } from '../components/index.ts';
 import { cn } from '../utils/cn.ts';
 import { createAudioSource, type AudioSource } from '../../core/audio-source.ts';
-import { MixingEQ, MixingCompressor, MixingReverb } from '../../core/mixing-effects.ts';
-import { evaluateMixingChallenge } from '../../core/mixing-evaluation.ts';
+import { MixingEQ, MixingCompressor, MixingReverb, MixingParametricEQ } from '../../core/mixing-effects.ts';
+import { evaluateMixingChallenge, parametricToEffective3Band } from '../../core/mixing-evaluation.ts';
 import { getTRPC } from '../api/trpc.ts';
 import type { MixingChallenge, MixingTrack, EQParams } from '../../core/types.ts';
 
@@ -25,6 +25,7 @@ interface MultiTrackMixingViewProps {
 interface TrackAudio {
   source: AudioSource;
   eq: MixingEQ;
+  parametricEQ?: MixingParametricEQ;
   gain: Tone.Gain;
   panner: Tone.Panner;
   reverb: MixingReverb;
@@ -43,6 +44,7 @@ export function MultiTrackMixingView({
     lastResult,
     trackParams,
     compressorParams,
+    trackParametricEQ,
     busEQParams,
     loadChallenge,
     revealHint,
@@ -56,6 +58,7 @@ export function MultiTrackMixingView({
     setTrackPan,
     setTrackReverbMix,
     setTrackReverbSize,
+    setTrackParametricBand,
     setCompressorThreshold,
     setCompressorAmount,
     setBusEQLow,
@@ -90,6 +93,7 @@ export function MultiTrackMixingView({
     busCompressorRef.current.connect(Tone.getDestination());
 
     // Create audio for each track
+    const useParametricEQ = challenge.controls.eq === 'parametric';
     for (const track of challenge.tracks) {
       const source = createAudioSource(track.sourceConfig);
       const eq = new MixingEQ();
@@ -97,14 +101,22 @@ export function MultiTrackMixingView({
       const panner = new Tone.Panner(track.initialPan ?? 0);
       const reverb = new MixingReverb();
 
-      // Chain: source -> eq -> gain -> panner -> reverb -> bus EQ
-      source.connect(eq.input);
-      eq.connect(gain);
+      let parametricEQ: MixingParametricEQ | undefined;
+      if (useParametricEQ) {
+        parametricEQ = new MixingParametricEQ();
+        // Chain: source -> parametricEQ -> gain -> panner -> reverb -> bus EQ
+        source.connect(parametricEQ.input);
+        parametricEQ.connect(gain);
+      } else {
+        // Chain: source -> eq -> gain -> panner -> reverb -> bus EQ
+        source.connect(eq.input);
+        eq.connect(gain);
+      }
       gain.connect(panner);
       panner.connect(reverb.input);
       reverb.connect(busEQRef.current!.input);
 
-      trackAudioRef.current.set(track.id, { source, eq, gain, panner, reverb });
+      trackAudioRef.current.set(track.id, { source, eq, parametricEQ, gain, panner, reverb });
     }
 
     // Poll gain reduction
@@ -122,6 +134,7 @@ export function MultiTrackMixingView({
         audio.source.stop();
         audio.source.dispose();
         audio.eq.dispose();
+        audio.parametricEQ?.dispose();
         audio.gain.dispose();
         audio.panner.dispose();
         audio.reverb.dispose();
@@ -144,6 +157,18 @@ export function MultiTrackMixingView({
       }
     }
   }, [trackParams]);
+
+  // Sync track parametric EQ params to audio
+  useEffect(() => {
+    for (const [trackId, params] of Object.entries(trackParametricEQ)) {
+      const audio = trackAudioRef.current.get(trackId);
+      if (audio?.parametricEQ) {
+        params.bands.forEach((band, i) => {
+          audio.parametricEQ!.setBand(i, band);
+        });
+      }
+    }
+  }, [trackParametricEQ]);
 
   // Sync bus EQ params
   useEffect(() => {
@@ -229,16 +254,22 @@ export function MultiTrackMixingView({
   }, [isPlaying]);
 
   // Submit and score
+  const isParametricMode = challenge.controls.eq === 'parametric';
+
   const handleSubmit = useCallback(() => {
     startScoring();
 
     // Convert track params to format for evaluation (including pan, reverb, and volume)
     const playerTrackEQs: Record<string, EQParams & { pan?: number; reverbMix?: number; volume?: number }> = {};
     for (const [trackId, params] of Object.entries(trackParams)) {
+      // When using parametric EQ, convert to effective 3-band for evaluation
+      const trackPEQ = trackParametricEQ[trackId];
+      const effectiveEQ = isParametricMode && trackPEQ
+        ? parametricToEffective3Band(trackPEQ)
+        : { low: params.low, mid: params.mid, high: params.high };
+
       playerTrackEQs[trackId] = {
-        low: params.low,
-        mid: params.mid,
-        high: params.high,
+        ...effectiveEQ,
         pan: params.pan,
         reverbMix: params.reverbMix,
         volume: params.volume,
@@ -253,7 +284,7 @@ export function MultiTrackMixingView({
       busEQParams
     );
     submitResult(result);
-  }, [challenge, trackParams, compressorParams, busEQParams, startScoring, submitResult]);
+  }, [challenge, trackParams, trackParametricEQ, isParametricMode, compressorParams, busEQParams, startScoring, submitResult]);
 
   // Handle retry
   const handleRetry = useCallback(() => {
@@ -348,54 +379,63 @@ export function MultiTrackMixingView({
 
                     {/* Per-track EQ */}
                     <div className="mb-4">
-                      <div className="text-base text-text-muted mb-2">EQ</div>
-                      <div className="flex flex-col gap-2">
-                        <div className="flex items-center gap-2">
-                          <span className="text-base text-text-tertiary w-8">Low</span>
-                          <input
-                            type="range"
-                            min="-12"
-                            max="12"
-                            step="0.5"
-                            value={params.low}
-                            onChange={(e) => setTrackEQLow(track.id, parseFloat(e.target.value))}
-                            className="flex-1"
-                          />
-                          <span className="text-base text-text-tertiary w-10 text-right">
-                            {params.low > 0 ? '+' : ''}{params.low.toFixed(1)}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-base text-text-tertiary w-8">Mid</span>
-                          <input
-                            type="range"
-                            min="-12"
-                            max="12"
-                            step="0.5"
-                            value={params.mid}
-                            onChange={(e) => setTrackEQMid(track.id, parseFloat(e.target.value))}
-                            className="flex-1"
-                          />
-                          <span className="text-base text-text-tertiary w-10 text-right">
-                            {params.mid > 0 ? '+' : ''}{params.mid.toFixed(1)}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-base text-text-tertiary w-8">High</span>
-                          <input
-                            type="range"
-                            min="-12"
-                            max="12"
-                            step="0.5"
-                            value={params.high}
-                            onChange={(e) => setTrackEQHigh(track.id, parseFloat(e.target.value))}
-                            className="flex-1"
-                          />
-                          <span className="text-base text-text-tertiary w-10 text-right">
-                            {params.high > 0 ? '+' : ''}{params.high.toFixed(1)}
-                          </span>
-                        </div>
-                      </div>
+                      {isParametricMode && trackParametricEQ[track.id] ? (
+                        <ParametricEQControl
+                          bands={trackParametricEQ[track.id]!.bands}
+                          onBandChange={(index, bandParams) => setTrackParametricBand(track.id, index, bandParams)}
+                        />
+                      ) : (
+                        <>
+                          <div className="text-base text-text-muted mb-2">EQ</div>
+                          <div className="flex flex-col gap-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-base text-text-tertiary w-8">Low</span>
+                              <input
+                                type="range"
+                                min="-12"
+                                max="12"
+                                step="0.5"
+                                value={params.low}
+                                onChange={(e) => setTrackEQLow(track.id, parseFloat(e.target.value))}
+                                className="flex-1"
+                              />
+                              <span className="text-base text-text-tertiary w-10 text-right">
+                                {params.low > 0 ? '+' : ''}{params.low.toFixed(1)}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-base text-text-tertiary w-8">Mid</span>
+                              <input
+                                type="range"
+                                min="-12"
+                                max="12"
+                                step="0.5"
+                                value={params.mid}
+                                onChange={(e) => setTrackEQMid(track.id, parseFloat(e.target.value))}
+                                className="flex-1"
+                              />
+                              <span className="text-base text-text-tertiary w-10 text-right">
+                                {params.mid > 0 ? '+' : ''}{params.mid.toFixed(1)}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-base text-text-tertiary w-8">High</span>
+                              <input
+                                type="range"
+                                min="-12"
+                                max="12"
+                                step="0.5"
+                                value={params.high}
+                                onChange={(e) => setTrackEQHigh(track.id, parseFloat(e.target.value))}
+                                className="flex-1"
+                              />
+                              <span className="text-base text-text-tertiary w-10 text-right">
+                                {params.high > 0 ? '+' : ''}{params.high.toFixed(1)}
+                              </span>
+                            </div>
+                          </div>
+                        </>
+                      )}
                     </div>
 
                     {/* Volume */}

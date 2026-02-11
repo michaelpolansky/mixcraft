@@ -28,13 +28,19 @@ src/
     drum-sequencer-engine.ts
     synth-sequencer.ts    # Note sequencer for synth views
     audio-recorder.ts     # WAV recording from audio nodes
+    audio-source.ts       # Audio source abstraction for mixing tracks
+    effects-chain.ts      # Tone.js effects chain builder
     sound-analysis.ts
     sound-comparison.ts
     sampling-evaluation.ts
     drum-sequencing-evaluation.ts
     mixing-evaluation.ts
+    mixing-effects.ts     # Parametric EQ, bus processing for mixing track
     production-evaluation.ts
-    player-model.ts   # Adaptive curriculum: skill scoring, weakness detection, recommendations
+    production-source.ts  # Multi-layer audio source for production track
+    player-model.ts       # Adaptive curriculum: skill scoring, weakness detection, recommendations
+    progress-sync.ts      # Cloud progress sync logic (Supabase)
+    supabase.ts           # Supabase client initialization
   ui/             # React components. Imports from core/ only.
     components/   # Reusable UI (Knob, Slider, XYPad, ModuleCard, ErrorBoundary, etc.)
       challenge/  # Challenge-specific components (Section, Header, HintsPanel, SubmitButton, ResultsModal)
@@ -47,6 +53,7 @@ src/
     context/      # React contexts (ConceptModalContext, InfoPanelContext)
     theme/        # Design system (COLORS constant for Canvas components)
   data/           # Static data files
+    module-controls.ts  # Progressive control visibility (per-module + per-challenge)
     challenges/   # Challenge definitions by track (sd1-sd17/, sm1-sm6/, ds1-ds6/, etc.)
     concepts/     # Concept library data (concepts.ts, glossary.ts, concept-metadata.ts)
     presets/      # Synth presets (subtractive, FM, additive)
@@ -91,6 +98,9 @@ Sound design is the entry point. It teaches concepts that make mixing and produc
 - **Subtractive synthesis (SD1-SD17, 86 challenges):** oscillator, filter, envelopes, LFO, effects, arpeggiator, unison/supersaw, oscillator 2, sub oscillator, noise shaping, glide/portamento, velocity sensitivity, combined techniques
 - **FM synthesis (SD8, 12 challenges):** harmonicity, modulation index, carrier/modulator waveforms
 - **Additive synthesis (SD9, 12 challenges):** harmonic drawbars, Fourier synthesis, timbres
+- Progressive control visibility: module-level (SD1=Osc+Output, SD2 adds Filter, SD3 adds Envelopes, SD4 adds LFO, SD5+ all) with per-challenge per-control granularity (SD1-SD4 challenges specify exactly which knobs are visible)
+- Per-control visibility: `SynthAvailableControls` sections accept `true` (show all) or per-control objects (e.g., `{ waveform: true, octave: true }`)
+- Visualization arrays: each challenge can specify which viz panels to show (spectrum, oscilloscope, filter, envelope, lfo, effects)
 - Effects chain: distortion, delay, reverb, chorus (all with dry/wet mix)
 - Challenge system with scoring (70% audio features, 30% parameter proximity)
 - AI feedback via Claude API (separate endpoints for subtractive, FM, additive)
@@ -104,7 +114,9 @@ Sound design is the entry point. It teaches concepts that make mixing and produc
 ### Mixing Track (136 challenges, F1-F8, I1-I6, A1-A5, M1-M4)
 - Multi-track mixing with per-track EQ, volume, pan, and reverb
 - Bus processing: bus compressor and bus EQ with UI controls
+- Progressive EQ complexity: 3-band simple (Fundamentals), 4-band parametric with freq/gain/Q per band (Intermediate+)
 - Goal-based evaluation with 17 condition types
+- Parametric-to-3-band conversion for backward-compatible evaluation
 - Four difficulty tiers: Fundamentals (32), Intermediate (36), Advanced (36), Mastery (32)
 - AI feedback via Claude API
 
@@ -169,7 +181,7 @@ Sound design is the entry point. It teaches concepts that make mixing and produc
 - **Practice suggestions:** Results modal shows "Practice More" chips for weak areas when player passes
 
 ### Testing
-- 527 unit tests for evaluation logic, engines, routing, player model, and concept links
+- 582 unit tests for evaluation logic, engines, routing, player model, concept links, module controls, parametric EQ, and per-control visibility
 - All pure function tests, no audio context dependencies
 
 ## Session Log
@@ -208,3 +220,5 @@ Sound design is the entry point. It teaches concepts that make mixing and produc
 | 29 | 2026-02-09 | Decompose 4 largest views (4,157 → 1,739 lines) - extracted 18 shared components: challenge (Section, ChallengeHeader, HintsPanel, SubmitButton, ScoreBreakdownRow, ChallengeResultsModal), synth stages (EnvelopeStage, OscillatorStage, Osc2Stage, SubOscStage, NoiseStage, MixerStage, FilterStage, LFOStage, OutputStage, BottomControlStrip), useAIFeedback hook, shared formatters |
 | 30 | 2026-02-10 | Error boundaries + hash routing tests (58 new tests) - ErrorBoundary component with two-tier recovery (app-level reload, view-level menu nav), extracted hash-routing.ts pure functions from useNavigation for testability |
 | 31 | 2026-02-10 | Concept Library + Adaptive Curriculum - Concept Library with ~50 concepts and ~100 glossary terms (search, filter, deep links, modal context), player model for skill scoring/weakness detection/recommendations, score breakdown persistence in all 5 stores, practice suggestions in results modal, concept link markers in hints (56 new tests) |
+| 32 | 2026-02-10 | Progressive Tool Complexity - Sound design progressive controls (SD1 shows only Oscillator+Output, SD2 adds Filter, SD3 adds Envelopes, SD4 adds LFO, SD5+ all), 4-band parametric EQ for mixing intermediate modules (lowshelf/2x peak/highshelf with freq/gain/Q per band), parametric-to-3-band conversion for backward-compatible evaluation (33 new tests) |
+| 33 | 2026-02-11 | Per-Challenge Control & Visualization Visibility - Per-control granularity for SD1-SD4 challenges (16 files), `isControlVisible`/`isSectionVisible`/`getVisualizations` helpers, visualization array rendering, ChallengeVisualization type (22 new tests) |
