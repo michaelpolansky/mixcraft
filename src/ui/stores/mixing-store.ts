@@ -18,6 +18,8 @@ export interface TrackEQParams {
   pan: number; // -1 (left) to +1 (right), 0 = center
   reverbMix: number; // 0 to 100 (dry to wet percentage)
   reverbSize: number; // 0 to 100 (small to large room)
+  compressorThreshold: number; // -60 to 0 dB
+  compressorAmount: number; // 0 to 100 %
 }
 
 /** Result from mixing challenge evaluation */
@@ -83,6 +85,8 @@ interface MixingStore {
   setTrackPan: (trackId: string, value: number) => void;
   setTrackReverbMix: (trackId: string, value: number) => void;
   setTrackReverbSize: (trackId: string, value: number) => void;
+  setTrackCompressorThreshold: (trackId: string, value: number) => void;
+  setTrackCompressorAmount: (trackId: string, value: number) => void;
   resetTrackEQ: (trackId: string) => void;
 
   // Actions - Parametric EQ (single-track)
@@ -116,7 +120,7 @@ const initialProgress: ChallengeProgress = {
   completed: false,
 };
 
-const DEFAULT_TRACK_EQ: TrackEQParams = { low: 0, mid: 0, high: 0, volume: 0, pan: 0, reverbMix: 0, reverbSize: 50 };
+const DEFAULT_TRACK_EQ: TrackEQParams = { low: 0, mid: 0, high: 0, volume: 0, pan: 0, reverbMix: 0, reverbSize: 50, compressorThreshold: 0, compressorAmount: 0 };
 
 export const useMixingStore = create<MixingStore>()(
   persist(
@@ -372,6 +376,28 @@ export const useMixingStore = create<MixingStore>()(
           trackParams: {
             ...trackParams,
             [trackId]: { ...existing, reverbSize: value },
+          },
+        });
+      },
+
+      setTrackCompressorThreshold: (trackId: string, value: number) => {
+        const { trackParams } = get();
+        const existing = trackParams[trackId] ?? { ...DEFAULT_TRACK_EQ };
+        set({
+          trackParams: {
+            ...trackParams,
+            [trackId]: { ...existing, compressorThreshold: value },
+          },
+        });
+      },
+
+      setTrackCompressorAmount: (trackId: string, value: number) => {
+        const { trackParams } = get();
+        const existing = trackParams[trackId] ?? { ...DEFAULT_TRACK_EQ };
+        set({
+          trackParams: {
+            ...trackParams,
+            [trackId]: { ...existing, compressorAmount: value },
           },
         });
       },

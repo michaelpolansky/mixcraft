@@ -272,11 +272,12 @@ function evaluateMultiTrackEQ(
   return { trackScores, busScore, total, feedback };
 }
 
-/** Extended track params that may include pan, reverb, and volume */
+/** Extended track params that may include pan, reverb, volume, and compression */
 interface TrackParamsWithExtras extends EQParams {
   pan?: number;
   reverbMix?: number;
   volume?: number;
+  compressorAmount?: number;
 }
 
 /**
@@ -409,6 +410,23 @@ function checkMultiTrackCondition(
       return diff <= condition.tolerance;
     }
 
+    case 'track_compression': {
+      // Check that a track has compression within a range
+      const track = playerTracks[condition.track];
+      if (!track || track.compressorAmount === undefined) return false;
+      const meetsMin = track.compressorAmount >= condition.minAmount;
+      const meetsMax = condition.maxAmount === undefined || track.compressorAmount <= condition.maxAmount;
+      return meetsMin && meetsMax;
+    }
+
+    case 'compression_contrast': {
+      // Check that one track is more compressed than another
+      const more = playerTracks[condition.moreCompressed];
+      const less = playerTracks[condition.lessCompressed];
+      if (!more || !less || more.compressorAmount === undefined || less.compressorAmount === undefined) return false;
+      return more.compressorAmount - less.compressorAmount >= condition.minDifference;
+    }
+
     // Bus-level conditions are handled separately in checkBusCondition
     case 'bus_compression':
     case 'bus_eq_boost':
@@ -436,7 +454,9 @@ function checkBusCondition(
   switch (condition.type) {
     case 'bus_compression': {
       if (!busParams.compressor) return false;
-      return busParams.compressor.amount >= condition.minAmount;
+      const meetsMin = busParams.compressor.amount >= condition.minAmount;
+      const meetsMax = condition.maxAmount === undefined || busParams.compressor.amount <= condition.maxAmount;
+      return meetsMin && meetsMax;
     }
 
     case 'bus_eq_boost': {
@@ -487,6 +507,11 @@ function describeCondition(condition: MultiTrackCondition): string {
       return `${condition.track} volume between ${condition.minDb} and ${condition.maxDb} dB`;
     case 'volume_balanced':
       return `${condition.track1} and ${condition.track2} balanced within ${condition.tolerance} dB`;
+    // Per-track compression conditions
+    case 'track_compression':
+      return `${condition.track} compression at ${condition.minAmount}%${condition.maxAmount !== undefined ? ` to ${condition.maxAmount}%` : '+'}`;
+    case 'compression_contrast':
+      return `${condition.moreCompressed} more compressed than ${condition.lessCompressed}`;
     // Bus-level conditions
     case 'bus_compression':
       return `Bus compression at ${condition.minAmount}%+`;

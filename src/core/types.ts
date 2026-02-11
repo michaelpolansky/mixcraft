@@ -1306,6 +1306,9 @@ export type MultiTrackCondition =
   | { type: 'volume_louder'; track1: string; track2: string }
   | { type: 'volume_range'; track: string; minDb: number; maxDb: number }
   | { type: 'volume_balanced'; track1: string; track2: string; tolerance: number }
+  // Per-track compression conditions
+  | { type: 'track_compression'; track: string; minAmount: number; maxAmount?: number }
+  | { type: 'compression_contrast'; moreCompressed: string; lessCompressed: string; minDifference: number }
   // Bus-level conditions
   | { type: 'bus_compression'; minAmount: number; maxAmount?: number }
   | { type: 'bus_eq_boost'; band: 'low' | 'mid' | 'high'; minBoost: number }
@@ -1347,6 +1350,8 @@ export interface MixingChallenge {
     pan?: boolean;
     /** Per-track reverb controls (for depth and space) */
     reverb?: boolean;
+    /** Per-track compressor (threshold + amount) */
+    trackCompressor?: boolean;
     /** Bus compressor (master bus processing) */
     busCompressor?: boolean;
     /** Bus EQ (master bus processing) */

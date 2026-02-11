@@ -101,6 +101,14 @@ import { challenge as i6_04 } from './i6/i6-04-lead-and-rhythm.ts';
 import { challenge as i6_05 } from './i6/i6-05-headroom.ts';
 import { challenge as i6_06 } from './i6/i6-06-full-band-balance.ts';
 
+// I7 - Track Dynamics
+import { challenge as i7_01 } from './i7/i7-01-tame-the-vocal.ts';
+import { challenge as i7_02 } from './i7/i7-02-drum-control.ts';
+import { challenge as i7_03 } from './i7/i7-03-bass-consistency.ts';
+import { challenge as i7_04 } from './i7/i7-04-dynamic-contrast.ts';
+import { challenge as i7_05 } from './i7/i7-05-rhythm-vs-melody.ts';
+import { challenge as i7_06 } from './i7/i7-06-dynamics-master.ts';
+
 // A1 - Full Drum Mix
 import { challenge as a1_01 } from './a1/a1-01-kit-foundation.ts';
 import { challenge as a1_02 } from './a1/a1-02-punch-and-crack.ts';
@@ -265,6 +273,13 @@ export const mixingChallengesById: Record<string, MixingChallenge> = {
   'i6-04-lead-and-rhythm': i6_04,
   'i6-05-headroom': i6_05,
   'i6-06-full-band-balance': i6_06,
+  // I7 - Track Dynamics
+  'i7-01-tame-the-vocal': i7_01,
+  'i7-02-drum-control': i7_02,
+  'i7-03-bass-consistency': i7_03,
+  'i7-04-dynamic-contrast': i7_04,
+  'i7-05-rhythm-vs-melody': i7_05,
+  'i7-06-dynamics-master': i7_06,
   // A1 - Full Drum Mix
   'a1-01-kit-foundation': a1_01,
   'a1-02-punch-and-crack': a1_02,
@@ -362,6 +377,7 @@ export const mixingChallengesByModule: Record<string, MixingChallenge[]> = {
   I4: [i4_01, i4_02, i4_03, i4_04, i4_05, i4_06],
   I5: [i5_01, i5_02, i5_03, i5_04, i5_05, i5_06],
   I6: [i6_01, i6_02, i6_03, i6_04, i6_05, i6_06],
+  I7: [i7_01, i7_02, i7_03, i7_04, i7_05, i7_06],
   A1: [a1_01, a1_02, a1_03, a1_04, a1_05, a1_06, a1_07, a1_08],
   A2: [a2_01, a2_02, a2_03, a2_04, a2_05, a2_06, a2_07, a2_08],
   A3: [a3_01, a3_02, a3_03, a3_04, a3_05, a3_06, a3_07, a3_08],
@@ -459,6 +475,13 @@ export const allMixingChallenges: MixingChallenge[] = [
   i6_04,
   i6_05,
   i6_06,
+  // I7 - Track Dynamics
+  i7_01,
+  i7_02,
+  i7_03,
+  i7_04,
+  i7_05,
+  i7_06,
   // A1 - Full Drum Mix
   a1_01,
   a1_02,
@@ -624,6 +647,12 @@ export const mixingModules = {
     id: 'I6',
     title: 'Level Balance',
     description: 'Master volume relationships to create professional-sounding mixes.',
+    challengeCount: 6,
+  },
+  I7: {
+    id: 'I7',
+    title: 'Track Dynamics',
+    description: 'Control dynamics on individual tracks with per-track compression.',
     challengeCount: 6,
   },
   A1: {

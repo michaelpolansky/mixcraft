@@ -84,7 +84,7 @@ docs/
 
 1. **Sound Design** (110 challenges) — subtractive synthesis (86), FM synthesis (12), additive synthesis (12).
 2. **Production** (20 challenges) — layering, arrangement, frequency stacking.
-3. **Mixing** (136 challenges) — EQ, compression, reverb, stereo, levels.
+3. **Mixing** (142 challenges) — EQ, compression, reverb, stereo, levels, per-track dynamics.
 4. **Sampling** (24 challenges) — sample manipulation, chopping, pitch/time, flipping.
 5. **Drum Sequencing** (24 challenges) — step sequencing, groove, velocity, genre patterns.
 
@@ -92,7 +92,7 @@ Sound design is the entry point. It teaches concepts that make mixing and produc
 
 ## Current State
 
-**All 314 challenges complete across five tracks.** Deployed to production with AI feedback on all tracks.
+**All 320 challenges complete across five tracks.** Deployed to production with AI feedback on all tracks.
 
 ### Sound Design Track (110 challenges, SD1-SD17)
 - **Subtractive synthesis (SD1-SD17, 86 challenges):** oscillator, filter, envelopes, LFO, effects, arpeggiator, unison/supersaw, oscillator 2, sub oscillator, noise shaping, glide/portamento, velocity sensitivity, combined techniques
@@ -111,13 +111,13 @@ Sound design is the entry point. It teaches concepts that make mixing and produc
 - Frequency stacking, arrangement, and stereo imaging challenges
 - AI feedback via Claude API
 
-### Mixing Track (136 challenges, F1-F8, I1-I6, A1-A5, M1-M4)
+### Mixing Track (142 challenges, F1-F8, I1-I7, A1-A5, M1-M4)
 - Multi-track mixing with per-track EQ, volume, pan, and reverb
 - Bus processing: bus compressor and bus EQ with UI controls
 - Progressive EQ complexity: 3-band simple (Fundamentals), 4-band parametric with freq/gain/Q per band (Intermediate+)
 - Goal-based evaluation with 17 condition types
 - Parametric-to-3-band conversion for backward-compatible evaluation
-- Four difficulty tiers: Fundamentals (32), Intermediate (36), Advanced (36), Mastery (32)
+- Four difficulty tiers: Fundamentals (32), Intermediate (42), Advanced (36), Mastery (32)
 - AI feedback via Claude API
 
 ### Sampling Track (24 challenges, SM1-SM6)
@@ -195,7 +195,7 @@ Sound design is the entry point. It teaches concepts that make mixing and produc
 | 4 | 2026-02-05 | SD5 (Effects), SD6 (Synthesis Techniques), SD7 (Genre Sound Design) - Sound Design track complete (32 challenges) |
 | 5 | 2026-02-05 | Polish - progress display, module progress bars, continue button, confetti celebration, mobile responsive, onboarding |
 | 6 | 2026-02-05 | Mixing Fundamentals (F1-F8, 32 challenges) - EQ, compression, problem-solving |
-| 7 | 2026-02-05 | Mixing Intermediate (I1-I6, 36 challenges) - multi-track with kick/bass, vocals, drums, stereo, reverb, full band |
+| 7 | 2026-02-05 | Mixing Intermediate (I1-I6, 36 challenges) - multi-track with kick/bass, vocals, drums, stereo, reverb, balance |
 | 8 | 2026-02-05 | Mixing Advanced (A1-A5, 36 challenges) - frequency mastery, stereo mastery, depth, dynamics, integration |
 | 9 | 2026-02-05 | Mixing Mastery (M1-M4, 32 challenges) - full mix, genre mixing, automation concepts, troubleshooting |
 | 10 | 2026-02-05 | Production Track (P1-P5, 20 challenges) - frequency stacking, layering, arrangement, stereo, full productions |
@@ -222,3 +222,4 @@ Sound design is the entry point. It teaches concepts that make mixing and produc
 | 31 | 2026-02-10 | Concept Library + Adaptive Curriculum - Concept Library with ~50 concepts and ~100 glossary terms (search, filter, deep links, modal context), player model for skill scoring/weakness detection/recommendations, score breakdown persistence in all 5 stores, practice suggestions in results modal, concept link markers in hints (56 new tests) |
 | 32 | 2026-02-10 | Progressive Tool Complexity - Sound design progressive controls (SD1 shows only Oscillator+Output, SD2 adds Filter, SD3 adds Envelopes, SD4 adds LFO, SD5+ all), 4-band parametric EQ for mixing intermediate modules (lowshelf/2x peak/highshelf with freq/gain/Q per band), parametric-to-3-band conversion for backward-compatible evaluation (33 new tests) |
 | 33 | 2026-02-11 | Per-Challenge Control & Visualization Visibility - Per-control granularity for SD1-SD4 challenges (16 files), `isControlVisible`/`isSectionVisible`/`getVisualizations` helpers, visualization array rendering, ChallengeVisualization type (22 new tests) |
+| 34 | 2026-02-11 | I7 Track Dynamics module (6 challenges) - per-track compression challenges using track_compression and compression_contrast conditions, AI feedback now includes compression data in mixing prompts |

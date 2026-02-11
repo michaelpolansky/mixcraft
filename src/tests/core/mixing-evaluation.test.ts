@@ -402,6 +402,541 @@ describe('evaluateMixingChallenge', () => {
     });
   });
 
+  describe('Per-track compression conditions', () => {
+    const compressionChallenge: MixingChallenge = {
+      id: 'test-track-comp',
+      title: 'Track Compression',
+      description: 'Compress the drums',
+      difficulty: 2,
+      module: 'I4',
+      tracks: [
+        { id: 'drums', name: 'Drums', sourceConfig: { type: 'drum' } },
+        { id: 'vocal', name: 'Vocal', sourceConfig: { type: 'vocal', frequency: 220 } },
+      ],
+      target: {
+        type: 'multitrack-goal',
+        description: 'Compress drums properly',
+        conditions: [
+          { type: 'track_compression', track: 'drums', minAmount: 30, maxAmount: 70 },
+        ],
+      },
+      hints: [],
+      controls: { eq: true, compressor: false, trackCompressor: true },
+    };
+
+    it('passes when track compression is in range', () => {
+      const trackParams = {
+        drums: { low: 0, mid: 0, high: 0, volume: 0, pan: 0, compressorAmount: 50 },
+        vocal: { low: 0, mid: 0, high: 0, volume: 0, pan: 0, compressorAmount: 0 },
+      };
+      const result = evaluateMixingChallenge(
+        compressionChallenge,
+        defaultEQ,
+        defaultCompressor,
+        trackParams
+      );
+      expect(result.passed).toBe(true);
+      expect(result.breakdown.conditions?.every((c) => c.passed)).toBe(true);
+    });
+
+    it('passes at exact min boundary', () => {
+      const trackParams = {
+        drums: { low: 0, mid: 0, high: 0, volume: 0, pan: 0, compressorAmount: 30 },
+        vocal: { low: 0, mid: 0, high: 0, volume: 0, pan: 0, compressorAmount: 0 },
+      };
+      const result = evaluateMixingChallenge(
+        compressionChallenge,
+        defaultEQ,
+        defaultCompressor,
+        trackParams
+      );
+      expect(result.passed).toBe(true);
+    });
+
+    it('passes at exact max boundary', () => {
+      const trackParams = {
+        drums: { low: 0, mid: 0, high: 0, volume: 0, pan: 0, compressorAmount: 70 },
+        vocal: { low: 0, mid: 0, high: 0, volume: 0, pan: 0, compressorAmount: 0 },
+      };
+      const result = evaluateMixingChallenge(
+        compressionChallenge,
+        defaultEQ,
+        defaultCompressor,
+        trackParams
+      );
+      expect(result.passed).toBe(true);
+    });
+
+    it('fails when compression is below minimum', () => {
+      const trackParams = {
+        drums: { low: 0, mid: 0, high: 0, volume: 0, pan: 0, compressorAmount: 10 },
+        vocal: { low: 0, mid: 0, high: 0, volume: 0, pan: 0, compressorAmount: 0 },
+      };
+      const result = evaluateMixingChallenge(
+        compressionChallenge,
+        defaultEQ,
+        defaultCompressor,
+        trackParams
+      );
+      expect(result.passed).toBe(false);
+    });
+
+    it('fails when compression exceeds maximum', () => {
+      const trackParams = {
+        drums: { low: 0, mid: 0, high: 0, volume: 0, pan: 0, compressorAmount: 80 },
+        vocal: { low: 0, mid: 0, high: 0, volume: 0, pan: 0, compressorAmount: 0 },
+      };
+      const result = evaluateMixingChallenge(
+        compressionChallenge,
+        defaultEQ,
+        defaultCompressor,
+        trackParams
+      );
+      expect(result.passed).toBe(false);
+    });
+
+    it('fails when track data is missing', () => {
+      const trackParams = {
+        vocal: { low: 0, mid: 0, high: 0, volume: 0, pan: 0, compressorAmount: 0 },
+      };
+      const result = evaluateMixingChallenge(
+        compressionChallenge,
+        defaultEQ,
+        defaultCompressor,
+        trackParams
+      );
+      expect(result.passed).toBe(false);
+    });
+
+    it('fails when compressorAmount is missing from track', () => {
+      const trackParams = {
+        drums: { low: 0, mid: 0, high: 0, volume: 0, pan: 0 },
+        vocal: { low: 0, mid: 0, high: 0, volume: 0, pan: 0 },
+      };
+      const result = evaluateMixingChallenge(
+        compressionChallenge,
+        defaultEQ,
+        defaultCompressor,
+        trackParams
+      );
+      expect(result.passed).toBe(false);
+    });
+
+    it('passes without maxAmount when only minAmount specified', () => {
+      const openChallenge: MixingChallenge = {
+        ...compressionChallenge,
+        id: 'test-track-comp-open',
+        target: {
+          type: 'multitrack-goal',
+          description: 'Add some compression',
+          conditions: [
+            { type: 'track_compression', track: 'drums', minAmount: 20 },
+          ],
+        },
+      };
+      const trackParams = {
+        drums: { low: 0, mid: 0, high: 0, volume: 0, pan: 0, compressorAmount: 95 },
+        vocal: { low: 0, mid: 0, high: 0, volume: 0, pan: 0, compressorAmount: 0 },
+      };
+      const result = evaluateMixingChallenge(
+        openChallenge,
+        defaultEQ,
+        defaultCompressor,
+        trackParams
+      );
+      expect(result.passed).toBe(true);
+    });
+  });
+
+  describe('Compression contrast conditions', () => {
+    const contrastChallenge: MixingChallenge = {
+      id: 'test-comp-contrast',
+      title: 'Compression Contrast',
+      description: 'Drums more compressed than vocal',
+      difficulty: 2,
+      module: 'I4',
+      tracks: [
+        { id: 'drums', name: 'Drums', sourceConfig: { type: 'drum' } },
+        { id: 'vocal', name: 'Vocal', sourceConfig: { type: 'vocal', frequency: 220 } },
+      ],
+      target: {
+        type: 'multitrack-goal',
+        description: 'Create compression contrast',
+        conditions: [
+          { type: 'compression_contrast', moreCompressed: 'drums', lessCompressed: 'vocal', minDifference: 20 },
+        ],
+      },
+      hints: [],
+      controls: { eq: true, compressor: false, trackCompressor: true },
+    };
+
+    it('passes with sufficient compression difference', () => {
+      const trackParams = {
+        drums: { low: 0, mid: 0, high: 0, volume: 0, pan: 0, compressorAmount: 60 },
+        vocal: { low: 0, mid: 0, high: 0, volume: 0, pan: 0, compressorAmount: 20 },
+      };
+      const result = evaluateMixingChallenge(
+        contrastChallenge,
+        defaultEQ,
+        defaultCompressor,
+        trackParams
+      );
+      expect(result.passed).toBe(true);
+    });
+
+    it('passes at exact boundary', () => {
+      const trackParams = {
+        drums: { low: 0, mid: 0, high: 0, volume: 0, pan: 0, compressorAmount: 40 },
+        vocal: { low: 0, mid: 0, high: 0, volume: 0, pan: 0, compressorAmount: 20 },
+      };
+      const result = evaluateMixingChallenge(
+        contrastChallenge,
+        defaultEQ,
+        defaultCompressor,
+        trackParams
+      );
+      expect(result.passed).toBe(true);
+    });
+
+    it('fails with insufficient difference', () => {
+      const trackParams = {
+        drums: { low: 0, mid: 0, high: 0, volume: 0, pan: 0, compressorAmount: 30 },
+        vocal: { low: 0, mid: 0, high: 0, volume: 0, pan: 0, compressorAmount: 20 },
+      };
+      const result = evaluateMixingChallenge(
+        contrastChallenge,
+        defaultEQ,
+        defaultCompressor,
+        trackParams
+      );
+      expect(result.passed).toBe(false);
+    });
+
+    it('fails when reversed (vocal more compressed)', () => {
+      const trackParams = {
+        drums: { low: 0, mid: 0, high: 0, volume: 0, pan: 0, compressorAmount: 20 },
+        vocal: { low: 0, mid: 0, high: 0, volume: 0, pan: 0, compressorAmount: 60 },
+      };
+      const result = evaluateMixingChallenge(
+        contrastChallenge,
+        defaultEQ,
+        defaultCompressor,
+        trackParams
+      );
+      expect(result.passed).toBe(false);
+    });
+
+    it('fails when tracks are missing', () => {
+      const trackParams = {
+        drums: { low: 0, mid: 0, high: 0, volume: 0, pan: 0, compressorAmount: 60 },
+      };
+      const result = evaluateMixingChallenge(
+        contrastChallenge,
+        defaultEQ,
+        defaultCompressor,
+        trackParams
+      );
+      expect(result.passed).toBe(false);
+    });
+
+    it('fails when compressorAmount missing', () => {
+      const trackParams = {
+        drums: { low: 0, mid: 0, high: 0, volume: 0, pan: 0 },
+        vocal: { low: 0, mid: 0, high: 0, volume: 0, pan: 0 },
+      };
+      const result = evaluateMixingChallenge(
+        contrastChallenge,
+        defaultEQ,
+        defaultCompressor,
+        trackParams
+      );
+      expect(result.passed).toBe(false);
+    });
+  });
+
+  describe('Bus compression maxAmount fix', () => {
+    const busCompChallenge: MixingChallenge = {
+      id: 'test-bus-max',
+      title: 'Gentle Bus Compression',
+      description: 'Light glue compression',
+      difficulty: 2,
+      module: 'M3',
+      tracks: [
+        { id: 'kick', name: 'Kick', sourceConfig: { type: 'drum' } },
+        { id: 'bass', name: 'Bass', sourceConfig: { type: 'bass', frequency: 55 } },
+      ],
+      target: {
+        type: 'multitrack-goal',
+        description: 'Gentle glue',
+        conditions: [
+          { type: 'bus_compression', minAmount: 10, maxAmount: 40 },
+        ],
+      },
+      hints: [],
+      controls: { eq: true, compressor: false, busCompressor: true },
+    };
+
+    it('passes when bus compression is within range', () => {
+      const trackParams = {
+        kick: { low: 0, mid: 0, high: 0, volume: 0, pan: 0 },
+        bass: { low: 0, mid: 0, high: 0, volume: 0, pan: 0 },
+      };
+      const busComp = { ...defaultCompressor, amount: 25 };
+      const result = evaluateMixingChallenge(
+        busCompChallenge,
+        defaultEQ,
+        busComp,
+        trackParams
+      );
+      expect(result.passed).toBe(true);
+    });
+
+    it('passes at exact min boundary', () => {
+      const trackParams = {
+        kick: { low: 0, mid: 0, high: 0, volume: 0, pan: 0 },
+        bass: { low: 0, mid: 0, high: 0, volume: 0, pan: 0 },
+      };
+      const busComp = { ...defaultCompressor, amount: 10 };
+      const result = evaluateMixingChallenge(
+        busCompChallenge,
+        defaultEQ,
+        busComp,
+        trackParams
+      );
+      expect(result.passed).toBe(true);
+    });
+
+    it('passes at exact max boundary', () => {
+      const trackParams = {
+        kick: { low: 0, mid: 0, high: 0, volume: 0, pan: 0 },
+        bass: { low: 0, mid: 0, high: 0, volume: 0, pan: 0 },
+      };
+      const busComp = { ...defaultCompressor, amount: 40 };
+      const result = evaluateMixingChallenge(
+        busCompChallenge,
+        defaultEQ,
+        busComp,
+        trackParams
+      );
+      expect(result.passed).toBe(true);
+    });
+
+    it('fails when bus compression exceeds maxAmount', () => {
+      const trackParams = {
+        kick: { low: 0, mid: 0, high: 0, volume: 0, pan: 0 },
+        bass: { low: 0, mid: 0, high: 0, volume: 0, pan: 0 },
+      };
+      const busComp = { ...defaultCompressor, amount: 60 };
+      const result = evaluateMixingChallenge(
+        busCompChallenge,
+        defaultEQ,
+        busComp,
+        trackParams
+      );
+      expect(result.passed).toBe(false);
+    });
+
+    it('fails when bus compression is below minAmount', () => {
+      const trackParams = {
+        kick: { low: 0, mid: 0, high: 0, volume: 0, pan: 0 },
+        bass: { low: 0, mid: 0, high: 0, volume: 0, pan: 0 },
+      };
+      const busComp = { ...defaultCompressor, amount: 5 };
+      const result = evaluateMixingChallenge(
+        busCompChallenge,
+        defaultEQ,
+        busComp,
+        trackParams
+      );
+      expect(result.passed).toBe(false);
+    });
+  });
+
+  describe('Condition descriptions', () => {
+    it('describes track_compression with max', () => {
+      const challenge: MixingChallenge = {
+        id: 'test-desc',
+        title: 'Test',
+        description: 'Test',
+        difficulty: 1,
+        module: 'I4',
+        tracks: [
+          { id: 'drums', name: 'Drums', sourceConfig: { type: 'drum' } },
+        ],
+        target: {
+          type: 'multitrack-goal',
+          description: 'Test descriptions',
+          conditions: [
+            { type: 'track_compression', track: 'drums', minAmount: 30, maxAmount: 70 },
+          ],
+        },
+        hints: [],
+        controls: { eq: true, compressor: false, trackCompressor: true },
+      };
+      const trackParams = {
+        drums: { low: 0, mid: 0, high: 0, volume: 0, pan: 0, compressorAmount: 0 },
+      };
+      const result = evaluateMixingChallenge(
+        challenge,
+        defaultEQ,
+        defaultCompressor,
+        trackParams
+      );
+      // Should have condition description
+      expect(result.breakdown.conditions![0]!.description).toBe('drums compression at 30% to 70%');
+    });
+
+    it('describes track_compression without max', () => {
+      const challenge: MixingChallenge = {
+        id: 'test-desc2',
+        title: 'Test',
+        description: 'Test',
+        difficulty: 1,
+        module: 'I4',
+        tracks: [
+          { id: 'drums', name: 'Drums', sourceConfig: { type: 'drum' } },
+        ],
+        target: {
+          type: 'multitrack-goal',
+          description: 'Test descriptions',
+          conditions: [
+            { type: 'track_compression', track: 'drums', minAmount: 20 },
+          ],
+        },
+        hints: [],
+        controls: { eq: true, compressor: false, trackCompressor: true },
+      };
+      const trackParams = {
+        drums: { low: 0, mid: 0, high: 0, volume: 0, pan: 0, compressorAmount: 0 },
+      };
+      const result = evaluateMixingChallenge(
+        challenge,
+        defaultEQ,
+        defaultCompressor,
+        trackParams
+      );
+      expect(result.breakdown.conditions![0]!.description).toBe('drums compression at 20%+');
+    });
+
+    it('describes compression_contrast', () => {
+      const challenge: MixingChallenge = {
+        id: 'test-desc3',
+        title: 'Test',
+        description: 'Test',
+        difficulty: 1,
+        module: 'I4',
+        tracks: [
+          { id: 'drums', name: 'Drums', sourceConfig: { type: 'drum' } },
+          { id: 'vocal', name: 'Vocal', sourceConfig: { type: 'vocal', frequency: 220 } },
+        ],
+        target: {
+          type: 'multitrack-goal',
+          description: 'Test descriptions',
+          conditions: [
+            { type: 'compression_contrast', moreCompressed: 'drums', lessCompressed: 'vocal', minDifference: 20 },
+          ],
+        },
+        hints: [],
+        controls: { eq: true, compressor: false, trackCompressor: true },
+      };
+      const trackParams = {
+        drums: { low: 0, mid: 0, high: 0, volume: 0, pan: 0, compressorAmount: 0 },
+        vocal: { low: 0, mid: 0, high: 0, volume: 0, pan: 0, compressorAmount: 0 },
+      };
+      const result = evaluateMixingChallenge(
+        challenge,
+        defaultEQ,
+        defaultCompressor,
+        trackParams
+      );
+      expect(result.breakdown.conditions![0]!.description).toBe('drums more compressed than vocal');
+    });
+  });
+
+  describe('Combined conditions (compression + other)', () => {
+    it('evaluates compression alongside EQ and volume conditions', () => {
+      const combinedChallenge: MixingChallenge = {
+        id: 'test-combined',
+        title: 'Full Mix',
+        description: 'Balance everything',
+        difficulty: 3,
+        module: 'I5',
+        tracks: [
+          { id: 'drums', name: 'Drums', sourceConfig: { type: 'drum' } },
+          { id: 'vocal', name: 'Vocal', sourceConfig: { type: 'vocal', frequency: 220 } },
+        ],
+        target: {
+          type: 'multitrack-goal',
+          description: 'Full mix balance',
+          conditions: [
+            { type: 'track_compression', track: 'drums', minAmount: 40 },
+            { type: 'track_compression', track: 'vocal', minAmount: 10, maxAmount: 30 },
+            { type: 'compression_contrast', moreCompressed: 'drums', lessCompressed: 'vocal', minDifference: 15 },
+            { type: 'volume_louder', track1: 'vocal', track2: 'drums' },
+          ],
+        },
+        hints: [],
+        controls: { eq: true, compressor: false, trackCompressor: true, volume: true },
+      };
+
+      const trackParams = {
+        drums: { low: 0, mid: 0, high: 0, volume: -8, pan: 0, compressorAmount: 50 },
+        vocal: { low: 0, mid: 0, high: 0, volume: -4, pan: 0, compressorAmount: 20 },
+      };
+      const result = evaluateMixingChallenge(
+        combinedChallenge,
+        defaultEQ,
+        defaultCompressor,
+        trackParams
+      );
+
+      expect(result.passed).toBe(true);
+      expect(result.overall).toBe(100);
+      expect(result.breakdown.conditions?.length).toBe(4);
+      expect(result.breakdown.conditions?.every((c) => c.passed)).toBe(true);
+    });
+
+    it('partially fails when some conditions are not met', () => {
+      const combinedChallenge: MixingChallenge = {
+        id: 'test-combined-partial',
+        title: 'Full Mix',
+        description: 'Balance everything',
+        difficulty: 3,
+        module: 'I5',
+        tracks: [
+          { id: 'drums', name: 'Drums', sourceConfig: { type: 'drum' } },
+          { id: 'vocal', name: 'Vocal', sourceConfig: { type: 'vocal', frequency: 220 } },
+        ],
+        target: {
+          type: 'multitrack-goal',
+          description: 'Full mix balance',
+          conditions: [
+            { type: 'track_compression', track: 'drums', minAmount: 40 },
+            { type: 'compression_contrast', moreCompressed: 'drums', lessCompressed: 'vocal', minDifference: 20 },
+          ],
+        },
+        hints: [],
+        controls: { eq: true, compressor: false, trackCompressor: true },
+      };
+
+      // Drums meet compression, but contrast is insufficient
+      const trackParams = {
+        drums: { low: 0, mid: 0, high: 0, volume: 0, pan: 0, compressorAmount: 45 },
+        vocal: { low: 0, mid: 0, high: 0, volume: 0, pan: 0, compressorAmount: 35 },
+      };
+      const result = evaluateMixingChallenge(
+        combinedChallenge,
+        defaultEQ,
+        defaultCompressor,
+        trackParams
+      );
+
+      expect(result.overall).toBe(50); // 1 of 2 conditions met
+      expect(result.breakdown.conditions![0]!.passed).toBe(true);
+      expect(result.breakdown.conditions![1]!.passed).toBe(false);
+    });
+  });
+
   describe('Star rating thresholds', () => {
     const simpleChallenge: MixingChallenge = {
       id: 'test-stars',

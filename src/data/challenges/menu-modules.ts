@@ -50,6 +50,7 @@ export const mixingIntermediateModules: ModuleDef[] = [
   { id: 'I4', title: 'Stereo Width', description: 'Create width and depth by mastering stereo imaging and panning.', challengeCount: 6 },
   { id: 'I5', title: 'Depth & Space', description: 'Use reverb to create front-to-back depth and a three-dimensional soundstage.', challengeCount: 6 },
   { id: 'I6', title: 'Level Balance', description: 'Master volume relationships to create professional-sounding mixes.', challengeCount: 6 },
+  { id: 'I7', title: 'Track Dynamics', description: 'Control dynamics on individual tracks with per-track compression.', challengeCount: 6 },
 ];
 
 export const mixingAdvancedModules: ModuleDef[] = [

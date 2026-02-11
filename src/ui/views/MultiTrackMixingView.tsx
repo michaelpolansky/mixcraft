@@ -7,7 +7,7 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import * as Tone from 'tone';
 import { useMixingStore, type TrackEQParams } from '../stores/mixing-store.ts';
-import { EQControl, ParametricEQControl, SpectrumAnalyzer, Slider } from '../components/index.ts';
+import { EQControl, ParametricEQControl, SpectrumAnalyzer, Slider, CompressorControl } from '../components/index.ts';
 import { cn } from '../utils/cn.ts';
 import { createAudioSource, type AudioSource } from '../../core/audio-source.ts';
 import { MixingEQ, MixingCompressor, MixingReverb, MixingParametricEQ } from '../../core/mixing-effects.ts';
@@ -26,6 +26,7 @@ interface TrackAudio {
   source: AudioSource;
   eq: MixingEQ;
   parametricEQ?: MixingParametricEQ;
+  compressor?: MixingCompressor;
   gain: Tone.Gain;
   panner: Tone.Panner;
   reverb: MixingReverb;
@@ -58,6 +59,8 @@ export function MultiTrackMixingView({
     setTrackPan,
     setTrackReverbMix,
     setTrackReverbSize,
+    setTrackCompressorThreshold,
+    setTrackCompressorAmount,
     setTrackParametricBand,
     setCompressorThreshold,
     setCompressorAmount,
@@ -72,6 +75,7 @@ export function MultiTrackMixingView({
   const busCompressorRef = useRef<MixingCompressor | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [gainReduction, setGainReduction] = useState(0);
+  const [trackGainReduction, setTrackGainReduction] = useState<Record<string, number>>({});
 
   // AI feedback state
   const [aiFeedback, setAiFeedback] = useState<string | null>(null);
@@ -94,6 +98,7 @@ export function MultiTrackMixingView({
 
     // Create audio for each track
     const useParametricEQ = challenge.controls.eq === 'parametric';
+    const useTrackCompressor = challenge.controls.trackCompressor === true;
     for (const track of challenge.tracks) {
       const source = createAudioSource(track.sourceConfig);
       const eq = new MixingEQ();
@@ -102,28 +107,48 @@ export function MultiTrackMixingView({
       const reverb = new MixingReverb();
 
       let parametricEQ: MixingParametricEQ | undefined;
+      let compressor: MixingCompressor | undefined;
+
+      // Chain: source -> [EQ] -> [compressor] -> gain -> panner -> reverb -> bus EQ
       if (useParametricEQ) {
         parametricEQ = new MixingParametricEQ();
-        // Chain: source -> parametricEQ -> gain -> panner -> reverb -> bus EQ
         source.connect(parametricEQ.input);
-        parametricEQ.connect(gain);
+        if (useTrackCompressor) {
+          compressor = new MixingCompressor();
+          parametricEQ.connect(compressor.input);
+          compressor.connect(gain);
+        } else {
+          parametricEQ.connect(gain);
+        }
       } else {
-        // Chain: source -> eq -> gain -> panner -> reverb -> bus EQ
         source.connect(eq.input);
-        eq.connect(gain);
+        if (useTrackCompressor) {
+          compressor = new MixingCompressor();
+          eq.connect(compressor.input);
+          compressor.connect(gain);
+        } else {
+          eq.connect(gain);
+        }
       }
       gain.connect(panner);
       panner.connect(reverb.input);
       reverb.connect(busEQRef.current!.input);
 
-      trackAudioRef.current.set(track.id, { source, eq, parametricEQ, gain, panner, reverb });
+      trackAudioRef.current.set(track.id, { source, eq, parametricEQ, compressor, gain, panner, reverb });
     }
 
-    // Poll gain reduction
+    // Poll gain reduction (bus + per-track)
     const pollGR = () => {
       if (busCompressorRef.current) {
         setGainReduction(busCompressorRef.current.gainReduction);
       }
+      const trackGR: Record<string, number> = {};
+      for (const [trackId, audio] of trackAudioRef.current.entries()) {
+        if (audio.compressor) {
+          trackGR[trackId] = audio.compressor.gainReduction;
+        }
+      }
+      setTrackGainReduction(trackGR);
     };
     const grInterval = setInterval(pollGR, 50);
 
@@ -135,6 +160,7 @@ export function MultiTrackMixingView({
         audio.source.dispose();
         audio.eq.dispose();
         audio.parametricEQ?.dispose();
+        audio.compressor?.dispose();
         audio.gain.dispose();
         audio.panner.dispose();
         audio.reverb.dispose();
@@ -154,6 +180,10 @@ export function MultiTrackMixingView({
         audio.gain.gain.value = Tone.dbToGain(params.volume);
         audio.panner.pan.value = params.pan;
         audio.reverb.setParams({ mix: params.reverbMix, size: params.reverbSize });
+        if (audio.compressor) {
+          audio.compressor.setThreshold(params.compressorThreshold);
+          audio.compressor.setAmount(params.compressorAmount);
+        }
       }
     }
   }, [trackParams]);
@@ -203,7 +233,12 @@ export function MultiTrackMixingView({
           trackParams: Object.fromEntries(
             Object.entries(trackParams).map(([id, p]) => [
               id,
-              { low: p.low, mid: p.mid, high: p.high, volume: p.volume, pan: p.pan, reverbMix: p.reverbMix },
+              {
+                low: p.low, mid: p.mid, high: p.high, volume: p.volume, pan: p.pan,
+                reverbMix: p.reverbMix,
+                compressorThreshold: p.compressorThreshold,
+                compressorAmount: p.compressorAmount,
+              },
             ])
           ),
           busCompressor: { threshold: compressorParams.threshold, amount: compressorParams.amount },
@@ -260,7 +295,7 @@ export function MultiTrackMixingView({
     startScoring();
 
     // Convert track params to format for evaluation (including pan, reverb, and volume)
-    const playerTrackEQs: Record<string, EQParams & { pan?: number; reverbMix?: number; volume?: number }> = {};
+    const playerTrackEQs: Record<string, EQParams & { pan?: number; reverbMix?: number; volume?: number; compressorAmount?: number }> = {};
     for (const [trackId, params] of Object.entries(trackParams)) {
       // When using parametric EQ, convert to effective 3-band for evaluation
       const trackPEQ = trackParametricEQ[trackId];
@@ -273,6 +308,7 @@ export function MultiTrackMixingView({
         pan: params.pan,
         reverbMix: params.reverbMix,
         volume: params.volume,
+        compressorAmount: params.compressorAmount,
       };
     }
 
@@ -305,6 +341,7 @@ export function MultiTrackMixingView({
   }, [onExit]);
 
   const tracks = challenge.tracks ?? [];
+  const showTrackCompressor = challenge.controls.trackCompressor === true;
   const showBusEQ = challenge.controls.busEQ === true;
   const showBusCompressor = challenge.controls.busCompressor === true;
 
@@ -363,7 +400,7 @@ export function MultiTrackMixingView({
             {/* Track Strips */}
             <div className="flex gap-4 mb-6">
               {tracks.map((track) => {
-                const params: TrackEQParams = trackParams[track.id] ?? { low: 0, mid: 0, high: 0, volume: 0, pan: 0, reverbMix: 0, reverbSize: 50 };
+                const params: TrackEQParams = trackParams[track.id] ?? { low: 0, mid: 0, high: 0, volume: 0, pan: 0, reverbMix: 0, reverbSize: 50, compressorThreshold: 0, compressorAmount: 0 };
                 return (
                   <div
                     key={track.id}
@@ -437,6 +474,62 @@ export function MultiTrackMixingView({
                         </>
                       )}
                     </div>
+
+                    {/* Per-Track Compressor */}
+                    {showTrackCompressor && (
+                      <div className="mb-4">
+                        <div className="text-base text-text-muted mb-2">Compressor</div>
+                        <div className="flex flex-col gap-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-text-tertiary w-10">Thresh</span>
+                            <input
+                              type="range"
+                              min="-60"
+                              max="0"
+                              step="1"
+                              value={params.compressorThreshold}
+                              onChange={(e) => setTrackCompressorThreshold(track.id, parseFloat(e.target.value))}
+                              className="flex-1"
+                            />
+                            <span className="text-base text-text-tertiary w-10 text-right">
+                              {params.compressorThreshold} dB
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-text-tertiary w-10">Amt</span>
+                            <input
+                              type="range"
+                              min="0"
+                              max="100"
+                              step="5"
+                              value={params.compressorAmount}
+                              onChange={(e) => setTrackCompressorAmount(track.id, parseFloat(e.target.value))}
+                              className="flex-1"
+                            />
+                            <span className="text-base text-text-tertiary w-8 text-right">
+                              {params.compressorAmount}%
+                            </span>
+                          </div>
+                          {/* Mini GR meter */}
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-text-tertiary w-10">GR</span>
+                            <div className="flex-1 h-3 bg-[#0a0a0a] rounded-sm overflow-hidden">
+                              <div
+                                className="h-full rounded-sm"
+                                style={{
+                                  width: `${Math.min(100, Math.abs(trackGainReduction[track.id] ?? 0) * 5)}%`,
+                                  background: Math.abs(trackGainReduction[track.id] ?? 0) > 10 ? '#ef4444' : Math.abs(trackGainReduction[track.id] ?? 0) > 4 ? '#eab308' : '#22c55e',
+                                  transition: 'width 0.05s ease',
+                                }}
+                              />
+                            </div>
+                            <span className="text-sm text-text-tertiary w-10 text-right font-mono">
+                              {(trackGainReduction[track.id] ?? 0).toFixed(1)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Volume */}
                     {challenge.controls.volume && (
@@ -586,50 +679,13 @@ export function MultiTrackMixingView({
 
                 {/* Bus Compressor */}
                 {showBusCompressor && (
-                  <div>
-                    <div className="text-md text-text-tertiary mb-3">Compressor</div>
-                    <div className="flex gap-6">
-                      <div className="flex-1">
-                        <div className="text-base text-text-muted mb-2">Threshold</div>
-                        <input
-                          type="range"
-                          min="-40"
-                          max="0"
-                          step="1"
-                          value={compressorParams.threshold}
-                          onChange={(e) => setCompressorThreshold(parseFloat(e.target.value))}
-                          className="w-full"
-                        />
-                        <div className="text-base text-text-tertiary text-center">
-                          {compressorParams.threshold} dB
-                        </div>
-                      </div>
-                      <div className="flex-1">
-                        <div className="text-base text-text-muted mb-2">Amount</div>
-                        <input
-                          type="range"
-                          min="0"
-                          max="100"
-                          step="5"
-                          value={compressorParams.amount}
-                          onChange={(e) => setCompressorAmount(parseFloat(e.target.value))}
-                          className="w-full"
-                        />
-                        <div className="text-base text-text-tertiary text-center">
-                          {compressorParams.amount}%
-                        </div>
-                      </div>
-                      <div className="w-[60px]">
-                        <div className="text-base text-text-muted mb-2">GR</div>
-                        <div className="h-[60px] bg-[#0a0a0a] rounded-sm flex items-end justify-center p-1">
-                          <div
-                            className="w-5 bg-danger rounded-sm"
-                            style={{ height: `${Math.min(100, Math.abs(gainReduction) * 5)}%` }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  <CompressorControl
+                    params={compressorParams}
+                    gainReduction={gainReduction}
+                    showAdvanced={false}
+                    onThresholdChange={setCompressorThreshold}
+                    onAmountChange={setCompressorAmount}
+                  />
                 )}
               </div>
             )}

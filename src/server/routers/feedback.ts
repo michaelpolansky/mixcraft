@@ -204,6 +204,8 @@ const TrackParamsSchema = z.record(z.string(), z.object({
   volume: z.number(),
   pan: z.number(),
   reverbMix: z.number().optional(),
+  compressorThreshold: z.number().optional(),
+  compressorAmount: z.number().optional(),
 }));
 
 const MixingChallengeInfoSchema = z.object({
@@ -240,7 +242,8 @@ function buildMixingFeedbackPrompt(input: z.infer<typeof MixingFeedbackInputSche
   const trackSummary = Object.entries(trackParams)
     .map(([id, params]) => {
       const panLabel = params.pan === 0 ? 'C' : params.pan < 0 ? `L${Math.abs(params.pan * 100).toFixed(0)}` : `R${(params.pan * 100).toFixed(0)}`;
-      return `- ${id}: Vol ${params.volume > 0 ? '+' : ''}${params.volume.toFixed(1)}dB, Pan ${panLabel}, EQ L${params.low > 0 ? '+' : ''}${params.low}/M${params.mid > 0 ? '+' : ''}${params.mid}/H${params.high > 0 ? '+' : ''}${params.high}${params.reverbMix !== undefined ? `, Reverb ${params.reverbMix}%` : ''}`;
+      const compStr = params.compressorAmount && params.compressorAmount > 0 ? `, Comp ${params.compressorThreshold ?? 0}dB/${params.compressorAmount}%` : '';
+      return `- ${id}: Vol ${params.volume > 0 ? '+' : ''}${params.volume.toFixed(1)}dB, Pan ${panLabel}, EQ L${params.low > 0 ? '+' : ''}${params.low}/M${params.mid > 0 ? '+' : ''}${params.mid}/H${params.high > 0 ? '+' : ''}${params.high}${params.reverbMix !== undefined ? `, Reverb ${params.reverbMix}%` : ''}${compStr}`;
     })
     .join('\n');
 
