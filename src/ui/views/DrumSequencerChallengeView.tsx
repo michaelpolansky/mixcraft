@@ -294,11 +294,9 @@ export function DrumSequencerChallengeView({
                   disabled={!targetEngineRef.current?.loaded}
                   className={cn(
                     'py-2.5 px-6 border-none rounded-md text-text-primary text-xl font-semibold min-w-[120px]',
-                    !targetEngineRef.current?.loaded ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+                    !targetEngineRef.current?.loaded ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
+                    isPlayingTarget ? 'bg-[#ef4444]' : 'bg-gradient-to-br from-[#a855f7] to-[#9333ea]'
                   )}
-                  style={{
-                    background: isPlayingTarget ? '#ef4444' : 'linear-gradient(145deg, #a855f7, #9333ea)',
-                  }}
                 >
                   {isPlayingTarget ? 'Stop Target' : 'Play Target'}
                 </button>

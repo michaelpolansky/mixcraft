@@ -212,12 +212,12 @@ export function MixingChallengeView({
           <Section title="Audio Source">
             <button
               onClick={togglePlayback}
-              className="py-3 px-6 border-none rounded-lg text-text-primary cursor-pointer text-xl font-semibold w-full"
-              style={{
-                background: isPlaying
-                  ? 'linear-gradient(145deg, #ef4444, #dc2626)'
-                  : 'linear-gradient(145deg, #22c55e, #16a34a)',
-              }}
+              className={cn(
+                'py-3 px-6 border-none rounded-lg text-text-primary cursor-pointer text-xl font-semibold w-full',
+                isPlaying
+                  ? 'bg-gradient-to-br from-[#ef4444] to-[#dc2626]'
+                  : 'bg-gradient-to-br from-success to-[#16a34a]'
+              )}
             >
               {isPlaying ? '■ Stop' : '▶ Play'}
             </button>
@@ -290,13 +290,10 @@ export function MixingChallengeView({
               disabled={isScoring}
               className={cn(
                 'w-full py-4 px-8 border-none rounded-lg text-text-primary text-2xl font-semibold',
-                isScoring ? 'cursor-wait' : 'cursor-pointer'
+                isScoring
+                  ? 'cursor-wait bg-[#333]'
+                  : 'cursor-pointer bg-gradient-to-br from-[#3b82f6] to-[#2563eb]'
               )}
-              style={{
-                background: isScoring
-                  ? '#333'
-                  : 'linear-gradient(145deg, #3b82f6, #2563eb)',
-              }}
             >
               {isScoring ? 'Scoring...' : 'Submit'}
             </button>
@@ -366,8 +363,10 @@ function MixingResultsModal({
           {result.feedback.map((fb, i) => (
             <div
               key={i}
-              className="text-text-tertiary text-xl mb-2 pl-3 border-l-2"
-              style={{ borderLeftColor: result.passed ? '#22c55e' : '#f59e0b' }}
+              className={cn(
+                'text-text-tertiary text-xl mb-2 pl-3 border-l-2',
+                result.passed ? 'border-l-success' : 'border-l-warning'
+              )}
             >
               {fb}
             </div>
@@ -386,8 +385,7 @@ function MixingResultsModal({
           {result.passed && hasNext && onNext && (
             <button
               onClick={onNext}
-              className="flex-1 py-3 border-none rounded-lg text-text-primary cursor-pointer text-xl font-semibold"
-              style={{ background: 'linear-gradient(145deg, #22c55e, #16a34a)' }}
+              className="flex-1 py-3 border-none rounded-lg text-text-primary cursor-pointer text-xl font-semibold bg-gradient-to-br from-success to-[#16a34a]"
             >
               Next Challenge →
             </button>

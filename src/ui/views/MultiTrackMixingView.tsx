@@ -388,10 +388,10 @@ export function MultiTrackMixingView({
             <div className="mb-6">
               <button
                 onClick={togglePlayback}
-                className="py-3 px-8 text-2xl border-none rounded-lg text-text-primary cursor-pointer font-medium"
-                style={{
-                  background: isPlaying ? '#ef4444' : '#22c55e',
-                }}
+                className={cn(
+                  'py-3 px-8 text-2xl border-none rounded-lg text-text-primary cursor-pointer font-medium',
+                  isPlaying ? 'bg-[#ef4444]' : 'bg-[#22c55e]'
+                )}
               >
                 {isPlaying ? '■ Stop' : '▶ Play'}
               </button>
@@ -697,11 +697,10 @@ export function MultiTrackMixingView({
                 disabled={isScoring}
                 className={cn(
                   'w-full py-4 text-2xl border-none rounded-lg text-text-primary font-semibold',
-                  isScoring ? 'cursor-default' : 'cursor-pointer'
+                  isScoring
+                    ? 'cursor-default bg-[#333]'
+                    : 'cursor-pointer bg-gradient-to-br from-success to-[#16a34a]'
                 )}
-                style={{
-                  background: isScoring ? '#333' : 'linear-gradient(145deg, #22c55e, #16a34a)',
-                }}
               >
                 {isScoring ? 'Evaluating...' : 'Submit'}
               </button>

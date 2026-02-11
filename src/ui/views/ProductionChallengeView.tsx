@@ -261,12 +261,12 @@ export function ProductionChallengeView({
               {isReferenceBased && (
                 <button
                   onClick={isPlaying && playbackMode === 'reference' ? stopPlayback : playReference}
-                  className="flex-1 py-3 px-6 border-none rounded-lg text-text-primary cursor-pointer text-xl font-semibold"
-                  style={{
-                    background: isPlaying && playbackMode === 'reference'
-                      ? 'linear-gradient(145deg, #ef4444, #dc2626)'
-                      : 'linear-gradient(145deg, #a855f7, #9333ea)',
-                  }}
+                  className={cn(
+                    'flex-1 py-3 px-6 border-none rounded-lg text-text-primary cursor-pointer text-xl font-semibold',
+                    isPlaying && playbackMode === 'reference'
+                      ? 'bg-gradient-to-br from-[#ef4444] to-[#dc2626]'
+                      : 'bg-gradient-to-br from-[#a855f7] to-[#9333ea]'
+                  )}
                 >
                   {isPlaying && playbackMode === 'reference' ? '■ Stop' : '▶ Reference'}
                 </button>
@@ -275,12 +275,12 @@ export function ProductionChallengeView({
               {/* Your mix play button */}
               <button
                 onClick={isPlaying && playbackMode === 'yours' ? stopPlayback : playYourMix}
-                className="flex-1 py-3 px-6 border-none rounded-lg text-text-primary cursor-pointer text-xl font-semibold"
-                style={{
-                  background: isPlaying && playbackMode === 'yours'
-                    ? 'linear-gradient(145deg, #ef4444, #dc2626)'
-                    : 'linear-gradient(145deg, #22c55e, #16a34a)',
-                }}
+                className={cn(
+                  'flex-1 py-3 px-6 border-none rounded-lg text-text-primary cursor-pointer text-xl font-semibold',
+                  isPlaying && playbackMode === 'yours'
+                    ? 'bg-gradient-to-br from-[#ef4444] to-[#dc2626]'
+                    : 'bg-gradient-to-br from-success to-[#16a34a]'
+                )}
               >
                 {isPlaying && playbackMode === 'yours' ? '■ Stop' : '▶ Your Mix'}
               </button>
@@ -371,13 +371,10 @@ export function ProductionChallengeView({
               disabled={isScoring}
               className={cn(
                 'w-full py-4 px-8 border-none rounded-lg text-text-primary text-2xl font-semibold',
-                isScoring ? 'cursor-wait' : 'cursor-pointer'
+                isScoring
+                  ? 'cursor-wait bg-[#333]'
+                  : 'cursor-pointer bg-gradient-to-br from-[#3b82f6] to-[#2563eb]'
               )}
-              style={{
-                background: isScoring
-                  ? '#333'
-                  : 'linear-gradient(145deg, #3b82f6, #2563eb)',
-              }}
             >
               {isScoring ? 'Scoring...' : 'Submit Mix'}
             </button>
@@ -573,8 +570,10 @@ function ProductionResultsModal({
           {result.feedback.map((fb, i) => (
             <div
               key={i}
-              className="text-text-muted text-md mb-1.5 pl-3 border-l-2"
-              style={{ borderLeftColor: result.passed ? '#22c55e44' : '#f59e0b44' }}
+              className={cn(
+                'text-text-muted text-md mb-1.5 pl-3 border-l-2',
+                result.passed ? 'border-l-[#22c55e44]' : 'border-l-[#f59e0b44]'
+              )}
             >
               {fb}
             </div>
@@ -593,8 +592,7 @@ function ProductionResultsModal({
           {result.passed && hasNext && onNext && (
             <button
               onClick={onNext}
-              className="flex-1 py-3 border-none rounded-lg text-text-primary cursor-pointer text-xl font-semibold"
-              style={{ background: 'linear-gradient(145deg, #22c55e, #16a34a)' }}
+              className="flex-1 py-3 border-none rounded-lg text-text-primary cursor-pointer text-xl font-semibold bg-gradient-to-br from-success to-[#16a34a]"
             >
               Next Challenge →
             </button>
