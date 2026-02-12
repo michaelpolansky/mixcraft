@@ -10,6 +10,7 @@ import { Knob, StepGrid, VelocityLane } from '../components/index.ts';
 import { Section } from '../components/ModuleCard.tsx';
 import { BackButton } from '../components/Button.tsx';
 import { cn } from '../utils/cn.ts';
+import { formatBPM, formatSwing, formatDb } from '../utils/formatters.ts';
 
 interface DrumSequencerViewProps {
   onBack?: () => void;
@@ -56,10 +57,7 @@ function HorizontalSlider({
         value={value}
         onChange={(e) => onChange(parseFloat(e.target.value))}
         className="h-1.5 appearance-none rounded-sm cursor-pointer"
-        style={{
-          width,
-          background: `linear-gradient(to right, #f97316 0%, #f97316 ${percentage}%, #333 ${percentage}%, #333 100%)`,
-        }}
+        style={{ width, background: `linear-gradient(to right, #f97316 0%, #f97316 ${percentage}%, #333 ${percentage}%, #333 100%)` }}
       />
     </div>
   );
@@ -121,10 +119,6 @@ export function DrumSequencerView({ onBack }: DrumSequencerViewProps) {
     [selectedTrack, setStepVelocity]
   );
 
-  // Format helpers
-  const formatBPM = (value: number) => `${Math.round(value)} BPM`;
-  const formatSwing = (value: number) => `${Math.round(value)}%`;
-  const formatDb = (value: number) => `${value.toFixed(1)}dB`;
 
   // Accent color for drum sequencer (orange theme)
   const accentColor = '#f97316';

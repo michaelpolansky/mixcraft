@@ -22,7 +22,7 @@ import { cn } from '../utils/cn.ts';
 import { evaluateSamplingChallenge } from '../../core/sampling-evaluation.ts';
 import { getTRPC } from '../api/trpc.ts';
 import { useAIFeedback } from '../hooks/useAIFeedback.ts';
-import { formatDb, formatPercent } from '../utils/formatters.ts';
+import { formatDb, formatPercent, formatSemitones } from '../utils/formatters.ts';
 import type { SamplingChallenge } from '../../core/types.ts';
 import { SAMPLER_PARAM_RANGES } from '../../core/types.ts';
 import type { SamplingScoreResult } from '../../core/sampling-evaluation.ts';
@@ -112,9 +112,6 @@ export function SamplerChallengeView({
     onExit();
   }, [onExit, stop]);
 
-  const formatSemitones = (value: number) =>
-    value >= 0 ? `+${value}` : `${value}`;
-
   const accentColor = '#a855f7';
   const transportDisabled = !isInitialized || params.duration === 0;
 
@@ -198,11 +195,11 @@ export function SamplerChallengeView({
             <Section title="Options">
               <div className="flex gap-6">
                 <label className="flex items-center gap-2 cursor-pointer text-text-secondary text-lg">
-                  <input type="checkbox" checked={params.loop} onChange={(e) => setLoop(e.target.checked)} style={{ width: '16px', height: '16px', accentColor, cursor: 'pointer' }} />
+                  <input type="checkbox" checked={params.loop} onChange={(e) => setLoop(e.target.checked)} className="w-4 h-4 cursor-pointer" style={{ accentColor }} />
                   Loop
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer text-text-secondary text-lg">
-                  <input type="checkbox" checked={params.reverse} onChange={(e) => setReverse(e.target.checked)} style={{ width: '16px', height: '16px', accentColor, cursor: 'pointer' }} />
+                  <input type="checkbox" checked={params.reverse} onChange={(e) => setReverse(e.target.checked)} className="w-4 h-4 cursor-pointer" style={{ accentColor }} />
                   Reverse
                 </label>
               </div>

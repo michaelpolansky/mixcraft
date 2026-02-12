@@ -42,7 +42,6 @@ interface DrawbarProps {
 
 function Drawbar({ index, value, onChange }: DrawbarProps) {
   const trackRef = useRef<HTMLDivElement>(null);
-  const height = 120;
 
   const { onPointerDown } = usePointerDrag({
     onMove: useCallback((_clientX: number, clientY: number) => {
@@ -59,65 +58,27 @@ function Drawbar({ index, value, onChange }: DrawbarProps) {
   const fillHeight = value * 100;
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '4px',
-        userSelect: 'none',
-      }}
-    >
+    <div className="flex flex-col items-center gap-1 select-none">
       <div
         ref={trackRef}
         onMouseDown={onPointerDown}
         onTouchStart={onPointerDown}
-        style={{
-          width: '20px',
-          height: height,
-          background: '#333',
-          borderRadius: '4px',
-          position: 'relative',
-          cursor: 'pointer',
-          overflow: 'hidden',
-        }}
+        className="w-5 h-[120px] bg-[#333] rounded relative cursor-pointer overflow-hidden"
       >
         {/* Fill */}
         <div
-          style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: `${fillHeight}%`,
-            background: 'linear-gradient(to top, #0891b2, #06b6d4)',
-            borderRadius: '4px',
-          }}
+          className="absolute bottom-0 left-0 right-0 rounded bg-gradient-to-t from-cyan-600 to-cyan-500"
+          style={{ height: `${fillHeight}%` }}
         />
 
         {/* Handle */}
         <div
-          style={{
-            position: 'absolute',
-            bottom: `calc(${fillHeight}% - 4px)`,
-            left: '50%',
-            width: '16px',
-            height: '8px',
-            background: '#06b6d4',
-            borderRadius: '2px',
-            transform: 'translateX(-50%)',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
-          }}
+          className="absolute left-1/2 w-4 h-2 bg-cyan-500 rounded-sm -translate-x-1/2 shadow-md"
+          style={{ bottom: `calc(${fillHeight}% - 4px)` }}
         />
       </div>
 
-      <span
-        style={{
-          fontSize: '9px',
-          color: '#888',
-          fontFamily: 'monospace',
-        }}
-      >
+      <span className="text-[9px] text-[#888] font-mono">
         {index + 1}
       </span>
     </div>
@@ -136,36 +97,14 @@ export function HarmonicDrawbars({ harmonics, onChange, onPreset }: HarmonicDraw
   }, [harmonics]);
 
   return (
-    <div
-      style={{
-        background: '#141414',
-        border: '1px solid #2a2a2a',
-        borderRadius: '12px',
-        padding: '16px',
-      }}
-    >
+    <div className="bg-[#141414] border border-[#2a2a2a] rounded-xl p-4">
       {/* Section label */}
-      <div
-        style={{
-          fontSize: '11px',
-          color: '#666',
-          textTransform: 'uppercase',
-          letterSpacing: '1px',
-          marginBottom: '12px',
-        }}
-      >
+      <div className="text-[11px] text-[#666] uppercase tracking-[1px] mb-3">
         Harmonics
       </div>
 
       {/* Drawbars row */}
-      <div
-        style={{
-          display: 'flex',
-          gap: '6px',
-          justifyContent: 'center',
-          marginBottom: '16px',
-        }}
-      >
+      <div className="flex gap-1.5 justify-center mb-4">
         {harmonics.slice(0, 16).map((value, index) => (
           <Drawbar
             key={index}
@@ -177,13 +116,7 @@ export function HarmonicDrawbars({ harmonics, onChange, onPreset }: HarmonicDraw
       </div>
 
       {/* Preset buttons */}
-      <div
-        style={{
-          display: 'flex',
-          gap: '8px',
-          justifyContent: 'center',
-        }}
-      >
+      <div className="flex gap-2 justify-center">
         {PRESETS.map((preset) => {
           const isActive = activePreset === preset;
           return (

@@ -2,7 +2,7 @@
  * Vertical slider for envelope parameters
  */
 
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, memo } from 'react';
 import { useInfoPanel } from '../context/InfoPanelContext.tsx';
 import { usePointerDrag } from '../hooks/usePointerDrag.ts';
 
@@ -23,7 +23,7 @@ interface SliderProps {
   paramId?: string;
 }
 
-export function Slider({
+export const Slider = memo(function Slider({
   value,
   min,
   max,
@@ -159,4 +159,4 @@ export function Slider({
       </span>
     </div>
   );
-}
+});

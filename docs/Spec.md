@@ -266,7 +266,7 @@ Effects use progressive complexity. Beginner versions expose 2-3 parameters. Adv
 | F7 | Delay basics | 4 |
 | F8 | Levels and gain staging | 4 |
 
-#### Intermediate (Levels 2-3): 36 Challenges
+#### Intermediate (Levels 2-3): 42 Challenges
 
 | Module | Concept | Challenges |
 |---|---|---|
@@ -276,6 +276,7 @@ Effects use progressive complexity. Beginner versions expose 2-3 parameters. Adv
 | I4 | Stereo width and imaging | 6 |
 | I5 | Depth and space (reverb/delay) | 6 |
 | I6 | Balance and level relationships | 6 |
+| I7 | Track dynamics (per-track compression) | 6 |
 
 #### Advanced (Levels 3-4): 36 Challenges
 
@@ -296,7 +297,7 @@ Effects use progressive complexity. Beginner versions expose 2-3 parameters. Adv
 | M3 | Automation concepts | 8 |
 | M4 | Troubleshooting | 8 |
 
-Total hand-crafted challenges across all five tracks: **314** (110 sound design + 20 production + 136 mixing + 24 sampling + 24 drum sequencing). AI-generated challenges provide unlimited additional practice.
+Total hand-crafted challenges across all five tracks: **320** (110 sound design + 20 production + 142 mixing + 24 sampling + 24 drum sequencing). AI-generated challenges provide unlimited additional practice.
 
 ---
 
@@ -547,7 +548,7 @@ Sound design challenges require minimal external audio because synthesis generat
 
 ### 13.4 Challenge Authoring
 
-314 hand-crafted challenges (110 sound design + 20 production + 136 mixing + 24 sampling + 24 drum sequencing). Each requires title, description, target parameters or audio assignment, goal and evaluation criteria, three progressive hints, and concept tags. Sound design challenges additionally specify per-control visibility and visualization panel overrides. Approximately 50 additional templates for AI challenge generation.
+320 hand-crafted challenges (110 sound design + 20 production + 142 mixing + 24 sampling + 24 drum sequencing). Each requires title, description, target parameters or audio assignment, goal and evaluation criteria, three progressive hints, and concept tags. Sound design challenges additionally specify per-control visibility and visualization panel overrides. Approximately 50 additional templates for AI challenge generation.
 
 ### 13.5 Educational Content
 
@@ -557,17 +558,19 @@ Approximately 50 concept explanations (EQ, compression, synthesis, etc.) in a se
 
 ## 14. Development Roadmap
 
-**Actual development:** All 314 challenges, five tracks, AI feedback, user accounts, and progressive tool complexity were built in 33 sessions over 8 days (Feb 4-11, 2026). The original 10-month roadmap was dramatically compressed through rapid iteration.
+**Actual development:** All 320 challenges, five tracks, AI feedback, user accounts, and progressive tool complexity were built in 37 sessions over 8 days (Feb 4-11, 2026). The original 10-month roadmap was dramatically compressed through rapid iteration.
 
 | Phase | Sessions | Deliverable | Details |
 |---|---|---|---|
 | Synth Engine | 1-2 | Synth + first challenges | Tone.js integration, subtractive synth UI, waveform/spectrum viz, sound analysis (Meyda.js), SD1 (4 challenges) |
 | Sound Design Core | 3-4 | 32 sound design challenges | SD2-SD7, AI feedback (tRPC + Claude), filter/envelope/LFO/effects modules |
-| Mixing Track | 6-9 | 136 mixing challenges | F1-F8, I1-I6, A1-A5, M1-M4 across four difficulty tiers |
+| Mixing Track | 6-9 | 142 mixing challenges | F1-F8, I1-I7, A1-A5, M1-M4 across four difficulty tiers |
 | Production + Sampling + Drums | 10-15 | 68 more challenges | Production (P1-P5), Sampling (SM1-SM6), Drum Sequencing (DS1-DS6), 16 synthesized drum samples |
 | Advanced Synthesis | 16-25 | 78 more SD challenges | FM/Additive AI feedback, SD10-SD17, arpeggiator, unison, mod matrix, LFO2, pan |
 | Infrastructure | 26-30 | Auth, routing, errors | Supabase auth, cloud sync, error boundaries, hash routing, component decomposition |
 | Curriculum + Polish | 31-33 | Concept Library + adaptive | Concept Library, player model, progressive tool complexity, per-control visibility, per-challenge visualizations |
+| Track Dynamics + Decomposition | 34-35 | I7 module + view decomposition | I7 Track Dynamics (6 challenges), per-track compression, view decomposition (5 views), Tailwind migration |
+| Performance + Docs | 36-37 | Optimization + documentation | Tailwind migration (793→103 inline styles), React.memo (9 components), format function extraction, timer throttling |
 
 ### 14.1 AI Development Status
 

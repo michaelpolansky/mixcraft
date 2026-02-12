@@ -13,3 +13,18 @@ export const formatPercent = (value: number) =>
 
 export const formatDb = (value: number) =>
   `${value.toFixed(1)}dB`;
+
+export const formatBPM = (value: number) =>
+  `${Math.round(value)} BPM`;
+
+export const formatSwing = (value: number) =>
+  `${Math.round(value)}%`;
+
+export const formatSemitones = (value: number) =>
+  value >= 0 ? `+${value}` : `${value}`;
+
+export const formatOctave = (value: number) =>
+  value >= 0 ? `+${value}` : `${value}`;
+
+export const formatCents = (value: number) =>
+  value >= 0 ? `+${value}` : `${value}`;

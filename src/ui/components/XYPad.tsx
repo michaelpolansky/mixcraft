@@ -13,7 +13,7 @@
  * - Optional click sound and theremin mode
  */
 
-import { useRef, useEffect, useCallback, useState } from 'react';
+import { useRef, useEffect, useCallback, useState, memo } from 'react';
 
 export interface XYPadProps {
   /** X-axis value (0-1 normalized) */
@@ -77,7 +77,7 @@ interface PulseState {
   active: boolean;
 }
 
-export function XYPad({
+export const XYPad = memo(function XYPad({
   xValue,
   yValue,
   xLabel,
@@ -668,4 +668,4 @@ export function XYPad({
       </div>
     </div>
   );
-}
+});

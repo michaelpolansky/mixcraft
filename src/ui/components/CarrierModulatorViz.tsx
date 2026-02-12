@@ -107,55 +107,34 @@ export function CarrierModulatorViz({
     drawWaveform(ctx, modulatorType, canvasWidth, canvasHeight, '#ff8800');
   }, [modulatorType]);
 
-  const labelStyle: React.CSSProperties = {
-    fontSize: '10px',
-    fontWeight: 600,
-    color: '#888',
-    textTransform: 'uppercase',
-    letterSpacing: '0.5px',
-    marginBottom: '4px',
-    textAlign: 'center',
-  };
-
-  const canvasContainerStyle: React.CSSProperties = {
-    background: '#0a0a0a',
-    borderRadius: '6px',
-    padding: '8px',
-    border: '1px solid #222',
-  };
-
   return (
-    <div
-      style={{
-        display: 'flex',
-        gap: '16px',
-        justifyContent: 'center',
-      }}
-    >
+    <div className="flex gap-4 justify-center">
       {/* Carrier waveform */}
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <div style={labelStyle}>Carrier</div>
-        <div style={canvasContainerStyle}>
+      <div className="flex flex-col items-center">
+        <div className="text-[10px] font-semibold text-[#888] uppercase tracking-wider mb-1 text-center">
+          Carrier
+        </div>
+        <div className="bg-[#0a0a0a] rounded-md p-2 border border-[#222]">
           <canvas
             ref={carrierCanvasRef}
             width={canvasWidth}
             height={canvasHeight}
-            style={{ display: 'block' }}
+            className="block"
           />
         </div>
       </div>
 
       {/* Modulator waveform */}
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <div style={labelStyle}>
+      <div className="flex flex-col items-center">
+        <div className="text-[10px] font-semibold text-[#888] uppercase tracking-wider mb-1 text-center">
           Modulator ({harmonicity.toFixed(1)}x)
         </div>
-        <div style={canvasContainerStyle}>
+        <div className="bg-[#0a0a0a] rounded-md p-2 border border-[#222]">
           <canvas
             ref={modulatorCanvasRef}
             width={canvasWidth}
             height={canvasHeight}
-            style={{ display: 'block' }}
+            className="block"
           />
         </div>
       </div>

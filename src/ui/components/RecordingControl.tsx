@@ -60,12 +60,19 @@ export function RecordingControl({
     };
   }, []);
 
-  // Update timer during recording
+  // Update timer during recording — throttled to once per displayed second
+  const lastDisplayedSecondRef = useRef(-1);
   useEffect(() => {
     if (state === 'recording' && recorderRef.current) {
       const updateTimer = () => {
         if (recorderRef.current) {
-          setElapsedTime(recorderRef.current.getElapsedTime());
+          const elapsed = recorderRef.current.getElapsedTime();
+          const displayedSecond = Math.floor(elapsed);
+          // Only trigger React re-render when the displayed second changes
+          if (displayedSecond !== lastDisplayedSecondRef.current) {
+            lastDisplayedSecondRef.current = displayedSecond;
+            setElapsedTime(elapsed);
+          }
         }
         if (state === 'recording') {
           timerRef.current = requestAnimationFrame(updateTimer);

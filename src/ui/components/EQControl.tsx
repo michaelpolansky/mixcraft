@@ -66,16 +66,7 @@ function BandSlider({ label, value, color, onChange }: BandSliderProps) {
         onTouchStart={onPointerDown}
       >
         {/* Center line (0 dB) */}
-        <div
-          style={{
-            position: 'absolute',
-            left: '4px',
-            right: '4px',
-            top: '50%',
-            height: '1px',
-            background: '#444',
-          }}
-        />
+        <div className="absolute left-1 right-1 top-1/2 h-px bg-[#444]" />
 
         {/* Fill bar */}
         <div

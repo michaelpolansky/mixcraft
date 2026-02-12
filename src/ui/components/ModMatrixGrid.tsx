@@ -25,36 +25,19 @@ interface ModMatrixGridProps {
   accentColor?: string;
 }
 
-// Cell size constants
-const CELL_SIZE = 28;
-const LABEL_WIDTH = 40;
-const HEADER_HEIGHT = 24;
-const GAP = 2;
-
 export function ModMatrixGrid({
   grid,
   onChange,
   accentColor = COLORS.synth.lfo,
 }: ModMatrixGridProps) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: GAP }}>
+    <div className="flex flex-col gap-0.5">
       {/* Header row with destination labels */}
-      <div style={{ display: 'flex', gap: GAP, marginLeft: LABEL_WIDTH + GAP }}>
+      <div className="flex gap-0.5 ml-[42px]">
         {MOD_DESTINATIONS.map((dest) => (
           <div
             key={dest}
-            style={{
-              width: CELL_SIZE,
-              height: HEADER_HEIGHT,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '8px',
-              fontWeight: 600,
-              color: COLORS.text.muted,
-              textTransform: 'uppercase',
-              letterSpacing: '0.02em',
-            }}
+            className="w-7 h-6 flex items-center justify-center text-[8px] font-semibold text-text-muted uppercase tracking-tight"
           >
             {MOD_DEST_LABELS[dest]}
           </div>
@@ -63,22 +46,9 @@ export function ModMatrixGrid({
 
       {/* Matrix rows */}
       {MOD_SOURCES.map((source) => (
-        <div key={source} style={{ display: 'flex', gap: GAP, alignItems: 'center' }}>
+        <div key={source} className="flex gap-0.5 items-center">
           {/* Row label */}
-          <div
-            style={{
-              width: LABEL_WIDTH,
-              height: CELL_SIZE,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'flex-end',
-              paddingRight: 4,
-              fontSize: '9px',
-              fontWeight: 600,
-              color: COLORS.text.muted,
-              textTransform: 'uppercase',
-            }}
-          >
+          <div className="w-10 h-7 flex items-center justify-end pr-1 text-[9px] font-semibold text-text-muted uppercase">
             {MOD_SOURCE_LABELS[source]}
           </div>
 
@@ -164,21 +134,10 @@ function MatrixCell({
       onTouchStart={onPointerDown}
       onDoubleClick={handleDoubleClick}
       title={`${MOD_SOURCE_LABELS[source]} → ${MOD_DEST_LABELS[destination]}: ${Math.round(amount * 100)}%`}
+      className="w-7 h-7 flex items-center justify-center cursor-ns-resize select-none rounded text-[8px] font-semibold font-mono transition-[background,border-color] duration-100"
       style={{
-        width: CELL_SIZE,
-        height: CELL_SIZE,
         background: bgColor,
         border: `1px solid ${borderColor}`,
-        borderRadius: 4,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        cursor: 'ns-resize',
-        userSelect: 'none',
-        transition: 'background 0.1s ease, border-color 0.1s ease',
-        fontSize: '8px',
-        fontWeight: 600,
-        fontFamily: 'ui-monospace, SFMono-Regular, SF Mono, Monaco, Consolas, monospace',
         color: isActive ? COLORS.text.primary : 'transparent',
       }}
     >

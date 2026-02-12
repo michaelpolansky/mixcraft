@@ -3,6 +3,7 @@
  * Renders EQ (simple 3-band or parametric), compressor, volume, pan, and reverb controls.
  */
 
+import { memo } from 'react';
 import type { MixingTrack, ParametricBand, ParametricEQParams } from '../../../core/types.ts';
 import type { TrackEQParams } from '../../stores/mixing-store.ts';
 import { ParametricEQControl } from '../ParametricEQControl.tsx';
@@ -82,7 +83,7 @@ function formatPan(v: number): string {
   return v < 0 ? `L${Math.abs(v * 100).toFixed(0)}` : `R${(v * 100).toFixed(0)}`;
 }
 
-export function MixingTrackStrip({
+export const MixingTrackStrip = memo(function MixingTrackStrip({
   track,
   params,
   isParametricMode,
@@ -231,4 +232,4 @@ export function MixingTrackStrip({
       )}
     </div>
   );
-}
+});

@@ -43,8 +43,10 @@ src/
     supabase.ts           # Supabase client initialization
   ui/             # React components. Imports from core/ only.
     components/   # Reusable UI (Knob, Slider, XYPad, ModuleCard, ErrorBoundary, etc.)
-      challenge/  # Challenge-specific components (Section, Header, HintsPanel, SubmitButton, ResultsModal)
-      synth/      # Synth stage components (OscillatorStage, FilterStage, LFOStage, OutputStage, etc.)
+      challenge/  # Challenge-specific components (Section, Header, HintsPanel, SubmitButton, ResultsModal, SubtractiveSections, FMAdditiveEffectsSection)
+      synth/      # Synth stage components (OscillatorStage, FilterStage, LFOStage, OutputStage, FMModMatrix, etc.)
+      mixing/     # Mixing components (MixingTrackStrip, MixingBusSection, MixingResults)
+      production/ # Production components (ProductionResultsModal)
       menu/       # Menu components (ChallengeButton, ChallengeModuleCard, ProgressStats, TrackSection, RecommendedChallenges)
       concepts/   # Concept Library components (ConceptCard, ConceptDetailPanel, GlossaryList, ConceptLink, ConceptDetailModal)
     views/        # Full-screen views (SynthView, FMSynthView, AdditiveSynthView, ChallengeView, ConceptLibraryView, etc.)
@@ -158,9 +160,10 @@ Sound design is the entry point. It teaches concepts that make mixing and produc
 - Error boundaries: two-tier (app-level reload, view-level menu recovery)
 - Hash routing with lazy-loaded Supabase/tRPC (557→355KB initial bundle)
 - Lazy-loaded view components via React.lazy + Suspense code splitting
+- React.memo on all Canvas visualizers + interactive controls (Knob, Slider, XYPad, PianoKeyboard, StepGrid, VelocityLane, Oscilloscope, MixingTrackStrip, MixingBusSection)
 - Touch support on 12 interactive components (Knob, Slider, XYPad, etc.)
-- Tailwind CSS v4 migration (793 → 183 inline styles)
-- Component decomposition: App.tsx (3,968 → 268 lines), 4 largest views (4,157 → 1,739 lines)
+- Tailwind CSS v4 migration (793 → 103 inline styles remaining, all dynamic/runtime values)
+- Component decomposition: App.tsx (3,968 → 268 lines), views decomposed across 6 component subdirectories (challenge/, synth/, mixing/, production/, menu/, concepts/) with 35 extracted components
 - Progress persistence (localStorage via Zustand + cloud sync)
 - Progress display in menu header (stars, completion %)
 - Module progress bars with star counts
@@ -181,7 +184,7 @@ Sound design is the entry point. It teaches concepts that make mixing and produc
 - **Practice suggestions:** Results modal shows "Practice More" chips for weak areas when player passes
 
 ### Testing
-- 582 unit tests for evaluation logic, engines, routing, player model, concept links, module controls, parametric EQ, and per-control visibility
+- 714 unit tests for evaluation logic, engines, stores, routing, player model, concept links, module controls, parametric EQ, and per-control visibility
 - All pure function tests, no audio context dependencies
 
 ## Session Log
@@ -223,3 +226,6 @@ Sound design is the entry point. It teaches concepts that make mixing and produc
 | 32 | 2026-02-10 | Progressive Tool Complexity - Sound design progressive controls (SD1 shows only Oscillator+Output, SD2 adds Filter, SD3 adds Envelopes, SD4 adds LFO, SD5+ all), 4-band parametric EQ for mixing intermediate modules (lowshelf/2x peak/highshelf with freq/gain/Q per band), parametric-to-3-band conversion for backward-compatible evaluation (33 new tests) |
 | 33 | 2026-02-11 | Per-Challenge Control & Visualization Visibility - Per-control granularity for SD1-SD4 challenges (16 files), `isControlVisible`/`isSectionVisible`/`getVisualizations` helpers, visualization array rendering, ChallengeVisualization type (22 new tests) |
 | 34 | 2026-02-11 | I7 Track Dynamics module (6 challenges) - per-track compression challenges using track_compression and compression_contrast conditions, AI feedback now includes compression data in mixing prompts |
+| 35 | 2026-02-11 | View decomposition + Tailwind migration - decompose ProductionChallengeView (604→351), ChallengeView (567→394), MultiTrackMixingView (928→432), FMSynthView (829→436), AdditiveSynthView (667→425). Extract 8 new components (ProductionResultsModal, SubtractiveSections, FMAdditiveEffectsSection, MixingTrackStrip, MixingBusSection, MixingResults, FMModMatrix). Migrate inline styles to Tailwind in ErrorBoundary, LayerStrip, RecordingControl, synth stages. Net -277 lines |
+| 36 | 2026-02-11 | Finish Tailwind migration - migrate 54 inline styles to Tailwind across 12 files (FMSynthPanel 17→1, ProductionMixer 11→2, HarmonicDrawbars 10→3, CarrierModulatorViz 5→0, ModMatrixGrid 6→1, AdditiveSynthPanel 3→0, TargetPlayer 4→0, PianoKeyboard 2→0, TrackSection partial, EQ center lines, Knob height, HorizontalSlider partials). Total: 157→103 remaining (all dynamic/runtime) |
+| 37 | 2026-02-11 | Performance audit - React.memo on 9 components (Oscilloscope, StepGrid, VelocityLane, Knob, Slider, XYPad, PianoKeyboard, MixingTrackStrip, MixingBusSection), extract 6 shared formatters to module-level constants (formatBPM/Swing/Semitones/Octave/Cents), throttle RecordingControl timer (60fps→1fps). Bundle analysis: 1.64 MB raw, 420 kB gzip, Tone.js largest dep at 285 kB |

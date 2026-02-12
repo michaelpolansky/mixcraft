@@ -2,7 +2,7 @@
  * Simple piano keyboard for playing notes
  */
 
-import { useCallback, useEffect, useState, type ReactElement } from 'react';
+import { useCallback, useEffect, useState, memo, type ReactElement } from 'react';
 
 interface PianoKeyboardProps {
   onNoteOn: (note: string) => void;
@@ -33,7 +33,7 @@ const KEY_MAP: Record<string, string> = {
   k: 'C+', // Next octave C
 };
 
-export function PianoKeyboard({
+export const PianoKeyboard = memo(function PianoKeyboard({
   onNoteOn,
   onNoteOff,
   octave = 4,
@@ -121,7 +121,7 @@ export function PianoKeyboard({
           stroke="#333"
           strokeWidth="1"
           rx="4"
-          style={{ cursor: 'pointer', touchAction: 'none' }}
+          className="cursor-pointer touch-none"
           onMouseDown={() => handleKeyDown(fullNote)}
           onMouseUp={() => handleKeyUp(fullNote)}
           onMouseLeave={() => {
@@ -152,7 +152,7 @@ export function PianoKeyboard({
           stroke="#000"
           strokeWidth="1"
           rx="2"
-          style={{ cursor: 'pointer', touchAction: 'none' }}
+          className="cursor-pointer touch-none"
           onMouseDown={() => handleKeyDown(fullNote)}
           onMouseUp={() => handleKeyUp(fullNote)}
           onMouseLeave={() => {
@@ -183,4 +183,4 @@ export function PianoKeyboard({
       </div>
     </div>
   );
-}
+});

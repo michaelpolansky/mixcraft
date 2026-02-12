@@ -49,22 +49,13 @@ export function TargetPlayer({
   });
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        gap: '12px',
-        padding: '16px',
-        background: '#0a0a0a',
-        borderRadius: '8px',
-        border: '1px solid #222',
-      }}
-    >
+    <div className="flex gap-3 p-4 bg-[#0a0a0a] rounded-lg border border-[#222]">
       <button
         onClick={() => handlePlay(onPlayTarget, 'target')}
         disabled={disabled}
         style={buttonStyle('target', true)}
       >
-        <span style={{ fontSize: '16px' }}>▶</span>
+        <span className="text-base">▶</span>
         Play Target
       </button>
 
@@ -73,7 +64,7 @@ export function TargetPlayer({
         disabled={disabled}
         style={buttonStyle('yours')}
       >
-        <span style={{ fontSize: '16px' }}>▶</span>
+        <span className="text-base">▶</span>
         Play Yours
       </button>
 
@@ -83,7 +74,7 @@ export function TargetPlayer({
         style={buttonStyle('compare')}
         title="Plays target, then yours, back to back"
       >
-        <span style={{ fontSize: '14px' }}>⟷</span>
+        <span className="text-sm">⟷</span>
         Compare
       </button>
     </div>

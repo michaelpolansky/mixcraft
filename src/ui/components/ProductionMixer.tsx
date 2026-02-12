@@ -66,15 +66,7 @@ export function ProductionMixer({
     masterLevel > -6 ? '#ef4444' : masterLevel > -12 ? '#eab308' : '#4ade80';
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        gap: '8px',
-        padding: '16px',
-        background: '#0a0a0a',
-        borderRadius: '12px',
-      }}
-    >
+    <div className="flex gap-2 p-4 bg-[#0a0a0a] rounded-xl">
       {/* Layer strips */}
       {layers.map((layer) => (
         <LayerStrip
@@ -93,102 +85,43 @@ export function ProductionMixer({
       ))}
 
       {/* Divider */}
-      <div
-        style={{
-          width: '1px',
-          background: '#333',
-          alignSelf: 'stretch',
-          margin: '0 4px',
-        }}
-      />
+      <div className="w-px bg-[#333] self-stretch mx-1" />
 
       {/* Master section */}
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '8px',
-          padding: '12px',
-          background: '#1a1a1a',
-          borderRadius: '8px',
-          minWidth: '60px',
-        }}
-      >
-        <span
-          style={{
-            fontSize: '11px',
-            color: '#fff',
-            fontWeight: 500,
-            textTransform: 'uppercase',
-            letterSpacing: '0.5px',
-          }}
-        >
+      <div className="flex flex-col items-center gap-2 p-3 bg-[#1a1a1a] rounded-lg min-w-[60px]">
+        <span className="text-[11px] text-white font-medium uppercase tracking-wider">
           Master
         </span>
 
         {/* Spacer to align with strips */}
-        <div style={{ flex: 1 }} />
+        <div className="flex-1" />
 
         {/* Master meter (stereo-style) */}
-        <div style={{ display: 'flex', gap: '2px' }}>
-          <div
-            style={{
-              width: '12px',
-              height: '120px',
-              background: '#0a0a0a',
-              borderRadius: '4px',
-              position: 'relative',
-              overflow: 'hidden',
-            }}
-          >
+        <div className="flex gap-0.5">
+          <div className="w-3 h-[120px] bg-[#0a0a0a] rounded relative overflow-hidden">
             <div
               style={{
-                position: 'absolute',
-                bottom: 0,
-                left: 0,
-                right: 0,
                 height: `${masterMeterHeight}%`,
                 background: masterMeterColor,
                 transition: 'height 50ms ease-out',
               }}
+              className="absolute bottom-0 left-0 right-0"
             />
           </div>
-          <div
-            style={{
-              width: '12px',
-              height: '120px',
-              background: '#0a0a0a',
-              borderRadius: '4px',
-              position: 'relative',
-              overflow: 'hidden',
-            }}
-          >
+          <div className="w-3 h-[120px] bg-[#0a0a0a] rounded relative overflow-hidden">
             <div
               style={{
-                position: 'absolute',
-                bottom: 0,
-                left: 0,
-                right: 0,
                 height: `${masterMeterHeight}%`,
                 background: masterMeterColor,
                 transition: 'height 50ms ease-out',
               }}
+              className="absolute bottom-0 left-0 right-0"
             />
           </div>
         </div>
 
         {/* dB scale markers */}
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'flex-end',
-            fontSize: '8px',
-            color: '#666',
-            fontFamily: 'monospace',
-          }}
-        >
+        <div className="flex flex-col items-end text-[8px] text-[#666] font-mono">
           <span>0</span>
           <span>-12</span>
           <span>-24</span>

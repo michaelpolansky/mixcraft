@@ -28,6 +28,7 @@ import {
 import { ADDITIVE_PRESETS } from '../../data/presets/additive-presets.ts';
 import { InfoPanelProvider } from '../context/InfoPanelContext.tsx';
 import { cn } from '../utils/cn.ts';
+import { formatPercent } from '../utils/formatters.ts';
 import type { AdditiveLFODestination } from '../../core/types.ts';
 
 // Stage colors following signal flow (cyan/teal theme for additive)
@@ -123,9 +124,6 @@ export function AdditiveSynthView() {
   const getAnalyser = useCallback(() => {
     return engine?.getAnalyser() ?? null;
   }, [engine]);
-
-  // Format helper
-  const formatPercent = (value: number) => `${Math.round(value * 100)}%`;
 
   // Harmonic presets
   const HARMONIC_PRESETS = [

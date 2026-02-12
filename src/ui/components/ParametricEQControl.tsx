@@ -68,16 +68,7 @@ function GainSlider({ value, color, onChange }: {
         onTouchStart={onPointerDown}
       >
         {/* Center line (0 dB) */}
-        <div
-          style={{
-            position: 'absolute',
-            left: '3px',
-            right: '3px',
-            top: '50%',
-            height: '1px',
-            background: '#444',
-          }}
-        />
+        <div className="absolute left-[3px] right-[3px] top-1/2 h-px bg-[#444]" />
         {/* Fill bar */}
         <div
           style={{

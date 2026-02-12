@@ -4,7 +4,7 @@
  * Filled waveform style like modern DAWs
  */
 
-import { useRef, useEffect, useCallback } from 'react';
+import { useRef, useEffect, useCallback, memo } from 'react';
 
 interface OscilloscopeProps {
   /** Function to get the AnalyserNode for waveform data */
@@ -19,7 +19,7 @@ interface OscilloscopeProps {
   accentColor?: string;
 }
 
-export function Oscilloscope({
+export const Oscilloscope = memo(function Oscilloscope({
   getAnalyser,
   analyser: directAnalyser,
   width = 300,
@@ -141,4 +141,4 @@ export function Oscilloscope({
       className="rounded-lg block"
     />
   );
-}
+});

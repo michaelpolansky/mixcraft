@@ -40,23 +40,14 @@ export function FMSynthPanel({
   onVolumeChange,
 }: FMSynthPanelProps) {
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '16px',
-        padding: '16px',
-        background: '#0d0d0d',
-        borderRadius: '16px',
-      }}
-    >
+    <div className="flex flex-col gap-4 p-4 bg-[#0d0d0d] rounded-2xl">
       {/* Section 1: Oscillators */}
       <ModuleCard
         title="Oscillators"
         color={MODULE_COLORS.oscillator}
         icon={<WaveformIcon type="sine" size={20} color={MODULE_COLORS.oscillator} />}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div className="flex flex-col gap-4">
           {/* Waveform visualization */}
           <CarrierModulatorViz
             carrierType={params.carrierType}
@@ -66,22 +57,9 @@ export function FMSynthPanel({
           />
 
           {/* Waveform selectors */}
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-around',
-              gap: '16px',
-            }}
-          >
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-              <span
-                style={{
-                  fontSize: '10px',
-                  color: '#00ff88',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                }}
-              >
+          <div className="flex justify-around gap-4">
+            <div className="flex flex-col items-center gap-2">
+              <span className="text-[10px] text-[#00ff88] uppercase tracking-wider">
                 Carrier
               </span>
               <WaveformSelector
@@ -90,15 +68,8 @@ export function FMSynthPanel({
               />
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-              <span
-                style={{
-                  fontSize: '10px',
-                  color: '#ff8800',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                }}
-              >
+            <div className="flex flex-col items-center gap-2">
+              <span className="text-[10px] text-[#ff8800] uppercase tracking-wider">
                 Modulator
               </span>
               <WaveformSelector
@@ -116,10 +87,10 @@ export function FMSynthPanel({
         color={MODULE_COLORS.modulation}
         icon={<WaveformIcon type="sine" size={20} color={MODULE_COLORS.modulation} />}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div className="flex flex-col gap-4">
           {/* Harmonicity with preset buttons */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-4">
               <Knob
                 value={params.harmonicity}
                 min={FM_PARAM_RANGES.harmonicity.min}
@@ -132,18 +103,11 @@ export function FMSynthPanel({
               />
 
               {/* Preset buttons */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <span
-                  style={{
-                    fontSize: '9px',
-                    color: '#555',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px',
-                  }}
-                >
+              <div className="flex flex-col gap-1">
+                <span className="text-[9px] text-[#555] uppercase tracking-wider">
                   Presets
                 </span>
-                <div style={{ display: 'flex', gap: '4px' }}>
+                <div className="flex gap-1">
                   {HARMONICITY_PRESETS.map((preset) => (
                     <button
                       key={preset}
@@ -176,7 +140,7 @@ export function FMSynthPanel({
           </div>
 
           {/* Mod Index and Mod Env Amount */}
-          <div style={{ display: 'flex', gap: '24px', justifyContent: 'center' }}>
+          <div className="flex gap-6 justify-center">
             <Knob
               value={params.modulationIndex}
               min={FM_PARAM_RANGES.modulationIndex.min}
@@ -208,7 +172,7 @@ export function FMSynthPanel({
         color={MODULE_COLORS.ampEnvelope}
         icon={<WaveformIcon type="envelope" size={20} color={MODULE_COLORS.ampEnvelope} animated={false} />}
       >
-        <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
+        <div className="flex gap-4 justify-center">
           <Knob
             value={params.amplitudeEnvelope.attack}
             min={PARAM_RANGES.attack.min}
@@ -261,7 +225,7 @@ export function FMSynthPanel({
         color={MODULE_COLORS.output}
         icon={<WaveformIcon type="speaker" size={20} color={MODULE_COLORS.output} animated={false} />}
       >
-        <div style={{ display: 'flex', justifyContent: 'center' }}>
+        <div className="flex justify-center">
           <Knob
             value={params.volume}
             min={PARAM_RANGES.volume.min}

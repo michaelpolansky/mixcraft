@@ -31,16 +31,7 @@ export function AdditiveSynthPanel({
   onVolumeChange,
 }: AdditiveSynthPanelProps) {
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '16px',
-        padding: '16px',
-        background: '#0d0d0d',
-        borderRadius: '16px',
-      }}
-    >
+    <div className="flex flex-col gap-4 p-4 bg-[#0d0d0d] rounded-2xl">
       {/* Section 1: Harmonic Drawbars (full width) */}
       <HarmonicDrawbars
         harmonics={params.harmonics}
@@ -54,7 +45,7 @@ export function AdditiveSynthPanel({
         color={MODULE_COLORS.ampEnvelope}
         icon={<WaveformIcon type="envelope" size={20} color={MODULE_COLORS.ampEnvelope} animated={false} />}
       >
-        <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
+        <div className="flex gap-4 justify-center">
           <Knob
             value={params.amplitudeEnvelope.attack}
             min={PARAM_RANGES.attack.min}
@@ -107,7 +98,7 @@ export function AdditiveSynthPanel({
         color={MODULE_COLORS.output}
         icon={<WaveformIcon type="speaker" size={20} color={MODULE_COLORS.output} animated={false} />}
       >
-        <div style={{ display: 'flex', justifyContent: 'center' }}>
+        <div className="flex justify-center">
           <Knob
             value={params.volume}
             min={PARAM_RANGES.volume.min}

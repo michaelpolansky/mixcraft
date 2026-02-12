@@ -16,6 +16,7 @@ import { Section } from '../components/ModuleCard.tsx';
 import { BackButton } from '../components/Button.tsx';
 import { InfoPanelProvider } from '../context/InfoPanelContext.tsx';
 import { cn } from '../utils/cn.ts';
+import { formatSemitones, formatPercent, formatDb } from '../utils/formatters.ts';
 import { SAMPLER_PARAM_RANGES } from '../../core/types.ts';
 
 /**
@@ -70,11 +71,6 @@ export function SamplerView({ onBack }: SamplerViewProps) {
     [loadSample]
   );
 
-  // Format helpers
-  const formatSemitones = (value: number) =>
-    value >= 0 ? `+${value}` : `${value}`;
-  const formatPercent = (value: number) => `${Math.round(value * 100)}%`;
-  const formatDb = (value: number) => `${value.toFixed(1)}dB`;
 
   // Accent color for sampler (purple/magenta theme)
   const accentColor = '#a855f7';

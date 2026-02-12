@@ -3,6 +3,7 @@
  * Renders master EQ sliders and bus compressor.
  */
 
+import { memo } from 'react';
 import type { EQParams, CompressorFullParams } from '../../../core/types.ts';
 import { CompressorControl } from '../CompressorControl.tsx';
 
@@ -43,7 +44,7 @@ function BusEQBand({ label, value, onChange }: { label: string; value: number; o
   );
 }
 
-export function MixingBusSection({
+export const MixingBusSection = memo(function MixingBusSection({
   showBusEQ,
   showBusCompressor,
   busEQParams,
@@ -83,4 +84,4 @@ export function MixingBusSection({
       )}
     </div>
   );
-}
+});

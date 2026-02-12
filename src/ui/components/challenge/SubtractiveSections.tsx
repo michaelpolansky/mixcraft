@@ -15,7 +15,7 @@ import { Section } from './Section.tsx';
 import { isControlVisible, isSectionVisible } from '../../../data/module-controls.ts';
 import { PARAM_RANGES } from '../../../core/types.ts';
 import type { SynthParams, SynthAvailableControls, OscillatorType, FilterType, LFOWaveform } from '../../../core/types.ts';
-import { formatHz, formatMs, formatPercent, formatDb } from '../../utils/formatters.ts';
+import { formatHz, formatMs, formatPercent, formatDb, formatOctave, formatCents } from '../../utils/formatters.ts';
 
 interface SubtractiveSectionsProps {
   params: SynthParams;
@@ -69,9 +69,6 @@ function EffectBlock({ label, knobs }: {
 }
 
 export function SubtractiveSections({ params, controls, ...actions }: SubtractiveSectionsProps) {
-  const formatOctave = (value: number) => (value >= 0 ? `+${value}` : `${value}`);
-  const formatCents = (value: number) => (value >= 0 ? `+${value}` : `${value}`);
-
   return (
     <>
       {isSectionVisible(controls.oscillator) && (

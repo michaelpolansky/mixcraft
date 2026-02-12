@@ -3,7 +3,7 @@
  * Converted from rotary knob to horizontal slider
  */
 
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, memo } from 'react';
 import { useInfoPanel } from '../context/InfoPanelContext.tsx';
 import { usePointerDrag } from '../hooks/usePointerDrag.ts';
 import { cn } from '../utils/cn.ts';
@@ -27,7 +27,7 @@ interface KnobProps {
   modulatedValue?: number;
 }
 
-export function Knob({
+export const Knob = memo(function Knob({
   value,
   min,
   max,
@@ -42,9 +42,6 @@ export function Knob({
 }: KnobProps) {
   const trackRef = useRef<HTMLDivElement>(null);
   const { setHoveredParam } = useInfoPanel();
-
-  // Slider dimensions - full width, fixed height
-  const sliderHeight = 6;
 
   // Convert between linear position (0-1) and actual value
   const valueToPosition = useCallback((v: number): number => {
@@ -195,8 +192,7 @@ export function Knob({
         onTouchStart={onPointerDown}
         onDoubleClick={handleDoubleClick}
         onKeyDown={handleKeyDown}
-        className="w-full bg-bg-tertiary rounded-full relative cursor-pointer overflow-visible outline-none focus:ring-2 focus:ring-success-light"
-        style={{ height: sliderHeight }}
+        className="w-full h-1.5 bg-bg-tertiary rounded-full relative cursor-pointer overflow-visible outline-none focus:ring-2 focus:ring-success-light"
       >
         {/* Background track */}
         <div className="absolute inset-0 bg-border-medium rounded-full" />
@@ -234,4 +230,4 @@ export function Knob({
       </div>
     </div>
   );
-}
+});

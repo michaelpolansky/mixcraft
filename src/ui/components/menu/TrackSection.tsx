@@ -31,15 +31,8 @@ export function TrackSection({
   return (
     <>
       <h2
-        style={{
-          fontSize: '14px',
-          fontWeight: 600,
-          color,
-          textTransform: 'uppercase',
-          letterSpacing: '1px',
-          marginBottom: '16px',
-          marginTop: title === 'Challenges' ? undefined : '32px',
-        }}
+        className="text-sm font-semibold uppercase tracking-[1px] mb-4"
+        style={{ color, marginTop: title === 'Challenges' ? undefined : '32px' }}
       >
         {title}
       </h2>

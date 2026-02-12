@@ -4,7 +4,7 @@
  * Shows velocity bars only for active steps
  */
 
-import { useRef, useEffect, useCallback, useState } from 'react';
+import { useRef, useEffect, useCallback, useState, memo } from 'react';
 import type { DrumTrack } from '../../core/types.ts';
 
 interface VelocityLaneProps {
@@ -29,7 +29,7 @@ const LABEL_WIDTH = 80; // Match StepGrid
 const BAR_PADDING = 2;
 const BAR_RADIUS = 2;
 
-export function VelocityLane({
+export const VelocityLane = memo(function VelocityLane({
   track,
   trackIndex,
   onVelocityChange,
@@ -306,7 +306,7 @@ export function VelocityLane({
       onTouchCancel={handleMouseLeave}
     />
   );
-}
+});
 
 /**
  * Adjusts the brightness of a hex color

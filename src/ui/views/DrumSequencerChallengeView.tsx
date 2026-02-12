@@ -25,6 +25,7 @@ import {
   DrumSequencerEngine,
   createDrumSequencerEngine,
 } from '../../core/drum-sequencer-engine.ts';
+import { formatBPM, formatSwing, formatDb } from '../utils/formatters.ts';
 import type { DrumSequencingChallenge, DrumPattern } from '../../core/types.ts';
 import type { DrumSequencingScoreResult } from '../../core/drum-sequencing-evaluation.ts';
 
@@ -76,14 +77,8 @@ function HorizontalSlider({
         value={value}
         onChange={(e) => onChange(parseFloat(e.target.value))}
         disabled={disabled}
-        style={{
-          width,
-          height: '6px',
-          appearance: 'none',
-          background: `linear-gradient(to right, #f97316 0%, #f97316 ${percentage}%, #333 ${percentage}%, #333 100%)`,
-          borderRadius: '3px',
-          cursor: disabled ? 'not-allowed' : 'pointer',
-        }}
+        className={cn('h-1.5 appearance-none rounded-sm', disabled ? 'cursor-not-allowed' : 'cursor-pointer')}
+        style={{ width, background: `linear-gradient(to right, #f97316 0%, #f97316 ${percentage}%, #333 ${percentage}%, #333 100%)` }}
       />
     </div>
   );
@@ -204,9 +199,6 @@ export function DrumSequencerChallengeView({
     [selectedTrack, setStepVelocity]
   );
 
-  const formatBPM = (value: number) => `${Math.round(value)} BPM`;
-  const formatSwing = (value: number) => `${Math.round(value)}%`;
-  const formatDb = (value: number) => `${value.toFixed(1)}dB`;
 
   const currentSelectedTrack = pattern.tracks[selectedTrack];
   const canEditTempo = challenge.evaluationFocus.includes('tempo');

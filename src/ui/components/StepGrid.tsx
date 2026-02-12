@@ -4,7 +4,7 @@
  * Features: step toggle, velocity display, playhead, beat markers, track selection
  */
 
-import { useRef, useEffect, useCallback, useState } from 'react';
+import { useRef, useEffect, useCallback, useState, memo } from 'react';
 import type { DrumPattern } from '../../core/types.ts';
 
 interface StepGridProps {
@@ -35,7 +35,7 @@ const CELL_PADDING = 2;
 const CELL_RADIUS = 3;
 const PLAYHEAD_WIDTH = 3;
 
-export function StepGrid({
+export const StepGrid = memo(function StepGrid({
   pattern,
   currentStep,
   selectedTrack,
@@ -411,7 +411,7 @@ export function StepGrid({
       onTouchCancel={handleMouseLeave}
     />
   );
-}
+});
 
 /**
  * Convert hex color to rgba
