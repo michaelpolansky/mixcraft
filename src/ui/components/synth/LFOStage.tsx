@@ -2,6 +2,7 @@
  * Generic LFO stage (used for LFO 1 and LFO 2)
  */
 
+import { memo } from 'react';
 import { Knob, WaveformSelector, LFOVisualizer, StageCard } from '../index.ts';
 import { cn } from '../../utils/cn.ts';
 import { formatPercent } from '../../utils/formatters.ts';
@@ -39,7 +40,7 @@ interface LFOStageProps {
   onDestinationChange?: (v: string) => void;
 }
 
-export function LFOStage({
+export const LFOStage = memo(function LFOStage({
   title,
   color,
   waveform,
@@ -163,4 +164,4 @@ export function LFOStage({
       )}
     </StageCard>
   );
-}
+});

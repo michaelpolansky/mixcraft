@@ -28,3 +28,13 @@ export const formatOctave = (value: number) =>
 
 export const formatCents = (value: number) =>
   value >= 0 ? `+${value}` : `${value}`;
+
+export const formatSemitonesSigned = (v: number) => `${v > 0 ? '+' : ''}${v} st`;
+
+export const formatOctavesSigned = (v: number) => `${v > 0 ? '+' : ''}${v.toFixed(1)}`;
+
+export const formatPan = (v: number) => {
+  if (Math.abs(v) < 0.05) return 'Center';
+  if (v < 0) return `${Math.round(Math.abs(v) * 100)}% L`;
+  return `${Math.round(v * 100)}% R`;
+};

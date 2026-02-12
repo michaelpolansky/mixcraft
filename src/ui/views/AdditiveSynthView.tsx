@@ -3,7 +3,7 @@
  * Horizontal signal-flow layout: HARMONICS -> LFO -> NOISE -> VELOCITY -> ARP -> AMP -> FX -> OUTPUT
  */
 
-import { useEffect, useCallback, useState } from 'react';
+import { useEffect, useCallback, useMemo, useState } from 'react';
 import { useAdditiveSynthStore } from '../stores/additive-synth-store.ts';
 import {
   SpectrumAnalyzer,
@@ -124,6 +124,8 @@ export function AdditiveSynthView() {
   const getAnalyser = useCallback(() => {
     return engine?.getAnalyser() ?? null;
   }, [engine]);
+
+  const sourceNode = useMemo(() => engine?.getOutputNode() ?? null, [engine]);
 
   // Harmonic presets
   const HARMONIC_PRESETS = [
@@ -336,7 +338,7 @@ export function AdditiveSynthView() {
             onVolumeChange={setVolume}
             onPanChange={setPan}
             getAnalyser={getAnalyser}
-            sourceNode={engine?.getOutputNode() ?? null}
+            sourceNode={sourceNode}
             color={COLORS.output}
           />
         </div>

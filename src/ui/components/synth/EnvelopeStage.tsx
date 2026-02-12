@@ -2,6 +2,7 @@
  * Generic envelope stage for SynthView (PITCH ENV, PWM ENV, FILTER ENV, AMP, MOD ENV)
  */
 
+import { memo } from 'react';
 import { Knob, EnvelopeVisualizer, StageCard } from '../index.ts';
 import { formatMs, formatPercent } from '../../utils/formatters.ts';
 
@@ -28,7 +29,7 @@ interface EnvelopeStageProps {
   visualizerHeight?: number;
 }
 
-export function EnvelopeStage({
+export const EnvelopeStage = memo(function EnvelopeStage({
   title,
   color,
   attack,
@@ -78,4 +79,4 @@ export function EnvelopeStage({
       </div>
     </StageCard>
   );
-}
+});

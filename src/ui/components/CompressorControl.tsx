@@ -5,6 +5,7 @@
 
 import { cn } from '../utils/cn.ts';
 import { Knob } from './Knob.tsx';
+import { CompressionCurve } from './CompressionCurve.tsx';
 import type { CompressorFullParams } from '../../core/mixing-effects.ts';
 import { COMPRESSOR_RANGES } from '../../core/mixing-effects.ts';
 
@@ -69,8 +70,20 @@ export function CompressorControl({
   return (
     <div className="bg-bg-secondary rounded-lg p-4 border border-border-default">
       {/* Header */}
-      <div className="text-sm font-semibold text-text-muted uppercase tracking-wider mb-4 text-center">
+      <div className="text-sm font-semibold text-text-muted uppercase tracking-wider mb-3 text-center">
         Compressor
+      </div>
+
+      {/* Transfer curve */}
+      <div className="flex justify-center mb-3">
+        <CompressionCurve
+          threshold={params.threshold}
+          ratio={1 + (params.amount / 100) * 19}
+          knee={6}
+          gainReduction={gainReduction}
+          width={200}
+          height={150}
+        />
       </div>
 
       <div className="flex items-start gap-4">

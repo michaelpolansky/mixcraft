@@ -2,6 +2,7 @@
  * Bottom control strip — XY pad / Piano keyboard tabs
  */
 
+import { memo } from 'react';
 import { cn } from '../../utils/cn.ts';
 import { PianoKeyboard, XYPad } from '../index.ts';
 import { formatHz } from '../../utils/formatters.ts';
@@ -27,7 +28,7 @@ const yRange: [number, number] = [PARAM_RANGES.resonance.min, PARAM_RANGES.reson
 const normalizeValue = (value: number, min: number, max: number) => (value - min) / (max - min);
 const denormalizeValue = (normalized: number, min: number, max: number) => min + normalized * (max - min);
 
-export function BottomControlStrip({
+export const BottomControlStrip = memo(function BottomControlStrip({
   mode,
   expanded,
   onModeChange,
@@ -108,4 +109,4 @@ export function BottomControlStrip({
       </div>
     </div>
   );
-}
+});

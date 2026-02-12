@@ -3,7 +3,7 @@
  * Horizontal signal-flow layout: OSC → FILTER → AMP → MOD → FX → OUTPUT
  */
 
-import { useEffect, useCallback, useState } from 'react';
+import { useEffect, useCallback, useMemo, useState } from 'react';
 import { useSynthStore } from '../stores/synth-store.ts';
 import { useModulatedValues } from '../hooks/useModulatedValues.ts';
 import {
@@ -32,7 +32,7 @@ import {
 import { SUBTRACTIVE_PRESETS } from '../../data/presets/subtractive-presets.ts';
 import { InfoPanelProvider, useInfoPanel } from '../context/InfoPanelContext.tsx';
 import { useToast } from '../components/Toast.tsx';
-import { formatPercent } from '../utils/formatters.ts';
+import { formatPercent, formatSemitonesSigned, formatOctavesSigned } from '../utils/formatters.ts';
 import { cn } from '../utils/cn.ts';
 
 // Stage colors following signal flow
@@ -111,6 +111,9 @@ export function SynthView() {
   const handleNoteOn = useCallback((note: string) => { arpNoteOn(note); }, [arpNoteOn]);
   const handleNoteOff = useCallback((note: string) => { arpNoteOff(note); }, [arpNoteOff]);
 
+  const getAnalyser = useCallback(() => engine?.getAnalyser() ?? null, [engine]);
+  const sourceNode = useMemo(() => engine?.getOutputNode() ?? null, [engine]);
+
   if (!isInitialized) {
     return (
       <AudioInitScreen
@@ -148,7 +151,9 @@ export function SynthView() {
         {/* Signal Flow */}
         <div className="flex-1 p-4 flex flex-wrap gap-4 content-start overflow-auto">
           <OscillatorStage
-            params={params}
+            oscillator={params.oscillator}
+            glide={params.glide}
+            unison={params.unison}
             setOscillatorType={setOscillatorType}
             setOctave={setOctave}
             setDetune={setDetune}
@@ -171,7 +176,7 @@ export function SynthView() {
             onSustainChange={setPitchEnvelopeSustain} onReleaseChange={setPitchEnvelopeRelease}
             amount={params.pitchEnvelope.amount} onAmountChange={setPitchEnvelopeAmount}
             amountMin={-24} amountMax={24} amountStep={1}
-            amountFormat={(v) => `${v > 0 ? '+' : ''}${v} st`}
+            amountFormat={formatSemitonesSigned}
             isTriggered={isPlaying}
           />
 
@@ -229,7 +234,7 @@ export function SynthView() {
             onSustainChange={setFilterEnvelopeSustain} onReleaseChange={setFilterEnvelopeRelease}
             amount={params.filterEnvelope.amount} onAmountChange={setFilterEnvelopeAmount}
             amountMin={-4} amountMax={4} amountStep={0.1}
-            amountFormat={(v) => `${v > 0 ? '+' : ''}${v.toFixed(1)}`}
+            amountFormat={formatOctavesSigned}
             isTriggered={isPlaying}
           />
 
@@ -337,8 +342,8 @@ export function SynthView() {
           <OutputStage
             volume={params.volume} pan={params.pan}
             onVolumeChange={setVolume} onPanChange={setPan}
-            getAnalyser={() => engine?.getAnalyser() ?? null}
-            sourceNode={engine?.getOutputNode() ?? null}
+            getAnalyser={getAnalyser}
+            sourceNode={sourceNode}
             modulatedAmplitude={modulatedValues?.amplitude}
             modulatedPan={modulatedValues?.pan}
             color={COLORS.output}

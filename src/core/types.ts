@@ -1072,6 +1072,9 @@ export interface EffectsControls { distortion?: boolean; delay?: boolean; reverb
 /** Which visualization panels to show for a challenge */
 export type ChallengeVisualization = 'spectrum' | 'oscilloscope' | 'filter' | 'envelope' | 'lfo' | 'effects';
 
+/** Visualization layout mode for ChallengeView */
+export type VizMode = 'default' | 'spectrum' | 'waveform' | 'compare' | 'minimal';
+
 /**
  * Which synth sections/controls are visible in a challenge view.
  *

@@ -3,7 +3,7 @@
  * Horizontal signal-flow layout: FM → LFO → NOISE → VELOCITY → ARP → MOD MATRIX → AMP → OUTPUT
  */
 
-import { useEffect, useCallback, useState } from 'react';
+import { useEffect, useCallback, useMemo, useState } from 'react';
 import { useFMSynthStore } from '../stores/fm-synth-store.ts';
 import {
   Knob,
@@ -125,6 +125,8 @@ export function FMSynthView() {
   const getAnalyser = useCallback(() => {
     return engine?.getAnalyser() ?? null;
   }, [engine]);
+
+  const sourceNode = useMemo(() => engine?.getOutputNode() ?? null, [engine]);
 
   // XY Pad handlers - maps to Harmonicity (X) and Mod Index (Y)
   const xRange: [number, number] = [FM_PARAM_RANGES.harmonicity.min, FM_PARAM_RANGES.harmonicity.max];
@@ -354,7 +356,7 @@ export function FMSynthView() {
             onVolumeChange={setVolume}
             onPanChange={setPan}
             getAnalyser={getAnalyser}
-            sourceNode={engine?.getOutputNode() ?? null}
+            sourceNode={sourceNode}
             color={COLORS.output}
           />
         </div>

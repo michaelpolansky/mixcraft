@@ -15,6 +15,7 @@ export { TargetPlayer } from './TargetPlayer.tsx';
 export { EQControl } from './EQControl.tsx';
 export { ParametricEQControl } from './ParametricEQControl.tsx';
 export { CompressorControl } from './CompressorControl.tsx';
+export { CompressionCurve } from './CompressionCurve.tsx';
 export { LayerStrip } from './LayerStrip.tsx';
 export { ProductionMixer } from './ProductionMixer.tsx';
 export { FMSynthPanel } from './FMSynthPanel.tsx';
@@ -92,6 +93,7 @@ export { BottomControlStrip } from './synth/BottomControlStrip.tsx';
 // Challenge extracted components
 export { SubtractiveSections } from './challenge/SubtractiveSections.tsx';
 export { FMAdditiveEffectsSection } from './challenge/FMAdditiveEffectsSection.tsx';
+export { VizModeToggle } from './challenge/VizModeToggle.tsx';
 
 // Production components
 export { ProductionResultsModal } from './production/ProductionResultsModal.tsx';

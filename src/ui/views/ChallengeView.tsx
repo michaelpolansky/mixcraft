@@ -3,7 +3,7 @@
  * Main view for playing "Recreate This Sound" challenges
  */
 
-import { useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSynthStore } from '../stores/synth-store.ts';
 import { useFMSynthStore } from '../stores/fm-synth-store.ts';
 import { useAdditiveSynthStore } from '../stores/additive-synth-store.ts';
@@ -25,6 +25,7 @@ import {
   ChallengeHeader,
   HintsPanel,
   SubmitButton,
+  VizModeToggle,
 } from '../components/index.ts';
 import { Section } from '../components/challenge/Section.tsx';
 import { SubtractiveSections } from '../components/challenge/SubtractiveSections.tsx';
@@ -32,8 +33,8 @@ import { FMAdditiveEffectsSection } from '../components/challenge/FMAdditiveEffe
 import { InfoPanelProvider } from '../context/InfoPanelContext.tsx';
 import { cn } from '../utils/cn.ts';
 import { FM_PARAM_RANGES, HARMONICITY_PRESETS, PARAM_RANGES } from '../../core/types.ts';
-import type { SynthParams, FMSynthParams, AdditiveSynthParams } from '../../core/types.ts';
-import { getAvailableControls, getVisualizations } from '../../data/module-controls.ts';
+import type { SynthParams, FMSynthParams, AdditiveSynthParams, VizMode } from '../../core/types.ts';
+import { getAvailableControls, getVisualizations, getVizLayout, getVizDims } from '../../data/module-controls.ts';
 import { SynthEngine, createSynthEngine } from '../../core/synth-engine.ts';
 import { FMSynthEngine, createFMSynthEngine } from '../../core/fm-synth-engine.ts';
 import { AdditiveSynthEngine, createAdditiveSynthEngine } from '../../core/additive-synth-engine.ts';
@@ -216,7 +217,9 @@ export function ChallengeView({ onExit, onNext, hasNext }: ChallengeViewProps) {
     );
   }
 
-  const vizList = (isFM || isAdditive) ? [] as string[] : getVisualizations(currentChallenge);
+  const rawVizList = (isFM || isAdditive) ? [] : getVisualizations(currentChallenge);
+  const [vizMode, setVizMode] = useState<VizMode>('default');
+  const vizLayout = getVizLayout(rawVizList, vizMode);
 
   const getActiveAnalyser = useCallback(() => {
     if (isFM && fmEngine) return fmEngine.getAnalyser();
@@ -224,6 +227,10 @@ export function ChallengeView({ onExit, onNext, hasNext }: ChallengeViewProps) {
     if (engine) return engine.getAnalyser();
     return null;
   }, [engine, fmEngine, additiveEngine, isFM, isAdditive]);
+
+  const getTargetAnalyser = useCallback(() => {
+    return targetSynthRef.current?.getAnalyser() ?? null;
+  }, []);
 
   return (
     <InfoPanelProvider>
@@ -349,15 +356,31 @@ export function ChallengeView({ onExit, onNext, hasNext }: ChallengeViewProps) {
 
         {/* Right Column - Visualization & Actions */}
         <div className="flex flex-col gap-4">
-          {vizList.includes('oscilloscope') && <Section title="Waveform"><Oscilloscope getAnalyser={getActiveAnalyser} width={450} height={120} accentColor="#4ade80" /></Section>}
-          {vizList.includes('filter') && <Section title="Filter Response"><FilterResponse filterType={params.filter.type} cutoff={params.filter.cutoff} resonance={params.filter.resonance} width={450} height={150} accentColor="#4ade80" /></Section>}
-          {vizList.includes('envelope') && <Section title="Envelope Shape"><EnvelopeVisualizerReadOnly amplitudeEnvelope={params.amplitudeEnvelope} filterEnvelope={params.filterEnvelope} width={450} height={150} /></Section>}
-          {vizList.includes('lfo') && <Section title="LFO Modulation"><LFOVisualizer waveform={params.lfo.waveform} rate={params.lfo.rate} depth={params.lfo.depth} width={450} height={150} accentColor="#4ade80" /></Section>}
-          {vizList.includes('effects') && <Section title="Effects Chain"><EffectsVisualizer effects={params.effects} width={450} height={150} accentColor="#4ade80" /></Section>}
+          {rawVizList.length > 0 && <VizModeToggle mode={vizMode} onChange={setVizMode} />}
 
-          {vizList.includes('spectrum') && <Section title="Spectrum Analyzer">
-            <SpectrumAnalyzer width={450} height={200} barCount={64} />
-          </Section>}
+          {vizMode === 'compare' && vizLayout.panels.includes('spectrum') ? (
+            <Section title="Compare">
+              <div className="flex gap-2">
+                <div className="flex flex-col items-center">
+                  <span className="text-xs text-text-disabled mb-1">Your Sound</span>
+                  <SpectrumAnalyzer getAnalyser={getActiveAnalyser} width={getVizDims('spectrum', vizLayout).width} height={getVizDims('spectrum', vizLayout).height} barCount={32} />
+                </div>
+                <div className="flex flex-col items-center">
+                  <span className="text-xs text-text-disabled mb-1">Target</span>
+                  <SpectrumAnalyzer getAnalyser={getTargetAnalyser} width={getVizDims('spectrum', vizLayout).width} height={getVizDims('spectrum', vizLayout).height} barCount={32} />
+                </div>
+              </div>
+            </Section>
+          ) : (
+            <>
+              {vizLayout.panels.includes('oscilloscope') && <Section title="Waveform"><Oscilloscope getAnalyser={getActiveAnalyser} width={getVizDims('oscilloscope', vizLayout).width} height={getVizDims('oscilloscope', vizLayout).height} accentColor="#4ade80" /></Section>}
+              {vizLayout.panels.includes('filter') && <Section title="Filter Response"><FilterResponse filterType={params.filter.type} cutoff={params.filter.cutoff} resonance={params.filter.resonance} width={getVizDims('filter', vizLayout).width} height={getVizDims('filter', vizLayout).height} accentColor="#4ade80" /></Section>}
+              {vizLayout.panels.includes('envelope') && <Section title="Envelope Shape"><EnvelopeVisualizerReadOnly amplitudeEnvelope={params.amplitudeEnvelope} filterEnvelope={params.filterEnvelope} width={getVizDims('envelope', vizLayout).width} height={getVizDims('envelope', vizLayout).height} /></Section>}
+              {vizLayout.panels.includes('lfo') && <Section title="LFO Modulation"><LFOVisualizer waveform={params.lfo.waveform} rate={params.lfo.rate} depth={params.lfo.depth} width={getVizDims('lfo', vizLayout).width} height={getVizDims('lfo', vizLayout).height} accentColor="#4ade80" /></Section>}
+              {vizLayout.panels.includes('effects') && <Section title="Effects Chain"><EffectsVisualizer effects={params.effects} width={getVizDims('effects', vizLayout).width} height={getVizDims('effects', vizLayout).height} accentColor="#4ade80" /></Section>}
+              {vizLayout.panels.includes('spectrum') && <Section title="Spectrum Analyzer"><SpectrumAnalyzer width={getVizDims('spectrum', vizLayout).width} height={getVizDims('spectrum', vizLayout).height} barCount={64} /></Section>}
+            </>
+          )}
 
           <Section title="Hints">
             <HintsPanel

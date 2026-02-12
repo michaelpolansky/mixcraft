@@ -2,6 +2,7 @@
  * SUB OSC stage
  */
 
+import { memo } from 'react';
 import { WaveformSelector, OscillatorVisualizer, StageCard } from '../index.ts';
 import { cn } from '../../utils/cn.ts';
 type SubOscWaveform = 'sine' | 'square';
@@ -14,7 +15,7 @@ interface SubOscStageProps {
   color: string;
 }
 
-export function SubOscStage({
+export const SubOscStage = memo(function SubOscStage({
   type,
   octave,
   onTypeChange,
@@ -60,4 +61,4 @@ export function SubOscStage({
       </div>
     </StageCard>
   );
-}
+});

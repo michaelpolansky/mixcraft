@@ -2,8 +2,9 @@
  * OUTPUT stage — oscilloscope, volume, pan, recording
  */
 
+import { memo } from 'react';
 import { Knob, Oscilloscope, RecordingControl, StageCard } from '../index.ts';
-import { formatDb } from '../../utils/formatters.ts';
+import { formatDb, formatPan } from '../../utils/formatters.ts';
 
 interface OutputStageProps {
   volume: number;
@@ -17,7 +18,7 @@ interface OutputStageProps {
   color: string;
 }
 
-export function OutputStage({
+export const OutputStage = memo(function OutputStage({
   volume,
   pan,
   onVolumeChange,
@@ -58,11 +59,7 @@ export function OutputStage({
             max={1}
             step={0.01}
             onChange={onPanChange}
-            formatValue={(v) => {
-              if (Math.abs(v) < 0.05) return 'Center';
-              if (v < 0) return `${Math.round(Math.abs(v) * 100)}% L`;
-              return `${Math.round(v * 100)}% R`;
-            }}
+            formatValue={formatPan}
             paramId="pan"
             modulatedValue={modulatedPan}
           />
@@ -75,4 +72,4 @@ export function OutputStage({
       </div>
     </StageCard>
   );
-}
+});

@@ -2,6 +2,7 @@
  * NOISE generator stage
  */
 
+import { memo } from 'react';
 import { Knob, NoiseVisualizer, StageCard } from '../index.ts';
 import { formatPercent } from '../../utils/formatters.ts';
 import { cn } from '../../utils/cn.ts';
@@ -22,7 +23,7 @@ const NOISE_TYPES: { value: NoiseType; label: string }[] = [
   { value: 'brown', label: 'Brown' },
 ];
 
-export function NoiseStage({
+export const NoiseStage = memo(function NoiseStage({
   type,
   level,
   onTypeChange,
@@ -73,4 +74,4 @@ export function NoiseStage({
       )}
     </StageCard>
   );
-}
+});

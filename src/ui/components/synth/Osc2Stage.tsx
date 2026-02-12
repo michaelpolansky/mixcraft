@@ -2,6 +2,7 @@
  * OSC 2 stage
  */
 
+import { memo } from 'react';
 import { Knob, WaveformSelector, OscillatorVisualizer, StageCard } from '../index.ts';
 import type { OscillatorType } from '../../../core/types.ts';
 
@@ -15,7 +16,7 @@ interface Osc2StageProps {
   color: string;
 }
 
-export function Osc2Stage({
+export const Osc2Stage = memo(function Osc2Stage({
   type,
   octave,
   detune,
@@ -48,4 +49,4 @@ export function Osc2Stage({
       </div>
     </StageCard>
   );
-}
+});

@@ -2,6 +2,7 @@
  * FM Modulation Matrix — route-based with 4 slots
  */
 
+import { memo } from 'react';
 import { cn } from '../../utils/cn.ts';
 import {
   FM_MOD_SOURCES,
@@ -25,7 +26,7 @@ interface FMModMatrixProps {
   accentColor: string;
 }
 
-export function FMModMatrix({ routes, onChange, accentColor }: FMModMatrixProps) {
+export const FMModMatrix = memo(function FMModMatrix({ routes, onChange, accentColor }: FMModMatrixProps) {
   return (
     <div className="flex flex-col gap-2">
       {routes.map((route, index) => (
@@ -39,7 +40,7 @@ export function FMModMatrix({ routes, onChange, accentColor }: FMModMatrixProps)
       ))}
     </div>
   );
-}
+});
 
 interface FMModRouteRowProps {
   index: number;

@@ -5,7 +5,7 @@
  * only the controls being taught, while later modules unlock everything.
  */
 
-import type { Challenge, SynthAvailableControls, ChallengeVisualization, OscillatorControls, FilterControls, AmpEnvelopeControls, FilterEnvelopeControls, LFOControls, EffectsControls } from '../core/types.ts';
+import type { Challenge, SynthAvailableControls, ChallengeVisualization, VizMode, OscillatorControls, FilterControls, AmpEnvelopeControls, FilterEnvelopeControls, LFOControls, EffectsControls } from '../core/types.ts';
 
 /** Union of all per-section control config types */
 type SectionConfig = boolean | OscillatorControls | FilterControls | AmpEnvelopeControls | FilterEnvelopeControls | LFOControls | EffectsControls | undefined;
@@ -113,4 +113,87 @@ export function getVisualizations(challenge: Challenge): ChallengeVisualization[
   if (controls.visualizations) return controls.visualizations;
   const moduleViz = MODULE_VIZ[challenge.module];
   return moduleViz ? ['spectrum', moduleViz] : ['spectrum', 'oscilloscope'];
+}
+
+// ── Visualization Layout Modes ──────────────────────────────────────
+
+/** Standard dimensions for each visualization panel (width x height) */
+export const STANDARD_DIMS: Record<ChallengeVisualization, { width: number; height: number }> = {
+  spectrum: { width: 450, height: 200 },
+  oscilloscope: { width: 450, height: 120 },
+  filter: { width: 450, height: 150 },
+  envelope: { width: 450, height: 150 },
+  lfo: { width: 450, height: 150 },
+  effects: { width: 450, height: 150 },
+};
+
+/** Layout result: which panels to show and any dimension overrides */
+export interface VizLayout {
+  panels: ChallengeVisualization[];
+  dimensions: Partial<Record<ChallengeVisualization, { width?: number; height?: number }>>;
+}
+
+/**
+ * Compute the visualization layout for a given mode.
+ *
+ * Operates on the output of `getVisualizations()` — respects progressive
+ * visibility by only filtering panels that are already in the list.
+ */
+export function getVizLayout(vizList: ChallengeVisualization[], mode: VizMode): VizLayout {
+  switch (mode) {
+    case 'spectrum': {
+      const panels = vizList.filter(v => v === 'spectrum' || v === 'oscilloscope');
+      return {
+        panels,
+        dimensions: { spectrum: { height: 320 }, oscilloscope: { height: 60 } },
+      };
+    }
+    case 'waveform': {
+      // Oscilloscope first (expanded), spectrum second (compact)
+      const filtered = vizList.filter(v => v === 'oscilloscope' || v === 'spectrum');
+      const panels: ChallengeVisualization[] = [];
+      if (filtered.includes('oscilloscope')) panels.push('oscilloscope');
+      if (filtered.includes('spectrum')) panels.push('spectrum');
+      return {
+        panels,
+        dimensions: { oscilloscope: { height: 300 }, spectrum: { height: 70 } },
+      };
+    }
+    case 'compare':
+      return {
+        panels: vizList.filter(v => v === 'spectrum'),
+        dimensions: { spectrum: { width: 215, height: 200 } },
+      };
+    case 'minimal':
+      return {
+        panels: [...vizList],
+        dimensions: {
+          spectrum: { height: 80 },
+          oscilloscope: { height: 60 },
+          filter: { height: 60 },
+          envelope: { height: 60 },
+          lfo: { height: 60 },
+          effects: { height: 60 },
+        },
+      };
+    default:
+      return { panels: [...vizList], dimensions: {} };
+  }
+}
+
+/**
+ * Get the resolved dimensions for a visualization panel.
+ * Layout overrides take priority; falls back to STANDARD_DIMS.
+ */
+export function getVizDims(
+  viz: ChallengeVisualization,
+  layout: VizLayout,
+): { width: number; height: number } {
+  const standard = STANDARD_DIMS[viz];
+  const override = layout.dimensions[viz];
+  if (!override) return standard;
+  return {
+    width: override.width ?? standard.width,
+    height: override.height ?? standard.height,
+  };
 }

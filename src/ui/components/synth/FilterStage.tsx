@@ -2,6 +2,7 @@
  * FILTER stage with visualizer, type selector, cutoff, resonance, key tracking
  */
 
+import { memo } from 'react';
 import { Knob, FilterTypeSelector, FilterVisualizer, StageCard } from '../index.ts';
 import { formatHz, formatPercent } from '../../utils/formatters.ts';
 import { PARAM_RANGES } from '../../../core/types.ts';
@@ -20,7 +21,7 @@ interface FilterStageProps {
   color: string;
 }
 
-export function FilterStage({
+export const FilterStage = memo(function FilterStage({
   type,
   cutoff,
   resonance,
@@ -56,4 +57,4 @@ export function FilterStage({
       </div>
     </StageCard>
   );
-}
+});

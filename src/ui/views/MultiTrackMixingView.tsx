@@ -17,6 +17,8 @@ import { MixingEQ, MixingCompressor, MixingReverb, MixingParametricEQ } from '..
 import { evaluateMixingChallenge, parametricToEffective3Band } from '../../core/mixing-evaluation.ts';
 import type { MixingChallenge, EQParams } from '../../core/types.ts';
 
+const DEFAULT_TRACK_PARAMS: TrackEQParams = { low: 0, mid: 0, high: 0, volume: 0, pan: 0, reverbMix: 0, reverbSize: 50, compressorThreshold: 0, compressorAmount: 0 };
+
 interface MultiTrackMixingViewProps {
   challenge: MixingChallenge;
   onExit: () => void;
@@ -337,7 +339,7 @@ export function MultiTrackMixingView({
             {/* Track Strips */}
             <div className="flex gap-4 mb-6">
               {tracks.map((track) => {
-                const params: TrackEQParams = trackParams[track.id] ?? { low: 0, mid: 0, high: 0, volume: 0, pan: 0, reverbMix: 0, reverbSize: 50, compressorThreshold: 0, compressorAmount: 0 };
+                const params: TrackEQParams = trackParams[track.id] ?? DEFAULT_TRACK_PARAMS;
                 return (
                   <MixingTrackStrip
                     key={track.id}
