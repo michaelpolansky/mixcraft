@@ -337,7 +337,8 @@ export function SynthView() {
           <OutputStage
             volume={params.volume} pan={params.pan}
             onVolumeChange={setVolume} onPanChange={setPan}
-            engine={engine}
+            getAnalyser={() => engine?.getAnalyser() ?? null}
+            sourceNode={engine?.getOutputNode() ?? null}
             modulatedAmplitude={modulatedValues?.amplitude}
             modulatedPan={modulatedValues?.pan}
             color={COLORS.output}

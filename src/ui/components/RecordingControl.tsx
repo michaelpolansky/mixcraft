@@ -231,14 +231,7 @@ export function RecordingControl({
             }}
             title="Stop Recording"
           >
-            <div
-              style={{
-                width: '12px',
-                height: '12px',
-                background: '#fff',
-                borderRadius: '2px',
-              }}
-            />
+            <div className="w-3 h-3 bg-white rounded-sm" />
           </button>
         )}
 
@@ -362,14 +355,7 @@ export function RecordingControl({
           title="Stop Recording"
         >
           {/* Stop icon (square) */}
-          <div
-            style={{
-              width: '14px',
-              height: '14px',
-              background: '#fff',
-              borderRadius: '2px',
-            }}
-          />
+          <div className="w-3.5 h-3.5 bg-white rounded-sm" />
         </button>
       )}
 

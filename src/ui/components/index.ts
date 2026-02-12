@@ -86,4 +86,17 @@ export { MixerStage } from './synth/MixerStage.tsx';
 export { FilterStage } from './synth/FilterStage.tsx';
 export { LFOStage } from './synth/LFOStage.tsx';
 export { OutputStage } from './synth/OutputStage.tsx';
+export { FMModMatrix } from './synth/FMModMatrix.tsx';
 export { BottomControlStrip } from './synth/BottomControlStrip.tsx';
+
+// Challenge extracted components
+export { SubtractiveSections } from './challenge/SubtractiveSections.tsx';
+export { FMAdditiveEffectsSection } from './challenge/FMAdditiveEffectsSection.tsx';
+
+// Production components
+export { ProductionResultsModal } from './production/ProductionResultsModal.tsx';
+
+// Mixing components
+export { MixingTrackStrip } from './mixing/MixingTrackStrip.tsx';
+export { MixingBusSection } from './mixing/MixingBusSection.tsx';
+export { MixingResults } from './mixing/MixingResults.tsx';

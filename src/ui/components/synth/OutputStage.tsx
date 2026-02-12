@@ -4,14 +4,14 @@
 
 import { Knob, Oscilloscope, RecordingControl, StageCard } from '../index.ts';
 import { formatDb } from '../../utils/formatters.ts';
-import type { SynthEngine } from '../../../core/synth-engine.ts';
 
 interface OutputStageProps {
   volume: number;
   pan: number;
   onVolumeChange: (v: number) => void;
   onPanChange: (v: number) => void;
-  engine: SynthEngine | null;
+  getAnalyser: () => AnalyserNode | null;
+  sourceNode: AudioNode | null;
   modulatedAmplitude?: number;
   modulatedPan?: number;
   color: string;
@@ -22,7 +22,8 @@ export function OutputStage({
   pan,
   onVolumeChange,
   onPanChange,
-  engine,
+  getAnalyser,
+  sourceNode,
   modulatedAmplitude,
   modulatedPan,
   color,
@@ -31,7 +32,7 @@ export function OutputStage({
     <StageCard title="OUTPUT" color={color}>
       <div className="flex flex-col gap-3">
         <Oscilloscope
-          getAnalyser={() => engine?.getAnalyser() ?? null}
+          getAnalyser={getAnalyser}
           width={200}
           height={60}
           accentColor={color}
@@ -67,7 +68,7 @@ export function OutputStage({
           />
         </div>
         <RecordingControl
-          sourceNode={engine?.getOutputNode() ?? null}
+          sourceNode={sourceNode}
           accentColor={color}
           compact
         />

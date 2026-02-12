@@ -1,23 +1,17 @@
 /**
  * Additive Synthesizer View
- * Horizontal signal-flow layout: HARMONICS -> LFO -> NOISE -> VELOCITY -> ARP -> AMP -> OUTPUT
+ * Horizontal signal-flow layout: HARMONICS -> LFO -> NOISE -> VELOCITY -> ARP -> AMP -> FX -> OUTPUT
  */
 
 import { useEffect, useCallback, useState } from 'react';
 import { useAdditiveSynthStore } from '../stores/additive-synth-store.ts';
 import {
-  Knob,
   SpectrumAnalyzer,
   PianoKeyboard,
   InfoPanel,
   Sequencer,
-  RecordingControl,
   HarmonicBarsVisualizer,
   EnvelopeVisualizer,
-  WaveformSelector,
-  LFOVisualizer,
-  NoiseVisualizer,
-  Oscilloscope,
   XYPad,
   ArpeggiatorControls,
   StageCard,
@@ -27,15 +21,14 @@ import {
   SynthHeader,
   GlideControls,
   VelocityControls,
+  LFOStage,
+  NoiseStage,
+  OutputStage,
 } from '../components/index.ts';
 import { ADDITIVE_PRESETS } from '../../data/presets/additive-presets.ts';
 import { InfoPanelProvider } from '../context/InfoPanelContext.tsx';
 import { cn } from '../utils/cn.ts';
-import type {
-  LFOWaveform,
-  AdditiveLFODestination,
-  NoiseType,
-} from '../../core/types.ts';
+import type { AdditiveLFODestination } from '../../core/types.ts';
 
 // Stage colors following signal flow (cyan/teal theme for additive)
 const COLORS = {
@@ -48,17 +41,10 @@ const COLORS = {
   output: '#f97316',
 };
 
-// Noise type options
-const NOISE_TYPES = [
-  { value: 'white' as const, label: 'White' },
-  { value: 'pink' as const, label: 'Pink' },
-  { value: 'brown' as const, label: 'Brown' },
-];
-
 // LFO destination options for Additive synth
 const ADDITIVE_LFO_DESTINATIONS = [
-  { value: 'brightness' as const, label: 'Brightness' },
-  { value: 'pitch' as const, label: 'Pitch' },
+  { value: 'brightness', label: 'Brightness' },
+  { value: 'pitch', label: 'Pitch' },
 ];
 
 export function AdditiveSynthView() {
@@ -92,23 +78,17 @@ export function AdditiveSynthView() {
     resetToDefaults,
     currentPreset,
     loadPreset,
-    // LFO actions
     setLFORate,
     setLFODepth,
     setLFOWaveform,
     setLFODestination,
-    // Noise actions
     setNoiseType,
     setNoiseLevel,
-    // Glide actions
     setGlideEnabled,
     setGlideTime,
-    // Pan action
     setPan,
-    // Velocity actions
     setVelocityAmpAmount,
     setVelocityBrightnessAmount,
-    // Arpeggiator actions
     setArpEnabled,
     setArpPattern,
     setArpDivision,
@@ -144,8 +124,7 @@ export function AdditiveSynthView() {
     return engine?.getAnalyser() ?? null;
   }, [engine]);
 
-  // Format helpers
-  const formatDb = (value: number) => `${value.toFixed(1)}dB`;
+  // Format helper
   const formatPercent = (value: number) => `${Math.round(value * 100)}%`;
 
   // Harmonic presets
@@ -157,13 +136,12 @@ export function AdditiveSynthView() {
   ];
 
   // XY Pad - controls fundamental (H1) and brightness (sum of high harmonics)
-  // X = fundamental volume, Y = high harmonic mix
   const xRange: [number, number] = [0, 1];
   const yRange: [number, number] = [0, 1];
 
   // Calculate current XY values from harmonics
   const fundamentalLevel = params.harmonics[0] ?? 1;
-  const highHarmonicsMix = params.harmonics.slice(4).reduce((sum, h) => sum + h, 0) / 4; // avg of H5-H8
+  const highHarmonicsMix = params.harmonics.slice(4).reduce((sum, h) => sum + h, 0) / 4;
 
   // Not initialized - show start button
   if (!isInitialized) {
@@ -235,122 +213,30 @@ export function AdditiveSynthView() {
           </StageCard>
 
           {/* LFO Stage */}
-          <StageCard title="LFO" color={COLORS.lfo}>
-            <LFOVisualizer
-              waveform={params.lfo.waveform}
-              rate={params.lfo.rate}
-              depth={params.lfo.depth}
-              width={200}
-              height={100}
-              accentColor={COLORS.lfo}
-              compact
-            />
-            <div className="mt-3">
-              <WaveformSelector
-                value={params.lfo.waveform}
-                onChange={(waveform: LFOWaveform) => setLFOWaveform(waveform)}
-                accentColor={COLORS.lfo}
-              />
-            </div>
-            <div className="flex flex-col gap-2 mt-3">
-              <Knob
-                label="Rate"
-                value={params.lfo.rate}
-                min={0.1}
-                max={20}
-                step={0.1}
-                onChange={setLFORate}
-                formatValue={(v) => `${v.toFixed(1)} Hz`}
-                paramId="additive.lfo.rate"
-              />
-              <Knob
-                label="Depth"
-                value={params.lfo.depth}
-                min={0}
-                max={1}
-                step={0.01}
-                onChange={setLFODepth}
-                formatValue={formatPercent}
-                paramId="additive.lfo.depth"
-              />
-            </div>
-            {/* Destination selector */}
-            <div className="mt-3">
-              <div className="text-xs text-text-tertiary mb-1 uppercase">
-                Destination
-              </div>
-              <div className="flex gap-0.5">
-                {ADDITIVE_LFO_DESTINATIONS.map((dest) => {
-                  const isActive = params.lfo.destination === dest.value;
-                  return (
-                    <button
-                      key={dest.value}
-                      onClick={() => setLFODestination(dest.value)}
-                      className={cn(
-                        'py-1 px-2 rounded-sm cursor-pointer text-xs font-medium border',
-                        isActive
-                          ? 'text-text-primary'
-                          : 'bg-bg-tertiary border-border-medium text-text-tertiary'
-                      )}
-                      style={isActive ? {
-                        background: COLORS.lfo,
-                        borderColor: COLORS.lfo,
-                      } : undefined}
-                    >
-                      {dest.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </StageCard>
+          <LFOStage
+            title="LFO"
+            color={COLORS.lfo}
+            paramPrefix="additive.lfo"
+            waveform={params.lfo.waveform}
+            rate={params.lfo.rate}
+            depth={params.lfo.depth}
+            onWaveformChange={setLFOWaveform}
+            onRateChange={setLFORate}
+            onDepthChange={setLFODepth}
+            destinations={ADDITIVE_LFO_DESTINATIONS}
+            currentDestination={params.lfo.destination}
+            onDestinationChange={(v) => setLFODestination(v as AdditiveLFODestination)}
+          />
 
           {/* NOISE Stage */}
-          <StageCard title="NOISE" color={COLORS.noise}>
-            <NoiseVisualizer
-              noiseType={params.noise.type}
-              level={params.noise.level}
-              width={200}
-              height={100}
-              accentColor={COLORS.noise}
-              compact
-            />
-            <div className="flex gap-1 mt-3">
-              {NOISE_TYPES.map((nt) => {
-                const isActive = params.noise.type === nt.value;
-                return (
-                  <button
-                    key={nt.value}
-                    onClick={() => setNoiseType(nt.value)}
-                    className={cn(
-                      'py-1.5 px-2.5 rounded-sm cursor-pointer text-sm font-medium border',
-                      isActive
-                        ? 'text-text-primary'
-                        : 'bg-bg-tertiary border-border-medium text-text-tertiary'
-                    )}
-                    style={isActive ? {
-                      background: COLORS.noise,
-                      borderColor: COLORS.noise,
-                    } : undefined}
-                  >
-                    {nt.label}
-                  </button>
-                );
-              })}
-            </div>
-            <div className="mt-3">
-              <Knob
-                label="Level"
-                value={params.noise.level}
-                min={0}
-                max={1}
-                step={0.01}
-                onChange={setNoiseLevel}
-                formatValue={formatPercent}
-                paramId="additive.noise.level"
-              />
-            </div>
-          </StageCard>
+          <NoiseStage
+            type={params.noise.type}
+            level={params.noise.level}
+            onTypeChange={setNoiseType}
+            color={COLORS.noise}
+            onLevelChange={setNoiseLevel}
+            paramId="additive.noise.level"
+          />
 
           {/* VELOCITY Stage */}
           <StageCard title="VELOCITY" color={COLORS.velocity}>
@@ -446,47 +332,15 @@ export function AdditiveSynthView() {
           </StageCard>
 
           {/* OUTPUT Stage */}
-          <StageCard title="OUTPUT" color={COLORS.output}>
-            <div className="flex flex-col items-center gap-3">
-              {/* Oscilloscope */}
-              <Oscilloscope
-                getAnalyser={getAnalyser}
-                width={200}
-                height={60}
-                accentColor={COLORS.output}
-              />
-              <Knob
-                label="Volume"
-                value={params.volume}
-                min={-40}
-                max={0}
-                step={0.5}
-                onChange={setVolume}
-                formatValue={formatDb}
-                size={56}
-                paramId="volume"
-              />
-              <Knob
-                label="Pan"
-                value={params.pan}
-                min={-1}
-                max={1}
-                step={0.01}
-                onChange={setPan}
-                formatValue={(v) => {
-                  if (Math.abs(v) < 0.05) return 'Center';
-                  if (v < 0) return `${Math.round(Math.abs(v) * 100)}% L`;
-                  return `${Math.round(v * 100)}% R`;
-                }}
-                paramId="additive.pan"
-              />
-              <RecordingControl
-                sourceNode={engine?.getOutputNode() ?? null}
-                accentColor={COLORS.output}
-                compact
-              />
-            </div>
-          </StageCard>
+          <OutputStage
+            volume={params.volume}
+            pan={params.pan}
+            onVolumeChange={setVolume}
+            onPanChange={setPan}
+            getAnalyser={getAnalyser}
+            sourceNode={engine?.getOutputNode() ?? null}
+            color={COLORS.output}
+          />
         </div>
 
         {/* Sequencer */}
@@ -501,20 +355,18 @@ export function AdditiveSynthView() {
             <button
               onClick={() => setBottomMode('xy')}
               className={cn(
-                'py-2 px-4 border-none cursor-pointer text-base font-semibold',
-                bottomMode === 'xy' ? 'bg-bg-tertiary text-text-primary' : 'bg-transparent text-text-muted'
+                'py-2 px-4 border-none border-b-2 cursor-pointer text-base font-semibold',
+                bottomMode === 'xy' ? 'bg-bg-tertiary text-text-primary border-b-[#06b6d4]' : 'bg-transparent text-text-muted border-b-transparent'
               )}
-              style={{ borderBottom: bottomMode === 'xy' ? `2px solid ${COLORS.harmonics}` : '2px solid transparent' }}
             >
               XY
             </button>
             <button
               onClick={() => setBottomMode('keys')}
               className={cn(
-                'py-2 px-4 border-none cursor-pointer text-base font-semibold',
-                bottomMode === 'keys' ? 'bg-bg-tertiary text-text-primary' : 'bg-transparent text-text-muted'
+                'py-2 px-4 border-none border-b-2 cursor-pointer text-base font-semibold',
+                bottomMode === 'keys' ? 'bg-bg-tertiary text-text-primary border-b-[#06b6d4]' : 'bg-transparent text-text-muted border-b-transparent'
               )}
-              style={{ borderBottom: bottomMode === 'keys' ? `2px solid ${COLORS.harmonics}` : '2px solid transparent' }}
             >
               KEYS
             </button>
@@ -529,8 +381,10 @@ export function AdditiveSynthView() {
 
           {/* Content */}
           <div
-            className="transition-[height] duration-200 overflow-hidden flex items-center justify-center py-2 px-6"
-            style={{ height: bottomExpanded ? '140px' : '50px' }}
+            className={cn(
+              'transition-[height] duration-200 overflow-hidden flex items-center justify-center py-2 px-6',
+              bottomExpanded ? 'h-[140px]' : 'h-[50px]'
+            )}
             onClick={() => !bottomExpanded && setBottomExpanded(true)}
           >
             {bottomMode === 'keys' ? (

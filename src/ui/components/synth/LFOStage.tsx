@@ -34,6 +34,9 @@ interface LFOStageProps {
   enabled?: boolean;
   onEnabledChange?: (v: boolean) => void;
   visualizerDepthOverride?: number;
+  destinations?: { value: string; label: string }[];
+  currentDestination?: string;
+  onDestinationChange?: (v: string) => void;
 }
 
 export function LFOStage({
@@ -54,6 +57,9 @@ export function LFOStage({
   enabled,
   onEnabledChange,
   visualizerDepthOverride,
+  destinations,
+  currentDestination,
+  onDestinationChange,
 }: LFOStageProps) {
   return (
     <StageCard title={title} color={color}>
@@ -90,6 +96,35 @@ export function LFOStage({
         )}
         <Knob label="Depth" value={depth} min={0} max={1} step={0.01} onChange={onDepthChange} formatValue={formatPercent} paramId={`${paramPrefix}.depth`} />
       </div>
+
+      {/* Destination selector (FM / Additive) */}
+      {destinations && onDestinationChange && (
+        <div className="mt-3">
+          <div className="text-xs text-text-tertiary mb-1 uppercase">
+            Destination
+          </div>
+          <div className="flex gap-0.5">
+            {destinations.map((dest) => {
+              const isActive = currentDestination === dest.value;
+              return (
+                <button
+                  key={dest.value}
+                  onClick={() => onDestinationChange(dest.value)}
+                  className={cn(
+                    'py-1 px-1.5 rounded-sm cursor-pointer text-xs font-medium border',
+                    isActive
+                      ? 'text-text-primary'
+                      : 'bg-bg-tertiary border-border-medium text-text-tertiary'
+                  )}
+                  style={isActive ? { background: color, borderColor: color } : undefined}
+                >
+                  {dest.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Sync toggle (LFO 1) */}
       {onSyncChange && (

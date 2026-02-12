@@ -6,12 +6,12 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import * as Tone from 'tone';
 import { useProductionStore } from '../stores/production-store.ts';
-import { ProductionMixer, SpectrumAnalyzer } from '../components/index.ts';
+import { ProductionMixer, SpectrumAnalyzer, ChallengeHeader, HintsPanel, SubmitButton } from '../components/index.ts';
 import { Section } from '../components/challenge/Section.tsx';
+import { ProductionResultsModal } from '../components/production/ProductionResultsModal.tsx';
 import { cn } from '../utils/cn.ts';
-import { createProductionSource, ProductionSource, type LayerState } from '../../core/production-source.ts';
+import { createProductionSource, ProductionSource } from '../../core/production-source.ts';
 import { evaluateProductionChallenge } from '../../core/production-evaluation.ts';
-import { getTRPC } from '../api/trpc.ts';
 import type { ProductionChallenge, ProductionGoalTarget, ProductionReferenceTarget } from '../../core/types.ts';
 
 type PlaybackMode = 'yours' | 'reference';
@@ -140,15 +140,6 @@ export function ProductionChallengeView({
     setIsPlaying(true);
   }, [stopPlayback]);
 
-  // Toggle playback for current mode
-  const togglePlayback = useCallback(async () => {
-    if (isPlaying) {
-      stopPlayback();
-    } else {
-      await playYourMix();
-    }
-  }, [isPlaying, stopPlayback, playYourMix]);
-
   // Submit and score
   const handleSubmit = useCallback(() => {
     startScoring();
@@ -224,31 +215,13 @@ export function ProductionChallengeView({
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-text-primary font-sans p-6">
-      {/* Header */}
-      <div className="flex justify-between items-start mb-6">
-        <div>
-          <button
-            onClick={handleExit}
-            className="bg-transparent border-none text-text-muted cursor-pointer text-xl mb-2 p-0"
-          >
-            ← Back
-          </button>
-          <h1 className="text-4xl font-semibold m-0">
-            {challenge.title}
-          </h1>
-          <p className="text-text-tertiary mt-2 text-xl max-w-[600px]">
-            {challenge.description}
-          </p>
-        </div>
-
-        <div className="text-right">
-          <div className="text-text-muted text-md">Attempt {currentAttempt}</div>
-          <div className="text-warning text-[18px]">
-            {'★'.repeat(challenge.difficulty)}
-            {'☆'.repeat(3 - challenge.difficulty)}
-          </div>
-        </div>
-      </div>
+      <ChallengeHeader
+        title={challenge.title}
+        description={challenge.description}
+        difficulty={challenge.difficulty}
+        currentAttempt={currentAttempt}
+        onExit={handleExit}
+      />
 
       {/* Main Layout */}
       <div className="grid grid-cols-[1fr_300px] gap-6 max-w-[1200px]">
@@ -343,42 +316,21 @@ export function ProductionChallengeView({
 
           {/* Hints */}
           <Section title="Hints">
-            <div className="min-h-[60px]">
-              {challenge.hints.slice(0, hintsRevealed).map((hint, i) => (
-                <div
-                  key={i}
-                  className="text-text-tertiary text-md mb-2 pl-3 border-l-2 border-border-default"
-                >
-                  {hint}
-                </div>
-              ))}
-
-              {hintsRevealed < challenge.hints.length && (
-                <button
-                  onClick={revealHint}
-                  className="bg-transparent border border-border-default rounded-sm text-text-muted cursor-pointer text-base py-1.5 px-3"
-                >
-                  Reveal Hint ({hintsRevealed + 1}/{challenge.hints.length})
-                </button>
-              )}
-            </div>
+            <HintsPanel
+              hints={challenge.hints}
+              hintsRevealed={hintsRevealed}
+              onRevealHint={revealHint}
+            />
           </Section>
 
           {/* Submit */}
-          <div className="mt-auto">
-            <button
-              onClick={handleSubmit}
-              disabled={isScoring}
-              className={cn(
-                'w-full py-4 px-8 border-none rounded-lg text-text-primary text-2xl font-semibold',
-                isScoring
-                  ? 'cursor-wait bg-[#333]'
-                  : 'cursor-pointer bg-gradient-to-br from-[#3b82f6] to-[#2563eb]'
-              )}
-            >
-              {isScoring ? 'Scoring...' : 'Submit Mix'}
-            </button>
-          </div>
+          <SubmitButton
+            onClick={handleSubmit}
+            isScoring={isScoring}
+            label="Submit Mix"
+            accentColor="#3b82f6"
+            accentColorDark="#2563eb"
+          />
         </div>
       </div>
 
@@ -394,211 +346,6 @@ export function ProductionChallengeView({
           hasNext={hasNext}
         />
       )}
-    </div>
-  );
-}
-
-/**
- * Results Modal for production challenges
- */
-interface ProductionResultsModalProps {
-  result: {
-    overall: number;
-    stars: 1 | 2 | 3;
-    passed: boolean;
-    feedback: string[];
-    breakdown: {
-      type: 'reference' | 'goal';
-      layerScores?: { id: string; name: string; score: number }[];
-      conditionResults?: { description: string; passed: boolean }[];
-    };
-  };
-  challenge: ProductionChallenge;
-  layerStates: LayerState[];
-  attemptNumber: number;
-  onRetry: () => void;
-  onNext?: () => void;
-  hasNext?: boolean;
-}
-
-function ProductionResultsModal({
-  result,
-  challenge,
-  layerStates,
-  attemptNumber,
-  onRetry,
-  onNext,
-  hasNext,
-}: ProductionResultsModalProps) {
-  // AI feedback state
-  const [aiFeedback, setAiFeedback] = useState<string | null>(null);
-  const [feedbackLoading, setFeedbackLoading] = useState(true);
-
-  // Fetch AI feedback on mount
-  useEffect(() => {
-    let cancelled = false;
-
-    async function fetchFeedback() {
-      try {
-        const targetDescription = challenge.target.type === 'goal'
-          ? (challenge.target as ProductionGoalTarget).description
-          : undefined;
-
-        const trpc = await getTRPC();
-        const response = await trpc.feedback.generateProduction.mutate({
-          result,
-          layerStates: layerStates.map((s) => ({
-            id: s.id,
-            name: s.name,
-            volume: s.volume,
-            pan: s.pan,
-            muted: s.muted,
-            eqLow: s.eqLow,
-            eqHigh: s.eqHigh,
-          })),
-          challenge: {
-            id: challenge.id,
-            title: challenge.title,
-            description: challenge.description,
-            module: challenge.module,
-            targetType: challenge.target.type,
-            targetDescription,
-          },
-          attemptNumber,
-        });
-
-        if (!cancelled) {
-          setAiFeedback(response.feedback);
-          setFeedbackLoading(false);
-        }
-      } catch (error) {
-        console.error('Failed to fetch AI feedback:', error);
-        if (!cancelled) {
-          setFeedbackLoading(false);
-        }
-      }
-    }
-
-    fetchFeedback();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [result, challenge, layerStates, attemptNumber]);
-
-  return (
-    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-modal">
-      <div className="bg-bg-tertiary rounded-xl p-8 max-w-[450px] w-[90%] border border-border-medium">
-        {/* Header */}
-        <div className="text-center mb-6">
-          <div className={cn(
-            'text-5xl mb-2',
-            result.passed ? 'text-success' : 'text-text-muted'
-          )}>
-            {'★'.repeat(result.stars)}
-            {'☆'.repeat(3 - result.stars)}
-          </div>
-          <h2 className="m-0 mb-2 text-4xl">
-            {result.passed ? 'Great Mix!' : 'Keep Tweaking'}
-          </h2>
-          <div className="text-5xl font-bold text-text-primary">
-            {result.overall}%
-          </div>
-        </div>
-
-        {/* Breakdown */}
-        {result.breakdown.type === 'reference' && result.breakdown.layerScores && (
-          <div className="mb-4">
-            <div className="text-base text-text-muted uppercase mb-2">
-              Layer Scores
-            </div>
-            {result.breakdown.layerScores.map((layer) => (
-              <div
-                key={layer.id}
-                className="flex justify-between items-center mb-1"
-              >
-                <span className="text-text-tertiary text-lg">{layer.name}</span>
-                <span
-                  className={cn(
-                    'text-lg font-semibold',
-                    layer.score >= 80 ? 'text-success' : layer.score >= 60 ? 'text-warning' : 'text-danger'
-                  )}
-                >
-                  {Math.round(layer.score)}%
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {result.breakdown.type === 'goal' && result.breakdown.conditionResults && (
-          <div className="mb-4">
-            <div className="text-base text-text-muted uppercase mb-2">
-              Conditions
-            </div>
-            {result.breakdown.conditionResults.map((cond, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-2 mb-1"
-              >
-                <span className={cond.passed ? 'text-success' : 'text-danger'}>
-                  {cond.passed ? '✓' : '✗'}
-                </span>
-                <span className="text-text-tertiary text-lg">{cond.description}</span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* AI Feedback */}
-        <div className="bg-[#0a0a0a] rounded-lg p-3 mb-4 border border-border-default">
-          <div className="text-base text-success-light uppercase tracking-wider mb-2 flex items-center gap-1.5">
-            <span>✦</span> AI Mentor
-          </div>
-          <div className={cn(
-            'text-text-secondary text-lg leading-relaxed',
-            feedbackLoading && 'italic'
-          )}>
-            {feedbackLoading && 'Analyzing your production...'}
-            {!feedbackLoading && aiFeedback}
-            {!feedbackLoading && !aiFeedback && 'AI feedback unavailable'}
-          </div>
-        </div>
-
-        {/* Condition Feedback */}
-        <div className="mb-6">
-          {result.feedback.map((fb, i) => (
-            <div
-              key={i}
-              className={cn(
-                'text-text-muted text-md mb-1.5 pl-3 border-l-2',
-                result.passed ? 'border-l-[#22c55e44]' : 'border-l-[#f59e0b44]'
-              )}
-            >
-              {fb}
-            </div>
-          ))}
-        </div>
-
-        {/* Actions */}
-        <div className="flex gap-3">
-          <button
-            onClick={onRetry}
-            className="flex-1 py-3 bg-border-medium border-none rounded-lg text-text-primary cursor-pointer text-xl font-semibold"
-          >
-            Try Again
-          </button>
-
-          {result.passed && hasNext && onNext && (
-            <button
-              onClick={onNext}
-              className="flex-1 py-3 border-none rounded-lg text-text-primary cursor-pointer text-xl font-semibold bg-gradient-to-br from-success to-[#16a34a]"
-            >
-              Next Challenge →
-            </button>
-          )}
-        </div>
-      </div>
     </div>
   );
 }

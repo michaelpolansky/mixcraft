@@ -42,45 +42,18 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.props.fallback) return this.props.fallback;
 
     return (
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: '60vh',
-          padding: '32px',
-        }}
-      >
-        <div
-          style={{
-            background: '#111111',
-            border: '1px solid #2a2a2a',
-            borderRadius: '12px',
-            padding: '32px',
-            maxWidth: '420px',
-            textAlign: 'center',
-            fontFamily: 'system-ui, -apple-system, sans-serif',
-          }}
-        >
-          <div style={{ fontSize: '32px', marginBottom: '12px' }}>!</div>
-          <h2 style={{ color: '#ffffff', fontSize: '18px', fontWeight: 600, margin: '0 0 8px' }}>
+      <div className="flex items-center justify-center min-h-[60vh] p-8">
+        <div className="bg-[#111111] border border-[#2a2a2a] rounded-xl p-8 max-w-[420px] text-center font-sans">
+          <div className="text-[32px] mb-3">!</div>
+          <h2 className="text-white text-lg font-semibold m-0 mb-2">
             Something went wrong
           </h2>
-          <p style={{ color: '#888888', fontSize: '14px', margin: '0 0 24px', lineHeight: 1.5 }}>
+          <p className="text-[#888888] text-sm m-0 mb-6 leading-normal">
             This view encountered an error. Your progress has been saved.
           </p>
           <button
             onClick={this.handleReset}
-            style={{
-              padding: '10px 28px',
-              fontSize: '14px',
-              background: 'linear-gradient(145deg, #22c55e, #16a34a)',
-              border: 'none',
-              borderRadius: '8px',
-              color: '#ffffff',
-              cursor: 'pointer',
-              fontWeight: 600,
-            }}
+            className="py-2.5 px-7 text-sm bg-gradient-to-br from-success to-[#16a34a] border-none rounded-lg text-white cursor-pointer font-semibold"
           >
             Try Again
           </button>

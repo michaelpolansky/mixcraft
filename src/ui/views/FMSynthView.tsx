@@ -1,6 +1,6 @@
 /**
  * FM Synthesizer View
- * Horizontal signal-flow layout: FM → LFO → NOISE → VELOCITY → ARP → AMP → OUTPUT
+ * Horizontal signal-flow layout: FM → LFO → NOISE → VELOCITY → ARP → MOD MATRIX → AMP → OUTPUT
  */
 
 import { useEffect, useCallback, useState } from 'react';
@@ -11,13 +11,9 @@ import {
   PianoKeyboard,
   InfoPanel,
   Sequencer,
-  RecordingControl,
   FMVisualizer,
   EnvelopeVisualizer,
   WaveformSelector,
-  LFOVisualizer,
-  NoiseVisualizer,
-  Oscilloscope,
   XYPad,
   ArpeggiatorControls,
   StageCard,
@@ -26,22 +22,18 @@ import {
   SynthHeader,
   GlideControls,
   VelocityControls,
+  LFOStage,
+  NoiseStage,
+  OutputStage,
 } from '../components/index.ts';
+import { FMModMatrix } from '../components/synth/FMModMatrix.tsx';
 import { FM_PRESETS } from '../../data/presets/fm-presets.ts';
 import { InfoPanelProvider } from '../context/InfoPanelContext.tsx';
 import { cn } from '../utils/cn.ts';
 import {
   FM_PARAM_RANGES,
   HARMONICITY_PRESETS,
-  FM_MOD_SOURCES,
-  FM_MOD_DESTINATIONS,
-  FM_MOD_SOURCE_LABELS,
-  FM_MOD_DEST_LABELS,
   type FMLFODestination,
-  type NoiseType,
-  type LFOWaveform,
-  type FMModSource,
-  type FMModDestination,
 } from '../../core/types.ts';
 
 // Stage colors following signal flow
@@ -56,18 +48,11 @@ const COLORS = {
   output: '#ef4444',
 };
 
-// Noise type options
-const NOISE_TYPES = [
-  { value: 'white' as const, label: 'White' },
-  { value: 'pink' as const, label: 'Pink' },
-  { value: 'brown' as const, label: 'Brown' },
-];
-
 // LFO destination options for FM synth
 const FM_LFO_DESTINATIONS = [
-  { value: 'modulationIndex' as const, label: 'Mod Index' },
-  { value: 'harmonicity' as const, label: 'Harmonic' },
-  { value: 'pitch' as const, label: 'Pitch' },
+  { value: 'modulationIndex', label: 'Mod Index' },
+  { value: 'harmonicity', label: 'Harmonic' },
+  { value: 'pitch', label: 'Pitch' },
 ];
 
 export function FMSynthView() {
@@ -94,29 +79,22 @@ export function FMSynthView() {
     resetToDefaults,
     currentPreset,
     loadPreset,
-    // LFO actions
     setLFORate,
     setLFODepth,
     setLFOWaveform,
     setLFODestination,
-    // Noise actions
     setNoiseType,
     setNoiseLevel,
-    // Glide actions
     setGlideEnabled,
     setGlideTime,
-    // Pan action
     setPan,
-    // Velocity actions
     setVelocityAmpAmount,
     setVelocityModIndexAmount,
-    // Arpeggiator actions
     setArpEnabled,
     setArpPattern,
     setArpDivision,
     setArpOctaves,
     setArpGate,
-    // Mod Matrix
     setModRoute,
   } = useFMSynthStore();
 
@@ -147,11 +125,6 @@ export function FMSynthView() {
   const getAnalyser = useCallback(() => {
     return engine?.getAnalyser() ?? null;
   }, [engine]);
-
-  // Format helpers
-  const formatMs = (value: number) => value >= 1 ? `${value.toFixed(2)}s` : `${Math.round(value * 1000)}ms`;
-  const formatDb = (value: number) => `${value.toFixed(1)}dB`;
-  const formatPercent = (value: number) => `${Math.round(value * 100)}%`;
 
   // XY Pad handlers - maps to Harmonicity (X) and Mod Index (Y)
   const xRange: [number, number] = [FM_PARAM_RANGES.harmonicity.min, FM_PARAM_RANGES.harmonicity.max];
@@ -211,7 +184,7 @@ export function FMSynthView() {
             {/* Carrier & Modulator Waveforms */}
             <div className="grid grid-cols-2 gap-3 mt-3">
               <div>
-                <div className="text-xs font-semibold mb-1" style={{ color: COLORS.fm }}>CARRIER</div>
+                <div className="text-xs font-semibold mb-1 text-[#f97316]">CARRIER</div>
                 <WaveformSelector value={params.carrierType} onChange={setCarrierType} accentColor={COLORS.fm} size="compact" />
               </div>
               <div>
@@ -243,9 +216,8 @@ export function FMSynthView() {
                         onClick={() => setHarmonicity(value)}
                         className={cn(
                           'py-0.5 px-1 border-none rounded-sm cursor-pointer text-[8px]',
-                          isActive ? 'text-text-primary' : 'bg-bg-tertiary text-text-muted'
+                          isActive ? 'bg-[#f97316] text-text-primary' : 'bg-bg-tertiary text-text-muted'
                         )}
-                        style={isActive ? { background: COLORS.fm } : undefined}
                       >
                         {value}
                       </button>
@@ -288,122 +260,30 @@ export function FMSynthView() {
           </StageCard>
 
           {/* LFO Stage */}
-          <StageCard title="LFO" color={COLORS.lfo}>
-            <LFOVisualizer
-              waveform={params.lfo.waveform}
-              rate={params.lfo.rate}
-              depth={params.lfo.depth}
-              width={200}
-              height={100}
-              accentColor={COLORS.lfo}
-              compact
-            />
-            <div className="mt-3">
-              <WaveformSelector
-                value={params.lfo.waveform}
-                onChange={(waveform: LFOWaveform) => setLFOWaveform(waveform)}
-                accentColor={COLORS.lfo}
-              />
-            </div>
-            <div className="flex flex-col gap-2 mt-3">
-              <Knob
-                label="Rate"
-                value={params.lfo.rate}
-                min={0.1}
-                max={20}
-                step={0.1}
-                onChange={setLFORate}
-                formatValue={(v) => `${v.toFixed(1)} Hz`}
-                paramId="fm.lfo.rate"
-              />
-              <Knob
-                label="Depth"
-                value={params.lfo.depth}
-                min={0}
-                max={1}
-                step={0.01}
-                onChange={setLFODepth}
-                formatValue={formatPercent}
-                paramId="fm.lfo.depth"
-              />
-            </div>
-            {/* Destination selector */}
-            <div className="mt-3">
-              <div className="text-xs text-text-tertiary mb-1 uppercase">
-                Destination
-              </div>
-              <div className="flex gap-0.5">
-                {FM_LFO_DESTINATIONS.map((dest) => {
-                  const isActive = params.lfo.destination === dest.value;
-                  return (
-                    <button
-                      key={dest.value}
-                      onClick={() => setLFODestination(dest.value)}
-                      className={cn(
-                        'py-1 px-1.5 rounded-sm cursor-pointer text-xs font-medium border',
-                        isActive
-                          ? 'text-text-primary'
-                          : 'bg-bg-tertiary border-border-medium text-text-tertiary'
-                      )}
-                      style={isActive ? {
-                        background: COLORS.lfo,
-                        borderColor: COLORS.lfo,
-                      } : undefined}
-                    >
-                      {dest.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </StageCard>
+          <LFOStage
+            title="LFO"
+            color={COLORS.lfo}
+            paramPrefix="fm.lfo"
+            waveform={params.lfo.waveform}
+            rate={params.lfo.rate}
+            depth={params.lfo.depth}
+            onWaveformChange={setLFOWaveform}
+            onRateChange={setLFORate}
+            onDepthChange={setLFODepth}
+            destinations={FM_LFO_DESTINATIONS}
+            currentDestination={params.lfo.destination}
+            onDestinationChange={(v) => setLFODestination(v as FMLFODestination)}
+          />
 
           {/* NOISE Stage */}
-          <StageCard title="NOISE" color={COLORS.noise}>
-            <NoiseVisualizer
-              noiseType={params.noise.type}
-              level={params.noise.level}
-              width={200}
-              height={100}
-              accentColor={COLORS.noise}
-              compact
-            />
-            <div className="flex gap-1 mt-3">
-              {NOISE_TYPES.map((nt) => {
-                const isActive = params.noise.type === nt.value;
-                return (
-                  <button
-                    key={nt.value}
-                    onClick={() => setNoiseType(nt.value)}
-                    className={cn(
-                      'py-1.5 px-2.5 rounded-sm cursor-pointer text-sm font-medium border',
-                      isActive
-                        ? 'text-text-primary'
-                        : 'bg-bg-tertiary border-border-medium text-text-tertiary'
-                    )}
-                    style={isActive ? {
-                      background: COLORS.noise,
-                      borderColor: COLORS.noise,
-                    } : undefined}
-                  >
-                    {nt.label}
-                  </button>
-                );
-              })}
-            </div>
-            <div className="mt-3">
-              <Knob
-                label="Level"
-                value={params.noise.level}
-                min={0}
-                max={1}
-                step={0.01}
-                onChange={setNoiseLevel}
-                formatValue={formatPercent}
-                paramId="fm.noise.level"
-              />
-            </div>
-          </StageCard>
+          <NoiseStage
+            type={params.noise.type}
+            level={params.noise.level}
+            onTypeChange={setNoiseType}
+            color={COLORS.noise}
+            onLevelChange={setNoiseLevel}
+            paramId="fm.noise.level"
+          />
 
           {/* VELOCITY Stage */}
           <StageCard title="VELOCITY" color={COLORS.velocity}>
@@ -436,7 +316,7 @@ export function FMSynthView() {
 
           {/* MOD MATRIX Stage */}
           <StageCard title="MOD MATRIX" color={COLORS.modMatrix} wide>
-            <FMModMatrixUI
+            <FMModMatrix
               routes={params.modMatrix.routes}
               onChange={setModRoute}
               accentColor={COLORS.modMatrix}
@@ -468,47 +348,15 @@ export function FMSynthView() {
           </StageCard>
 
           {/* OUTPUT Stage */}
-          <StageCard title="OUTPUT" color={COLORS.output}>
-            <div className="flex flex-col items-center gap-3">
-              {/* Oscilloscope */}
-              <Oscilloscope
-                getAnalyser={getAnalyser}
-                width={200}
-                height={60}
-                accentColor={COLORS.output}
-              />
-              <Knob
-                label="Volume"
-                value={params.volume}
-                min={-40}
-                max={0}
-                step={0.5}
-                onChange={setVolume}
-                formatValue={formatDb}
-                size={56}
-                paramId="volume"
-              />
-              <Knob
-                label="Pan"
-                value={params.pan}
-                min={-1}
-                max={1}
-                step={0.01}
-                onChange={setPan}
-                formatValue={(v) => {
-                  if (Math.abs(v) < 0.05) return 'Center';
-                  if (v < 0) return `${Math.round(Math.abs(v) * 100)}% L`;
-                  return `${Math.round(v * 100)}% R`;
-                }}
-                paramId="fm.pan"
-              />
-              <RecordingControl
-                sourceNode={engine?.getOutputNode() ?? null}
-                accentColor={COLORS.output}
-                compact
-              />
-            </div>
-          </StageCard>
+          <OutputStage
+            volume={params.volume}
+            pan={params.pan}
+            onVolumeChange={setVolume}
+            onPanChange={setPan}
+            getAnalyser={getAnalyser}
+            sourceNode={engine?.getOutputNode() ?? null}
+            color={COLORS.output}
+          />
         </div>
 
         {/* Sequencer */}
@@ -523,20 +371,18 @@ export function FMSynthView() {
             <button
               onClick={() => setBottomMode('xy')}
               className={cn(
-                'py-2 px-4 border-none cursor-pointer text-base font-semibold',
-                bottomMode === 'xy' ? 'bg-bg-tertiary text-text-primary' : 'bg-transparent text-text-muted'
+                'py-2 px-4 border-none border-b-2 cursor-pointer text-base font-semibold',
+                bottomMode === 'xy' ? 'bg-bg-tertiary text-text-primary border-b-[#f97316]' : 'bg-transparent text-text-muted border-b-transparent'
               )}
-              style={{ borderBottom: bottomMode === 'xy' ? `2px solid ${COLORS.fm}` : '2px solid transparent' }}
             >
               XY
             </button>
             <button
               onClick={() => setBottomMode('keys')}
               className={cn(
-                'py-2 px-4 border-none cursor-pointer text-base font-semibold',
-                bottomMode === 'keys' ? 'bg-bg-tertiary text-text-primary' : 'bg-transparent text-text-muted'
+                'py-2 px-4 border-none border-b-2 cursor-pointer text-base font-semibold',
+                bottomMode === 'keys' ? 'bg-bg-tertiary text-text-primary border-b-[#f97316]' : 'bg-transparent text-text-muted border-b-transparent'
               )}
-              style={{ borderBottom: bottomMode === 'keys' ? `2px solid ${COLORS.fm}` : '2px solid transparent' }}
             >
               KEYS
             </button>
@@ -551,8 +397,10 @@ export function FMSynthView() {
 
           {/* Content */}
           <div
-            className="transition-[height] duration-200 overflow-hidden flex items-center justify-center py-2 px-6"
-            style={{ height: bottomExpanded ? '140px' : '50px' }}
+            className={cn(
+              'transition-[height] duration-200 overflow-hidden flex items-center justify-center py-2 px-6',
+              bottomExpanded ? 'h-[140px]' : 'h-[50px]'
+            )}
             onClick={() => !bottomExpanded && setBottomExpanded(true)}
           >
             {bottomMode === 'keys' ? (
@@ -584,146 +432,5 @@ export function FMSynthView() {
         <InfoPanel accentColor="#f97316" />
       </div>
     </InfoPanelProvider>
-  );
-}
-
-// FM Mod Matrix UI - route-based with 4 slots
-interface FMModMatrixUIProps {
-  routes: readonly [
-    { source: FMModSource; destination: FMModDestination; amount: number; enabled: boolean },
-    { source: FMModSource; destination: FMModDestination; amount: number; enabled: boolean },
-    { source: FMModSource; destination: FMModDestination; amount: number; enabled: boolean },
-    { source: FMModSource; destination: FMModDestination; amount: number; enabled: boolean },
-  ];
-  onChange: (index: number, route: Partial<{ source: FMModSource; destination: FMModDestination; amount: number; enabled: boolean }>) => void;
-  accentColor: string;
-}
-
-function FMModMatrixUI({ routes, onChange, accentColor }: FMModMatrixUIProps) {
-  return (
-    <div className="flex flex-col gap-2">
-      {routes.map((route, index) => (
-        <FMModRouteRow
-          key={index}
-          index={index}
-          route={route}
-          onChange={onChange}
-          accentColor={accentColor}
-        />
-      ))}
-    </div>
-  );
-}
-
-interface FMModRouteRowProps {
-  index: number;
-  route: { source: FMModSource; destination: FMModDestination; amount: number; enabled: boolean };
-  onChange: (index: number, route: Partial<{ source: FMModSource; destination: FMModDestination; amount: number; enabled: boolean }>) => void;
-  accentColor: string;
-}
-
-function FMModRouteRow({ index, route, onChange, accentColor }: FMModRouteRowProps) {
-  const isActive = route.enabled && Math.abs(route.amount) > 0.01;
-
-  return (
-    <div
-      className={cn(
-        'flex items-center gap-1 py-1 px-1.5 rounded-sm border',
-        isActive ? '' : 'bg-bg-tertiary border-border-medium'
-      )}
-      style={isActive ? {
-        background: `${accentColor}15`,
-        borderColor: accentColor,
-      } : undefined}
-    >
-      {/* Enable toggle */}
-      <button
-        onClick={() => onChange(index, { enabled: !route.enabled })}
-        className={cn(
-          'w-5 h-5 text-sm font-bold border-none rounded-sm cursor-pointer',
-          route.enabled ? 'text-black' : 'bg-border-medium text-text-tertiary'
-        )}
-        style={route.enabled ? { background: accentColor } : undefined}
-      >
-        {index + 1}
-      </button>
-
-      {/* Source selector */}
-      <select
-        value={route.source}
-        onChange={(e) => onChange(index, { source: e.target.value as FMModSource })}
-        disabled={!route.enabled}
-        className={cn(
-          'py-0.5 px-1 bg-bg-quaternary border border-border-bright rounded-sm text-xs flex-1 min-w-0',
-          route.enabled ? 'text-text-primary cursor-pointer' : 'text-text-muted cursor-not-allowed'
-        )}
-      >
-        {FM_MOD_SOURCES.map((src) => (
-          <option key={src} value={src}>{FM_MOD_SOURCE_LABELS[src]}</option>
-        ))}
-      </select>
-
-      {/* Arrow */}
-      <span
-        className="text-sm"
-        style={{ color: route.enabled ? accentColor : '#666' }}
-      >
-        →
-      </span>
-
-      {/* Destination selector */}
-      <select
-        value={route.destination}
-        onChange={(e) => onChange(index, { destination: e.target.value as FMModDestination })}
-        disabled={!route.enabled}
-        className={cn(
-          'py-0.5 px-1 bg-bg-quaternary border border-border-bright rounded-sm text-xs flex-1 min-w-0',
-          route.enabled ? 'text-text-primary cursor-pointer' : 'text-text-muted cursor-not-allowed'
-        )}
-      >
-        {FM_MOD_DESTINATIONS.map((dest) => (
-          <option key={dest} value={dest}>{FM_MOD_DEST_LABELS[dest]}</option>
-        ))}
-      </select>
-
-      {/* Amount slider */}
-      <div
-        className={cn(
-          'w-[60px] h-4 bg-bg-quaternary rounded-sm relative overflow-hidden',
-          route.enabled ? 'cursor-pointer' : 'cursor-not-allowed'
-        )}
-        onClick={(e) => {
-          if (!route.enabled) return;
-          const rect = e.currentTarget.getBoundingClientRect();
-          const x = (e.clientX - rect.left) / rect.width;
-          // Map 0-1 to -1 to +1
-          const amount = (x * 2 - 1);
-          onChange(index, { amount: Math.round(amount * 100) / 100 });
-        }}
-      >
-        {/* Center line */}
-        <div className="absolute left-1/2 top-0 bottom-0 w-px bg-border-bright" />
-        {/* Fill */}
-        {route.enabled && (
-          <div
-            className="absolute top-0.5 bottom-0.5 rounded-sm"
-            style={{
-              left: route.amount >= 0 ? '50%' : `${(0.5 + route.amount / 2) * 100}%`,
-              width: `${Math.abs(route.amount) / 2 * 100}%`,
-              background: accentColor,
-            }}
-          />
-        )}
-        {/* Value label */}
-        <span
-          className={cn(
-            'absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[8px] font-semibold font-mono',
-            route.enabled ? 'text-text-primary' : 'text-text-muted'
-          )}
-        >
-          {route.enabled ? `${route.amount >= 0 ? '+' : ''}${Math.round(route.amount * 100)}` : '---'}
-        </span>
-      </div>
-    </div>
   );
 }

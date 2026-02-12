@@ -7,13 +7,15 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import * as Tone from 'tone';
 import { useMixingStore, type TrackEQParams } from '../stores/mixing-store.ts';
-import { EQControl, ParametricEQControl, SpectrumAnalyzer, Slider, CompressorControl } from '../components/index.ts';
+import { HintsPanel } from '../components/index.ts';
+import { MixingTrackStrip } from '../components/mixing/MixingTrackStrip.tsx';
+import { MixingBusSection } from '../components/mixing/MixingBusSection.tsx';
+import { MixingResults } from '../components/mixing/MixingResults.tsx';
 import { cn } from '../utils/cn.ts';
 import { createAudioSource, type AudioSource } from '../../core/audio-source.ts';
 import { MixingEQ, MixingCompressor, MixingReverb, MixingParametricEQ } from '../../core/mixing-effects.ts';
 import { evaluateMixingChallenge, parametricToEffective3Band } from '../../core/mixing-evaluation.ts';
-import { getTRPC } from '../api/trpc.ts';
-import type { MixingChallenge, MixingTrack, EQParams } from '../../core/types.ts';
+import type { MixingChallenge, EQParams } from '../../core/types.ts';
 
 interface MultiTrackMixingViewProps {
   challenge: MixingChallenge;
@@ -76,10 +78,6 @@ export function MultiTrackMixingView({
   const [isPlaying, setIsPlaying] = useState(false);
   const [gainReduction, setGainReduction] = useState(0);
   const [trackGainReduction, setTrackGainReduction] = useState<Record<string, number>>({});
-
-  // AI feedback state
-  const [aiFeedback, setAiFeedback] = useState<string | null>(null);
-  const [feedbackLoading, setFeedbackLoading] = useState(false);
 
   // Load challenge on mount
   useEffect(() => {
@@ -154,7 +152,6 @@ export function MultiTrackMixingView({
 
     return () => {
       clearInterval(grInterval);
-      // Dispose all track audio
       for (const audio of trackAudioRef.current.values()) {
         audio.source.stop();
         audio.source.dispose();
@@ -214,64 +211,6 @@ export function MultiTrackMixingView({
     }
   }, [compressorParams]);
 
-  // Fetch AI feedback when results are available
-  useEffect(() => {
-    if (!lastResult) {
-      setAiFeedback(null);
-      return;
-    }
-
-    let cancelled = false;
-    setFeedbackLoading(true);
-
-    async function fetchFeedback() {
-      if (!lastResult) return;
-      try {
-        const trpc = await getTRPC();
-        const response = await trpc.feedback.generateMixing.mutate({
-          result: lastResult,
-          trackParams: Object.fromEntries(
-            Object.entries(trackParams).map(([id, p]) => [
-              id,
-              {
-                low: p.low, mid: p.mid, high: p.high, volume: p.volume, pan: p.pan,
-                reverbMix: p.reverbMix,
-                compressorThreshold: p.compressorThreshold,
-                compressorAmount: p.compressorAmount,
-              },
-            ])
-          ),
-          busCompressor: { threshold: compressorParams.threshold, amount: compressorParams.amount },
-          busEQ: busEQParams,
-          challenge: {
-            id: challenge.id,
-            title: challenge.title,
-            description: challenge.description,
-            module: challenge.module,
-            trackNames: challenge.tracks?.map((t) => t.name) ?? [],
-          },
-          attemptNumber: currentAttempt,
-        });
-
-        if (!cancelled) {
-          setAiFeedback(response.feedback);
-          setFeedbackLoading(false);
-        }
-      } catch (error) {
-        console.error('Failed to fetch AI feedback:', error);
-        if (!cancelled) {
-          setFeedbackLoading(false);
-        }
-      }
-    }
-
-    fetchFeedback();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [lastResult, challenge, currentAttempt]);
-
   // Play/Stop toggle
   const togglePlayback = useCallback(async () => {
     if (isPlaying) {
@@ -294,10 +233,8 @@ export function MultiTrackMixingView({
   const handleSubmit = useCallback(() => {
     startScoring();
 
-    // Convert track params to format for evaluation (including pan, reverb, and volume)
     const playerTrackEQs: Record<string, EQParams & { pan?: number; reverbMix?: number; volume?: number; compressorAmount?: number }> = {};
     for (const [trackId, params] of Object.entries(trackParams)) {
-      // When using parametric EQ, convert to effective 3-band for evaluation
       const trackPEQ = trackParametricEQ[trackId];
       const effectiveEQ = isParametricMode && trackPEQ
         ? parametricToEffective3Band(trackPEQ)
@@ -314,7 +251,7 @@ export function MultiTrackMixingView({
 
     const result = evaluateMixingChallenge(
       challenge,
-      { low: 0, mid: 0, high: 0 }, // Not used for multi-track
+      { low: 0, mid: 0, high: 0 },
       compressorParams,
       playerTrackEQs,
       busEQParams
@@ -402,292 +339,46 @@ export function MultiTrackMixingView({
               {tracks.map((track) => {
                 const params: TrackEQParams = trackParams[track.id] ?? { low: 0, mid: 0, high: 0, volume: 0, pan: 0, reverbMix: 0, reverbSize: 50, compressorThreshold: 0, compressorAmount: 0 };
                 return (
-                  <div
+                  <MixingTrackStrip
                     key={track.id}
-                    className="flex-1 bg-bg-tertiary rounded-xl p-4"
-                    style={{ borderTop: `3px solid ${track.color ?? '#666'}` }}
-                  >
-                    <div
-                      className="text-xl font-medium mb-4"
-                      style={{ color: track.color ?? '#fff' }}
-                    >
-                      {track.name}
-                    </div>
-
-                    {/* Per-track EQ */}
-                    <div className="mb-4">
-                      {isParametricMode && trackParametricEQ[track.id] ? (
-                        <ParametricEQControl
-                          bands={trackParametricEQ[track.id]!.bands}
-                          onBandChange={(index, bandParams) => setTrackParametricBand(track.id, index, bandParams)}
-                        />
-                      ) : (
-                        <>
-                          <div className="text-base text-text-muted mb-2">EQ</div>
-                          <div className="flex flex-col gap-2">
-                            <div className="flex items-center gap-2">
-                              <span className="text-base text-text-tertiary w-8">Low</span>
-                              <input
-                                type="range"
-                                min="-12"
-                                max="12"
-                                step="0.5"
-                                value={params.low}
-                                onChange={(e) => setTrackEQLow(track.id, parseFloat(e.target.value))}
-                                className="flex-1"
-                              />
-                              <span className="text-base text-text-tertiary w-10 text-right">
-                                {params.low > 0 ? '+' : ''}{params.low.toFixed(1)}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-base text-text-tertiary w-8">Mid</span>
-                              <input
-                                type="range"
-                                min="-12"
-                                max="12"
-                                step="0.5"
-                                value={params.mid}
-                                onChange={(e) => setTrackEQMid(track.id, parseFloat(e.target.value))}
-                                className="flex-1"
-                              />
-                              <span className="text-base text-text-tertiary w-10 text-right">
-                                {params.mid > 0 ? '+' : ''}{params.mid.toFixed(1)}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-base text-text-tertiary w-8">High</span>
-                              <input
-                                type="range"
-                                min="-12"
-                                max="12"
-                                step="0.5"
-                                value={params.high}
-                                onChange={(e) => setTrackEQHigh(track.id, parseFloat(e.target.value))}
-                                className="flex-1"
-                              />
-                              <span className="text-base text-text-tertiary w-10 text-right">
-                                {params.high > 0 ? '+' : ''}{params.high.toFixed(1)}
-                              </span>
-                            </div>
-                          </div>
-                        </>
-                      )}
-                    </div>
-
-                    {/* Per-Track Compressor */}
-                    {showTrackCompressor && (
-                      <div className="mb-4">
-                        <div className="text-base text-text-muted mb-2">Compressor</div>
-                        <div className="flex flex-col gap-2">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-text-tertiary w-10">Thresh</span>
-                            <input
-                              type="range"
-                              min="-60"
-                              max="0"
-                              step="1"
-                              value={params.compressorThreshold}
-                              onChange={(e) => setTrackCompressorThreshold(track.id, parseFloat(e.target.value))}
-                              className="flex-1"
-                            />
-                            <span className="text-base text-text-tertiary w-10 text-right">
-                              {params.compressorThreshold} dB
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-text-tertiary w-10">Amt</span>
-                            <input
-                              type="range"
-                              min="0"
-                              max="100"
-                              step="5"
-                              value={params.compressorAmount}
-                              onChange={(e) => setTrackCompressorAmount(track.id, parseFloat(e.target.value))}
-                              className="flex-1"
-                            />
-                            <span className="text-base text-text-tertiary w-8 text-right">
-                              {params.compressorAmount}%
-                            </span>
-                          </div>
-                          {/* Mini GR meter */}
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-text-tertiary w-10">GR</span>
-                            <div className="flex-1 h-3 bg-[#0a0a0a] rounded-sm overflow-hidden">
-                              <div
-                                className="h-full rounded-sm"
-                                style={{
-                                  width: `${Math.min(100, Math.abs(trackGainReduction[track.id] ?? 0) * 5)}%`,
-                                  background: Math.abs(trackGainReduction[track.id] ?? 0) > 10 ? '#ef4444' : Math.abs(trackGainReduction[track.id] ?? 0) > 4 ? '#eab308' : '#22c55e',
-                                  transition: 'width 0.05s ease',
-                                }}
-                              />
-                            </div>
-                            <span className="text-sm text-text-tertiary w-10 text-right font-mono">
-                              {(trackGainReduction[track.id] ?? 0).toFixed(1)}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Volume */}
-                    {challenge.controls.volume && (
-                      <div className={challenge.controls.pan ? 'mb-4' : ''}>
-                        <div className="text-base text-text-muted mb-2">Volume</div>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="range"
-                            min="-24"
-                            max="6"
-                            step="0.5"
-                            value={params.volume}
-                            onChange={(e) => setTrackVolume(track.id, parseFloat(e.target.value))}
-                            className="flex-1"
-                          />
-                          <span className="text-base text-text-tertiary w-10 text-right">
-                            {params.volume > 0 ? '+' : ''}{params.volume.toFixed(1)} dB
-                          </span>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Pan */}
-                    {challenge.controls.pan && (
-                      <div className={challenge.controls.reverb ? 'mb-4' : ''}>
-                        <div className="text-base text-text-muted mb-2">Pan</div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-text-muted">L</span>
-                          <input
-                            type="range"
-                            min="-1"
-                            max="1"
-                            step="0.1"
-                            value={params.pan}
-                            onChange={(e) => setTrackPan(track.id, parseFloat(e.target.value))}
-                            className="flex-1"
-                          />
-                          <span className="text-sm text-text-muted">R</span>
-                          <span className="text-base text-text-tertiary w-8 text-right">
-                            {params.pan === 0 ? 'C' : params.pan < 0 ? `L${Math.abs(params.pan * 100).toFixed(0)}` : `R${(params.pan * 100).toFixed(0)}`}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Reverb */}
-                    {challenge.controls.reverb && (
-                      <div>
-                        <div className="text-base text-text-muted mb-2">Reverb</div>
-                        <div className="flex flex-col gap-2">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-text-tertiary w-7">Mix</span>
-                            <input
-                              type="range"
-                              min="0"
-                              max="100"
-                              step="5"
-                              value={params.reverbMix}
-                              onChange={(e) => setTrackReverbMix(track.id, parseFloat(e.target.value))}
-                              className="flex-1"
-                            />
-                            <span className="text-base text-text-tertiary w-8 text-right">
-                              {params.reverbMix.toFixed(0)}%
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-text-tertiary w-7">Size</span>
-                            <input
-                              type="range"
-                              min="0"
-                              max="100"
-                              step="5"
-                              value={params.reverbSize}
-                              onChange={(e) => setTrackReverbSize(track.id, parseFloat(e.target.value))}
-                              className="flex-1"
-                            />
-                            <span className="text-base text-text-tertiary w-8 text-right">
-                              {params.reverbSize.toFixed(0)}%
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                    track={track}
+                    params={params}
+                    isParametricMode={isParametricMode}
+                    parametricEQ={trackParametricEQ[track.id]}
+                    gainReduction={trackGainReduction[track.id] ?? 0}
+                    showCompressor={showTrackCompressor}
+                    showVolume={challenge.controls.volume === true}
+                    showPan={challenge.controls.pan === true}
+                    showReverb={challenge.controls.reverb === true}
+                    onEQLowChange={setTrackEQLow}
+                    onEQMidChange={setTrackEQMid}
+                    onEQHighChange={setTrackEQHigh}
+                    onParametricBandChange={setTrackParametricBand}
+                    onVolumeChange={setTrackVolume}
+                    onPanChange={setTrackPan}
+                    onReverbMixChange={setTrackReverbMix}
+                    onReverbSizeChange={setTrackReverbSize}
+                    onCompressorThresholdChange={setTrackCompressorThreshold}
+                    onCompressorAmountChange={setTrackCompressorAmount}
+                  />
                 );
               })}
             </div>
 
             {/* Bus Processing Section */}
             {(showBusEQ || showBusCompressor) && (
-              <div className="bg-bg-tertiary rounded-xl p-4 mb-6">
-                <div className="text-xl font-medium mb-4">Bus Processing</div>
-
-                {/* Bus EQ */}
-                {showBusEQ && (
-                  <div className={showBusCompressor ? 'mb-4' : ''}>
-                    <div className="text-md text-text-tertiary mb-3">Master EQ</div>
-                    <div className="flex gap-4">
-                      <div className="flex-1">
-                        <div className="text-base text-text-muted mb-1">Low</div>
-                        <input
-                          type="range"
-                          min="-12"
-                          max="12"
-                          step="0.5"
-                          value={busEQParams.low}
-                          onChange={(e) => setBusEQLow(parseFloat(e.target.value))}
-                          className="w-full"
-                        />
-                        <div className="text-base text-text-tertiary text-center">
-                          {busEQParams.low > 0 ? '+' : ''}{busEQParams.low.toFixed(1)} dB
-                        </div>
-                      </div>
-                      <div className="flex-1">
-                        <div className="text-base text-text-muted mb-1">Mid</div>
-                        <input
-                          type="range"
-                          min="-12"
-                          max="12"
-                          step="0.5"
-                          value={busEQParams.mid}
-                          onChange={(e) => setBusEQMid(parseFloat(e.target.value))}
-                          className="w-full"
-                        />
-                        <div className="text-base text-text-tertiary text-center">
-                          {busEQParams.mid > 0 ? '+' : ''}{busEQParams.mid.toFixed(1)} dB
-                        </div>
-                      </div>
-                      <div className="flex-1">
-                        <div className="text-base text-text-muted mb-1">High</div>
-                        <input
-                          type="range"
-                          min="-12"
-                          max="12"
-                          step="0.5"
-                          value={busEQParams.high}
-                          onChange={(e) => setBusEQHigh(parseFloat(e.target.value))}
-                          className="w-full"
-                        />
-                        <div className="text-base text-text-tertiary text-center">
-                          {busEQParams.high > 0 ? '+' : ''}{busEQParams.high.toFixed(1)} dB
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Bus Compressor */}
-                {showBusCompressor && (
-                  <CompressorControl
-                    params={compressorParams}
-                    gainReduction={gainReduction}
-                    showAdvanced={false}
-                    onThresholdChange={setCompressorThreshold}
-                    onAmountChange={setCompressorAmount}
-                  />
-                )}
-              </div>
+              <MixingBusSection
+                showBusEQ={showBusEQ}
+                showBusCompressor={showBusCompressor}
+                busEQParams={busEQParams}
+                compressorParams={compressorParams}
+                gainReduction={gainReduction}
+                onBusEQLowChange={setBusEQLow}
+                onBusEQMidChange={setBusEQMid}
+                onBusEQHighChange={setBusEQHigh}
+                onCompressorThresholdChange={setCompressorThreshold}
+                onCompressorAmountChange={setCompressorAmount}
+              />
             )}
 
             {/* Submit Button */}
@@ -712,103 +403,26 @@ export function MultiTrackMixingView({
             {/* Hints */}
             <div className="bg-bg-tertiary rounded-xl p-4 mb-4">
               <div className="text-xl font-medium mb-3">Hints</div>
-              {challenge.hints.slice(0, hintsRevealed).map((hint, i) => (
-                <div
-                  key={i}
-                  className="text-lg text-text-tertiary mb-2 p-2 bg-[#0a0a0a] rounded-sm"
-                >
-                  {hint}
-                </div>
-              ))}
-              {hintsRevealed < challenge.hints.length && (
-                <button
-                  onClick={revealHint}
-                  className="w-full py-2 text-lg bg-border-medium border-none rounded-sm text-text-tertiary cursor-pointer"
-                >
-                  Show Hint ({challenge.hints.length - hintsRevealed} remaining)
-                </button>
-              )}
+              <HintsPanel
+                hints={challenge.hints}
+                hintsRevealed={hintsRevealed}
+                onRevealHint={revealHint}
+              />
             </div>
 
             {/* Results */}
             {lastResult && (
-              <div className={cn(
-                'rounded-xl p-4',
-                lastResult.passed ? 'bg-[#052e16]' : 'bg-[#450a0a]'
-              )}>
-                <div className="text-center mb-4">
-                  <div className={cn(
-                    'text-5xl font-light',
-                    lastResult.passed ? 'text-success-light' : 'text-[#f87171]'
-                  )}>
-                    {lastResult.overall}%
-                  </div>
-                  <div className="flex justify-center gap-1 mb-2">
-                    {[1, 2, 3].map((star) => (
-                      <span
-                        key={star}
-                        className={cn(
-                          'text-3xl',
-                          star <= lastResult.stars ? 'text-warning' : 'text-border-default'
-                        )}
-                      >
-                        ★
-                      </span>
-                    ))}
-                  </div>
-                  <div className={cn(
-                    'text-xl',
-                    lastResult.passed ? 'text-success-light' : 'text-[#f87171]'
-                  )}>
-                    {lastResult.passed ? 'Challenge Complete!' : 'Not quite - try again'}
-                  </div>
-                </div>
-
-                {/* AI Feedback */}
-                <div className="bg-[#0a0a0a] rounded-lg p-3 mb-4 border border-border-default">
-                  <div className="text-base text-success-light uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                    <span>✦</span> AI Mentor
-                  </div>
-                  <div className={cn(
-                    'text-text-secondary text-lg leading-relaxed',
-                    feedbackLoading && 'italic'
-                  )}>
-                    {feedbackLoading && 'Analyzing your mix...'}
-                    {!feedbackLoading && aiFeedback}
-                    {!feedbackLoading && !aiFeedback && 'AI feedback unavailable'}
-                  </div>
-                </div>
-
-                {/* Condition Feedback */}
-                <div className="mb-4">
-                  {lastResult.feedback.map((fb, i) => (
-                    <div
-                      key={i}
-                      className="text-md text-text-tertiary mb-1"
-                    >
-                      • {fb}
-                    </div>
-                  ))}
-                </div>
-
-                {/* Actions */}
-                <div className="flex gap-2">
-                  <button
-                    onClick={handleRetry}
-                    className="flex-1 py-3 text-xl bg-border-medium border-none rounded-lg text-text-primary cursor-pointer"
-                  >
-                    Retry
-                  </button>
-                  {lastResult.passed && hasNext && onNext && (
-                    <button
-                      onClick={onNext}
-                      className="flex-1 py-3 text-xl bg-success border-none rounded-lg text-text-primary cursor-pointer"
-                    >
-                      Next Challenge
-                    </button>
-                  )}
-                </div>
-              </div>
+              <MixingResults
+                result={lastResult}
+                challenge={challenge}
+                attemptNumber={currentAttempt}
+                trackParams={trackParams}
+                compressorParams={compressorParams}
+                busEQParams={busEQParams}
+                onRetry={handleRetry}
+                onNext={onNext}
+                hasNext={hasNext}
+              />
             )}
           </div>
         </div>

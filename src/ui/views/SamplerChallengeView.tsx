@@ -158,11 +158,9 @@ export function SamplerChallengeView({
                     disabled={transportDisabled}
                     className={cn(
                       'py-2.5 px-6 border-none rounded-md text-text-primary text-xl font-semibold min-w-[100px]',
-                      transportDisabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+                      transportDisabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
+                      isPlaying ? 'bg-[#ef4444]' : 'bg-gradient-to-br from-[#a855f7] to-[#9333ea]'
                     )}
-                    style={{
-                      background: isPlaying ? '#ef4444' : `linear-gradient(145deg, ${accentColor}, #9333ea)`,
-                    }}
                   >
                     {isPlaying ? 'Stop' : 'Play'}
                   </button>

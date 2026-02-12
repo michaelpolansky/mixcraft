@@ -2,7 +2,8 @@
  * NOISE generator stage
  */
 
-import { NoiseVisualizer, StageCard } from '../index.ts';
+import { Knob, NoiseVisualizer, StageCard } from '../index.ts';
+import { formatPercent } from '../../utils/formatters.ts';
 import { cn } from '../../utils/cn.ts';
 import type { NoiseType } from '../../../core/types.ts';
 
@@ -11,6 +12,8 @@ interface NoiseStageProps {
   level: number;
   onTypeChange: (t: NoiseType) => void;
   color: string;
+  onLevelChange?: (v: number) => void;
+  paramId?: string;
 }
 
 const NOISE_TYPES: { value: NoiseType; label: string }[] = [
@@ -24,6 +27,8 @@ export function NoiseStage({
   level,
   onTypeChange,
   color,
+  onLevelChange,
+  paramId,
 }: NoiseStageProps) {
   return (
     <StageCard title="NOISE" color={color}>
@@ -52,6 +57,20 @@ export function NoiseStage({
           </button>
         ))}
       </div>
+      {onLevelChange && (
+        <div className="mt-3">
+          <Knob
+            label="Level"
+            value={level}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={onLevelChange}
+            formatValue={formatPercent}
+            paramId={paramId ?? 'noise.level'}
+          />
+        </div>
+      )}
     </StageCard>
   );
 }

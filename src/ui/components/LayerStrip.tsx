@@ -6,6 +6,7 @@
 import { useCallback } from 'react';
 import { Slider } from './Slider.tsx';
 import { Knob } from './Knob.tsx';
+import { cn } from '../utils/cn.ts';
 import type { LayerState } from '../../core/production-source.ts';
 import { LAYER_RANGES } from '../../core/production-source.ts';
 
@@ -54,35 +55,15 @@ export function LayerStrip({
   const meterColor = level > -6 ? '#ef4444' : level > -12 ? '#eab308' : '#4ade80';
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '8px',
-        padding: '12px',
-        background: '#1a1a1a',
-        borderRadius: '8px',
-        minWidth: '80px',
-      }}
-    >
+    <div className="flex flex-col items-center gap-2 p-3 bg-[#1a1a1a] rounded-lg min-w-[80px]">
       {/* Layer name */}
-      <span
-        style={{
-          fontSize: '11px',
-          color: '#fff',
-          fontWeight: 500,
-          textTransform: 'uppercase',
-          letterSpacing: '0.5px',
-          textAlign: 'center',
-        }}
-      >
+      <span className="text-[11px] text-white font-medium uppercase tracking-wide text-center">
         {state.name}
       </span>
 
       {/* EQ section (if enabled) */}
       {showEQ && (
-        <div style={{ display: 'flex', gap: '4px' }}>
+        <div className="flex gap-1">
           <Knob
             value={state.eqHigh}
             min={LAYER_RANGES.eqHigh.min}
@@ -121,27 +102,14 @@ export function LayerStrip({
       )}
 
       {/* Volume fader with meter */}
-      <div style={{ display: 'flex', alignItems: 'stretch', gap: '4px' }}>
+      <div className="flex items-stretch gap-1">
         {/* Meter */}
-        <div
-          style={{
-            width: '8px',
-            height: '120px',
-            background: '#0a0a0a',
-            borderRadius: '4px',
-            position: 'relative',
-            overflow: 'hidden',
-          }}
-        >
+        <div className="w-2 h-[120px] bg-[#0a0a0a] rounded relative overflow-hidden">
           <div
+            className="absolute bottom-0 left-0 right-0 transition-[height] duration-[50ms] ease-out"
             style={{
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
               height: `${meterHeight}%`,
               background: meterColor,
-              transition: 'height 50ms ease-out',
             }}
           />
         </div>
@@ -160,51 +128,29 @@ export function LayerStrip({
       </div>
 
       {/* Mute/Solo buttons */}
-      <div style={{ display: 'flex', gap: '4px' }}>
+      <div className="flex gap-1">
         <button
           onClick={onMuteToggle}
-          style={{
-            width: '28px',
-            height: '24px',
-            border: 'none',
-            borderRadius: '4px',
-            background: state.muted ? '#f97316' : '#333',
-            color: state.muted ? '#fff' : '#888',
-            fontWeight: 700,
-            fontSize: '11px',
-            cursor: 'pointer',
-            transition: 'background 100ms ease',
-          }}
+          className={cn(
+            'w-7 h-6 border-none rounded text-[11px] font-bold cursor-pointer transition-colors duration-100',
+            state.muted ? 'bg-[#f97316] text-white' : 'bg-[#333] text-[#888]'
+          )}
         >
           M
         </button>
         <button
           onClick={onSoloToggle}
-          style={{
-            width: '28px',
-            height: '24px',
-            border: 'none',
-            borderRadius: '4px',
-            background: state.solo ? '#eab308' : '#333',
-            color: state.solo ? '#000' : '#888',
-            fontWeight: 700,
-            fontSize: '11px',
-            cursor: 'pointer',
-            transition: 'background 100ms ease',
-          }}
+          className={cn(
+            'w-7 h-6 border-none rounded text-[11px] font-bold cursor-pointer transition-colors duration-100',
+            state.solo ? 'bg-[#eab308] text-black' : 'bg-[#333] text-[#888]'
+          )}
         >
           S
         </button>
       </div>
 
       {/* Volume readout */}
-      <span
-        style={{
-          fontSize: '10px',
-          color: '#4ade80',
-          fontFamily: 'monospace',
-        }}
-      >
+      <span className="text-[10px] text-[#4ade80] font-mono">
         {formatVolume(state.volume)} dB
       </span>
     </div>
